@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -12,7 +13,7 @@ class FitnessAppAi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'FitnessAppAI',
       themeMode: ThemeMode.dark,
       theme: AppTheme.dark(),
@@ -20,18 +21,7 @@ class FitnessAppAi extends StatelessWidget {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('ru'),
-      home: const HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text(AppLocalizations.of(context).appTitle)),
+      routerConfig: AppRouter.create(),
     );
   }
 }

@@ -198,7 +198,7 @@ fitnessappai/
 - **Зависимости:** Задача 0.2.
 
 ### Задача 0.5: Роутинг и каркас навигации
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** app / navigation
 - **Ветка:** `task/0.5-routing`
 - **Описание:** `go_router`: ShellRoute (вкладки: Упражнения, Программы, План, Прогресс, Профиль) + роуты: `/exercises/:id`, `/exercises/new`, `/exercises/:id/edit`, `/programs/new`, `/programs/:id/edit`, `/program-day/:dayId/exercise-params`, `/workout/prepare/:programDayId`, `/workout/run`, `/history`, `/history/:id`, `/profile`, `/sync`, `/contraindications`. Placeholder-экраны вкладок.

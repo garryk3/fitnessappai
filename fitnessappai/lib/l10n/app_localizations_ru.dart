@@ -117,4 +117,43 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get muscleNeck => 'Шея';
+
+  @override
+  String get errorNotFound => 'Страница не найдена';
+
+  @override
+  String get exerciseNew => 'Новое упражнение';
+
+  @override
+  String get exerciseEdit => 'Редактирование упражнения';
+
+  @override
+  String get exerciseDetail => 'Упражнение';
+
+  @override
+  String get exerciseParams => 'Параметры упражнения';
+
+  @override
+  String get programNew => 'Новая программа';
+
+  @override
+  String get programEdit => 'Редактирование программы';
+
+  @override
+  String get workoutPrepare => 'Подготовка к тренировке';
+
+  @override
+  String get workoutRun => 'Тренировка';
+
+  @override
+  String get history => 'История';
+
+  @override
+  String get historyDetail => 'Детали тренировки';
+
+  @override
+  String get sync => 'Синхронизация';
+
+  @override
+  String get contraindications => 'Противопоказания';
 }

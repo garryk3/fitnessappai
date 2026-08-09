@@ -10,7 +10,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const FitnessAppAi());
 
-    expect(find.text('FitnessAppAI'), findsOneWidget);
+    expect(find.text('Раздел «Упражнения» в разработке'), findsOneWidget);
   });
 
   testWidgets('delegates и supportedLocales настроены', (

@@ -309,6 +309,84 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Шея'**
   String get muscleNeck;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Страница не найдена'**
+  String get errorNotFound;
+
+  /// No description provided for @exerciseNew.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое упражнение'**
+  String get exerciseNew;
+
+  /// No description provided for @exerciseEdit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Редактирование упражнения'**
+  String get exerciseEdit;
+
+  /// No description provided for @exerciseDetail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Упражнение'**
+  String get exerciseDetail;
+
+  /// No description provided for @exerciseParams.
+  ///
+  /// In ru, this message translates to:
+  /// **'Параметры упражнения'**
+  String get exerciseParams;
+
+  /// No description provided for @programNew.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая программа'**
+  String get programNew;
+
+  /// No description provided for @programEdit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Редактирование программы'**
+  String get programEdit;
+
+  /// No description provided for @workoutPrepare.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подготовка к тренировке'**
+  String get workoutPrepare;
+
+  /// No description provided for @workoutRun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка'**
+  String get workoutRun;
+
+  /// No description provided for @history.
+  ///
+  /// In ru, this message translates to:
+  /// **'История'**
+  String get history;
+
+  /// No description provided for @historyDetail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Детали тренировки'**
+  String get historyDetail;
+
+  /// No description provided for @sync.
+  ///
+  /// In ru, this message translates to:
+  /// **'Синхронизация'**
+  String get sync;
+
+  /// No description provided for @contraindications.
+  ///
+  /// In ru, this message translates to:
+  /// **'Противопоказания'**
+  String get contraindications;
 }
 
 class _AppLocalizationsDelegate
