@@ -176,7 +176,7 @@ fitnessappai/
 - **Зависимости:** Задача 0.1.
 
 ### Задача 0.3: Темизация (Material 3, тёмная)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** app / theme
 - **Ветка:** `task/0.3-theme`
 - **Описание:** `AppTheme`: `ColorScheme.fromSeed(seed, brightness: dark)`, `themeMode: ThemeMode.dark`, стили NavigationBar/NavigationRail, Card, FilledButton, SegmentedButton, SearchBar, диалогов. Подключить в MaterialApp.
