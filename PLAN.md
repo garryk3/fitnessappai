@@ -233,7 +233,7 @@ fitnessappai/
 - **Зависимости:** Задача 0.2.
 
 ### Задача 1.2: Drift-инфраструктура
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** core / database
 - **Ветка:** `task/1.2-drift-core`
 - **Описание:** `AppDatabase` с инжектируемым `QueryExecutor` (`driftDatabase(name: 'fitnessappai')` в проде, `NativeDatabase.memory()` в тестах), таблица `app_meta`, `MigrationStrategy`, `drift_dev schema dump`, `build_runner`; `*.g.dart` коммитить. Регистрация в ServiceLocator.
@@ -628,8 +628,8 @@ fitnessappai/
 | 0.4 | Локализация ru | [x] | task/0.4-l10n / PR #4 | 2026-08-08 |
 | 0.5 | Роутинг и каркас | [x] | task/0.5-routing / PR #5 | 2026-08-09 |
 | 0.6 | Адаптивная навигация | [x] | task/0.6-responsive / PR #6 | 2026-08-09 |
-| 1.1 | Domain-модели и валидаторы | [ ] | | |
-| 1.2 | Drift-инфраструктура | [ ] | | |
+| 1.1 | Domain-модели и валидаторы | [x] | task/1.1-models / PR #7 | 2026-08-09 |
+| 1.2 | Drift-инфраструктура | [x] | task/1.2-drift-core / PR #8 | 2026-08-09 |
 | 1.3 | Таблицы Drift и конвертеры | [ ] | | |
 | 1.4 | MediaStore | [ ] | | |
 | 2.1 | Репозиторий упражнений | [ ] | | |
