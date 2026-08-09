@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 
-import 'package:fitnessappai/app/app_shell.dart';
+import 'package:fitnessappai/app/responsive/adaptive_navigation.dart';
 import 'package:fitnessappai/app/screens/not_found_screen.dart';
 import 'package:fitnessappai/app/screens/placeholder_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
@@ -19,7 +19,7 @@ class AppRouter {
       routes: [
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
-              AppShell(navigationShell: navigationShell),
+              AdaptiveNavigation(navigationShell: navigationShell),
           branches: [
             StatefulShellBranch(
               routes: [
