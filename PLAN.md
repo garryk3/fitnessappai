@@ -209,7 +209,7 @@ fitnessappai/
 - **Зависимости:** Задачи 0.3, 0.4.
 
 ### Задача 0.6: Адаптивная навигация (планшеты, складные)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (PR #6)
 - **Модуль:** app / responsive
 - **Ветка:** `task/0.6-responsive`
 - **Описание:** Breakpoints (compact <600dp, medium 600–840, expanded ≥840). На expanded — `NavigationRail` вместо `NavigationBar`; на планшетах — two-pane (список+детали). Helper-класс `AppBreakpoints`, виджеты `AdaptiveNavigation`, `TwoPaneLayout`. Проверить на AVD с профилем Samsung Fold и планшета.
