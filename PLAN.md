@@ -222,7 +222,7 @@ fitnessappai/
 # Этап 1. Базовая инфраструктура данных
 
 ### Задача 1.1: Domain-модели и валидаторы
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (PR #7)
 - **Модуль:** core / domain
 - **Ветка:** `task/1.1-models`
 - **Описание:** Модели (immutable, `copyWith`, `==`): `ExerciseType`, `Exercise` (включая instructions/commonMistakes/thumbnailPath/animationPath), `MuscleGroup`, `ExerciseMuscle`, `Program`, `ProgramDay`, `ProgramDayExercise` (isAlternative), `WorkoutSession`, `WorkoutSetResult`, `ScheduleMark`, `BodyMeasurement`, `UserProfile`, `WorkoutReminder`. Валидаторы: `ExerciseValidator`, `ProgramValidator` (дни 1–7, уникальный dayIndex, у дня ≥1 основное упражнение), `ProgramDayExerciseValidator` (метрики по типу).
