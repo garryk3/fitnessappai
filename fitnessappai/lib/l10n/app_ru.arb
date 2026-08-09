@@ -1,0 +1,47 @@
+{
+  "appTitle": "FitnessAppAI",
+  "placeholderTab": "Раздел «{tab}» в разработке",
+  "@placeholderTab": {
+    "description": "Заглушка экрана вкладки",
+    "placeholders": {
+      "tab": {
+        "type": "String",
+        "example": "Упражнения"
+      }
+    }
+  },
+  "navExercises": "Упражнения",
+  "navPrograms": "Программы",
+  "navPlan": "План",
+  "navProgress": "Прогресс",
+  "navProfile": "Профиль",
+  "commonSave": "Сохранить",
+  "commonCancel": "Отмена",
+  "commonDelete": "Удалить",
+  "commonEdit": "Редактировать",
+  "commonAdd": "Добавить",
+  "commonClose": "Закрыть",
+  "commonRetry": "Повторить",
+  "exerciseTypeStrength": "Силовые",
+  "exerciseTypePlank": "Планка",
+  "exerciseTypeRunning": "Бег",
+  "schedulePerformed": "Выполнено",
+  "scheduleRescheduled": "Перенесено",
+  "scheduleSkipped": "Пропущено",
+  "schedulePending": "Запланировано",
+  "muscleAbs": "Пресс",
+  "muscleObliques": "Косые",
+  "muscleChest": "Грудь",
+  "muscleShoulders": "Плечи",
+  "muscleBiceps": "Бицепс",
+  "muscleTriceps": "Трицепс",
+  "muscleForearms": "Предплечья",
+  "muscleTraps": "Трапеции",
+  "muscleLats": "Широчайшие",
+  "muscleLowerBack": "Поясница",
+  "muscleGlutes": "Ягодицы",
+  "muscleQuads": "Квадрицепсы",
+  "muscleHamstrings": "Бицепс бедра",
+  "muscleCalves": "Икры",
+  "muscleNeck": "Шея"
+}
