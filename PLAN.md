@@ -165,7 +165,7 @@ fitnessappai/
 - **Зависимости:** нет.
 
 ### Задача 0.2: Зависимости, структура папок, ServiceLocator
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** core / di
 - **Ветка:** `task/0.2-structure-di`
 - **Описание:** Добавить в `pubspec.yaml` все пакеты раздела 4. Создать структуру `lib/` (раздел 5). Реализовать `ServiceLocator` (`registerLazySingleton`/`registerFactory`/`reset`).
