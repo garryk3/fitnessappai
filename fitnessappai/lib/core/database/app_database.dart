@@ -12,13 +12,12 @@ part 'app_database.g.dart';
 @DriftDatabase(tables: [AppMeta])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor})
-      : super(executor ?? driftDatabase(name: 'fitnessappai'));
+    : super(executor ?? driftDatabase(name: 'fitnessappai'));
 
   @override
   int get schemaVersion => 1;
 
   @override
-  MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
-      );
+  MigrationStrategy get migration =>
+      MigrationStrategy(onCreate: (m) => m.createAll());
 }
