@@ -255,7 +255,7 @@ fitnessappai/
 - **Зависимости:** Задачи 1.1, 1.2.
 
 ### Задача 1.4: MediaStore (файлы анимаций и изображений)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** core / media
 - **Ветка:** `task/1.4-media-store`
 - **Описание:** `MediaStore`: `ensureAppMediaDir()`, `copyAssetToStorage(assetPath) → path`, `importFromPicker() → path` (file_picker), `deleteFile(path)`, кэш `path → ImageProvider` (`MediaCache` с `cacheWidth`). Анимированный WebP — нативный `Image.file`.
@@ -631,7 +631,7 @@ fitnessappai/
 | 1.1 | Domain-модели и валидаторы | [x] | task/1.1-models / PR #7 | 2026-08-09 |
 | 1.2 | Drift-инфраструктура | [x] | task/1.2-drift-core / PR #8 | 2026-08-09 |
 | 1.3 | Таблицы Drift и конвертеры | [x] | task/1.3-drift-tables | 2026-08-10 |
-| 1.4 | MediaStore | [ ] | | |
+| 1.4 | MediaStore | [x] | task/1.4-media-store | 2026-08-10 |
 | 2.1 | Репозиторий упражнений | [ ] | | |
 | 2.2 | Seed-данные (wger) | [ ] | | |
 | 2.3 | Список упражнений (UI) | [ ] | | |
