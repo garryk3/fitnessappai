@@ -154,7 +154,7 @@ fitnessappai/
 # Этап 0. Подготовка проекта
 
 ### Задача 0.1: Настройка проекта и CI
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** проект
 - **Ветка:** `task/0.1-setup`
 - **Описание:** Проект `fitnessappai/` создан. Довести до рабочего состояния: поднять `minSdk = 31` в `android/app/build.gradle.kts`, проверить `applicationId`/namespace, обновить `analysis_options.yaml`, `.gitignore`, README. Удалить counter-пример из `lib/main.dart` (минимальный экран «FitnessAppAI»). Создать `.github/workflows/ci.yml` (см. раздел 3). Первый коммит всех файлов в ветке `task/0.1-setup`, PR в `main`.
