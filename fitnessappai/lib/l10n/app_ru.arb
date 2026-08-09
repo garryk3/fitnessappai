@@ -43,5 +43,18 @@
   "muscleQuads": "Квадрицепсы",
   "muscleHamstrings": "Бицепс бедра",
   "muscleCalves": "Икры",
-  "muscleNeck": "Шея"
+  "muscleNeck": "Шея",
+  "errorNotFound": "Страница не найдена",
+  "exerciseNew": "Новое упражнение",
+  "exerciseEdit": "Редактирование упражнения",
+  "exerciseDetail": "Упражнение",
+  "exerciseParams": "Параметры упражнения",
+  "programNew": "Новая программа",
+  "programEdit": "Редактирование программы",
+  "workoutPrepare": "Подготовка к тренировке",
+  "workoutRun": "Тренировка",
+  "history": "История",
+  "historyDetail": "Детали тренировки",
+  "sync": "Синхронизация",
+  "contraindications": "Противопоказания"
 }

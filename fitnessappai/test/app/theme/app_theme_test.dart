@@ -43,7 +43,7 @@ void main() {
     ) async {
       await tester.pumpWidget(const FitnessAppAi());
 
-      final BuildContext context = tester.element(find.text('FitnessAppAI'));
+      final BuildContext context = tester.element(find.byType(NavigationBar));
       expect(Theme.of(context).brightness, Brightness.dark);
     });
   });
