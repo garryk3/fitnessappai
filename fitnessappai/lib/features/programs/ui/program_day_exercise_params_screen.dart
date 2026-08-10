@@ -90,8 +90,9 @@ class _ProgramDayExerciseParamsScreenState
       _weightController.text = _formatDouble(item?.weightKg);
       if (type == ExerciseType.running) {
         final minutes = item?.durationSeconds;
-        _durationController.text =
-            minutes == null ? '' : '${(minutes / 60).round()}';
+        _durationController.text = minutes == null
+            ? ''
+            : '${(minutes / 60).round()}';
         _distanceController.text = _formatDouble(item?.distanceMeters);
       } else {
         _durationController.text = _formatInt(item?.durationSeconds);
@@ -110,9 +111,7 @@ class _ProgramDayExerciseParamsScreenState
       exerciseId: item.exerciseId,
       orderIndex: item.orderIndex,
       isAlternative: item.isAlternative,
-      sets: type == ExerciseType.running
-          ? 1
-          : int.parse(_setsController.text),
+      sets: type == ExerciseType.running ? 1 : int.parse(_setsController.text),
       reps: type == ExerciseType.strength
           ? int.parse(_repsController.text)
           : null,

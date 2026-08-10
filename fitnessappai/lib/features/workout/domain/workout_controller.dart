@@ -34,11 +34,9 @@ typedef TimerFactory =
 /// Управляет переходами между упражнениями и подходами, отсчитывает отдых
 /// и время удержания для планки, накапливает результаты подходов.
 class WorkoutController {
-  WorkoutController({
-    DateTime Function()? clock,
-    TimerFactory? timerFactory,
-  }) : _clock = clock ?? DateTime.now,
-       _timerFactory = timerFactory ?? _defaultTimerFactory;
+  WorkoutController({DateTime Function()? clock, TimerFactory? timerFactory})
+    : _clock = clock ?? DateTime.now,
+      _timerFactory = timerFactory ?? _defaultTimerFactory;
 
   static Timer _defaultTimerFactory(
     Duration duration,
@@ -80,7 +78,8 @@ class WorkoutController {
     return _exercises[currentExerciseIndex.value];
   }
 
-  bool get isLastExercise => currentExerciseIndex.value == _exercises.length - 1;
+  bool get isLastExercise =>
+      currentExerciseIndex.value == _exercises.length - 1;
 
   WorkoutSessionContext? get context => _context;
   WorkoutSetInput? get draft => _draft;
@@ -140,10 +139,7 @@ class WorkoutController {
     holdRemainingSeconds.value = null;
     _draft = null;
 
-    results.value = [
-      ...results.value,
-      _buildResult(exercise, input, _clock()),
-    ];
+    results.value = [...results.value, _buildResult(exercise, input, _clock())];
     completedSets.value++;
 
     if (currentSet.value < exercise.sets) {
