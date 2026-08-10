@@ -404,7 +404,7 @@ fitnessappai/
 - **Зависимости:** Задачи 1.1, 3.1.
 
 ### Задача 4.2: Репозиторий тренировки (бизнес-логика)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (PR #20)
 - **Модуль:** features / workout / data
 - **Ветка:** `task/4.2-workout-repository`
 - **Описание:** `WorkoutRepository.saveSession(WorkoutSession, List<WorkoutSetResult>)` в транзакции (копии programName/exerciseName/type, programDayId, dayIndex, variant). `getSessions(programDayId, weekStart)`, `getSessionsBetween(start, end)`, `getSession(id)` с результатами. `markSkipped(programDayId, weekStart)`, `clearSkip(...)`, `getSkips(weekStart)`.
@@ -644,7 +644,7 @@ fitnessappai/
 | 3.4 | Конструктор: наполнение дней | [x] | task/3.4-program-builder-exercises / PR #17 | 2026-08-10 |
 | 3.5 | Параметры упражнения в дне | [x] | task/3.5-day-exercise-params / PR #18 | 2026-08-10 |
 | 4.1 | Контроллер тренировки | [x] | task/4.1-workout-controller / PR #19 | 2026-08-10 |
-| 4.2 | Репозиторий тренировки | [ ] | | |
+| 4.2 | Репозиторий тренировки | [x] | task/4.2-workout-repository / PR #20 | 2026-08-10 |
 | 4.3 | План недели (UI) | [ ] | | |
 | 4.4 | Подготовка к тренировке (UI) | [ ] | | |
 | 4.5 | Выполнение тренировки (UI) | [ ] | | |
