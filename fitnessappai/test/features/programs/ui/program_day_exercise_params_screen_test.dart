@@ -85,14 +85,10 @@ void main() {
     String label,
     String value,
   ) async {
-    await tester.enterText(
-      find.widgetWithText(TextFormField, label),
-      value,
-    );
+    await tester.enterText(find.widgetWithText(TextFormField, label), value);
   }
 
-  Finder field(String label) =>
-      find.widgetWithText(TextFormField, label);
+  Finder field(String label) => find.widgetWithText(TextFormField, label);
 
   testWidgets('strength: набор полей по типу', (tester) async {
     final positionId = await addPosition('Жим штанги', ExerciseType.strength);
@@ -180,9 +176,7 @@ void main() {
     expect(items.sets, 1);
   });
 
-  testWidgets('предзаполнение значениями существующей позиции', (
-    tester,
-  ) async {
+  testWidgets('предзаполнение значениями существующей позиции', (tester) async {
     final exercise = await createExercise('Планка', ExerciseType.plank);
     final program = await createProgram('Сплит');
     final days = await programRepository.getDays(program.id!);
@@ -215,10 +209,7 @@ void main() {
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
     final program = await createProgram('Сплит');
     final days = await programRepository.getDays(program.id!);
-    await programRepository.addExerciseToDay(
-      days[0].id!,
-      exercise.id!,
-    );
+    await programRepository.addExerciseToDay(days[0].id!, exercise.id!);
 
     final router = GoRouter(
       initialLocation: '/programs/${program.id}/day/0',
@@ -270,10 +261,7 @@ void main() {
   });
 }
 
-Future<dynamic> _dayItems(
-  ProgramRepository repository,
-  int positionId,
-) async {
+Future<dynamic> _dayItems(ProgramRepository repository, int positionId) async {
   final dayId = (await repository.getExercise(positionId))!.dayId;
   return (await repository.getExercises(dayId)).first;
 }

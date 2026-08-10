@@ -34,6 +34,5 @@ class WorkoutExercise {
   int get hashCode => Object.hash(position, exercise);
 
   @override
-  String toString() =>
-      'WorkoutExercise(name: $name, type: $type, sets: $sets)';
+  String toString() => 'WorkoutExercise(name: $name, type: $type, sets: $sets)';
 }

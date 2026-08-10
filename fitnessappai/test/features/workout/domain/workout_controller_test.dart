@@ -28,18 +28,17 @@ void main() {
     int? reps = 8,
     double? weightKg = 20,
     int? rest = 60,
-  }) =>
-      WorkoutExercise(
-        position: ProgramDayExercise(
-          dayId: 1,
-          orderIndex: 0,
-          sets: sets,
-          reps: reps,
-          weightKg: weightKg,
-          restSeconds: rest,
-        ),
-        exercise: exercise(10, 'Приседания', ExerciseType.strength),
-      );
+  }) => WorkoutExercise(
+    position: ProgramDayExercise(
+      dayId: 1,
+      orderIndex: 0,
+      sets: sets,
+      reps: reps,
+      weightKg: weightKg,
+      restSeconds: rest,
+    ),
+    exercise: exercise(10, 'Приседания', ExerciseType.strength),
+  );
 
   WorkoutExercise plankExercise({int? duration = 45, int sets = 1}) =>
       WorkoutExercise(
@@ -55,17 +54,16 @@ void main() {
   WorkoutExercise runningExercise({
     int? duration = 1800,
     double? distanceMeters = 5000,
-  }) =>
-      WorkoutExercise(
-        position: ProgramDayExercise(
-          dayId: 1,
-          orderIndex: 0,
-          sets: 1,
-          durationSeconds: duration,
-          distanceMeters: distanceMeters,
-        ),
-        exercise: exercise(12, 'Бег', ExerciseType.running),
-      );
+  }) => WorkoutExercise(
+    position: ProgramDayExercise(
+      dayId: 1,
+      orderIndex: 0,
+      sets: 1,
+      durationSeconds: duration,
+      distanceMeters: distanceMeters,
+    ),
+    exercise: exercise(12, 'Бег', ExerciseType.running),
+  );
 
   test('start: невалидно без упражнений', () {
     final controller = WorkoutController(clock: () => startTime);
