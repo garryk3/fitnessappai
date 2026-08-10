@@ -688,6 +688,66 @@ abstract class AppLocalizations {
   /// **'Параметры не заданы'**
   String get programBuilderNoMetrics;
 
+  /// No description provided for @exerciseParamsSets.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подходы'**
+  String get exerciseParamsSets;
+
+  /// No description provided for @exerciseParamsReps.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторения'**
+  String get exerciseParamsReps;
+
+  /// No description provided for @exerciseParamsWeightKg.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес (кг)'**
+  String get exerciseParamsWeightKg;
+
+  /// No description provided for @exerciseParamsDurationSeconds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время (сек)'**
+  String get exerciseParamsDurationSeconds;
+
+  /// No description provided for @exerciseParamsDurationMinutes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время (мин)'**
+  String get exerciseParamsDurationMinutes;
+
+  /// No description provided for @exerciseParamsDistanceKm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дистанция (км)'**
+  String get exerciseParamsDistanceKm;
+
+  /// No description provided for @exerciseParamsRestSeconds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отдых (сек)'**
+  String get exerciseParamsRestSeconds;
+
+  /// No description provided for @exerciseParamsRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполните поле'**
+  String get exerciseParamsRequired;
+
+  /// No description provided for @exerciseParamsPositive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значение должно быть больше нуля'**
+  String get exerciseParamsPositive;
+
+  /// No description provided for @exerciseParamsNotNegative.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значение не может быть отрицательным'**
+  String get exerciseParamsNotNegative;
+
   /// No description provided for @workoutPrepare.
   ///
   /// In ru, this message translates to:

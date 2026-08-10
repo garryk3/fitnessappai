@@ -336,6 +336,37 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderNoMetrics => 'Параметры не заданы';
 
   @override
+  String get exerciseParamsSets => 'Подходы';
+
+  @override
+  String get exerciseParamsReps => 'Повторения';
+
+  @override
+  String get exerciseParamsWeightKg => 'Вес (кг)';
+
+  @override
+  String get exerciseParamsDurationSeconds => 'Время (сек)';
+
+  @override
+  String get exerciseParamsDurationMinutes => 'Время (мин)';
+
+  @override
+  String get exerciseParamsDistanceKm => 'Дистанция (км)';
+
+  @override
+  String get exerciseParamsRestSeconds => 'Отдых (сек)';
+
+  @override
+  String get exerciseParamsRequired => 'Заполните поле';
+
+  @override
+  String get exerciseParamsPositive => 'Значение должно быть больше нуля';
+
+  @override
+  String get exerciseParamsNotNegative =>
+      'Значение не может быть отрицательным';
+
+  @override
   String get workoutPrepare => 'Подготовка к тренировке';
 
   @override

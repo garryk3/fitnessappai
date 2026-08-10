@@ -131,6 +131,12 @@ class ProgramRepository {
     return rows.map(_toDayExercise).toList();
   }
 
+  /// Возвращает позицию упражнения по [id] или `null`.
+  Future<ProgramDayExercise?> getExercise(int id) async {
+    final row = await _dayExerciseById(id);
+    return row == null ? null : _toDayExercise(row);
+  }
+
   /// Создаёт программу с днями. Проверяется структура дней (1–7, индексы).
   Future<Program> create(Program program, List<ProgramDay> days) async {
     _validateDayStructure(program, days);
