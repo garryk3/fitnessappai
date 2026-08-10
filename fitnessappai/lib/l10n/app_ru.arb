@@ -194,6 +194,68 @@
   "workoutUnitMinutes": "мин",
   "workoutUnitKg": "кг",
   "workoutUnitKm": "км",
+  "workoutRunExerciseOf": "Упражнение {current} из {total}",
+  "@workoutRunExerciseOf": {
+    "description": "Счётчик упражнений во время тренировки",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutRunSetOf": "Подход {current} из {total}",
+  "@workoutRunSetOf": {
+    "description": "Счётчик подходов текущего упражнения",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutRunApproachDone": "Подход выполнен",
+  "workoutRunRest": "Отдых",
+  "workoutRunSkipRest": "Пропустить отдых",
+  "workoutRunFinish": "Завершить тренировку",
+  "workoutRunFinished": "Тренировка завершена",
+  "workoutRunHold": "Удержание {seconds} с",
+  "@workoutRunHold": {
+    "description": "Обратный отсчёт удержания планки",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutRunExitTitle": "Выйти из тренировки?",
+  "workoutRunExitBody": "Тренировка не будет сохранена. Выйти?",
+  "workoutRunExit": "Выйти",
+  "workoutRunTime": "Время: {minutes} мин",
+  "@workoutRunTime": {
+    "description": "Длительность завершённой тренировки",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutRunSetsCount": "{count, plural, one{1 подход} few{{count} подхода} other{{count} подходов}}",
+  "@workoutRunSetsCount": {
+    "description": "Количество выполненных подходов",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutRunSaved": "Тренировка сохранена",
+  "workoutRunGoProgress": "К прогрессу",
+  "workoutRunEmpty": "В этом дне нет упражнений",
   "history": "История",
   "historyDetail": "Детали тренировки",
   "sync": "Синхронизация",
