@@ -84,6 +84,42 @@
   "exerciseParams": "Параметры упражнения",
   "programNew": "Новая программа",
   "programEdit": "Редактирование программы",
+  "programListEmpty": "Список программ пуст",
+  "programListCreate": "Новая программа",
+  "programDeleteConfirm": "Удалить программу «{name}»?",
+  "@programDeleteConfirm": {
+    "description": "Подтверждение удаления программы",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "programDaysCount": "{count, plural, one{1 день} few{{count} дня} other{{count} дней}}",
+  "@programDaysCount": {
+    "description": "Количество дней в программе",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "programExercisesCount": "{count, plural, one{1 упражнение} few{{count} упражнения} other{{count} упражнений}}",
+  "@programExercisesCount": {
+    "description": "Количество упражнений в программе",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekdayMon": "Пн",
+  "weekdayTue": "Вт",
+  "weekdayWed": "Ср",
+  "weekdayThu": "Чт",
+  "weekdayFri": "Пт",
+  "weekdaySat": "Сб",
+  "weekdaySun": "Вс",
   "workoutPrepare": "Подготовка к тренировке",
   "workoutRun": "Тренировка",
   "history": "История",

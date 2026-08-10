@@ -502,6 +502,78 @@ abstract class AppLocalizations {
   /// **'Редактирование программы'**
   String get programEdit;
 
+  /// No description provided for @programListEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Список программ пуст'**
+  String get programListEmpty;
+
+  /// No description provided for @programListCreate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая программа'**
+  String get programListCreate;
+
+  /// Подтверждение удаления программы
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить программу «{name}»?'**
+  String programDeleteConfirm(String name);
+
+  /// Количество дней в программе
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{1 день} few{{count} дня} other{{count} дней}}'**
+  String programDaysCount(int count);
+
+  /// Количество упражнений в программе
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{1 упражнение} few{{count} упражнения} other{{count} упражнений}}'**
+  String programExercisesCount(int count);
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пн'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вт'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ср'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чт'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пт'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сб'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вс'**
+  String get weekdaySun;
+
   /// No description provided for @workoutPrepare.
   ///
   /// In ru, this message translates to:
