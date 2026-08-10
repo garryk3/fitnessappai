@@ -1,13 +1,235 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 
-import 'package:fitnessappai/app/screens/placeholder_screen.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-class ProgramsScreen extends StatelessWidget {
-  const ProgramsScreen({super.key});
+/// Экран списка программ: карточки с днями и упражнениями.
+class ProgramsScreen extends StatefulWidget {
+  const ProgramsScreen({super.key, this.repository});
+
+  final ProgramRepository? repository;
+
+  @override
+  State<ProgramsScreen> createState() => _ProgramsScreenState();
+}
+
+class _ProgramsScreenState extends State<ProgramsScreen> {
+  late final ProgramListController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ProgramListController(
+      widget.repository ?? locator.get<ProgramRepository>(),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return PlaceholderScreen(title: AppLocalizations.of(context).navPrograms);
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.navPrograms)),
+      body: SignalBuilder(builder: (context) => _buildBody(context)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/programs/new'),
+        tooltip: l10n.programListCreate,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    final items = _controller.items.value;
+    if (_controller.isLoading.value && items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (items.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _controller.refresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 160),
+            Center(child: Text(AppLocalizations.of(context).programListEmpty)),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _controller.refresh,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ProgramCard(
+              item: item,
+              onEdit: () => context.push('/programs/${item.program.id}/edit'),
+              onDelete: () => _confirmDelete(context, item.program),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, Program program) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.commonDelete),
+        content: Text(l10n.programDeleteConfirm(program.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.commonDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) {
+      await _controller.deleteProgram(program.id!);
+      await _controller.refresh();
+    }
   }
 }
+
+class _ProgramCard extends StatelessWidget {
+  const _ProgramCard({
+    required this.item,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final ProgramListItem item;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final program = item.program;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onEdit,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      program.name,
+                      style: theme.textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.programDaysCount(program.daysCount),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    if (item.days.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          for (final day in item.days)
+                            _DayBadge(
+                              label: _weekdayLabel(l10n, day.dayOfWeek),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (item.exercisesCount > 0) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.programExercisesCount(item.exercisesCount),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    onEdit();
+                  } else if (value == 'delete') {
+                    onDelete();
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(value: 'edit', child: Text(l10n.commonEdit)),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Text(l10n.commonDelete),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DayBadge extends StatelessWidget {
+  const _DayBadge({required this.label});
+
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label ?? '',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: colorScheme.onSecondaryContainer,
+        ),
+      ),
+    );
+  }
+}
+
+String _weekdayLabel(AppLocalizations l10n, int? dayOfWeek) =>
+    switch (dayOfWeek) {
+      1 => l10n.weekdayMon,
+      2 => l10n.weekdayTue,
+      3 => l10n.weekdayWed,
+      4 => l10n.weekdayThu,
+      5 => l10n.weekdayFri,
+      6 => l10n.weekdaySat,
+      7 => l10n.weekdaySun,
+      _ => '',
+    };

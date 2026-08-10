@@ -217,6 +217,62 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programEdit => 'Редактирование программы';
 
   @override
+  String get programListEmpty => 'Список программ пуст';
+
+  @override
+  String get programListCreate => 'Новая программа';
+
+  @override
+  String programDeleteConfirm(String name) {
+    return 'Удалить программу «$name»?';
+  }
+
+  @override
+  String programDaysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дней',
+      few: '$count дня',
+      one: '1 день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String programExercisesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count упражнений',
+      few: '$count упражнения',
+      one: '1 упражнение',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get weekdayMon => 'Пн';
+
+  @override
+  String get weekdayTue => 'Вт';
+
+  @override
+  String get weekdayWed => 'Ср';
+
+  @override
+  String get weekdayThu => 'Чт';
+
+  @override
+  String get weekdayFri => 'Пт';
+
+  @override
+  String get weekdaySat => 'Сб';
+
+  @override
+  String get weekdaySun => 'Вс';
+
+  @override
   String get workoutPrepare => 'Подготовка к тренировке';
 
   @override

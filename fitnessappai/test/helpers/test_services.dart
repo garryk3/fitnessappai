@@ -6,6 +6,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 
 /// Регистрирует в глобальном [locator] сервисы на in-memory БД.
 ///
@@ -18,6 +19,7 @@ void registerTestServices() {
   locator.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(db, MediaStore()),
   );
+  locator.registerLazySingleton<ProgramRepository>(() => ProgramRepository(db));
   addTearDown(() async {
     locator.reset();
     await db.close();

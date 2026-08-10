@@ -31,7 +31,7 @@ void main() {
       await tester.tap(find.text('Программы'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Раздел «Программы» в разработке'), findsOneWidget);
+      expect(find.text('Список программ пуст'), findsOneWidget);
 
       await tester.tap(find.text('План'));
       await tester.pumpAndSettle();
