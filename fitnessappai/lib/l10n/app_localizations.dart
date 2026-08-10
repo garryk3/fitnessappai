@@ -244,6 +244,48 @@ abstract class AppLocalizations {
   /// **'Запланировано'**
   String get schedulePending;
 
+  /// No description provided for @weekPlanToday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня'**
+  String get weekPlanToday;
+
+  /// No description provided for @weekPlanStart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать'**
+  String get weekPlanStart;
+
+  /// No description provided for @weekPlanReschedule.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести на сегодня'**
+  String get weekPlanReschedule;
+
+  /// No description provided for @weekPlanSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get weekPlanSkip;
+
+  /// No description provided for @weekPlanUnskip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отменить пропуск'**
+  String get weekPlanUnskip;
+
+  /// No description provided for @weekPlanEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет запланированных тренировок'**
+  String get weekPlanEmpty;
+
+  /// No description provided for @weekPlanHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане'**
+  String get weekPlanHint;
+
   /// No description provided for @muscleAbs.
   ///
   /// In ru, this message translates to:

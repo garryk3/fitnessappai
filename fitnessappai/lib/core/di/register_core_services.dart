@@ -4,6 +4,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Регистрация сервисов core-слоя в контейнере.
 void registerCoreServices(ServiceLocator sl) {
@@ -15,5 +16,8 @@ void registerCoreServices(ServiceLocator sl) {
   );
   sl.registerLazySingleton<ProgramRepository>(
     () => ProgramRepository(sl.get<AppDatabase>()),
+  );
+  sl.registerLazySingleton<WorkoutRepository>(
+    () => WorkoutRepository(sl.get<AppDatabase>()),
   );
 }
