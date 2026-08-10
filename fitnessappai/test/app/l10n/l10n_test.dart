@@ -4,13 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/main.dart';
 
+import '../../helpers/test_services.dart';
+
 void main() {
+  setUp(registerTestServices);
+
   testWidgets('приложение отображает русские строки', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const FitnessAppAi());
 
-    expect(find.text('Раздел «Упражнения» в разработке'), findsOneWidget);
+    expect(find.text('Поиск упражнений'), findsOneWidget);
+    expect(find.text('Упражнения'), findsWidgets);
   });
 
   testWidgets('delegates и supportedLocales настроены', (

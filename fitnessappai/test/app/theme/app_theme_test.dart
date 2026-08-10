@@ -4,7 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/main.dart';
 
+import '../../helpers/test_services.dart';
+
 void main() {
+  setUp(registerTestServices);
+
   group('AppTheme', () {
     test('dark возвращает тему с brightness=dark', () {
       final ThemeData theme = AppTheme.dark();

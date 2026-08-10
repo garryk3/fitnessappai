@@ -196,6 +196,30 @@ abstract class AppLocalizations {
   /// **'Бег'**
   String get exerciseTypeRunning;
 
+  /// No description provided for @exerciseListHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск упражнений'**
+  String get exerciseListHint;
+
+  /// No description provided for @exerciseListEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Список упражнений пуст'**
+  String get exerciseListEmpty;
+
+  /// No description provided for @exerciseFilterAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get exerciseFilterAll;
+
+  /// No description provided for @exerciseListCreate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое упражнение'**
+  String get exerciseListCreate;
+
   /// No description provided for @schedulePerformed.
   ///
   /// In ru, this message translates to:
@@ -333,6 +357,132 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Упражнение'**
   String get exerciseDetail;
+
+  /// No description provided for @exerciseDetailNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Упражнение не найдено'**
+  String get exerciseDetailNotFound;
+
+  /// No description provided for @exerciseDetailDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get exerciseDetailDescription;
+
+  /// No description provided for @exerciseDetailTechnique.
+  ///
+  /// In ru, this message translates to:
+  /// **'Техника выполнения'**
+  String get exerciseDetailTechnique;
+
+  /// No description provided for @exerciseDetailMistakes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Частые ошибки'**
+  String get exerciseDetailMistakes;
+
+  /// No description provided for @exerciseDetailMuscles.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задействованные мышцы'**
+  String get exerciseDetailMuscles;
+
+  /// Подтверждение удаления упражнения
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить упражнение «{name}»?'**
+  String exerciseDetailDeleteConfirm(String name);
+
+  /// No description provided for @exerciseFormName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название'**
+  String get exerciseFormName;
+
+  /// No description provided for @exerciseFormType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип'**
+  String get exerciseFormType;
+
+  /// No description provided for @exerciseFormDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get exerciseFormDescription;
+
+  /// No description provided for @exerciseFormTechnique.
+  ///
+  /// In ru, this message translates to:
+  /// **'Техника выполнения'**
+  String get exerciseFormTechnique;
+
+  /// No description provided for @exerciseFormMistakes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Частые ошибки'**
+  String get exerciseFormMistakes;
+
+  /// No description provided for @exerciseFormMistakeAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить ошибку'**
+  String get exerciseFormMistakeAdd;
+
+  /// No description provided for @exerciseFormMuscles.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задействованные мышцы'**
+  String get exerciseFormMuscles;
+
+  /// No description provided for @exerciseFormMusclePrimary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Основная'**
+  String get exerciseFormMusclePrimary;
+
+  /// No description provided for @exerciseFormMuscleSecondary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вспомогательная'**
+  String get exerciseFormMuscleSecondary;
+
+  /// No description provided for @exerciseFormContraindications.
+  ///
+  /// In ru, this message translates to:
+  /// **'Противопоказания'**
+  String get exerciseFormContraindications;
+
+  /// No description provided for @exerciseFormAnimation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Анимация'**
+  String get exerciseFormAnimation;
+
+  /// No description provided for @exerciseFormAnimationPick.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать анимацию'**
+  String get exerciseFormAnimationPick;
+
+  /// No description provided for @exerciseFormAnimationRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать анимацию'**
+  String get exerciseFormAnimationRemove;
+
+  /// No description provided for @exerciseFormNameRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите название'**
+  String get exerciseFormNameRequired;
+
+  /// No description provided for @exerciseFormSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
+  String get exerciseFormSave;
 
   /// No description provided for @exerciseParams.
   ///
