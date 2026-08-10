@@ -393,7 +393,7 @@ fitnessappai/
 # Этап 4. Выполнение тренировок и расписание
 
 ### Задача 4.1: Контроллер тренировки (бизнес-логика)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (PR #19)
 - **Модуль:** features / workout / domain
 - **Ветка:** `task/4.1-workout-controller`
 - **Описание:** Чистый класс `WorkoutController` (signals): `currentExerciseIndex`, `currentSet`, `completedSets`, `results`, `phase` (exercise/rest/finished), `restRemainingSeconds`. Методы: `start(List<ProgramDayExercise>)`, `setResult(values)`, `confirmSet()`, `startRest()/skipRest()`, `nextExercise()`, `completeWorkout() → (WorkoutSession, List<WorkoutSetResult>)`, `cancelWorkout()` (ничего не сохраняет). `RestTimer` через `Timer.periodic` (инжектируемый для тестов); для планки — таймер удержания.
@@ -643,7 +643,7 @@ fitnessappai/
 | 3.3 | Конструктор: параметры и дни | [x] | task/3.3-program-builder-days | 2026-08-10 |
 | 3.4 | Конструктор: наполнение дней | [x] | task/3.4-program-builder-exercises / PR #17 | 2026-08-10 |
 | 3.5 | Параметры упражнения в дне | [x] | task/3.5-day-exercise-params / PR #18 | 2026-08-10 |
-| 4.1 | Контроллер тренировки | [ ] | | |
+| 4.1 | Контроллер тренировки | [x] | task/4.1-workout-controller / PR #19 | 2026-08-10 |
 | 4.2 | Репозиторий тренировки | [ ] | | |
 | 4.3 | План недели (UI) | [ ] | | |
 | 4.4 | Подготовка к тренировке (UI) | [ ] | | |
