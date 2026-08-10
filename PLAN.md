@@ -450,7 +450,7 @@ fitnessappai/
 # Этап 5. Отслеживание прогресса
 
 ### Задача 5.1: Агрегатор статистики (бизнес-логика)
-- **Статус:** [ ] не начата
+- **Статус:** [x] завершена
 - **Модуль:** features / progress / domain
 - **Ветка:** `task/5.1-stats-aggregator`
 - **Описание:** `StatsAggregator`. `StatPeriod { week, month, year }` + разбиение на срезы. Методы: `workoutCount(period)`, `totalDistance(period)`, `totalPlankTime(period)`, `maxWeight(exerciseId, period)`, `totalReps(exerciseId, period)`, `workoutCountPerSlice(period)`, **`muscleLoadPercent(period)`** (primary=1.0, secondary=0.5 на выполненный подход, по текущей карте `exercise_muscles`; нормализация в %, ограничение: удалённые упражнения не участвуют).
@@ -648,7 +648,7 @@ fitnessappai/
 | 4.3 | План недели (UI) | [x] | task/4.3-week-plan / PR #21 | 2026-08-10 |
 | 4.4 | Подготовка к тренировке (UI) | [x] | task/4.4-workout-prepare / PR #22 | 2026-08-10 |
 | 4.5 | Выполнение тренировки (UI) | [x] | task/4.5-workout-run | 2026-08-10 |
-| 5.1 | Агрегатор статистики | [ ] | | |
+| 5.1 | Агрегатор статистики | [x] | task/5.1-stats-aggregator | 2026-08-10 |
 | 5.2 | Экран прогресса (UI) | [ ] | | |
 | 5.3 | История тренировок (UI) | [ ] | | |
 | 6.1 | Архитектура генерации (LLM) | [ ] | | |
