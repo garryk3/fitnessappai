@@ -268,7 +268,7 @@ fitnessappai/
 # Этап 2. Управление упражнениями
 
 ### Задача 2.1: Репозиторий упражнений (бизнес-логика)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** features / exercises / data
 - **Ветка:** `task/2.1-exercise-repository`
 - **Описание:** `ExerciseRepository`: `getAll()`, `getById(id)`, `search(String)`, `getByType(ExerciseType)`, `create(Exercise, List<ExerciseMuscle>)`, `update(...)`, `delete(id)` (файлы медиа удаляются через MediaStore), `getMuscles(exerciseId)`, `setMuscles(...)`, `getContraindications/setContraindications`.
@@ -632,7 +632,7 @@ fitnessappai/
 | 1.2 | Drift-инфраструктура | [x] | task/1.2-drift-core / PR #8 | 2026-08-09 |
 | 1.3 | Таблицы Drift и конвертеры | [x] | task/1.3-drift-tables | 2026-08-10 |
 | 1.4 | MediaStore | [x] | task/1.4-media-store | 2026-08-10 |
-| 2.1 | Репозиторий упражнений | [ ] | | |
+| 2.1 | Репозиторий упражнений | [x] | task/2.1-exercise-repository | 2026-08-10 |
 | 2.2 | Seed-данные (wger) | [ ] | | |
 | 2.3 | Список упражнений (UI) | [ ] | | |
 | 2.4 | Детали упражнения (UI) | [ ] | | |
