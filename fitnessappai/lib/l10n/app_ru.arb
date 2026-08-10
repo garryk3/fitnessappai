@@ -120,6 +120,24 @@
   "weekdayFri": "Пт",
   "weekdaySat": "Сб",
   "weekdaySun": "Вс",
+  "programBuilderName": "Название",
+  "programBuilderNameRequired": "Введите название",
+  "programBuilderDescription": "Описание",
+  "programBuilderDaysCount": "Количество дней",
+  "programBuilderDay": "День {index}",
+  "@programBuilderDay": {
+    "description": "Заголовок тренировочного дня в конструкторе",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "programBuilderDayNoWeekday": "Без привязки",
+  "programBuilderDayWeekday": "День недели",
+  "programBuilderDaySettings": "Настройка дня",
+  "programBuilderSave": "Сохранить",
   "workoutPrepare": "Подготовка к тренировке",
   "workoutRun": "Тренировка",
   "history": "История",

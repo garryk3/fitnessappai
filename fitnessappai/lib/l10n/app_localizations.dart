@@ -574,6 +574,60 @@ abstract class AppLocalizations {
   /// **'Вс'**
   String get weekdaySun;
 
+  /// No description provided for @programBuilderName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название'**
+  String get programBuilderName;
+
+  /// No description provided for @programBuilderNameRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите название'**
+  String get programBuilderNameRequired;
+
+  /// No description provided for @programBuilderDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get programBuilderDescription;
+
+  /// No description provided for @programBuilderDaysCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Количество дней'**
+  String get programBuilderDaysCount;
+
+  /// Заголовок тренировочного дня в конструкторе
+  ///
+  /// In ru, this message translates to:
+  /// **'День {index}'**
+  String programBuilderDay(int index);
+
+  /// No description provided for @programBuilderDayNoWeekday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без привязки'**
+  String get programBuilderDayNoWeekday;
+
+  /// No description provided for @programBuilderDayWeekday.
+  ///
+  /// In ru, this message translates to:
+  /// **'День недели'**
+  String get programBuilderDayWeekday;
+
+  /// No description provided for @programBuilderDaySettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройка дня'**
+  String get programBuilderDaySettings;
+
+  /// No description provided for @programBuilderSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
+  String get programBuilderSave;
+
   /// No description provided for @workoutPrepare.
   ///
   /// In ru, this message translates to:
