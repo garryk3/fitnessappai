@@ -802,6 +802,54 @@ abstract class AppLocalizations {
   /// **'Тренировка'**
   String get workoutRun;
 
+  /// No description provided for @workoutPrepareStart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать тренировку'**
+  String get workoutPrepareStart;
+
+  /// No description provided for @workoutPrepareNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'День не найден'**
+  String get workoutPrepareNotFound;
+
+  /// Время отдыха в карточке упражнения подготовки
+  ///
+  /// In ru, this message translates to:
+  /// **'Отдых {seconds} с'**
+  String workoutPrepareRest(int seconds);
+
+  /// No description provided for @workoutUnitReps.
+  ///
+  /// In ru, this message translates to:
+  /// **'повт'**
+  String get workoutUnitReps;
+
+  /// No description provided for @workoutUnitSeconds.
+  ///
+  /// In ru, this message translates to:
+  /// **'с'**
+  String get workoutUnitSeconds;
+
+  /// No description provided for @workoutUnitMinutes.
+  ///
+  /// In ru, this message translates to:
+  /// **'мин'**
+  String get workoutUnitMinutes;
+
+  /// No description provided for @workoutUnitKg.
+  ///
+  /// In ru, this message translates to:
+  /// **'кг'**
+  String get workoutUnitKg;
+
+  /// No description provided for @workoutUnitKm.
+  ///
+  /// In ru, this message translates to:
+  /// **'км'**
+  String get workoutUnitKm;
+
   /// No description provided for @history.
   ///
   /// In ru, this message translates to:

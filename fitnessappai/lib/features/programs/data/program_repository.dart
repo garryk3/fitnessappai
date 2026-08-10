@@ -115,6 +115,12 @@ class ProgramRepository {
     return row == null ? null : _toProgram(row);
   }
 
+  /// Возвращает день программы по [id] или `null`, если его нет.
+  Future<ProgramDay?> getDay(int id) async {
+    final row = await _dayById(id);
+    return row == null ? null : _toDay(row);
+  }
+
   /// Возвращает дни программы, отсортированные по индексу.
   Future<List<ProgramDay>> getDays(int programId) async {
     final rows = await _daysOf(programId);

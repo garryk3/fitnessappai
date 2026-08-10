@@ -1,0 +1,174 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
+import 'package:fitnessappai/l10n/app_localizations.dart';
+
+void main() {
+  late AppDatabase db;
+  late Directory tempDir;
+  late ProgramRepository programRepo;
+  late ExerciseRepository exerciseRepo;
+
+  setUp(() async {
+    db = AppDatabase(executor: NativeDatabase.memory());
+    tempDir = await Directory.systemTemp.createTemp('workout_prepare_test');
+    programRepo = ProgramRepository(db);
+    exerciseRepo = ExerciseRepository(
+      db,
+      MediaStore(
+        directoryProvider: () async => tempDir,
+        assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
+        filePicker: () async => null,
+      ),
+    );
+  });
+
+  tearDown(() async {
+    await db.close();
+    await tempDir.delete(recursive: true);
+  });
+
+  Future<int> insertExercise(
+    String name, {
+    ExerciseType type = ExerciseType.strength,
+  }) {
+    return db
+        .into(db.exercises)
+        .insert(
+          ExercisesCompanion.insert(
+            name: name,
+            type: type,
+            createdAt: DateTime(2024, 1, 1),
+            updatedAt: DateTime(2024, 1, 1),
+          ),
+        );
+  }
+
+  Future<int> createDay({int mainCount = 1, int alternativeCount = 0}) async {
+    final created = await programRepo.create(
+      Program(
+        name: 'База',
+        daysCount: 1,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
+    final day = (await programRepo.getDays(created.id!)).first;
+    final exId = await insertExercise('Приседания');
+    await programRepo.addExerciseToDay(day.id!, exId);
+    await programRepo.updateExercise(
+      (await programRepo.getExercises(
+        day.id!,
+      )).first.copyWith(sets: 3, reps: 8, weightKg: 20, restSeconds: 60),
+    );
+    for (var i = 0; i < alternativeCount; i++) {
+      final altExId = await insertExercise('Альт $i');
+      await programRepo.addExerciseToDay(day.id!, altExId, isAlternative: true);
+    }
+    return day.id!;
+  }
+
+  Future<void> pumpPrepare(WidgetTester tester, int dayId) async {
+    final router = GoRouter(
+      initialLocation: '/workout/prepare/$dayId',
+      routes: [
+        GoRoute(
+          path: '/workout/prepare/:programDayId',
+          builder: (context, state) => WorkoutPrepareScreen(
+            programDayId: int.parse(state.pathParameters['programDayId']!),
+            programRepository: programRepo,
+            exerciseRepository: exerciseRepo,
+          ),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) => Scaffold(
+            body: Text('run-${state.uri.queryParameters['variant']}'),
+          ),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('показывает программу и упражнение с параметрами', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    await pumpPrepare(tester, dayId);
+
+    expect(find.text('База'), findsOneWidget);
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('3 × 8 повт × 20 кг'), findsOneWidget);
+    expect(find.text('Отдых 60 с'), findsOneWidget);
+    expect(find.text('Начать тренировку'), findsOneWidget);
+  });
+
+  testWidgets('переключатель варианта меняет список упражнений', (
+    tester,
+  ) async {
+    final dayId = await createDay(alternativeCount: 1);
+    await pumpPrepare(tester, dayId);
+
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('Альт 0'), findsNothing);
+
+    await tester.tap(find.text('Альтернативный набор'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Приседания'), findsNothing);
+    expect(find.text('Альт 0'), findsOneWidget);
+  });
+
+  testWidgets('переключатель скрыт без альтернативного набора', (tester) async {
+    final dayId = await createDay();
+    await pumpPrepare(tester, dayId);
+
+    expect(find.text('Альтернативный набор'), findsNothing);
+    expect(find.byType(SegmentedButton<WorkoutVariant>), findsNothing);
+  });
+
+  testWidgets('старт переходит на тренировку с выбранным вариантом', (
+    tester,
+  ) async {
+    final dayId = await createDay(alternativeCount: 1);
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('run-main'), findsOneWidget);
+  });
+
+  testWidgets('неизвестный день показывает сообщение', (tester) async {
+    await pumpPrepare(tester, 999);
+
+    expect(find.text('День не найден'), findsOneWidget);
+    expect(find.text('Начать тренировку'), findsNothing);
+  });
+}
