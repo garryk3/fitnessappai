@@ -628,6 +628,66 @@ abstract class AppLocalizations {
   /// **'Сохранить'**
   String get programBuilderSave;
 
+  /// No description provided for @programBuilderAddExercise.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить упражнение'**
+  String get programBuilderAddExercise;
+
+  /// No description provided for @programBuilderPickExercise.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите упражнение'**
+  String get programBuilderPickExercise;
+
+  /// No description provided for @programBuilderMainSet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Основной набор'**
+  String get programBuilderMainSet;
+
+  /// No description provided for @programBuilderAlternativeSet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Альтернативный набор'**
+  String get programBuilderAlternativeSet;
+
+  /// No description provided for @programBuilderMuscles.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задействованные мышцы'**
+  String get programBuilderMuscles;
+
+  /// No description provided for @programBuilderEmptyDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этом дне пока нет упражнений'**
+  String get programBuilderEmptyDay;
+
+  /// Прогресс наполнения программы упражнениями
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполнено {filled} из {total} дней'**
+  String programBuilderDayProgress(int filled, int total);
+
+  /// No description provided for @programBuilderMetricsInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите параметры упражнения перед сохранением'**
+  String get programBuilderMetricsInvalid;
+
+  /// No description provided for @programBuilderFillAllDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполните все дни программы перед сохранением'**
+  String get programBuilderFillAllDays;
+
+  /// No description provided for @programBuilderNoMetrics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Параметры не заданы'**
+  String get programBuilderNoMetrics;
+
   /// No description provided for @workoutPrepare.
   ///
   /// In ru, this message translates to:

@@ -138,6 +138,27 @@
   "programBuilderDayWeekday": "День недели",
   "programBuilderDaySettings": "Настройка дня",
   "programBuilderSave": "Сохранить",
+  "programBuilderAddExercise": "Добавить упражнение",
+  "programBuilderPickExercise": "Выберите упражнение",
+  "programBuilderMainSet": "Основной набор",
+  "programBuilderAlternativeSet": "Альтернативный набор",
+  "programBuilderMuscles": "Задействованные мышцы",
+  "programBuilderEmptyDay": "В этом дне пока нет упражнений",
+  "programBuilderDayProgress": "Заполнено {filled} из {total} дней",
+  "@programBuilderDayProgress": {
+    "description": "Прогресс наполнения программы упражнениями",
+    "placeholders": {
+      "filled": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "programBuilderMetricsInvalid": "Укажите параметры упражнения перед сохранением",
+  "programBuilderFillAllDays": "Заполните все дни программы перед сохранением",
+  "programBuilderNoMetrics": "Параметры не заданы",
   "workoutPrepare": "Подготовка к тренировке",
   "workoutRun": "Тренировка",
   "history": "История",
