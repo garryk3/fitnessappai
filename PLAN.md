@@ -336,7 +336,7 @@ fitnessappai/
 # Этап 3. Управление программами (тренировочные дни)
 
 ### Задача 3.1: Репозиторий программ (бизнес-логика)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** features / programs / data
 - **Ветка:** `task/3.1-program-repository`
 - **Описание:** `ProgramRepository`: `getPrograms()` (с кол-вом дней и упражнений), `getProgram(id)` (дни + основные и альтернативные упражнения), `create(Program, List<ProgramDay>)`, `update(...)`, `delete(id)`, `addDay`, `updateDay`, `removeDay`, `reorderDays`, `addExerciseToDay(dayId, exerciseId, isAlternative)`, `updateExercise`, `removeExercise`, `reorderExercises(dayId, List)`. Валидация через `ProgramValidator`/`ProgramDayExerciseValidator` (1.1) в транзакции.
@@ -638,7 +638,7 @@ fitnessappai/
 | 2.4 | Детали упражнения (UI) | [ ] | | |
 | 2.5 | Форма упражнения (UI) | [ ] | | |
 | 2.6 | Схема мускулатуры | [ ] | | |
-| 3.1 | Репозиторий программ | [ ] | | |
+| 3.1 | Репозиторий программ | [x] | task/3.1-program-repository | 2026-08-10 |
 | 3.2 | Список программ (UI) | [ ] | | |
 | 3.3 | Конструктор: параметры и дни | [ ] | | |
 | 3.4 | Конструктор: наполнение дней | [ ] | | |
