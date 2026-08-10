@@ -199,7 +199,24 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     if (item.id == null) {
       return;
     }
-    await context.push('/program-day/${item.id}/exercise-params');
+    final updated = await context.push<ProgramDayExercise>(
+      '/program-day/${item.id}/exercise-params',
+    );
+    if (updated != null && mounted) {
+      setState(() => _replaceItem(item.id!, updated));
+    }
+  }
+
+  void _replaceItem(int id, ProgramDayExercise updated) {
+    void replaceIn(List<_ItemDraft> list) {
+      final index = list.indexWhere((d) => d.item.id == id);
+      if (index != -1) {
+        list[index] = _ItemDraft(key: list[index].key, item: updated);
+      }
+    }
+
+    replaceIn(_mainItems);
+    replaceIn(_altItems);
   }
 
   int _filledDaysCount() {
