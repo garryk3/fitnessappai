@@ -273,6 +273,35 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekdaySun => 'Вс';
 
   @override
+  String get programBuilderName => 'Название';
+
+  @override
+  String get programBuilderNameRequired => 'Введите название';
+
+  @override
+  String get programBuilderDescription => 'Описание';
+
+  @override
+  String get programBuilderDaysCount => 'Количество дней';
+
+  @override
+  String programBuilderDay(int index) {
+    return 'День $index';
+  }
+
+  @override
+  String get programBuilderDayNoWeekday => 'Без привязки';
+
+  @override
+  String get programBuilderDayWeekday => 'День недели';
+
+  @override
+  String get programBuilderDaySettings => 'Настройка дня';
+
+  @override
+  String get programBuilderSave => 'Сохранить';
+
+  @override
   String get workoutPrepare => 'Подготовка к тренировке';
 
   @override
