@@ -6,7 +6,11 @@ import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
+import '../helpers/test_services.dart';
+
 void main() {
+  setUp(registerTestServices);
+
   Widget buildApp(GoRouter router) {
     return MaterialApp.router(
       theme: AppTheme.dark(),
@@ -22,7 +26,7 @@ void main() {
       final GoRouter router = AppRouter.create();
       await tester.pumpWidget(buildApp(router));
 
-      expect(find.text('Раздел «Упражнения» в разработке'), findsOneWidget);
+      expect(find.text('Поиск упражнений'), findsOneWidget);
 
       await tester.tap(find.text('Программы'));
       await tester.pumpAndSettle();
@@ -56,7 +60,7 @@ void main() {
       router.go('/exercises/42');
       await tester.pumpAndSettle();
 
-      expect(find.text('Раздел «Упражнение» в разработке'), findsOneWidget);
+      expect(find.text('Упражнение не найдено'), findsOneWidget);
     });
 
     testWidgets('неизвестный маршрут показывает 404', (

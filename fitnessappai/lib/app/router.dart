@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:fitnessappai/app/responsive/adaptive_navigation.dart';
 import 'package:fitnessappai/app/screens/not_found_screen.dart';
 import 'package:fitnessappai/app/screens/placeholder_screen.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
@@ -63,9 +65,22 @@ class AppRouter {
             ),
           ],
         ),
-        _placeholderRoute('/exercises/new', (l10n) => l10n.exerciseNew),
-        _placeholderRoute('/exercises/:id', (l10n) => l10n.exerciseDetail),
-        _placeholderRoute('/exercises/:id/edit', (l10n) => l10n.exerciseEdit),
+        GoRoute(
+          path: '/exercises/new',
+          builder: (context, state) => const ExerciseFormScreen(),
+        ),
+        GoRoute(
+          path: '/exercises/:id',
+          builder: (context, state) => ExerciseDetailScreen(
+            exerciseId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: '/exercises/:id/edit',
+          builder: (context, state) => ExerciseFormScreen(
+            exerciseId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
         _placeholderRoute('/programs/new', (l10n) => l10n.programNew),
         _placeholderRoute('/programs/:id/edit', (l10n) => l10n.programEdit),
         _placeholderRoute(

@@ -3,7 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/main.dart';
 
+import '../../helpers/test_services.dart';
+
 void main() {
+  setUp(registerTestServices);
+
   Future<void> pumpAtSize(WidgetTester tester, Size size) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;

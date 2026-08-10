@@ -5,6 +5,7 @@ import 'package:fitnessappai/core/domain/models/contraindication_tag.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 
 /// Репозиторий упражнений: CRUD, поиск/фильтр, мышцы и противопоказания.
@@ -51,6 +52,22 @@ class ExerciseRepository {
               ..orderBy([(t) => OrderingTerm.asc(t.name)]))
             .get();
     return rows.map(_toModel).toList();
+  }
+
+  /// Возвращает весь каталог мышечных групп.
+  Future<List<MuscleGroup>> getAllMuscleGroups() async {
+    final rows = await (_db.select(
+      _db.muscleGroups,
+    )..orderBy([(t) => OrderingTerm.asc(t.id)])).get();
+    return rows.map(_muscleGroupFromRow).toList();
+  }
+
+  /// Возвращает весь каталог тегов противопоказаний.
+  Future<List<ContraindicationTag>> getAllContraindicationTags() async {
+    final rows = await (_db.select(
+      _db.contraindicationTags,
+    )..orderBy([(t) => OrderingTerm.asc(t.id)])).get();
+    return rows.map(_tagFromRow).toList();
   }
 
   /// Создаёт упражнение и привязывает [muscles].
@@ -110,6 +127,33 @@ class ExerciseRepository {
           ),
         )
         .toList();
+  }
+
+  /// Возвращает карту «id упражнения → мышечные группы» для списка.
+  Future<Map<int, List<MuscleGroup>>> muscleGroupsByExercise() async {
+    final query = _db.select(_db.muscleGroups).join([
+      innerJoin(
+        _db.exerciseMuscles,
+        _db.exerciseMuscles.muscleGroupId.equalsExp(_db.muscleGroups.id),
+      ),
+    ]);
+    final result = <int, List<MuscleGroup>>{};
+    for (final row in await query.get()) {
+      final link = row.readTable(_db.exerciseMuscles);
+      final group = _muscleGroupFromRow(row.readTable(_db.muscleGroups));
+      result.putIfAbsent(link.exerciseId, () => []).add(group);
+    }
+    return result;
+  }
+
+  /// Возвращает множество id упражнений, у которых есть противопоказания.
+  Future<Set<int>> exerciseIdsWithContraindications() async {
+    final query = _db.selectOnly(_db.exerciseContraindications)
+      ..addColumns([_db.exerciseContraindications.exerciseId]);
+    final rows = await query.get();
+    return rows
+        .map((r) => r.read(_db.exerciseContraindications.exerciseId)!)
+        .toSet();
   }
 
   /// Заменяет привязки мышц упражнения.
@@ -211,4 +255,12 @@ class ExerciseRepository {
 
   ContraindicationTag _tagFromRow(ContraindicationTagRow row) =>
       ContraindicationTag(id: row.id, key: row.key, labelRu: row.labelRu);
+
+  MuscleGroup _muscleGroupFromRow(MuscleGroupRow row) => MuscleGroup(
+    id: row.id,
+    key: row.key,
+    labelRu: row.labelRu,
+    view: row.view,
+    regionKey: row.regionKey,
+  );
 }

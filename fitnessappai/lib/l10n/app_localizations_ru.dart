@@ -62,6 +62,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseTypeRunning => 'Бег';
 
   @override
+  String get exerciseListHint => 'Поиск упражнений';
+
+  @override
+  String get exerciseListEmpty => 'Список упражнений пуст';
+
+  @override
+  String get exerciseFilterAll => 'Все';
+
+  @override
+  String get exerciseListCreate => 'Новое упражнение';
+
+  @override
   String get schedulePerformed => 'Выполнено';
 
   @override
@@ -129,6 +141,71 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exerciseDetail => 'Упражнение';
+
+  @override
+  String get exerciseDetailNotFound => 'Упражнение не найдено';
+
+  @override
+  String get exerciseDetailDescription => 'Описание';
+
+  @override
+  String get exerciseDetailTechnique => 'Техника выполнения';
+
+  @override
+  String get exerciseDetailMistakes => 'Частые ошибки';
+
+  @override
+  String get exerciseDetailMuscles => 'Задействованные мышцы';
+
+  @override
+  String exerciseDetailDeleteConfirm(String name) {
+    return 'Удалить упражнение «$name»?';
+  }
+
+  @override
+  String get exerciseFormName => 'Название';
+
+  @override
+  String get exerciseFormType => 'Тип';
+
+  @override
+  String get exerciseFormDescription => 'Описание';
+
+  @override
+  String get exerciseFormTechnique => 'Техника выполнения';
+
+  @override
+  String get exerciseFormMistakes => 'Частые ошибки';
+
+  @override
+  String get exerciseFormMistakeAdd => 'Добавить ошибку';
+
+  @override
+  String get exerciseFormMuscles => 'Задействованные мышцы';
+
+  @override
+  String get exerciseFormMusclePrimary => 'Основная';
+
+  @override
+  String get exerciseFormMuscleSecondary => 'Вспомогательная';
+
+  @override
+  String get exerciseFormContraindications => 'Противопоказания';
+
+  @override
+  String get exerciseFormAnimation => 'Анимация';
+
+  @override
+  String get exerciseFormAnimationPick => 'Выбрать анимацию';
+
+  @override
+  String get exerciseFormAnimationRemove => 'Убрать анимацию';
+
+  @override
+  String get exerciseFormNameRequired => 'Введите название';
+
+  @override
+  String get exerciseFormSave => 'Сохранить';
 
   @override
   String get exerciseParams => 'Параметры упражнения';

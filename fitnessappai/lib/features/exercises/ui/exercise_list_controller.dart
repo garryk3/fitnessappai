@@ -1,0 +1,71 @@
+import 'dart:async';
+
+import 'package:signals/signals.dart';
+
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_list_item.dart';
+
+/// Управляет списком упражнений: поиск с дебаунсом, фильтр по типу,
+/// загрузка данных для карточек.
+class ExerciseListController {
+  ExerciseListController(this._repository) {
+    _load();
+  }
+
+  static const Duration searchDebounce = Duration(milliseconds: 300);
+
+  final ExerciseRepository _repository;
+
+  final Signal<List<ExerciseListItem>> items = Signal(<ExerciseListItem>[]);
+  final Signal<bool> isLoading = Signal(false);
+  final Signal<String> query = Signal('');
+  final Signal<ExerciseType?> typeFilter = Signal(null);
+
+  Timer? _debounce;
+
+  void setQuery(String value) {
+    query.value = value;
+    _debounce?.cancel();
+    _debounce = Timer(searchDebounce, _load);
+  }
+
+  void setTypeFilter(ExerciseType? type) {
+    typeFilter.value = type;
+    _load();
+  }
+
+  Future<void> refresh() => _load();
+
+  Future<void> _load() async {
+    isLoading.value = true;
+    try {
+      final q = query.value.trim();
+      final exercises = q.isEmpty
+          ? await _repository.getAll()
+          : await _repository.search(q);
+      final type = typeFilter.value;
+      final filtered = type == null
+          ? exercises
+          : exercises.where((e) => e.type == type).toList();
+
+      final musclesByExercise = await _repository.muscleGroupsByExercise();
+      final warnings = await _repository.exerciseIdsWithContraindications();
+
+      items.value = [
+        for (final exercise in filtered)
+          ExerciseListItem(
+            exercise: exercise,
+            muscles: musclesByExercise[exercise.id] ?? const [],
+            hasContraindications: warnings.contains(exercise.id),
+          ),
+      ];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void dispose() {
+    _debounce?.cancel();
+  }
+}
