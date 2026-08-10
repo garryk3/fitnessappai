@@ -395,6 +395,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRun => 'Тренировка';
 
   @override
+  String get workoutPrepareStart => 'Начать тренировку';
+
+  @override
+  String get workoutPrepareNotFound => 'День не найден';
+
+  @override
+  String workoutPrepareRest(int seconds) {
+    return 'Отдых $seconds с';
+  }
+
+  @override
+  String get workoutUnitReps => 'повт';
+
+  @override
+  String get workoutUnitSeconds => 'с';
+
+  @override
+  String get workoutUnitMinutes => 'мин';
+
+  @override
+  String get workoutUnitKg => 'кг';
+
+  @override
+  String get workoutUnitKm => 'км';
+
+  @override
   String get history => 'История';
 
   @override

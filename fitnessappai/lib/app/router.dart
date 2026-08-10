@@ -13,6 +13,7 @@ import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_sc
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
+import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Конфигурация маршрутов приложения.
@@ -107,9 +108,11 @@ class AppRouter {
             positionId: int.parse(state.pathParameters['id']!),
           ),
         ),
-        _placeholderRoute(
-          '/workout/prepare/:programDayId',
-          (l10n) => l10n.workoutPrepare,
+        GoRoute(
+          path: '/workout/prepare/:programDayId',
+          builder: (context, state) => WorkoutPrepareScreen(
+            programDayId: int.parse(state.pathParameters['programDayId']!),
+          ),
         ),
         _placeholderRoute('/workout/run', (l10n) => l10n.workoutRun),
         _placeholderRoute('/history', (l10n) => l10n.history),
