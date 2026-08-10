@@ -36,7 +36,7 @@ void main() {
       await tester.tap(find.text('План'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Раздел «План» в разработке'), findsOneWidget);
+      expect(find.text('Нет запланированных тренировок'), findsOneWidget);
     });
 
     testWidgets('deep-link на роут истории открывает экран', (

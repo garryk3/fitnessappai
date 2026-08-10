@@ -86,6 +86,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get schedulePending => 'Запланировано';
 
   @override
+  String get weekPlanToday => 'Сегодня';
+
+  @override
+  String get weekPlanStart => 'Начать';
+
+  @override
+  String get weekPlanReschedule => 'Перенести на сегодня';
+
+  @override
+  String get weekPlanSkip => 'Пропустить';
+
+  @override
+  String get weekPlanUnskip => 'Отменить пропуск';
+
+  @override
+  String get weekPlanEmpty => 'Нет запланированных тренировок';
+
+  @override
+  String get weekPlanHint =>
+      'Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане';
+
+  @override
   String get muscleAbs => 'Пресс';
 
   @override
