@@ -8,6 +8,7 @@ import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
+import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
@@ -90,6 +91,13 @@ class AppRouter {
           path: '/programs/:id/edit',
           builder: (context, state) => ProgramBuilderScreen(
             programId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: '/programs/:id/day/:dayIndex',
+          builder: (context, state) => ProgramDayBuilderScreen(
+            programId: int.parse(state.pathParameters['id']!),
+            dayIndex: int.parse(state.pathParameters['dayIndex']!),
           ),
         ),
         _placeholderRoute(

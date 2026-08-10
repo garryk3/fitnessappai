@@ -302,6 +302,40 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderSave => 'Сохранить';
 
   @override
+  String get programBuilderAddExercise => 'Добавить упражнение';
+
+  @override
+  String get programBuilderPickExercise => 'Выберите упражнение';
+
+  @override
+  String get programBuilderMainSet => 'Основной набор';
+
+  @override
+  String get programBuilderAlternativeSet => 'Альтернативный набор';
+
+  @override
+  String get programBuilderMuscles => 'Задействованные мышцы';
+
+  @override
+  String get programBuilderEmptyDay => 'В этом дне пока нет упражнений';
+
+  @override
+  String programBuilderDayProgress(int filled, int total) {
+    return 'Заполнено $filled из $total дней';
+  }
+
+  @override
+  String get programBuilderMetricsInvalid =>
+      'Укажите параметры упражнения перед сохранением';
+
+  @override
+  String get programBuilderFillAllDays =>
+      'Заполните все дни программы перед сохранением';
+
+  @override
+  String get programBuilderNoMetrics => 'Параметры не заданы';
+
+  @override
   String get workoutPrepare => 'Подготовка к тренировке';
 
   @override

@@ -1,0 +1,280 @@
+import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/domain/models/exercise.dart';
+import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
+import 'package:fitnessappai/l10n/app_localizations.dart';
+
+void main() {
+  late AppDatabase db;
+  late ProgramRepository programRepository;
+  late ExerciseRepository exerciseRepository;
+
+  setUp(() {
+    db = AppDatabase(executor: NativeDatabase.memory());
+    programRepository = ProgramRepository(db);
+    exerciseRepository = ExerciseRepository(db, MediaStore());
+    addTearDown(() => db.close());
+  });
+
+  Future<int> muscleId(String key) async {
+    final groups = await exerciseRepository.getAllMuscleGroups();
+    return groups.firstWhere((g) => g.key == key).id!;
+  }
+
+  Future<Exercise> createExercise(
+    String name,
+    ExerciseType type, {
+    List<int> muscles = const [],
+  }) {
+    return exerciseRepository.create(
+      Exercise(
+        name: name,
+        type: type,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      [
+        for (final id in muscles)
+          ExerciseMuscle(
+            exerciseId: 0,
+            muscleGroupId: id,
+            intensity: MuscleIntensity.primary,
+          ),
+      ],
+    );
+  }
+
+  Future<Program> createProgram(String name, int daysCount) {
+    return programRepository.create(
+      Program(
+        name: name,
+        daysCount: daysCount,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      [
+        for (var i = 0; i < daysCount; i++)
+          ProgramDay(programId: 0, dayIndex: i),
+      ],
+    );
+  }
+
+  Future<void> addValidExercise(int dayId, int exerciseId) async {
+    final item = await programRepository.addExerciseToDay(dayId, exerciseId);
+    await programRepository.updateExercise(
+      item.copyWith(sets: 3, reps: 10, weightKg: 20, restSeconds: 60),
+    );
+  }
+
+  Future<void> pumpDayBuilder(
+    WidgetTester tester, {
+    required int programId,
+    int dayIndex = 0,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: ProgramDayBuilderScreen(
+          programId: programId,
+          dayIndex: dayIndex,
+          repository: programRepository,
+          exerciseRepository: exerciseRepository,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> addExercise(WidgetTester tester, String name) async {
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(name));
+    await tester.pumpAndSettle();
+  }
+
+  List<String> tileTitles(WidgetTester tester) => tester
+      .widgetList<ListTile>(find.byType(ListTile))
+      .map((tile) => (tile.title as Text).data!)
+      .toList();
+
+  testWidgets('отображает упражнения сохранённого дня и прогресс', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    expect(find.text('День 1'), findsOneWidget);
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Заполнено 1 из 1 дней'), findsOneWidget);
+    expect(find.text('3 × 10 · 20 кг · отдых 60 с'), findsOneWidget);
+    expect(find.byType(MuscleDiagram), findsNWidgets(2));
+  });
+
+  testWidgets('добавление упражнения через диалог выбора', (tester) async {
+    final program = await createProgram('Сплит', 1);
+    await createExercise('Приседания', ExerciseType.strength);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    expect(find.text('В этом дне пока нет упражнений'), findsOneWidget);
+
+    await addExercise(tester, 'Приседания');
+
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('Параметры не заданы'), findsOneWidget);
+    expect(find.text('В этом дне пока нет упражнений'), findsNothing);
+  });
+
+  testWidgets('альтернативный набор редактируется отдельно', (tester) async {
+    final program = await createProgram('Сплит', 1);
+    await createExercise('Приседания', ExerciseType.strength);
+    await createExercise('Рывок гири', ExerciseType.strength);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await addExercise(tester, 'Приседания');
+
+    await tester.tap(find.text('Альтернативный набор'));
+    await tester.pumpAndSettle();
+    await addExercise(tester, 'Рывок гири');
+
+    expect(find.text('Рывок гири'), findsOneWidget);
+    expect(find.text('Приседания'), findsNothing);
+
+    await tester.tap(find.text('Основной набор'));
+    await tester.pumpAndSettle();
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('Рывок гири'), findsNothing);
+  });
+
+  testWidgets('удаление упражнения из дня', (tester) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    expect(find.text('Жим штанги'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Жим штанги'), findsNothing);
+    expect(find.text('В этом дне пока нет упражнений'), findsOneWidget);
+  });
+
+  testWidgets('реордер упражнений дня', (tester) async {
+    final squat = await createExercise('Приседания', ExerciseType.strength);
+    final press = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, squat.id!);
+    await addValidExercise(days[0].id!, press.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    expect(tileTitles(tester), ['Приседания', 'Жим штанги']);
+
+    await tester.timedDrag(
+      find.byIcon(Icons.drag_indicator).first,
+      const Offset(0, 120),
+      const Duration(milliseconds: 400),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tileTitles(tester), ['Жим штанги', 'Приседания']);
+  });
+
+  testWidgets('схема мышц обновляется при добавлении упражнения', (
+    tester,
+  ) async {
+    final chest = await muscleId('chest');
+    final program = await createProgram('Сплит', 1);
+    await createExercise('Жим штанги', ExerciseType.strength, muscles: [chest]);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    Map<String, double> firstDiagramHighlights() {
+      final diagram = tester.widget<MuscleDiagram>(
+        find.byType(MuscleDiagram).first,
+      );
+      return diagram.highlights;
+    }
+
+    expect(firstDiagramHighlights(), isEmpty);
+
+    await addExercise(tester, 'Жим штанги');
+    await tester.pumpAndSettle();
+
+    expect(firstDiagramHighlights(), containsPair('chest', 1.0));
+  });
+
+  testWidgets('невалидные позиции блокируют сохранение', (tester) async {
+    final program = await createProgram('Сплит', 1);
+    await createExercise('Приседания', ExerciseType.strength);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await addExercise(tester, 'Приседания');
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Укажите параметры упражнения перед сохранением'),
+      findsOneWidget,
+    );
+    final detail = await programRepository.getProgram(program.id!);
+    expect(detail!.days[0].mainExercises, isEmpty);
+  });
+
+  testWidgets('сохранение валидного дня сохраняет упражнения', (tester) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final detail = await programRepository.getProgram(program.id!);
+    final items = detail!.days[0].mainExercises;
+    expect(items, hasLength(1));
+    expect(items.single.exerciseId, exercise.id);
+    expect(items.single.sets, 3);
+  });
+
+  testWidgets('пустой день в другой позиции блокирует сохранение', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 2);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!, dayIndex: 0);
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Заполните все дни программы перед сохранением'),
+      findsOneWidget,
+    );
+  });
+}

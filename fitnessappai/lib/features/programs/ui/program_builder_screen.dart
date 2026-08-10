@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
@@ -117,31 +118,48 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     }
   }
 
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
+  /// Сохраняет черновик программы и открывает экран наполнения дня.
+  Future<void> _openDayFill(int dayIndex) async {
+    var programId = widget.programId;
+    if (programId == null) {
+      final saved = await _persist();
+      programId = saved?.id;
     }
+    if (programId != null && mounted) {
+      context.push('/programs/$programId/day/$dayIndex');
+    }
+  }
+
+  /// Создаёт или обновляет черновик программы. Возвращает `null` при
+  /// невалидной форме.
+  Future<Program?> _persist() async {
+    if (!_formKey.currentState!.validate()) {
+      return null;
+    }
+    final now = DateTime.now();
+    final program = Program(
+      id: widget.programId,
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.trim(),
+      daysCount: _days.length,
+      createdAt: _createdAt ?? now,
+      updatedAt: now,
+    );
+    final days = [
+      for (var i = 0; i < _days.length; i++)
+        ProgramDay(programId: 0, dayIndex: i, dayOfWeek: _days[i].dayOfWeek),
+    ];
+    if (widget.programId == null) {
+      return _repository.create(program, days);
+    }
+    return _repository.update(program, days: days);
+  }
+
+  Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      final now = DateTime.now();
-      final program = Program(
-        id: widget.programId,
-        name: _nameController.text.trim(),
-        description: _descriptionController.text.trim(),
-        daysCount: _days.length,
-        createdAt: _createdAt ?? now,
-        updatedAt: now,
-      );
-      final days = [
-        for (var i = 0; i < _days.length; i++)
-          ProgramDay(programId: 0, dayIndex: i, dayOfWeek: _days[i].dayOfWeek),
-      ];
-      if (widget.programId == null) {
-        await _repository.create(program, days);
-      } else {
-        await _repository.update(program, days: days);
-      }
-      if (mounted) {
+      final saved = await _persist();
+      if (saved != null && mounted) {
         Navigator.of(context).pop();
       }
     } finally {
@@ -261,7 +279,21 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           ),
           title: Text(l10n.programBuilderDay(index + 1)),
           subtitle: Text(_weekdayLabel(l10n, day.dayOfWeek)),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: l10n.programBuilderAddExercise,
+                icon: const Icon(Icons.playlist_add),
+                onPressed: () => _openDayFill(index),
+              ),
+              IconButton(
+                tooltip: l10n.programBuilderDaySettings,
+                icon: const Icon(Icons.tune),
+                onPressed: () => _openDaySettings(day),
+              ),
+            ],
+          ),
         ),
       ),
     );
