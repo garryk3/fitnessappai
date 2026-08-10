@@ -421,6 +421,71 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutUnitKm => 'км';
 
   @override
+  String workoutRunExerciseOf(int current, int total) {
+    return 'Упражнение $current из $total';
+  }
+
+  @override
+  String workoutRunSetOf(int current, int total) {
+    return 'Подход $current из $total';
+  }
+
+  @override
+  String get workoutRunApproachDone => 'Подход выполнен';
+
+  @override
+  String get workoutRunRest => 'Отдых';
+
+  @override
+  String get workoutRunSkipRest => 'Пропустить отдых';
+
+  @override
+  String get workoutRunFinish => 'Завершить тренировку';
+
+  @override
+  String get workoutRunFinished => 'Тренировка завершена';
+
+  @override
+  String workoutRunHold(int seconds) {
+    return 'Удержание $seconds с';
+  }
+
+  @override
+  String get workoutRunExitTitle => 'Выйти из тренировки?';
+
+  @override
+  String get workoutRunExitBody => 'Тренировка не будет сохранена. Выйти?';
+
+  @override
+  String get workoutRunExit => 'Выйти';
+
+  @override
+  String workoutRunTime(int minutes) {
+    return 'Время: $minutes мин';
+  }
+
+  @override
+  String workoutRunSetsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count подходов',
+      few: '$count подхода',
+      one: '1 подход',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workoutRunSaved => 'Тренировка сохранена';
+
+  @override
+  String get workoutRunGoProgress => 'К прогрессу';
+
+  @override
+  String get workoutRunEmpty => 'В этом дне нет упражнений';
+
+  @override
   String get history => 'История';
 
   @override

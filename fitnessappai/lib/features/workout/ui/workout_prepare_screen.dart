@@ -222,8 +222,8 @@ class _ExerciseCard extends StatelessWidget {
             : l10n.programBuilderNoMetrics;
       case ExerciseType.running:
         return distance != null && duration != null
-            ? '${_fmt(distance)} ${l10n.workoutUnitKm} × '
-                  '$duration ${l10n.workoutUnitMinutes}'
+            ? '${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
+                  '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}'
             : l10n.programBuilderNoMetrics;
     }
   }

@@ -81,6 +81,15 @@ class WorkoutController {
   bool get isLastExercise =>
       currentExerciseIndex.value == _exercises.length - 1;
 
+  /// Время с начала тренировки (до завершения или отмены).
+  Duration elapsed() {
+    final started = _startedAt;
+    if (started == null) {
+      return Duration.zero;
+    }
+    return _clock().difference(started);
+  }
+
   WorkoutSessionContext? get context => _context;
   WorkoutSetInput? get draft => _draft;
 

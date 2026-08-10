@@ -850,6 +850,102 @@ abstract class AppLocalizations {
   /// **'км'**
   String get workoutUnitKm;
 
+  /// Счётчик упражнений во время тренировки
+  ///
+  /// In ru, this message translates to:
+  /// **'Упражнение {current} из {total}'**
+  String workoutRunExerciseOf(int current, int total);
+
+  /// Счётчик подходов текущего упражнения
+  ///
+  /// In ru, this message translates to:
+  /// **'Подход {current} из {total}'**
+  String workoutRunSetOf(int current, int total);
+
+  /// No description provided for @workoutRunApproachDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подход выполнен'**
+  String get workoutRunApproachDone;
+
+  /// No description provided for @workoutRunRest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отдых'**
+  String get workoutRunRest;
+
+  /// No description provided for @workoutRunSkipRest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить отдых'**
+  String get workoutRunSkipRest;
+
+  /// No description provided for @workoutRunFinish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Завершить тренировку'**
+  String get workoutRunFinish;
+
+  /// No description provided for @workoutRunFinished.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка завершена'**
+  String get workoutRunFinished;
+
+  /// Обратный отсчёт удержания планки
+  ///
+  /// In ru, this message translates to:
+  /// **'Удержание {seconds} с'**
+  String workoutRunHold(int seconds);
+
+  /// No description provided for @workoutRunExitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из тренировки?'**
+  String get workoutRunExitTitle;
+
+  /// No description provided for @workoutRunExitBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка не будет сохранена. Выйти?'**
+  String get workoutRunExitBody;
+
+  /// No description provided for @workoutRunExit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти'**
+  String get workoutRunExit;
+
+  /// Длительность завершённой тренировки
+  ///
+  /// In ru, this message translates to:
+  /// **'Время: {minutes} мин'**
+  String workoutRunTime(int minutes);
+
+  /// Количество выполненных подходов
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{1 подход} few{{count} подхода} other{{count} подходов}}'**
+  String workoutRunSetsCount(int count);
+
+  /// No description provided for @workoutRunSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка сохранена'**
+  String get workoutRunSaved;
+
+  /// No description provided for @workoutRunGoProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'К прогрессу'**
+  String get workoutRunGoProgress;
+
+  /// No description provided for @workoutRunEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этом дне нет упражнений'**
+  String get workoutRunEmpty;
+
   /// No description provided for @history.
   ///
   /// In ru, this message translates to:
