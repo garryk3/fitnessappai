@@ -587,6 +587,46 @@ class AppLocalizationsRu extends AppLocalizations {
   String get contraindications => 'Противопоказания';
 
   @override
+  String get contraindicationsTitle => 'Моё здоровье';
+
+  @override
+  String get contraindicationsHint =>
+      'Отметьте свои противопоказания. Упражнения с ними будут отмечены предупреждением.';
+
+  @override
+  String get contraindicationsSaved => 'Настройки сохранены';
+
+  @override
+  String get contraindicationDescKnees => 'Избегайте приседаний и прыжков.';
+
+  @override
+  String get contraindicationDescBack =>
+      'Избегайте осевых нагрузок на позвоночник.';
+
+  @override
+  String get contraindicationDescNeck => 'Избегайте нагрузки на шейный отдел.';
+
+  @override
+  String get contraindicationDescShoulders =>
+      'Избегайте жимов и махов над головой.';
+
+  @override
+  String get contraindicationDescElbows =>
+      'Избегайте ударной нагрузки на локти.';
+
+  @override
+  String get contraindicationDescWrists =>
+      'Избегайте упоров и отжиманий на запястьях.';
+
+  @override
+  String get contraindicationDescHeart =>
+      'Проконсультируйтесь с врачом перед тренировками.';
+
+  @override
+  String get contraindicationDescPregnancy =>
+      'Умеренные нагрузки, без упражнений на пресс.';
+
+  @override
   String get profileCurrentValues => 'Текущие значения';
 
   @override

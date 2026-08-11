@@ -67,6 +67,14 @@ class UserProfileRepository {
     });
   }
 
+  /// Возвращает весь каталог тегов противопоказаний, отсортированный по id.
+  Future<List<ContraindicationTag>> getAllTags() async {
+    final rows = await (_db.select(
+      _db.contraindicationTags,
+    )..orderBy([(t) => OrderingTerm.asc(t.id)])).get();
+    return rows.map(_tagFromRow).toList(growable: false);
+  }
+
   /// Возвращает теги противопоказаний пользователя, отсортированные по id.
   Future<List<ContraindicationTag>> getContraindicationTags() async {
     final profile = await _selectProfile();

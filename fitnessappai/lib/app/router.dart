@@ -6,6 +6,7 @@ import 'package:fitnessappai/app/screens/placeholder_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
+import 'package:fitnessappai/features/profile/ui/contraindications_screen.dart';
 import 'package:fitnessappai/features/profile/ui/measurement_form_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
 import 'package:fitnessappai/features/progress/ui/history_screen.dart';
@@ -142,9 +143,9 @@ class AppRouter {
           ),
         ),
         _placeholderRoute('/sync', (l10n) => l10n.sync),
-        _placeholderRoute(
-          '/contraindications',
-          (l10n) => l10n.contraindications,
+        GoRoute(
+          path: '/contraindications',
+          builder: (context, state) => const ContraindicationsScreen(),
         ),
         GoRoute(
           path: '/measurements/new',

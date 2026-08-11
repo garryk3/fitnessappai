@@ -1126,6 +1126,72 @@ abstract class AppLocalizations {
   /// **'Противопоказания'**
   String get contraindications;
 
+  /// No description provided for @contraindicationsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Моё здоровье'**
+  String get contraindicationsTitle;
+
+  /// No description provided for @contraindicationsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отметьте свои противопоказания. Упражнения с ними будут отмечены предупреждением.'**
+  String get contraindicationsHint;
+
+  /// No description provided for @contraindicationsSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки сохранены'**
+  String get contraindicationsSaved;
+
+  /// No description provided for @contraindicationDescKnees.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избегайте приседаний и прыжков.'**
+  String get contraindicationDescKnees;
+
+  /// No description provided for @contraindicationDescBack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избегайте осевых нагрузок на позвоночник.'**
+  String get contraindicationDescBack;
+
+  /// No description provided for @contraindicationDescNeck.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избегайте нагрузки на шейный отдел.'**
+  String get contraindicationDescNeck;
+
+  /// No description provided for @contraindicationDescShoulders.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избегайте жимов и махов над головой.'**
+  String get contraindicationDescShoulders;
+
+  /// No description provided for @contraindicationDescElbows.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избегайте ударной нагрузки на локти.'**
+  String get contraindicationDescElbows;
+
+  /// No description provided for @contraindicationDescWrists.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избегайте упоров и отжиманий на запястьях.'**
+  String get contraindicationDescWrists;
+
+  /// No description provided for @contraindicationDescHeart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проконсультируйтесь с врачом перед тренировками.'**
+  String get contraindicationDescHeart;
+
+  /// No description provided for @contraindicationDescPregnancy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Умеренные нагрузки, без упражнений на пресс.'**
+  String get contraindicationDescPregnancy;
+
   /// No description provided for @profileCurrentValues.
   ///
   /// In ru, this message translates to:
