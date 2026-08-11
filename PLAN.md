@@ -560,7 +560,7 @@ fitnessappai/
 - **Зависимости:** Задачи 7.1, 4.4, 2.4.
 
 ### Задача 7.6: Напоминания о тренировках
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (2026-08-11)
 - **Модуль:** features / programs + core / notifications
 - **Ветка:** `task/7.6-reminders`
 - **Описание:** `ReminderService` на `flutter_local_notifications` + `timezone`: `schedule(programDayId, hour, minute)` (еженедельное по dayOfWeek через `zonedSchedule` + `matchDateTimeComponents: weekday`), `cancel(programDayId)`, `rescheduleAll()` (после импорта БД). Настройка времени в диалоге дня программы (3.3): время + переключатель «Напоминать» / «Отключить». Пермишен на точное время для API 31+ (`SCHEDULE_EXACT_ALARM`, fallback — неточное). При смене dayOfWeek/времени — перепланирование.
@@ -657,7 +657,7 @@ fitnessappai/
 | 7.3 | Экран профиля (UI) | [x] | task/7.3-profile-screen | 2026-08-11 |
 | 7.4 | Противопоказания (UI) | [x] | task/7.4-contraindications-screen | 2026-08-11 |
 | 7.5 | Предупреждения в UI | [x] | task/7.5-warnings-ui | 2026-08-11 |
-| 7.6 | Напоминания | [ ] | | |
+| 7.6 | Напоминания | [x] | task/7.6-reminders | 2026-08-11 |
 | 7.7 | Синхронизация (экспорт/импорт) | [ ] | | |
 | 8.1 | Integration-тесты | [ ] | | |
 | 8.2 | Оптимизация | [ ] | | |

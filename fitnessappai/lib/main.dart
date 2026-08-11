@@ -4,10 +4,17 @@ import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/di/register_core_services.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   registerCoreServices(locator);
+  try {
+    await locator.get<ReminderService>().initialize();
+  } on Exception {
+    // Напоминания не должны блокировать запуск приложения.
+  }
   runApp(const FitnessAppAi());
 }
 

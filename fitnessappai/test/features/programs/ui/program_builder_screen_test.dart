@@ -4,9 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -17,6 +20,14 @@ void main() {
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
     repository = ProgramRepository(db);
+    locator.reset();
+    locator.registerLazySingleton<WorkoutReminderRepository>(
+      () => WorkoutReminderRepository(db),
+    );
+    locator.registerLazySingleton<ReminderService>(
+      () =>
+          ReminderService(repository: locator.get<WorkoutReminderRepository>()),
+    );
     addTearDown(() => db.close());
   });
 

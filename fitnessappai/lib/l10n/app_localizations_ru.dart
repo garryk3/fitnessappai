@@ -321,6 +321,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderDaySettings => 'Настройка дня';
 
   @override
+  String get reminderToggle => 'Напоминать';
+
+  @override
+  String get reminderTime => 'Время напоминания';
+
+  @override
   String get programBuilderSave => 'Сохранить';
 
   @override

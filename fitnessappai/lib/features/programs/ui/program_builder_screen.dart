@@ -1,10 +1,15 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Конструктор программы: параметры и тренировочные дни.
@@ -20,16 +25,27 @@ class ProgramBuilderScreen extends StatefulWidget {
   State<ProgramBuilderScreen> createState() => _ProgramBuilderScreenState();
 }
 
+/// Результат диалога настроек дня.
+class DaySettings {
+  const DaySettings({required this.dayOfWeek, required this.reminder});
+
+  final int? dayOfWeek;
+  final WorkoutReminder? reminder;
+}
+
 /// Черновик дня с уникальным стабильным ключом для реордера.
 class _DayDraft {
   _DayDraft(this.key, {this.dayOfWeek});
 
   final int key;
   int? dayOfWeek;
+  WorkoutReminder? reminder;
 }
 
 class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   late final ProgramRepository _repository;
+  late final WorkoutReminderRepository _reminderRepository;
+  late final ReminderService _reminderService;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -44,6 +60,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   void initState() {
     super.initState();
     _repository = widget.repository ?? locator.get<ProgramRepository>();
+    _reminderRepository = locator.get<WorkoutReminderRepository>();
+    _reminderService = locator.get<ReminderService>();
     _load();
   }
 
@@ -71,6 +89,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                 dayOfWeek: day.day.dayOfWeek,
               ),
           ]);
+        await _loadReminders();
         if (_days.isEmpty) {
           _addDay();
         }
@@ -109,12 +128,88 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   }
 
   Future<void> _openDaySettings(_DayDraft day) async {
-    final selected = await showDialog<int?>(
+    final selected = await showDialog<DaySettings>(
       context: context,
-      builder: (context) => _DaySettingsDialog(dayOfWeek: day.dayOfWeek),
+      builder: (context) =>
+          _DaySettingsDialog(dayOfWeek: day.dayOfWeek, reminder: day.reminder),
     );
     if (selected != null && mounted) {
-      setState(() => day.dayOfWeek = selected);
+      setState(() {
+        day.dayOfWeek = selected.dayOfWeek;
+        day.reminder = selected.reminder;
+      });
+    }
+  }
+
+  /// Загружает сохранённые напоминания дней редактируемой программы.
+  Future<void> _loadReminders() async {
+    for (final day in _days) {
+      if (day.key >= 0) {
+        day.reminder = await _reminderRepository.getForDay(day.key);
+      }
+    }
+  }
+
+  /// Захватывает напоминания текущих (до сохранения) дней программы.
+  Future<Map<int, WorkoutReminder>> _previousReminders() async {
+    final result = <int, WorkoutReminder>{};
+    for (final day in _days) {
+      if (day.key < 0) {
+        continue;
+      }
+      final reminder = await _reminderRepository.getForDay(day.key);
+      if (reminder != null) {
+        result[day.key] = reminder;
+      }
+    }
+    return result;
+  }
+
+  /// Планирует или отменяет уведомления по черновикам дней.
+  ///
+  /// [previousByDayKey] — напоминания старых дней (до сохранения). При
+  /// редактировании `update` заменяет дни и их id, поэтому старые уведомления
+  /// отменяются по прежним id.
+  Future<void> _applyReminders(
+    int programId,
+    Map<int, WorkoutReminder> previousByDayKey,
+  ) async {
+    final program = await _repository.getById(programId);
+    final days = await _repository.getDays(programId);
+    for (var i = 0; i < _days.length && i < days.length; i++) {
+      final draft = _days[i];
+      final day = days[i];
+      final wantReminder = draft.dayOfWeek != null && draft.reminder != null;
+      final hadReminder = previousByDayKey.containsKey(draft.key);
+      try {
+        if (wantReminder) {
+          if (hadReminder) {
+            await _reminderRepository.deleteForDay(draft.key);
+            await _reminderService.cancel(draft.key);
+          }
+          final saved = await _reminderRepository.saveForDay(
+            day.id!,
+            hour: draft.reminder!.hour,
+            minute: draft.reminder!.minute,
+            enabled: true,
+          );
+          await _reminderService.schedule(
+            saved,
+            dayOfWeek: draft.dayOfWeek!,
+            programName: program?.name ?? '',
+            dayNumber: day.dayIndex + 1,
+          );
+        } else if (hadReminder) {
+          await _reminderRepository.deleteForDay(draft.key);
+          await _reminderService.cancel(draft.key);
+        }
+      } on Exception catch (e, st) {
+        log(
+          'Не удалось обновить напоминание дня ${day.id}',
+          error: e,
+          stackTrace: st,
+        );
+      }
     }
   }
 
@@ -158,8 +253,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
+      final previousReminders = await _previousReminders();
       final saved = await _persist();
       if (saved != null && mounted) {
+        await _applyReminders(saved.id!, previousReminders);
+        if (!mounted) {
+          return;
+        }
         Navigator.of(context).pop();
       }
     } finally {
@@ -301,9 +401,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 }
 
 class _DaySettingsDialog extends StatefulWidget {
-  const _DaySettingsDialog({this.dayOfWeek});
+  const _DaySettingsDialog({this.dayOfWeek, this.reminder});
 
   final int? dayOfWeek;
+  final WorkoutReminder? reminder;
 
   @override
   State<_DaySettingsDialog> createState() => _DaySettingsDialogState();
@@ -311,33 +412,81 @@ class _DaySettingsDialog extends StatefulWidget {
 
 class _DaySettingsDialogState extends State<_DaySettingsDialog> {
   late int? _selected;
+  late bool _remindEnabled;
+  late TimeOfDay _time;
 
   @override
   void initState() {
     super.initState();
     _selected = widget.dayOfWeek;
+    final reminder = widget.reminder;
+    _remindEnabled = reminder != null;
+    _time = reminder != null
+        ? TimeOfDay(hour: reminder.hour, minute: reminder.minute)
+        : const TimeOfDay(hour: 9, minute: 0);
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _time);
+    if (picked != null && mounted) {
+      setState(() => _time = picked);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final hasWeekday = _selected != null;
     return AlertDialog(
       title: Text(l10n.programBuilderDaySettings),
-      content: DropdownButtonFormField<int?>(
-        initialValue: _selected,
-        decoration: InputDecoration(
-          labelText: l10n.programBuilderDayWeekday,
-          border: const OutlineInputBorder(),
-        ),
-        items: [
-          DropdownMenuItem(
-            value: null,
-            child: Text(l10n.programBuilderDayNoWeekday),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonFormField<int?>(
+            initialValue: _selected,
+            decoration: InputDecoration(
+              labelText: l10n.programBuilderDayWeekday,
+              border: const OutlineInputBorder(),
+            ),
+            items: [
+              DropdownMenuItem(
+                value: null,
+                child: Text(l10n.programBuilderDayNoWeekday),
+              ),
+              for (var day = 1; day <= 7; day++)
+                DropdownMenuItem(
+                  value: day,
+                  child: Text(_weekdayLabel(l10n, day)),
+                ),
+            ],
+            onChanged: (value) => setState(() {
+              _selected = value;
+              if (value == null) {
+                _remindEnabled = false;
+              }
+            }),
           ),
-          for (var day = 1; day <= 7; day++)
-            DropdownMenuItem(value: day, child: Text(_weekdayLabel(l10n, day))),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.reminderToggle),
+            value: _remindEnabled,
+            onChanged: hasWeekday
+                ? (value) => setState(() => _remindEnabled = value)
+                : null,
+          ),
+          ListTile(
+            enabled: _remindEnabled,
+            leading: const Icon(Icons.access_time),
+            title: Text(l10n.reminderTime),
+            subtitle: Text(
+              MaterialLocalizations.of(
+                context,
+              ).formatTimeOfDay(_time, alwaysUse24HourFormat: true),
+            ),
+            onTap: _remindEnabled ? _pickTime : null,
+          ),
         ],
-        onChanged: (value) => setState(() => _selected = value),
       ),
       actions: [
         TextButton(
@@ -345,7 +494,19 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
           child: Text(l10n.commonCancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(_selected),
+          onPressed: () => Navigator.of(context).pop(
+            DaySettings(
+              dayOfWeek: _selected,
+              reminder: _remindEnabled && hasWeekday
+                  ? WorkoutReminder(
+                      programDayId: 0,
+                      hour: _time.hour,
+                      minute: _time.minute,
+                      enabled: true,
+                    )
+                  : null,
+            ),
+          ),
           child: Text(l10n.commonSave),
         ),
       ],
