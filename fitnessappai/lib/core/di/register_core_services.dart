@@ -1,4 +1,8 @@
+import 'package:path_provider/path_provider.dart';
+
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/database/app_database_path.dart';
+import 'package:fitnessappai/core/database/seed/reference_seeder.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
@@ -13,6 +17,8 @@ import 'package:fitnessappai/features/profile/domain/user_profile_repository.dar
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
+import 'package:fitnessappai/features/sync/data/local_file_sync_service.dart';
+import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Регистрация сервисов core-слоя в контейнере.
@@ -56,4 +62,24 @@ void registerCoreServices(ServiceLocator sl) {
   sl.registerLazySingleton<ReminderService>(
     () => ReminderService(repository: sl.get<WorkoutReminderRepository>()),
   );
+  sl.registerLazySingleton<SyncService>(
+    () => LocalFileSyncService(
+      database: sl.get<AppDatabase>(),
+      databaseFilePath: appDatabasePath,
+      temporaryDirectoryPath: () async => (await getTemporaryDirectory()).path,
+      onImported: () => _rebuildAfterImport(sl),
+    ),
+  );
+}
+
+/// Перестраивает контейнер после импорта БД: пересоздаёт базу из нового
+/// файла, заливает справочники и перепланирует напоминания.
+Future<void> _rebuildAfterImport(ServiceLocator sl) async {
+  sl.reset();
+  registerCoreServices(sl);
+  final database = sl.get<AppDatabase>();
+  await ReferenceSeeder(database).seed();
+  final reminders = sl.get<ReminderService>();
+  await reminders.initialize();
+  await reminders.rescheduleAll();
 }

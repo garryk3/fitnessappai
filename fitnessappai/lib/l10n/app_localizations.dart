@@ -148,6 +148,12 @@ abstract class AppLocalizations {
   /// **'Отмена'**
   String get commonCancel;
 
+  /// No description provided for @commonOk.
+  ///
+  /// In ru, this message translates to:
+  /// **'ОК'**
+  String get commonOk;
+
   /// No description provided for @commonDelete.
   ///
   /// In ru, this message translates to:
@@ -1131,6 +1137,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Синхронизация'**
   String get sync;
+
+  /// No description provided for @syncCloudHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переносите данные между устройствами через файл резервной копии базы данных.'**
+  String get syncCloudHint;
+
+  /// No description provided for @syncCloudComing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Облачная синхронизация появится позже.'**
+  String get syncCloudComing;
+
+  /// No description provided for @syncExport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Экспортировать БД'**
+  String get syncExport;
+
+  /// No description provided for @syncImport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Импортировать БД'**
+  String get syncImport;
+
+  /// No description provided for @syncImportSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'База данных импортирована'**
+  String get syncImportSuccess;
+
+  /// No description provided for @syncRestartHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для полного применения изменений приложение будет перезапущено.'**
+  String get syncRestartHint;
 
   /// No description provided for @contraindications.
   ///
