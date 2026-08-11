@@ -11,6 +11,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_controller.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Экран деталей упражнения: анимация, описание, техника, мышцы,
@@ -21,11 +22,13 @@ class ExerciseDetailScreen extends StatefulWidget {
     required this.exerciseId,
     this.repository,
     this.mediaCache,
+    this.profileRepository,
   });
 
   final int exerciseId;
   final ExerciseRepository? repository;
   final MediaCache? mediaCache;
+  final UserProfileRepository? profileRepository;
 
   @override
   State<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
@@ -41,7 +44,12 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     super.initState();
     _repository = widget.repository ?? locator.get<ExerciseRepository>();
     _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
-    _controller = ExerciseDetailController(_repository, widget.exerciseId);
+    _controller = ExerciseDetailController(
+      _repository,
+      widget.exerciseId,
+      profileRepository:
+          widget.profileRepository ?? locator.get<UserProfileRepository>(),
+    );
     _controller.load();
   }
 
@@ -185,7 +193,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         ],
         if (data.hasContraindications) ...[
           const SizedBox(height: 16),
-          _ContraindicationsSection(tags: data.contraindications),
+          _ContraindicationsSection(
+            tags: data.contraindications,
+            warnings: data.userWarnings,
+          ),
         ],
       ],
     );
@@ -326,32 +337,68 @@ class _MusclesSection extends StatelessWidget {
 }
 
 class _ContraindicationsSection extends StatelessWidget {
-  const _ContraindicationsSection({required this.tags});
+  const _ContraindicationsSection({required this.tags, required this.warnings});
 
   final List<ContraindicationTag> tags;
+  final List<ContraindicationTag> warnings;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
+    final warningKeys = {for (final tag in warnings) tag.key};
     return _Section(
       title: l10n.contraindications,
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final tag in tags)
-            Chip(
-              label: Text(tag.labelRu),
-              avatar: Icon(
-                Icons.warning_amber_rounded,
-                size: 18,
-                color: colorScheme.onErrorContainer,
-              ),
-              backgroundColor: colorScheme.errorContainer,
-              labelStyle: TextStyle(color: colorScheme.onErrorContainer),
-              side: BorderSide.none,
+          if (warnings.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: colorScheme.error,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.contraindicationWarningForYou,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
+          ],
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final tag in tags)
+                Chip(
+                  label: Text(tag.labelRu),
+                  avatar: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 18,
+                    color: warningKeys.contains(tag.key)
+                        ? colorScheme.onErrorContainer
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  backgroundColor: warningKeys.contains(tag.key)
+                      ? colorScheme.errorContainer
+                      : colorScheme.surfaceContainerHighest,
+                  labelStyle: TextStyle(
+                    color: warningKeys.contains(tag.key)
+                        ? colorScheme.onErrorContainer
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  side: BorderSide.none,
+                ),
+            ],
+          ),
         ],
       ),
     );

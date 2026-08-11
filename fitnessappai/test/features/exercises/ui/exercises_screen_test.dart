@@ -14,12 +14,14 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
   late AppDatabase db;
   late Directory tempDir;
   late ExerciseRepository repository;
+  late UserProfileRepository profileRepository;
 
   setUp(() async {
     db = AppDatabase(executor: NativeDatabase.memory());
@@ -32,6 +34,7 @@ void main() {
         filePicker: () async => null,
       ),
     );
+    profileRepository = UserProfileRepository(db);
     addTearDown(() async {
       await db.close();
       await tempDir.delete(recursive: true);
@@ -45,7 +48,11 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
-        home: ExercisesScreen(repository: repository, mediaCache: MediaCache()),
+        home: ExercisesScreen(
+          repository: repository,
+          mediaCache: MediaCache(),
+          profileRepository: profileRepository,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -151,9 +158,22 @@ void main() {
       ),
     ]);
     await repository.setContraindications(created.id!, [kneesTag]);
+    await profileRepository.setContraindicationTags(['knees']);
     await pumpExercises(tester);
 
     expect(find.text('Грудь'), findsOneWidget);
     expect(find.text('Противопоказания'), findsOneWidget);
+  });
+
+  testWidgets('бейдж не показывается без пересечения с профилем', (
+    tester,
+  ) async {
+    final kneesTag = await tagId('knees');
+    final created = await repository.create(exercise('Жим штанги'), const []);
+    await repository.setContraindications(created.id!, [kneesTag]);
+    await pumpExercises(tester);
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Противопоказания'), findsNothing);
   });
 }

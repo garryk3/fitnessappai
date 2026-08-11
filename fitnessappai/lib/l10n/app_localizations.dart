@@ -1144,6 +1144,30 @@ abstract class AppLocalizations {
   /// **'Настройки сохранены'**
   String get contraindicationsSaved;
 
+  /// No description provided for @contraindicationWarningForYou.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть противопоказания для вас'**
+  String get contraindicationWarningForYou;
+
+  /// No description provided for @workoutWarningsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Противопоказания'**
+  String get workoutWarningsTitle;
+
+  /// No description provided for @workoutWarningsBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'В программе есть упражнения с противопоказаниями:'**
+  String get workoutWarningsBody;
+
+  /// No description provided for @workoutWarningsProceed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжить'**
+  String get workoutWarningsProceed;
+
   /// No description provided for @contraindicationDescKnees.
   ///
   /// In ru, this message translates to:

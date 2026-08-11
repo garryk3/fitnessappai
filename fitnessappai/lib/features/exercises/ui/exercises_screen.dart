@@ -9,14 +9,21 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_list_controller.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_list_item.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Экран списка упражнений: поиск, фильтр по типу, карточки.
 class ExercisesScreen extends StatefulWidget {
-  const ExercisesScreen({super.key, this.repository, this.mediaCache});
+  const ExercisesScreen({
+    super.key,
+    this.repository,
+    this.mediaCache,
+    this.profileRepository,
+  });
 
   final ExerciseRepository? repository;
   final MediaCache? mediaCache;
+  final UserProfileRepository? profileRepository;
 
   @override
   State<ExercisesScreen> createState() => _ExercisesScreenState();
@@ -31,6 +38,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     super.initState();
     _controller = ExerciseListController(
       widget.repository ?? locator.get<ExerciseRepository>(),
+      profileRepository:
+          widget.profileRepository ?? locator.get<UserProfileRepository>(),
     );
     _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
   }
