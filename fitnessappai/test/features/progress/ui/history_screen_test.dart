@@ -1,0 +1,180 @@
+import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
+import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
+import 'package:fitnessappai/features/progress/ui/history_screen.dart';
+import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/l10n/app_localizations.dart';
+
+void main() {
+  late AppDatabase db;
+  late WorkoutRepository workoutRepo;
+
+  setUp(() {
+    db = AppDatabase(executor: NativeDatabase.memory());
+    workoutRepo = WorkoutRepository(db);
+  });
+
+  tearDown(() async {
+    await db.close();
+  });
+
+  WorkoutSession session({
+    required DateTime performedDate,
+    String programName = 'База',
+    WorkoutVariant variant = WorkoutVariant.main,
+    DateTime? startedAt,
+    DateTime? endedAt,
+  }) => WorkoutSession(
+    programName: programName,
+    dayIndex: 0,
+    variant: variant,
+    performedDate: performedDate,
+    startedAt: startedAt ?? performedDate.add(const Duration(hours: 18)),
+    endedAt:
+        endedAt ?? performedDate.add(const Duration(hours: 18, minutes: 40)),
+  );
+
+  WorkoutSetResult setResult({
+    String name = 'Приседания',
+    ExerciseType type = ExerciseType.strength,
+    int setIndex = 1,
+    int? reps = 8,
+    double? weightKg = 20,
+    int? durationSeconds,
+    double? distanceMeters,
+  }) => WorkoutSetResult(
+    sessionId: 0,
+    exerciseId: null,
+    exerciseName: name,
+    exerciseType: type,
+    setIndex: setIndex,
+    reps: reps,
+    weightKg: weightKg,
+    durationSeconds: durationSeconds,
+    distanceMeters: distanceMeters,
+    completedAt: DateTime(2026, 8, 10, 18, 5),
+  );
+
+  Future<void> pumpHistory(
+    WidgetTester tester, {
+    String location = '/history',
+  }) async {
+    final router = GoRouter(
+      initialLocation: location,
+      routes: [
+        GoRoute(
+          path: '/history',
+          builder: (context, state) =>
+              HistoryScreen(workoutRepository: workoutRepo),
+        ),
+        GoRoute(
+          path: '/history/:id',
+          builder: (context, state) => HistoryDetailScreen(
+            sessionId: int.tryParse(state.pathParameters['id'] ?? '') ?? -1,
+            workoutRepository: workoutRepo,
+          ),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('список сессий: свежие сверху, программа, дата, метрики', (
+    tester,
+  ) async {
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(2026, 8, 10)),
+      [setResult(), setResult(name: 'Тяга', setIndex: 2)],
+    );
+    await workoutRepo.saveSession(
+      session(
+        performedDate: DateTime(2026, 8, 12),
+        programName: 'Кардио',
+        variant: WorkoutVariant.alternative,
+      ),
+      [setResult(name: 'Бег')],
+    );
+
+    await pumpHistory(tester);
+
+    final fmt = DateFormat('d MMMM yyyy', 'ru');
+    final firstDate = fmt.format(DateTime(2026, 8, 12));
+    final secondDate = fmt.format(DateTime(2026, 8, 10));
+
+    expect(find.text('Кардио'), findsOneWidget);
+    expect(find.text('База'), findsOneWidget);
+    expect(find.text(firstDate), findsOneWidget);
+    expect(find.text(secondDate), findsOneWidget);
+    expect(find.text('Альтернативный набор'), findsOneWidget);
+    expect(find.text('1 упражнение · 40 мин'), findsOneWidget);
+    expect(find.text('2 упражнения · 40 мин'), findsOneWidget);
+
+    final firstCenter = tester.getCenter(find.text(firstDate));
+    final secondCenter = tester.getCenter(find.text(secondDate));
+    expect(firstCenter.dy, lessThan(secondCenter.dy));
+  });
+
+  testWidgets('тап по сессии открывает детали с подходами', (tester) async {
+    await workoutRepo
+        .saveSession(session(performedDate: DateTime(2026, 8, 10)), [
+          setResult(reps: 8, weightKg: 20),
+          setResult(setIndex: 2, reps: 6, weightKg: 25),
+          setResult(
+            name: 'Планка',
+            type: ExerciseType.plank,
+            reps: null,
+            weightKg: null,
+            durationSeconds: 45,
+          ),
+          setResult(
+            name: 'Бег',
+            type: ExerciseType.running,
+            reps: null,
+            weightKg: null,
+            durationSeconds: 900,
+            distanceMeters: 3000,
+          ),
+        ]);
+
+    await pumpHistory(tester);
+    await tester.tap(find.text('База'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Детали тренировки'), findsOneWidget);
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('1. 8 повт × 20 кг'), findsOneWidget);
+    expect(find.text('2. 6 повт × 25 кг'), findsOneWidget);
+    expect(find.text('1. 45 с'), findsOneWidget);
+    expect(find.text('1. 3 км × 15 мин'), findsOneWidget);
+    expect(find.textContaining('40 мин'), findsOneWidget);
+  });
+
+  testWidgets('пустая история показывает сообщение', (tester) async {
+    await pumpHistory(tester);
+
+    expect(find.text('Пока нет тренировок'), findsOneWidget);
+  });
+
+  testWidgets('неизвестная сессия показывает сообщение', (tester) async {
+    await pumpHistory(tester, location: '/history/999');
+
+    expect(find.text('Тренировка не найдена'), findsOneWidget);
+  });
+}

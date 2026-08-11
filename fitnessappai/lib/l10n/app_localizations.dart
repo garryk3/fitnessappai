@@ -1090,6 +1090,30 @@ abstract class AppLocalizations {
   /// **'Детали тренировки'**
   String get historyDetail;
 
+  /// No description provided for @historyEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока нет тренировок'**
+  String get historyEmpty;
+
+  /// No description provided for @historySessionNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка не найдена'**
+  String get historySessionNotFound;
+
+  /// Количество упражнений в сессии истории
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{1 упражнение} few{{count} упражнения} other{{count} упражнений}}'**
+  String historyExercisesCount(int count);
+
+  /// Длительность сессии в истории
+  ///
+  /// In ru, this message translates to:
+  /// **'{minutes} мин'**
+  String historyDuration(int minutes);
+
   /// No description provided for @sync.
   ///
   /// In ru, this message translates to:

@@ -558,6 +558,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get historyDetail => 'Детали тренировки';
 
   @override
+  String get historyEmpty => 'Пока нет тренировок';
+
+  @override
+  String get historySessionNotFound => 'Тренировка не найдена';
+
+  @override
+  String historyExercisesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count упражнений',
+      few: '$count упражнения',
+      one: '1 упражнение',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String historyDuration(int minutes) {
+    return '$minutes мин';
+  }
+
+  @override
   String get sync => 'Синхронизация';
 
   @override

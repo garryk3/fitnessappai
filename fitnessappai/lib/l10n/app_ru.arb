@@ -280,6 +280,26 @@
   "monthShortDec": "Дек",
   "history": "История",
   "historyDetail": "Детали тренировки",
+  "historyEmpty": "Пока нет тренировок",
+  "historySessionNotFound": "Тренировка не найдена",
+  "historyExercisesCount": "{count, plural, one{1 упражнение} few{{count} упражнения} other{{count} упражнений}}",
+  "@historyExercisesCount": {
+    "description": "Количество упражнений в сессии истории",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "historyDuration": "{minutes} мин",
+  "@historyDuration": {
+    "description": "Длительность сессии в истории",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "sync": "Синхронизация",
   "contraindications": "Противопоказания"
 }
