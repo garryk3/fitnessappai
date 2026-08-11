@@ -505,7 +505,7 @@ fitnessappai/
 # Этап 7. Профиль, замеры, противопоказания, уведомления, синхронизация
 
 ### Задача 7.1: Противопоказания — бизнес-логика
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (2026-08-11)
 - **Модуль:** features / profile / domain
 - **Ветка:** `task/7.1-contraindications-logic`
 - **Описание:** `UserProfileRepository`: `get()`, `setContraindicationTags(keys)`, `getContraindicationTags()`. `ContraindicationService`: `warningsFor(exercise, userTags)` → сообщения, `hasContraindications(exercise)`, `filterAllowed(List<Exercise>, userTags)`.
@@ -652,7 +652,7 @@ fitnessappai/
 | 5.2 | Экран прогресса (UI) | [x] | task/5.2-progress-screen | 2026-08-10 |
 | 5.3 | История тренировок (UI) | [x] | task/5.3-history-screen | 2026-08-11 |
 | 6.1 | Архитектура генерации (LLM) | [x] | task/6.1-llm-contract | 2026-08-11 |
-| 7.1 | Противопоказания: логика | [ ] | | |
+| 7.1 | Противопоказания: логика | [x] | task/7.1-contraindications-logic | 2026-08-11 |
 | 7.2 | Замеры тела: репозиторий | [ ] | | |
 | 7.3 | Экран профиля (UI) | [ ] | | |
 | 7.4 | Противопоказания (UI) | [ ] | | |
