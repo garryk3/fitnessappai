@@ -83,4 +83,22 @@ void main() {
   test('getContraindicationTags пуст до сохранения тегов', () async {
     expect(await repo.getContraindicationTags(), isEmpty);
   });
+
+  group('UserProfileRepository.getAllTags', () {
+    test('возвращает каталог тегов по id', () async {
+      final tags = await repo.getAllTags();
+
+      expect(tags.map((t) => t.key), [
+        'knees',
+        'back',
+        'neck',
+        'shoulders',
+        'elbows',
+        'wrists',
+        'heart',
+        'pregnancy',
+      ]);
+      expect(tags.first.labelRu, 'Колени');
+    });
+  });
 }
