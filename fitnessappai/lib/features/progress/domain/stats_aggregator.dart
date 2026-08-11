@@ -212,6 +212,52 @@ class StatsAggregator {
     return loads;
   }
 
+  /// Метрика упражнения по срезам периода для графика прогресса.
+  ///
+  /// strength — максимальный вес в срезе (кг), running — суммарная
+  /// дистанция (м), plank — суммарное время (с). Пустые срезы — 0.
+  Future<List<double>> exerciseMetricPerSlice(
+    int exerciseId,
+    StatPeriod period,
+  ) async {
+    final exercise = await exerciseRepository.getById(exerciseId);
+    if (exercise == null) {
+      return List.filled(slices(period).length, 0.0);
+    }
+    final results = (await _results(
+      period,
+    )).where((r) => r.exerciseId == exerciseId).toList();
+    return slices(period).map((slice) {
+      final (start, end) = slice;
+      final inSlice = results
+          .where(
+            (r) =>
+                !r.completedAt.isBefore(start) && r.completedAt.isBefore(end),
+          )
+          .toList();
+      switch (exercise.type) {
+        case ExerciseType.strength:
+          var max = 0.0;
+          for (final r in inSlice) {
+            if (r.weightKg != null && r.weightKg! > max) {
+              max = r.weightKg!;
+            }
+          }
+          return max;
+        case ExerciseType.running:
+          return inSlice.fold<double>(
+            0,
+            (sum, r) => sum + (r.distanceMeters ?? 0),
+          );
+        case ExerciseType.plank:
+          return inSlice.fold<double>(
+            0,
+            (sum, r) => sum + (r.durationSeconds ?? 0),
+          );
+      }
+    }).toList();
+  }
+
   Future<List<WorkoutSession>> _sessions(StatPeriod period) {
     final (start, end) = periodBounds(period);
     return workoutRepository.getSessionsBetween(start, end);

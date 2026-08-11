@@ -486,6 +486,72 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRunEmpty => 'В этом дне нет упражнений';
 
   @override
+  String get progressPeriodWeek => 'Неделя';
+
+  @override
+  String get progressPeriodMonth => 'Месяц';
+
+  @override
+  String get progressPeriodYear => 'Год';
+
+  @override
+  String get progressWorkouts => 'Тренировок';
+
+  @override
+  String get progressDistance => 'Дистанция';
+
+  @override
+  String get progressPlankTime => 'Время планки';
+
+  @override
+  String get progressWorkoutsChart => 'Тренировки по срезам';
+
+  @override
+  String get progressMetricChart => 'Прогресс метрики';
+
+  @override
+  String get progressMuscleLoad => 'Нагрузка на мышцы';
+
+  @override
+  String get progressEmpty => 'Нет тренировок за период';
+
+  @override
+  String get monthShortJan => 'Янв';
+
+  @override
+  String get monthShortFeb => 'Фев';
+
+  @override
+  String get monthShortMar => 'Мар';
+
+  @override
+  String get monthShortApr => 'Апр';
+
+  @override
+  String get monthShortMay => 'Май';
+
+  @override
+  String get monthShortJun => 'Июн';
+
+  @override
+  String get monthShortJul => 'Июл';
+
+  @override
+  String get monthShortAug => 'Авг';
+
+  @override
+  String get monthShortSep => 'Сен';
+
+  @override
+  String get monthShortOct => 'Окт';
+
+  @override
+  String get monthShortNov => 'Ноя';
+
+  @override
+  String get monthShortDec => 'Дек';
+
+  @override
   String get history => 'История';
 
   @override
