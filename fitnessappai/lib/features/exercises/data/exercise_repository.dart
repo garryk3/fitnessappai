@@ -146,14 +146,25 @@ class ExerciseRepository {
     return result;
   }
 
-  /// Возвращает множество id упражнений, у которых есть противопоказания.
-  Future<Set<int>> exerciseIdsWithContraindications() async {
-    final query = _db.selectOnly(_db.exerciseContraindications)
-      ..addColumns([_db.exerciseContraindications.exerciseId]);
-    final rows = await query.get();
-    return rows
-        .map((r) => r.read(_db.exerciseContraindications.exerciseId)!)
-        .toSet();
+  /// Возвращает карту «id упражнения → теги противопоказаний» для предупреждений.
+  Future<Map<int, List<ContraindicationTag>>>
+  contraindicationsByExercise() async {
+    final query = _db.select(_db.contraindicationTags).join([
+      innerJoin(
+        _db.exerciseContraindications,
+        _db.exerciseContraindications.contraindicationTagId.equalsExp(
+          _db.contraindicationTags.id,
+        ),
+      ),
+    ]);
+    final result = <int, List<ContraindicationTag>>{};
+    for (final row in await query.get()) {
+      final link = row.readTable(_db.exerciseContraindications);
+      result
+          .putIfAbsent(link.exerciseId, () => [])
+          .add(_tagFromRow(row.readTable(_db.contraindicationTags)));
+    }
+    return result;
   }
 
   /// Заменяет привязки мышц упражнения.

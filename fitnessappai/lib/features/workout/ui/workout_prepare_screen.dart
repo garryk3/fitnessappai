@@ -7,6 +7,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -18,11 +19,13 @@ class WorkoutPrepareScreen extends StatefulWidget {
     required this.programDayId,
     this.programRepository,
     this.exerciseRepository,
+    this.profileRepository,
   });
 
   final int programDayId;
   final ProgramRepository? programRepository;
   final ExerciseRepository? exerciseRepository;
+  final UserProfileRepository? profileRepository;
 
   @override
   State<WorkoutPrepareScreen> createState() => _WorkoutPrepareScreenState();
@@ -40,10 +43,51 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
           widget.programRepository ?? locator.get<ProgramRepository>(),
       exerciseRepository:
           widget.exerciseRepository ?? locator.get<ExerciseRepository>(),
+      profileRepository:
+          widget.profileRepository ?? locator.get<UserProfileRepository>(),
     );
   }
 
-  void _start() {
+  Future<void> _start() async {
+    final l10n = AppLocalizations.of(context);
+    final warnings = _controller.visibleWarnings;
+    if (warnings.isNotEmpty) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.workoutWarningsTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.workoutWarningsBody),
+              const SizedBox(height: 8),
+              for (final warning in warnings)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '• ${warning.exerciseName} — '
+                    '${warning.tagLabels.join(', ')}',
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.workoutWarningsProceed),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true || !mounted) {
+        return;
+      }
+    }
     context.push(
       '/workout/run?programDayId=${widget.programDayId}'
       '&variant=${_controller.variant.value.name}',

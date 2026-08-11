@@ -597,6 +597,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get contraindicationsSaved => 'Настройки сохранены';
 
   @override
+  String get contraindicationWarningForYou => 'Есть противопоказания для вас';
+
+  @override
+  String get workoutWarningsTitle => 'Противопоказания';
+
+  @override
+  String get workoutWarningsBody =>
+      'В программе есть упражнения с противопоказаниями:';
+
+  @override
+  String get workoutWarningsProceed => 'Продолжить';
+
+  @override
   String get contraindicationDescKnees => 'Избегайте приседаний и прыжков.';
 
   @override

@@ -16,12 +16,14 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
   late AppDatabase db;
   late Directory tempDir;
   late ExerciseRepository repository;
+  late UserProfileRepository profileRepository;
 
   setUp(() async {
     db = AppDatabase(executor: NativeDatabase.memory());
@@ -34,6 +36,7 @@ void main() {
         filePicker: () async => null,
       ),
     );
+    profileRepository = UserProfileRepository(db);
     addTearDown(() async {
       await db.close();
       await tempDir.delete(recursive: true);
@@ -56,6 +59,7 @@ void main() {
           exerciseId: exerciseId,
           repository: repo ?? repository,
           mediaCache: MediaCache(),
+          profileRepository: profileRepository,
         ),
       ),
     );
@@ -133,6 +137,37 @@ void main() {
     await tester.scrollUntilVisible(find.text('Противопоказания'), 200);
 
     expect(find.text('Противопоказания'), findsOneWidget);
+    expect(find.text('Колени'), findsOneWidget);
+  });
+
+  testWidgets('подсвечивает противопоказания, пересекающиеся с профилем', (
+    tester,
+  ) async {
+    final kneesTag = await tagId('knees');
+    final backTag = await tagId('back');
+    final created = await repository.create(exercise('Приседания'), const []);
+    await repository.setContraindications(created.id!, [kneesTag, backTag]);
+    await profileRepository.setContraindicationTags(['knees']);
+
+    await pumpDetail(tester, exerciseId: created.id!);
+    await tester.scrollUntilVisible(find.text('Противопоказания'), 200);
+
+    expect(find.text('Есть противопоказания для вас'), findsOneWidget);
+    expect(find.text('Колени'), findsOneWidget);
+    expect(find.text('Спина'), findsOneWidget);
+  });
+
+  testWidgets('секция противопоказаний без предупреждения без профиля', (
+    tester,
+  ) async {
+    final kneesTag = await tagId('knees');
+    final created = await repository.create(exercise('Приседания'), const []);
+    await repository.setContraindications(created.id!, [kneesTag]);
+
+    await pumpDetail(tester, exerciseId: created.id!);
+    await tester.scrollUntilVisible(find.text('Противопоказания'), 200);
+
+    expect(find.text('Есть противопоказания для вас'), findsNothing);
     expect(find.text('Колени'), findsOneWidget);
   });
 
@@ -216,6 +251,7 @@ void main() {
                 exerciseId: int.parse(state.pathParameters['id']!),
                 repository: repository,
                 mediaCache: MediaCache(),
+                profileRepository: profileRepository,
               ),
             ),
             GoRoute(

@@ -14,6 +14,7 @@ import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -23,6 +24,7 @@ void main() {
   late Directory tempDir;
   late ProgramRepository programRepo;
   late ExerciseRepository exerciseRepo;
+  late UserProfileRepository profileRepo;
 
   setUp(() async {
     db = AppDatabase(executor: NativeDatabase.memory());
@@ -36,6 +38,7 @@ void main() {
         filePicker: () async => null,
       ),
     );
+    profileRepo = UserProfileRepository(db);
   });
 
   tearDown(() async {
@@ -94,6 +97,7 @@ void main() {
             programDayId: int.parse(state.pathParameters['programDayId']!),
             programRepository: programRepo,
             exerciseRepository: exerciseRepo,
+            profileRepository: profileRepo,
           ),
         ),
         GoRoute(
@@ -170,5 +174,73 @@ void main() {
 
     expect(find.text('День не найден'), findsOneWidget);
     expect(find.text('Начать тренировку'), findsNothing);
+  });
+
+  testWidgets('показывает диалог предупреждений при пересечении тегов', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    final tagId = (await db.select(db.contraindicationTags).get())
+        .firstWhere((t) => t.key == 'knees')
+        .id;
+    final exerciseId = (await exerciseRepo.getAll()).single.id!;
+    await exerciseRepo.setContraindications(exerciseId, [tagId]);
+    await profileRepo.setContraindicationTags(['knees']);
+
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Противопоказания'), findsOneWidget);
+    expect(
+      find.text('В программе есть упражнения с противопоказаниями:'),
+      findsOneWidget,
+    );
+    expect(find.text('• Приседания — Колени'), findsOneWidget);
+
+    await tester.tap(find.text('Продолжить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('run-main'), findsOneWidget);
+  });
+
+  testWidgets('«Отмена» в диалоге предупреждений не запускает тренировку', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    final tagId = (await db.select(db.contraindicationTags).get())
+        .firstWhere((t) => t.key == 'knees')
+        .id;
+    final exerciseId = (await exerciseRepo.getAll()).single.id!;
+    await exerciseRepo.setContraindications(exerciseId, [tagId]);
+    await profileRepo.setContraindicationTags(['knees']);
+
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Начать тренировку'), findsOneWidget);
+    expect(find.textContaining('run-'), findsNothing);
+  });
+
+  testWidgets('без пересечения с профилем старт без диалога', (tester) async {
+    final dayId = await createDay();
+    final tagId = (await db.select(db.contraindicationTags).get())
+        .firstWhere((t) => t.key == 'knees')
+        .id;
+    final exerciseId = (await exerciseRepo.getAll()).single.id!;
+    await exerciseRepo.setContraindications(exerciseId, [tagId]);
+
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Противопоказания'), findsNothing);
+    expect(find.text('run-main'), findsOneWidget);
   });
 }
