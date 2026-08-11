@@ -485,7 +485,7 @@ fitnessappai/
 # Этап 6. LLM (отложено после MVP)
 
 ### Задача 6.1: Подготовка архитектуры генерации контента (в MVP)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (2026-08-11)
 - **Модуль:** features / llm / domain
 - **Ветка:** `task/6.1-llm-contract`
 - **Описание:** Абстрактный `ExerciseContentGenerator { Future<ExerciseSuggestion> generate(String nameHint); }`. DTO `ExerciseSuggestion` (name, description, type, contraindications[], muscles, instructions, commonMistakes). **JSON-контракт** в `docs/llm_contract.md` (промпт на русском, строгий JSON, правила валидности). Парсер `SuggestionJsonParser.fromJson` с обработкой ошибок (`MalformedSuggestionException`). Заглушка `UnsupportedGenerator` регистрируется в ServiceLocator (UI не использует).
@@ -651,7 +651,7 @@ fitnessappai/
 | 5.1 | Агрегатор статистики | [x] | task/5.1-stats-aggregator | 2026-08-10 |
 | 5.2 | Экран прогресса (UI) | [x] | task/5.2-progress-screen | 2026-08-10 |
 | 5.3 | История тренировок (UI) | [x] | task/5.3-history-screen | 2026-08-11 |
-| 6.1 | Архитектура генерации (LLM) | [ ] | | |
+| 6.1 | Архитектура генерации (LLM) | [x] | task/6.1-llm-contract | 2026-08-11 |
 | 7.1 | Противопоказания: логика | [ ] | | |
 | 7.2 | Замеры тела: репозиторий | [ ] | | |
 | 7.3 | Экран профиля (UI) | [ ] | | |
