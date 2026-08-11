@@ -585,4 +585,37 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get contraindications => 'Противопоказания';
+
+  @override
+  String get profileCurrentValues => 'Текущие значения';
+
+  @override
+  String get profileMetricChart => 'Динамика';
+
+  @override
+  String get profileMeasurementsHistory => 'История замеров';
+
+  @override
+  String get profileEmpty => 'Пока нет замеров тела';
+
+  @override
+  String get profileChartEmpty => 'Добавьте замеры, чтобы увидеть динамику';
+
+  @override
+  String get profileAddMeasurement => 'Добавить замер';
+
+  @override
+  String get profileDeleteMeasurementConfirm => 'Удалить замер?';
+
+  @override
+  String get profileUnitCm => 'см';
+
+  @override
+  String get measurementFormTitle => 'Новый замер';
+
+  @override
+  String get measurementFormDate => 'Дата';
+
+  @override
+  String get measurementFormNumberError => 'Введите число';
 }
