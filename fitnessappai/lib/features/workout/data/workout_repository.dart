@@ -62,6 +62,17 @@ class WorkoutRepository {
     return rows.map(_toSession).toList();
   }
 
+  /// Все сессии, свежие сверху.
+  Future<List<WorkoutSession>> getAllSessions() async {
+    final rows =
+        await (_db.select(_db.workoutSessions)..orderBy([
+              (t) => OrderingTerm.desc(t.performedDate),
+              (t) => OrderingTerm.desc(t.id),
+            ]))
+            .get();
+    return rows.map(_toSession).toList();
+  }
+
   /// Все сессии в диапазоне дат `[start, end)`.
   Future<List<WorkoutSession>> getSessionsBetween(
     DateTime start,

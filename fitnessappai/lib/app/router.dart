@@ -7,6 +7,7 @@ import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
+import 'package:fitnessappai/features/progress/ui/history_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
@@ -129,8 +130,16 @@ class AppRouter {
             return WorkoutRunScreen(programDayId: dayId, variant: variant);
           },
         ),
-        _placeholderRoute('/history', (l10n) => l10n.history),
-        _placeholderRoute('/history/:id', (l10n) => l10n.historyDetail),
+        GoRoute(
+          path: '/history',
+          builder: (context, state) => const HistoryScreen(),
+        ),
+        GoRoute(
+          path: '/history/:id',
+          builder: (context, state) => HistoryDetailScreen(
+            sessionId: int.tryParse(state.pathParameters['id'] ?? '') ?? -1,
+          ),
+        ),
         _placeholderRoute('/sync', (l10n) => l10n.sync),
         _placeholderRoute(
           '/contraindications',

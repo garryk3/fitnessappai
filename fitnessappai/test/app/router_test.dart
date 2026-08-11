@@ -48,7 +48,7 @@ void main() {
       router.go('/history');
       await tester.pumpAndSettle();
 
-      expect(find.text('Раздел «История» в разработке'), findsOneWidget);
+      expect(find.text('Пока нет тренировок'), findsOneWidget);
     });
 
     testWidgets('deep-link с параметром открывает экран упражнения', (
