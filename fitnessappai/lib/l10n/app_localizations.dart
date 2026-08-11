@@ -946,6 +946,138 @@ abstract class AppLocalizations {
   /// **'В этом дне нет упражнений'**
   String get workoutRunEmpty;
 
+  /// No description provided for @progressPeriodWeek.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неделя'**
+  String get progressPeriodWeek;
+
+  /// No description provided for @progressPeriodMonth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Месяц'**
+  String get progressPeriodMonth;
+
+  /// No description provided for @progressPeriodYear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год'**
+  String get progressPeriodYear;
+
+  /// No description provided for @progressWorkouts.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировок'**
+  String get progressWorkouts;
+
+  /// No description provided for @progressDistance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дистанция'**
+  String get progressDistance;
+
+  /// No description provided for @progressPlankTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время планки'**
+  String get progressPlankTime;
+
+  /// No description provided for @progressWorkoutsChart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировки по срезам'**
+  String get progressWorkoutsChart;
+
+  /// No description provided for @progressMetricChart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прогресс метрики'**
+  String get progressMetricChart;
+
+  /// No description provided for @progressMuscleLoad.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нагрузка на мышцы'**
+  String get progressMuscleLoad;
+
+  /// No description provided for @progressEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет тренировок за период'**
+  String get progressEmpty;
+
+  /// No description provided for @monthShortJan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Янв'**
+  String get monthShortJan;
+
+  /// No description provided for @monthShortFeb.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фев'**
+  String get monthShortFeb;
+
+  /// No description provided for @monthShortMar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мар'**
+  String get monthShortMar;
+
+  /// No description provided for @monthShortApr.
+  ///
+  /// In ru, this message translates to:
+  /// **'Апр'**
+  String get monthShortApr;
+
+  /// No description provided for @monthShortMay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Май'**
+  String get monthShortMay;
+
+  /// No description provided for @monthShortJun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Июн'**
+  String get monthShortJun;
+
+  /// No description provided for @monthShortJul.
+  ///
+  /// In ru, this message translates to:
+  /// **'Июл'**
+  String get monthShortJul;
+
+  /// No description provided for @monthShortAug.
+  ///
+  /// In ru, this message translates to:
+  /// **'Авг'**
+  String get monthShortAug;
+
+  /// No description provided for @monthShortSep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сен'**
+  String get monthShortSep;
+
+  /// No description provided for @monthShortOct.
+  ///
+  /// In ru, this message translates to:
+  /// **'Окт'**
+  String get monthShortOct;
+
+  /// No description provided for @monthShortNov.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ноя'**
+  String get monthShortNov;
+
+  /// No description provided for @monthShortDec.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дек'**
+  String get monthShortDec;
+
   /// No description provided for @history.
   ///
   /// In ru, this message translates to:
