@@ -55,6 +55,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   bool _loading = true;
   bool _saving = false;
   DateTime? _createdAt;
+  int? _programId;
 
   @override
   void initState() {
@@ -62,6 +63,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     _repository = widget.repository ?? locator.get<ProgramRepository>();
     _reminderRepository = locator.get<WorkoutReminderRepository>();
     _reminderService = locator.get<ReminderService>();
+    _programId = widget.programId;
     _load();
   }
 
@@ -215,11 +217,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   /// Сохраняет черновик программы и открывает экран наполнения дня.
   Future<void> _openDayFill(int dayIndex) async {
-    var programId = widget.programId;
-    if (programId == null) {
-      final saved = await _persist();
-      programId = saved?.id;
-    }
+    final saved = await _persist();
+    final programId = saved?.id;
     if (programId != null && mounted) {
       context.push('/programs/$programId/day/$dayIndex');
     }
@@ -233,7 +232,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     }
     final now = DateTime.now();
     final program = Program(
-      id: widget.programId,
+      id: _programId,
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
       daysCount: _days.length,
@@ -244,10 +243,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       for (var i = 0; i < _days.length; i++)
         ProgramDay(programId: 0, dayIndex: i, dayOfWeek: _days[i].dayOfWeek),
     ];
-    if (widget.programId == null) {
-      return _repository.create(program, days);
-    }
-    return _repository.update(program, days: days);
+    final saved = _programId == null
+        ? await _repository.create(program, days)
+        : await _repository.update(program, days: days);
+    _programId = saved.id;
+    return saved;
   }
 
   Future<void> _save() async {
@@ -272,7 +272,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isEditing = widget.programId != null;
+    final isEditing = _programId != null;
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? l10n.programEdit : l10n.programNew),

@@ -40,6 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.navProfile)),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'profile-fab',
         onPressed: () async {
           await context.push('/measurements/new');
           if (mounted) {

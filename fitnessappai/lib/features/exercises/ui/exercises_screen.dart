@@ -72,6 +72,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'exercises-fab',
         onPressed: () => context.push('/exercises/new'),
         tooltip: l10n.exerciseListCreate,
         child: const Icon(Icons.add),

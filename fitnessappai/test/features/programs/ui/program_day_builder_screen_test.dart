@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -14,6 +15,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
+import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -277,4 +279,94 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'новое упражнение: параметры задаются через экран и день сохраняется',
+    (tester) async {
+      final exercise = await createExercise(
+        'Приседания',
+        ExerciseType.strength,
+      );
+      final program = await createProgram('Сплит', 1);
+
+      final router = GoRouter(
+        initialLocation: '/programs/${program.id}/edit/day/0',
+        routes: [
+          GoRoute(
+            path: '/programs/:id/edit',
+            builder: (context, state) => const Scaffold(body: SizedBox()),
+            routes: [
+              GoRoute(
+                path: 'day/:dayIndex',
+                builder: (context, state) => ProgramDayBuilderScreen(
+                  programId: int.parse(state.pathParameters['id']!),
+                  dayIndex: int.parse(state.pathParameters['dayIndex']!),
+                  repository: programRepository,
+                  exerciseRepository: exerciseRepository,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/program-day/:id/exercise-params',
+            builder: (context, state) => ProgramDayExerciseParamsScreen(
+              positionId: int.parse(state.pathParameters['id']!),
+              repository: programRepository,
+              exerciseRepository: exerciseRepository,
+            ),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await addExercise(tester, 'Приседания');
+
+      await tester.tap(find.byIcon(Icons.tune));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Параметры упражнения'), findsOneWidget);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Подходы'),
+        '3',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Повторения'),
+        '10',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Вес (кг)'),
+        '20',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Отдых (сек)'),
+        '60',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Параметры упражнения'), findsNothing);
+      expect(find.text('Приседания'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      final detail = await programRepository.getProgram(program.id!);
+      final items = detail!.days[0].mainExercises;
+      expect(items, hasLength(1));
+      expect(items.single.exerciseId, exercise.id);
+      expect(items.single.sets, 3);
+      expect(items.single.reps, 10);
+    },
+  );
 }

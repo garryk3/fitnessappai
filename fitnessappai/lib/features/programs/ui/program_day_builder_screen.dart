@@ -195,9 +195,22 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
   }
 
   Future<void> _openExerciseParams(_ItemDraft draft) async {
-    final item = draft.item;
+    var item = draft.item;
     if (item.id == null) {
-      return;
+      final exerciseId = item.exerciseId;
+      if (exerciseId == null) {
+        return;
+      }
+      final persisted = await _repository.addExerciseToDay(
+        item.dayId,
+        exerciseId,
+        isAlternative: item.isAlternative,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() => _replaceDraft(draft, persisted));
+      item = persisted;
     }
     final updated = await context.push<ProgramDayExercise>(
       '/program-day/${item.id}/exercise-params',
@@ -205,6 +218,18 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     if (updated != null && mounted) {
       setState(() => _replaceItem(item.id!, updated));
     }
+  }
+
+  void _replaceDraft(_ItemDraft draft, ProgramDayExercise item) {
+    void replaceIn(List<_ItemDraft> list) {
+      final index = list.indexWhere((d) => identical(d, draft));
+      if (index != -1) {
+        list[index] = _ItemDraft(key: list[index].key, item: item);
+      }
+    }
+
+    replaceIn(_mainItems);
+    replaceIn(_altItems);
   }
 
   void _replaceItem(int id, ProgramDayExercise updated) {
@@ -291,6 +316,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       floatingActionButton: _loading
           ? null
           : FloatingActionButton(
+              heroTag: 'program-day-builder-fab',
               tooltip: l10n.programBuilderAddExercise,
               onPressed: _addExercise,
               child: const Icon(Icons.add),
@@ -406,14 +432,13 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     final item = draft.item;
     final exercise = _exercisesById[item.exerciseId];
     final type = exercise?.type;
-    final canEdit = item.id != null;
     return Padding(
       key: ValueKey(draft.key),
       padding: const EdgeInsets.only(bottom: 4),
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: ListTile(
-          onTap: canEdit ? () => _openExerciseParams(draft) : null,
+          onTap: () => _openExerciseParams(draft),
           leading: ReorderableDragStartListener(
             index: index,
             child: const Icon(Icons.drag_indicator),
@@ -429,7 +454,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               IconButton(
                 tooltip: l10n.programBuilderPickExercise,
                 icon: const Icon(Icons.tune),
-                onPressed: canEdit ? () => _openExerciseParams(draft) : null,
+                onPressed: () => _openExerciseParams(draft),
               ),
               IconButton(
                 tooltip: l10n.commonDelete,

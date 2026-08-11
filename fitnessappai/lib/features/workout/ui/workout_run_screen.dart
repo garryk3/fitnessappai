@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -31,10 +33,22 @@ class WakelockPlusService implements WakelockService {
   const WakelockPlusService();
 
   @override
-  Future<void> enable() => WakelockPlus.enable();
+  Future<void> enable() async {
+    try {
+      await WakelockPlus.enable();
+    } catch (e) {
+      log('Не удалось включить wakelock', error: e);
+    }
+  }
 
   @override
-  Future<void> disable() => WakelockPlus.disable();
+  Future<void> disable() async {
+    try {
+      await WakelockPlus.disable();
+    } catch (e) {
+      log('Не удалось выключить wakelock', error: e);
+    }
+  }
 }
 
 /// Экран выполнения тренировки: подходы, отдых и сохранение результатов.

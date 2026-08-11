@@ -370,19 +370,37 @@ class ProgramRepository {
   }
 
   Future<void> _replaceDays(int programId, List<ProgramDay> days) async {
-    await (_db.delete(
+    final existing = await (_db.select(
       _db.programDays,
-    )..where((t) => t.programId.equals(programId))).go();
-    await _db.batch((batch) {
-      batch.insertAll(_db.programDays, [
-        for (final day in days)
-          ProgramDaysCompanion.insert(
-            programId: programId,
-            dayIndex: day.dayIndex,
-            dayOfWeek: Value(day.dayOfWeek),
-          ),
-      ]);
-    });
+    )..where((t) => t.programId.equals(programId))).get();
+    final idByDayIndex = {for (final row in existing) row.dayIndex: row.id};
+    final requestedIndexes = {for (final day in days) day.dayIndex};
+
+    for (final day in days) {
+      final existingId = idByDayIndex[day.dayIndex];
+      if (existingId != null) {
+        await (_db.update(_db.programDays)
+              ..where((t) => t.id.equals(existingId)))
+            .write(ProgramDaysCompanion(dayOfWeek: Value(day.dayOfWeek)));
+      } else {
+        await _db
+            .into(_db.programDays)
+            .insert(
+              ProgramDaysCompanion.insert(
+                programId: programId,
+                dayIndex: day.dayIndex,
+                dayOfWeek: Value(day.dayOfWeek),
+              ),
+            );
+      }
+    }
+    for (final row in existing) {
+      if (!requestedIndexes.contains(row.dayIndex)) {
+        await (_db.delete(
+          _db.programDays,
+        )..where((t) => t.id.equals(row.id))).go();
+      }
+    }
     await _syncDaysCount(programId);
   }
 
