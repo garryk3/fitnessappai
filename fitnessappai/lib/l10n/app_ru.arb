@@ -301,5 +301,16 @@
     }
   },
   "sync": "Синхронизация",
-  "contraindications": "Противопоказания"
+  "contraindications": "Противопоказания",
+  "profileCurrentValues": "Текущие значения",
+  "profileMetricChart": "Динамика",
+  "profileMeasurementsHistory": "История замеров",
+  "profileEmpty": "Пока нет замеров тела",
+  "profileChartEmpty": "Добавьте замеры, чтобы увидеть динамику",
+  "profileAddMeasurement": "Добавить замер",
+  "profileDeleteMeasurementConfirm": "Удалить замер?",
+  "profileUnitCm": "см",
+  "measurementFormTitle": "Новый замер",
+  "measurementFormDate": "Дата",
+  "measurementFormNumberError": "Введите число"
 }

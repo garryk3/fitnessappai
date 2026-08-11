@@ -1125,6 +1125,72 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Противопоказания'**
   String get contraindications;
+
+  /// No description provided for @profileCurrentValues.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текущие значения'**
+  String get profileCurrentValues;
+
+  /// No description provided for @profileMetricChart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Динамика'**
+  String get profileMetricChart;
+
+  /// No description provided for @profileMeasurementsHistory.
+  ///
+  /// In ru, this message translates to:
+  /// **'История замеров'**
+  String get profileMeasurementsHistory;
+
+  /// No description provided for @profileEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока нет замеров тела'**
+  String get profileEmpty;
+
+  /// No description provided for @profileChartEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте замеры, чтобы увидеть динамику'**
+  String get profileChartEmpty;
+
+  /// No description provided for @profileAddMeasurement.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить замер'**
+  String get profileAddMeasurement;
+
+  /// No description provided for @profileDeleteMeasurementConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить замер?'**
+  String get profileDeleteMeasurementConfirm;
+
+  /// No description provided for @profileUnitCm.
+  ///
+  /// In ru, this message translates to:
+  /// **'см'**
+  String get profileUnitCm;
+
+  /// No description provided for @measurementFormTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый замер'**
+  String get measurementFormTitle;
+
+  /// No description provided for @measurementFormDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дата'**
+  String get measurementFormDate;
+
+  /// No description provided for @measurementFormNumberError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите число'**
+  String get measurementFormNumberError;
 }
 
 class _AppLocalizationsDelegate
