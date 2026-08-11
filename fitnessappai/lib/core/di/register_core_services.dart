@@ -3,6 +3,8 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/llm/data/unsupported_generator.dart';
+import 'package:fitnessappai/features/llm/domain/exercise_content_generator.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -26,5 +28,8 @@ void registerCoreServices(ServiceLocator sl) {
       workoutRepository: sl.get<WorkoutRepository>(),
       exerciseRepository: sl.get<ExerciseRepository>(),
     ),
+  );
+  sl.registerLazySingleton<ExerciseContentGenerator>(
+    () => const UnsupportedGenerator(),
   );
 }
