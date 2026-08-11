@@ -38,6 +38,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonCancel => 'Отмена';
 
   @override
+  String get commonOk => 'ОК';
+
+  @override
   String get commonDelete => 'Удалить';
 
   @override
@@ -588,6 +591,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sync => 'Синхронизация';
+
+  @override
+  String get syncCloudHint =>
+      'Переносите данные между устройствами через файл резервной копии базы данных.';
+
+  @override
+  String get syncCloudComing => 'Облачная синхронизация появится позже.';
+
+  @override
+  String get syncExport => 'Экспортировать БД';
+
+  @override
+  String get syncImport => 'Импортировать БД';
+
+  @override
+  String get syncImportSuccess => 'База данных импортирована';
+
+  @override
+  String get syncRestartHint =>
+      'Для полного применения изменений приложение будет перезапущено.';
 
   @override
   String get contraindications => 'Противопоказания';

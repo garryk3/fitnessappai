@@ -2,7 +2,6 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/responsive/adaptive_navigation.dart';
 import 'package:fitnessappai/app/screens/not_found_screen.dart';
-import 'package:fitnessappai/app/screens/placeholder_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
@@ -15,11 +14,11 @@ import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dar
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
+import 'package:fitnessappai/features/sync/ui/sync_screen.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
-import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Конфигурация маршрутов приложения.
 class AppRouter {
@@ -142,7 +141,7 @@ class AppRouter {
             sessionId: int.tryParse(state.pathParameters['id'] ?? '') ?? -1,
           ),
         ),
-        _placeholderRoute('/sync', (l10n) => l10n.sync),
+        GoRoute(path: '/sync', builder: (context, state) => const SyncScreen()),
         GoRoute(
           path: '/contraindications',
           builder: (context, state) => const ContraindicationsScreen(),
@@ -152,17 +151,6 @@ class AppRouter {
           builder: (context, state) => const MeasurementFormScreen(),
         ),
       ],
-    );
-  }
-
-  static GoRoute _placeholderRoute(
-    String path,
-    String Function(AppLocalizations l10n) titleBuilder,
-  ) {
-    return GoRoute(
-      path: path,
-      builder: (context, state) =>
-          PlaceholderScreen(title: titleBuilder(AppLocalizations.of(context))),
     );
   }
 }

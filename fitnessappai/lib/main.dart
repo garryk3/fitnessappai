@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:fitnessappai/app/app_restart.dart';
 import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/di/register_core_services.dart';
@@ -23,15 +24,19 @@ class FitnessAppAi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'FitnessAppAI',
-      themeMode: ThemeMode.dark,
-      theme: AppTheme.dark(),
-      darkTheme: AppTheme.dark(),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('ru'),
-      routerConfig: AppRouter.create(),
+    return ValueListenableBuilder<int>(
+      valueListenable: appRestartTick,
+      builder: (context, tick, _) => MaterialApp.router(
+        key: ValueKey<int>(tick),
+        title: 'FitnessAppAI',
+        themeMode: ThemeMode.dark,
+        theme: AppTheme.dark(),
+        darkTheme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        routerConfig: AppRouter.create(),
+      ),
     );
   }
 }

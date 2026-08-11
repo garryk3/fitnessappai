@@ -53,12 +53,16 @@ part 'app_database.g.dart';
     BodyMeasurements,
   ],
 )
+/// Версия схемы БД; записывается в `PRAGMA user_version` и используется
+/// при валидации импортируемых файлов.
+const int appDatabaseSchemaVersion = 1;
+
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor})
     : super(executor ?? driftDatabase(name: 'fitnessappai'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => appDatabaseSchemaVersion;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
