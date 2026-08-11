@@ -6,6 +6,8 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
+import 'package:fitnessappai/features/profile/domain/body_measurement_validator.dart';
 import 'package:fitnessappai/features/profile/domain/contraindication_service.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -29,6 +31,12 @@ void registerTestServices() {
   );
   locator.registerLazySingleton<ContraindicationService>(
     () => const ContraindicationService(),
+  );
+  locator.registerLazySingleton<BodyMeasurementRepository>(
+    () => BodyMeasurementRepository(db),
+  );
+  locator.registerLazySingleton<BodyMeasurementValidator>(
+    () => const BodyMeasurementValidator(),
   );
   addTearDown(() async {
     locator.reset();
