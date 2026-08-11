@@ -664,6 +664,18 @@ abstract class AppLocalizations {
   /// **'Настройка дня'**
   String get programBuilderDaySettings;
 
+  /// No description provided for @reminderToggle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминать'**
+  String get reminderToggle;
+
+  /// No description provided for @reminderTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время напоминания'**
+  String get reminderTime;
+
   /// No description provided for @programBuilderSave.
   ///
   /// In ru, this message translates to:

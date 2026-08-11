@@ -144,6 +144,8 @@
   "programBuilderDayNoWeekday": "Без привязки",
   "programBuilderDayWeekday": "День недели",
   "programBuilderDaySettings": "Настройка дня",
+  "reminderToggle": "Напоминать",
+  "reminderTime": "Время напоминания",
   "programBuilderSave": "Сохранить",
   "programBuilderAddExercise": "Добавить упражнение",
   "programBuilderPickExercise": "Выберите упражнение",

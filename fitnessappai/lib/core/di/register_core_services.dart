@@ -2,6 +2,7 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/unsupported_generator.dart';
 import 'package:fitnessappai/features/llm/domain/exercise_content_generator.dart';
@@ -11,6 +12,7 @@ import 'package:fitnessappai/features/profile/domain/contraindication_service.da
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Регистрация сервисов core-слоя в контейнере.
@@ -47,5 +49,11 @@ void registerCoreServices(ServiceLocator sl) {
   );
   sl.registerLazySingleton<BodyMeasurementValidator>(
     () => const BodyMeasurementValidator(),
+  );
+  sl.registerLazySingleton<WorkoutReminderRepository>(
+    () => WorkoutReminderRepository(sl.get<AppDatabase>()),
+  );
+  sl.registerLazySingleton<ReminderService>(
+    () => ReminderService(repository: sl.get<WorkoutReminderRepository>()),
   );
 }
