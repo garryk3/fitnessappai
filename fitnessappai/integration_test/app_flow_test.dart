@@ -83,8 +83,9 @@ Future<void> pullToRefreshPrograms(WidgetTester tester) async {
 Future<void> createExercise(
   WidgetTester tester,
   String name,
-  ExerciseType type,
-) async {
+  ExerciseType type, {
+  String? contraindication,
+}) async {
   await tester.tap(find.byTooltip('Новое упражнение'));
   await tester.pumpAndSettle();
 
@@ -106,6 +107,19 @@ Future<void> createExercise(
     }).last,
   );
   await tester.pumpAndSettle();
+
+  if (contraindication != null) {
+    final chip = find.text(contraindication);
+    await tester.scrollUntilVisible(
+      chip,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(chip);
+    await tester.pumpAndSettle();
+    await tester.tap(chip);
+    await tester.pumpAndSettle();
+  }
 
   await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
   await tester.pumpAndSettle();
@@ -282,6 +296,13 @@ Future<void> expectWorkoutCount(WidgetTester tester, String count) async {
   );
   expect(card, findsOneWidget);
   expect(find.descendant(of: card, matching: find.text(count)), findsOneWidget);
+}
+
+Future<void> reloadWeekPlan(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Предыдущий месяц'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byTooltip('Следующий месяц'));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -528,5 +549,165 @@ void main() {
     expect(detail!.results, hasLength(1));
     expect(detail.results.single.reps, 12);
     expect(detail.results.single.weightKg, 50);
+  });
+
+  testWidgets('противопоказания: предупреждение при старте и продолжение', (
+    tester,
+  ) async {
+    final db = AppDatabase(executor: NativeDatabase.memory());
+    addTearDown(() => db.close());
+    await pumpApp(tester, db);
+
+    await goToTab(tester, Icons.person_outline);
+    final healthLink = find.text('Противопоказания');
+    await ensureFieldVisible(tester, healthLink);
+    await tester.tap(healthLink);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(SwitchListTile, 'Колени'));
+    await tester.pumpAndSettle();
+    final saveHealth = find.widgetWithText(FilledButton, 'Сохранить');
+    await ensureFieldVisible(tester, saveHealth);
+    await tester.tap(saveHealth);
+    await tester.pumpAndSettle();
+    await Future<void>.delayed(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    await goToTab(tester, Icons.fitness_center_outlined);
+    await createExercise(
+      tester,
+      _squat,
+      ExerciseType.strength,
+      contraindication: 'Колени',
+    );
+    await pullToRefreshExercises(tester);
+    expect(find.text(_squat), findsOneWidget);
+
+    final today = DateTime.now().weekday;
+
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byTooltip('Новая программа'));
+    await tester.pumpAndSettle();
+    await enterField(
+      tester,
+      find.widgetWithText(TextFormField, 'Название'),
+      _programName,
+    );
+
+    await configureDay(
+      tester,
+      1,
+      today,
+      mainSets: [
+        (
+          _squat,
+          {
+            'Подходы': '1',
+            'Повторения': '10',
+            'Вес (кг)': '40',
+            'Отдых (сек)': '10',
+          },
+        ),
+      ],
+      alternativeSets: const [],
+    );
+
+    final programSave = find.descendant(
+      of: find.byType(ProgramBuilderScreen),
+      matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    );
+    await ensureFieldVisible(tester, programSave);
+    await tester.tap(programSave);
+    await tester.pumpAndSettle();
+    await pullToRefreshPrograms(tester);
+
+    await goToTab(tester, Icons.event_note_outlined);
+    await tester.tap(find.text('Начать'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Противопоказания'), findsOneWidget);
+    expect(find.text('• Тест Приседания — Колени'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Продолжить'));
+    await tester.pumpAndSettle();
+
+    await completeStrengthSet(tester, repeats: '10', weight: '40');
+    await skipRestIfShown(tester);
+    await finishAndGoProgress(tester);
+    await expectWorkoutCount(tester, '1');
+  });
+
+  testWidgets('план недели: пропуск, отмена пропуска и перенос дня', (
+    tester,
+  ) async {
+    final db = AppDatabase(executor: NativeDatabase.memory());
+    addTearDown(() => db.close());
+    await pumpApp(tester, db);
+
+    await createExercise(tester, _running, ExerciseType.running);
+    await pullToRefreshExercises(tester);
+
+    final tomorrow = day2Weekday(DateTime.now().weekday);
+
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byTooltip('Новая программа'));
+    await tester.pumpAndSettle();
+    await enterField(
+      tester,
+      find.widgetWithText(TextFormField, 'Название'),
+      _programName,
+    );
+
+    await configureDay(
+      tester,
+      1,
+      tomorrow,
+      mainSets: [
+        (
+          _running,
+          {'Время (мин)': '15', 'Дистанция (км)': '3', 'Отдых (сек)': '10'},
+        ),
+      ],
+      alternativeSets: const [],
+    );
+
+    final programSave = find.descendant(
+      of: find.byType(ProgramBuilderScreen),
+      matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    );
+    await ensureFieldVisible(tester, programSave);
+    await tester.tap(programSave);
+    await tester.pumpAndSettle();
+    await pullToRefreshPrograms(tester);
+
+    await goToTab(tester, Icons.event_note_outlined);
+    expect(find.text('Запланировано'), findsOneWidget);
+    expect(find.text('Перенести на сегодня'), findsOneWidget);
+    expect(find.text('Пропустить'), findsOneWidget);
+
+    await tester.tap(find.text('Пропустить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Пропущено'), findsOneWidget);
+    expect(find.text('Отменить пропуск'), findsOneWidget);
+
+    await tester.tap(find.text('Отменить пропуск'));
+    await tester.pumpAndSettle();
+    expect(find.text('Запланировано'), findsOneWidget);
+
+    await tester.tap(find.text('Перенести на сегодня'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    await completeRunningSet(tester, minutes: '15', distance: '3');
+    await skipRestIfShown(tester);
+    await finishAndGoProgress(tester);
+    await expectWorkoutCount(tester, '1');
+
+    await goToTab(tester, Icons.event_note_outlined);
+    await reloadWeekPlan(tester);
+    expect(find.text('Перенесено'), findsOneWidget);
   });
 }
