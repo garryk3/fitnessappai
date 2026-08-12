@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -146,4 +147,79 @@ void main() {
     final days = await repository.getDays(created.id!);
     expect(days[1].dayOfWeek, 5);
   });
+
+  testWidgets(
+    'наполнение дней не создаёт дубликат программы и сохраняет дни недели',
+    (tester) async {
+      final router = GoRouter(
+        initialLocation: '/programs/new',
+        routes: [
+          GoRoute(
+            path: '/programs/new',
+            builder: (context, state) =>
+                ProgramBuilderScreen(repository: repository),
+          ),
+          GoRoute(
+            path: '/programs/:id/day/:dayIndex',
+            builder: (context, state) =>
+                Scaffold(appBar: AppBar(title: const Text('Наполнение дня'))),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await enterName(tester, 'Сплит');
+      await tester.tap(find.text('2'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('День 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<int?>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Пн').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.playlist_add).at(0));
+      await tester.pumpAndSettle();
+      expect(find.text('Наполнение дня'), findsOneWidget);
+
+      final afterFirst = await repository.getPrograms();
+      expect(afterFirst, hasLength(1));
+      final programId = afterFirst.single.program.id!;
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('День 2'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<int?>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ср').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.playlist_add).at(1));
+      await tester.pumpAndSettle();
+
+      final programs = await repository.getPrograms();
+      expect(programs, hasLength(1));
+      expect(programs.single.program.id, programId);
+
+      final days = await repository.getDays(programId);
+      expect(days[0].dayOfWeek, 1);
+      expect(days[1].dayOfWeek, 3);
+    },
+  );
 }

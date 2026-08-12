@@ -158,6 +158,56 @@ void main() {
       expect(days.single.dayOfWeek, 2);
     });
 
+    test(
+      'update с днями сохраняет id существующих дней и их упражнения',
+      () async {
+        final created = await repo.create(program(daysCount: 2), [
+          day(dayIndex: 0, dayOfWeek: 1),
+          day(dayIndex: 1),
+        ]);
+        final originalDays = await repo.getDays(created.id!);
+        final exId = await insertExercise();
+        await repo.addExerciseToDay(originalDays[0].id!, exId);
+
+        await repo.update(
+          created,
+          days: [
+            day(dayIndex: 0, dayOfWeek: 3),
+            day(dayIndex: 1, dayOfWeek: 5),
+          ],
+        );
+
+        final days = await repo.getDays(created.id!);
+        expect(days.map((d) => d.id), originalDays.map((d) => d.id));
+        expect(days[0].dayOfWeek, 3);
+        expect(days[1].dayOfWeek, 5);
+
+        final exercises = await repo.getExercises(originalDays[0].id!);
+        expect(exercises, hasLength(1));
+        expect(exercises.single.exerciseId, exId);
+      },
+    );
+
+    test('update с днями вставляет новые и удаляет отсутствующие', () async {
+      final created = await repo.create(program(daysCount: 2), [
+        day(dayIndex: 0),
+        day(dayIndex: 1),
+      ]);
+      final originalDays = await repo.getDays(created.id!);
+
+      await repo.update(
+        created.copyWith(daysCount: 2),
+        days: [day(dayIndex: 0), day(dayIndex: 2, dayOfWeek: 6)],
+      );
+
+      final days = await repo.getDays(created.id!);
+      expect(days, hasLength(2));
+      expect(days[0].id, originalDays[0].id);
+      expect(days[1].dayIndex, 2);
+      expect(days[1].dayOfWeek, 6);
+      expect(days[1].id, isNot(originalDays[1].id));
+    });
+
     test('delete удаляет программу с днями и упражнениями (cascade)', () async {
       final created = await createProgram();
       final exId = await insertExercise();

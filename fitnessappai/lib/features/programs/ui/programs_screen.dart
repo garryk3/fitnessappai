@@ -41,6 +41,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
       appBar: AppBar(title: Text(l10n.navPrograms)),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'programs-fab',
         onPressed: () => context.push('/programs/new'),
         tooltip: l10n.programListCreate,
         child: const Icon(Icons.add),
