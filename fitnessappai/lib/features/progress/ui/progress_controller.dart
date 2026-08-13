@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
@@ -9,12 +10,18 @@ class ProgressController {
   ProgressController({
     required this.statsAggregator,
     required this.exerciseRepository,
+    DataChangeNotifier? changes,
   }) {
+    _reloadSubscription = ChangeReloadSubscription(
+      changes: changes ?? appDataChanges,
+      reload: _load,
+    );
     _load();
   }
 
   final StatsAggregator statsAggregator;
   final ExerciseRepository exerciseRepository;
+  late final ChangeReloadSubscription _reloadSubscription;
 
   final Signal<StatPeriod> period = Signal(StatPeriod.week);
   final Signal<bool> isLoading = Signal(true);
@@ -88,5 +95,9 @@ class ProgressController {
       id,
       period.value,
     );
+  }
+
+  void dispose() {
+    _reloadSubscription.dispose();
   }
 }

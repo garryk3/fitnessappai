@@ -259,4 +259,24 @@ void main() {
     expect(find.text('Приседания'), findsOneWidget);
     expect(find.byType(LineChart), findsOneWidget);
   });
+
+  testWidgets('карточки обновляются после новой сессии без переоткрытия', (
+    tester,
+  ) async {
+    final exerciseId = await insertExercise('Приседания');
+    await pumpProgress(tester);
+
+    expect(find.text('Нет тренировок за период'), findsOneWidget);
+
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 12)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Нет тренировок за период'), findsNothing);
+    expect(
+      find.descendant(of: statCard('Тренировок'), matching: find.text('1')),
+      findsOneWidget,
+    );
+  });
 }

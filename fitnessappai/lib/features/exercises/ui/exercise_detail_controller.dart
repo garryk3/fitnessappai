@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/contraindication_tag.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
@@ -41,12 +42,20 @@ class ExerciseDetailController {
     this.exerciseId, {
     required this.profileRepository,
     this.service = const ContraindicationService(),
-  });
+    DataChangeNotifier? changes,
+  }) {
+    _reloadSubscription = ChangeReloadSubscription(
+      changes: changes ?? appDataChanges,
+      reload: load,
+    );
+  }
 
   final ExerciseRepository _repository;
   final int exerciseId;
   final UserProfileRepository profileRepository;
   final ContraindicationService service;
+
+  late final ChangeReloadSubscription _reloadSubscription;
 
   final Signal<ExerciseDetailData?> data = Signal(null);
   final Signal<bool> isLoading = Signal(true);
@@ -94,6 +103,10 @@ class ExerciseDetailController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void dispose() {
+    _reloadSubscription.dispose();
   }
 }
 

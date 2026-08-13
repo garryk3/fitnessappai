@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/domain/body_measurement_validator.dart';
@@ -8,9 +9,11 @@ import 'package:fitnessappai/features/profile/domain/metric_point.dart';
 
 /// Репозиторий замеров тела: CRUD, выборка по периодам и `latest`.
 class BodyMeasurementRepository {
-  BodyMeasurementRepository(this._db);
+  BodyMeasurementRepository(this._db, {DataChangeNotifier? changes})
+    : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
+  final DataChangeNotifier _changes;
   final BodyMeasurementValidator _validator = const BodyMeasurementValidator();
 
   /// Добавляет замер после валидации значений и возвращает его с id.
@@ -22,6 +25,7 @@ class BodyMeasurementRepository {
     final id = await _db
         .into(_db.bodyMeasurements)
         .insert(_toCompanion(measurement));
+    _changes.notifyChanged();
     return (await _getById(id))!;
   }
 
@@ -54,6 +58,7 @@ class BodyMeasurementRepository {
     await (_db.delete(
       _db.bodyMeasurements,
     )..where((t) => t.id.equals(id))).go();
+    _changes.notifyChanged();
   }
 
   /// Точки метрики за период [start]..[end] (включительно) по датам.

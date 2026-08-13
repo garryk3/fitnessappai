@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -36,15 +37,21 @@ class WeekPlanController {
     required this.programRepository,
     required this.workoutRepository,
     DateTime Function()? clock,
+    DataChangeNotifier? changes,
   }) : _now = clock ?? DateTime.now {
     weekStart.value = _mondayOf(_dateOnly(_now()));
     selectedDate.value = _dateOnly(_now());
+    _reloadSubscription = ChangeReloadSubscription(
+      changes: changes ?? appDataChanges,
+      reload: _load,
+    );
     _load();
   }
 
   final ProgramRepository programRepository;
   final WorkoutRepository workoutRepository;
   final DateTime Function() _now;
+  late final ChangeReloadSubscription _reloadSubscription;
 
   final Signal<List<WeekPlanItem>> items = Signal(<WeekPlanItem>[]);
   final Signal<bool> isLoading = Signal(false);
@@ -133,6 +140,10 @@ class WeekPlanController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void dispose() {
+    _reloadSubscription.dispose();
   }
 
   WeekPlanStatus _statusOf(

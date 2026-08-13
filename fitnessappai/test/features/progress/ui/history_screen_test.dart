@@ -177,4 +177,20 @@ void main() {
 
     expect(find.text('Тренировка не найдена'), findsOneWidget);
   });
+
+  testWidgets('новая сессия появляется без повторного открытия экрана', (
+    tester,
+  ) async {
+    await pumpHistory(tester);
+    expect(find.text('Пока нет тренировок'), findsOneWidget);
+
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(2026, 8, 10)),
+      [setResult()],
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Пока нет тренировок'), findsNothing);
+    expect(find.text('База'), findsOneWidget);
+  });
 }

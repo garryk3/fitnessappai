@@ -270,4 +270,23 @@ void main() {
 
     expect(find.text('EDIT_SCREEN'), findsOneWidget);
   });
+
+  testWidgets('обновляется после изменения данных в БД без переоткрытия', (
+    tester,
+  ) async {
+    final created = await repository.create(
+      exercise('Приседания', description: 'Старая техника'),
+      const [],
+    );
+
+    await pumpDetail(tester, exerciseId: created.id!);
+    expect(find.text('Старая техника'), findsOneWidget);
+
+    await repository.update(
+      created.copyWith(description: 'Новая техника'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Новая техника'), findsOneWidget);
+  });
 }

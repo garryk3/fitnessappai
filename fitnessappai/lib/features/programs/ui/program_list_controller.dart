@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -21,11 +22,16 @@ class ProgramListItem {
 
 /// Управляет списком программ: загрузка, обновление, удаление.
 class ProgramListController {
-  ProgramListController(this._repository) {
+  ProgramListController(this._repository, {DataChangeNotifier? changes}) {
+    _reloadSubscription = ChangeReloadSubscription(
+      changes: changes ?? appDataChanges,
+      reload: _load,
+    );
     _load();
   }
 
   final ProgramRepository _repository;
+  late final ChangeReloadSubscription _reloadSubscription;
 
   final Signal<List<ProgramListItem>> items = Signal(<ProgramListItem>[]);
   final Signal<bool> isLoading = Signal(false);
@@ -52,5 +58,9 @@ class ProgramListController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void dispose() {
+    _reloadSubscription.dispose();
   }
 }

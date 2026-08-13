@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_list_item.dart';
@@ -15,7 +16,12 @@ class ExerciseListController {
     this._repository, {
     required this.profileRepository,
     this.service = const ContraindicationService(),
+    DataChangeNotifier? changes,
   }) {
+    _reloadSubscription = ChangeReloadSubscription(
+      changes: changes ?? appDataChanges,
+      reload: _load,
+    );
     _load();
   }
 
@@ -24,6 +30,8 @@ class ExerciseListController {
   final ExerciseRepository _repository;
   final UserProfileRepository profileRepository;
   final ContraindicationService service;
+
+  late final ChangeReloadSubscription _reloadSubscription;
 
   final Signal<List<ExerciseListItem>> items = Signal(<ExerciseListItem>[]);
   final Signal<bool> isLoading = Signal(false);
@@ -82,5 +90,6 @@ class ExerciseListController {
 
   void dispose() {
     _debounce?.cancel();
+    _reloadSubscription.dispose();
   }
 }
