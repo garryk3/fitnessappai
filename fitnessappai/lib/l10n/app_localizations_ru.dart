@@ -227,6 +227,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseFormAnimationRemove => 'Убрать анимацию';
 
   @override
+  String get exerciseFormAnimationError =>
+      'Не удалось загрузить файл. Попробуйте ещё раз.';
+
+  @override
   String get exerciseFormNameRequired => 'Введите название';
 
   @override

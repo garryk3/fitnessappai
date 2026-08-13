@@ -37,6 +37,23 @@ void main() {
     expect(identical(cache.imageFor('/tmp/a.png'), before), isFalse);
   });
 
+  test('remove убирает провайдеры файла из кэша', () {
+    final before = cache.imageFor('/tmp/a.png');
+    cache.imageFor('/tmp/a.png', cacheWidth: 100);
+    cache.remove('/tmp/a.png');
+    expect(identical(cache.imageFor('/tmp/a.png'), before), isFalse);
+    expect(
+      identical(cache.imageFor('/tmp/a.png', cacheWidth: 100), before),
+      isFalse,
+    );
+  });
+
+  test('remove не трогает провайдеры других файлов', () {
+    final other = cache.imageFor('/tmp/b.png');
+    cache.remove('/tmp/a.png');
+    expect(identical(cache.imageFor('/tmp/b.png'), other), isTrue);
+  });
+
   test('без cacheWidth возвращается FileImage, с cacheWidth - ResizeImage', () {
     expect(cache.imageFor('/tmp/a.png'), isA<FileImage>());
     expect(cache.imageFor('/tmp/a.png', cacheWidth: 200), isA<ResizeImage>());

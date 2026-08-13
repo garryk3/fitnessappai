@@ -20,6 +20,12 @@ class MediaCache {
     );
   }
 
+  /// Удаляет из кэша провайдеры для файла по [path] (например, после
+  /// удаления файла), чтобы не оставались ссылки на несуществующий путь.
+  void remove(String path) {
+    _cache.removeWhere((key, _) => key.startsWith('$path::'));
+  }
+
   /// Очищает кэш (например, после удаления файлов).
   void clear() => _cache.clear();
 

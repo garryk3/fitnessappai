@@ -7,16 +7,22 @@ import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 
 /// Репозиторий упражнений: CRUD, поиск/фильтр, мышцы и противопоказания.
 class ExerciseRepository {
-  ExerciseRepository(this._db, this._mediaStore, {DataChangeNotifier? changes})
-    : _changes = changes ?? appDataChanges;
+  ExerciseRepository(
+    this._db,
+    this._mediaStore, {
+    DataChangeNotifier? changes,
+    this._mediaCache,
+  }) : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
   final MediaStore _mediaStore;
   final DataChangeNotifier _changes;
+  final MediaCache? _mediaCache;
 
   void _notify() => _changes.notifyChanged();
 
@@ -119,6 +125,7 @@ class ExerciseRepository {
     await (_db.delete(_db.exercises)..where((t) => t.id.equals(id))).go();
     for (final path in _mediaPaths(exercise)) {
       await _mediaStore.deleteFile(path);
+      _mediaCache?.remove(path);
     }
     _notify();
   }

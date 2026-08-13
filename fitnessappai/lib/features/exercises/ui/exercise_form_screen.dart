@@ -142,9 +142,19 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
       intensity == MuscleIntensity.primary ? 1.0 : 0.5;
 
   void _pickAnimation() async {
-    final path = await _mediaStore.importFromPicker();
-    if (path != null && mounted) {
-      setState(() => _animationPath = path);
+    try {
+      final path = await _mediaStore.importFromPicker();
+      if (path != null && mounted) {
+        setState(() => _animationPath = path);
+      }
+    } on MediaImportException {
+      if (!mounted) {
+        return;
+      }
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.exerciseFormAnimationError)));
     }
   }
 

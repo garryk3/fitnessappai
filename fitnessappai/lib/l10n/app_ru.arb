@@ -87,6 +87,7 @@
   "exerciseFormAnimation": "Анимация",
   "exerciseFormAnimationPick": "Выбрать анимацию",
   "exerciseFormAnimationRemove": "Убрать анимацию",
+  "exerciseFormAnimationError": "Не удалось загрузить файл. Попробуйте ещё раз.",
   "exerciseFormNameRequired": "Введите название",
   "exerciseFormSave": "Сохранить",
   "exerciseParams": "Параметры упражнения",

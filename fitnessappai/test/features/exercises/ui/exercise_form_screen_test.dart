@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
@@ -47,6 +47,7 @@ void main() {
     WidgetTester tester, {
     int? exerciseId,
     ExerciseRepository? repo,
+    MediaFilePicker? picker,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -60,7 +61,7 @@ void main() {
           mediaStore: MediaStore(
             directoryProvider: () async => tempDir,
             assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
-            filePicker: () async => lastPickedPath,
+            filePicker: picker ?? () async => lastPickedPath,
           ),
           mediaCache: MediaCache(),
         ),
@@ -266,5 +267,24 @@ void main() {
     expect(updated.isCustom, before!.isCustom);
     expect(updated.createdAt, before.createdAt);
     expect(await repository.getAll(), hasLength(1));
+  });
+
+  testWidgets('ошибка выбора анимации показывает SnackBar без краха', (
+    tester,
+  ) async {
+    await pumpForm(
+      tester,
+      picker: () async => throw PlatformException(code: 'pick_failed'),
+    );
+
+    await scrollFormTo(tester, find.text('Выбрать анимацию'));
+    await tester.tap(find.text('Выбрать анимацию'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Не удалось загрузить файл. Попробуйте ещё раз.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

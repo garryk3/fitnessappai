@@ -14,6 +14,19 @@ typedef AssetLoader = Future<Uint8List> Function(String assetPath);
 /// Пикер файлов; возвращает путь выбранного файла или `null` при отмене.
 typedef MediaFilePicker = Future<String?> Function();
 
+/// Бросается при неудачном импорте медиафайла (ошибка пикера, чтения или
+/// копирования файла).
+class MediaImportException implements Exception {
+  MediaImportException(this.message, {this.cause});
+
+  final String message;
+  final Object? cause;
+
+  @override
+  String toString() =>
+      'MediaImportException($message${cause == null ? '' : ', cause: $cause'})';
+}
+
 /// Слой доступа к медиафайлам (анимации и изображения упражнений).
 ///
 /// Копирует ассеты и импортированные файлы в поддиректорию `media`
@@ -52,12 +65,25 @@ class MediaStore {
   /// Открывает системный диалог выбора файла и копирует его в storage.
   ///
   /// Возвращает путь к созданному файлу или `null`, если выбор отменён.
+  /// При ошибке пикера, чтения или копирования бросает [MediaImportException].
   Future<String?> importFromPicker() async {
-    final picked = await _filePicker();
+    final String? picked;
+    try {
+      picked = await _filePicker();
+    } catch (e) {
+      throw MediaImportException('Не удалось открыть выбор файла', cause: e);
+    }
     if (picked == null) {
       return null;
     }
-    return _writeFile(p.basename(picked), await File(picked).readAsBytes());
+    try {
+      return _writeFile(p.basename(picked), await File(picked).readAsBytes());
+    } catch (e) {
+      throw MediaImportException(
+        'Не удалось скопировать файл "$picked"',
+        cause: e,
+      );
+    }
   }
 
   /// Удаляет файл по [path]. Отсутствующий файл не считается ошибкой.
