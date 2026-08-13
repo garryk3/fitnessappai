@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
@@ -51,9 +52,13 @@ class ProgramDetail {
 
 /// Репозиторий программ: CRUD, дни и упражнения с реордером, валидация.
 class ProgramRepository {
-  ProgramRepository(this._db);
+  ProgramRepository(this._db, {DataChangeNotifier? changes})
+    : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
+  final DataChangeNotifier _changes;
+
+  void _notify() => _changes.notifyChanged();
 
   static final ProgramValidator _programValidator = ProgramValidator();
   static final ProgramDayExerciseValidator _exerciseValidator =
@@ -146,7 +151,7 @@ class ProgramRepository {
   /// Создаёт программу с днями. Проверяется структура дней (1–7, индексы).
   Future<Program> create(Program program, List<ProgramDay> days) async {
     _validateDayStructure(program, days);
-    return _db.transaction(() async {
+    final created = await _db.transaction(() async {
       final id = await _db.into(_db.programs).insert(_toCompanion(program));
       await _db.batch((batch) {
         batch.insertAll(_db.programDays, [
@@ -160,6 +165,8 @@ class ProgramRepository {
       });
       return (await getById(id))!;
     });
+    _notify();
+    return created;
   }
 
   /// Обновляет программу. При передаче [days] заменяет дни, при передаче
@@ -169,7 +176,7 @@ class ProgramRepository {
     List<ProgramDay>? days,
     Map<int, List<ProgramDayExercise>>? exercisesByDayIndex,
   }) async {
-    return _db.transaction(() async {
+    final updated = await _db.transaction(() async {
       final id = program.id!;
       await (_db.update(
         _db.programs,
@@ -186,11 +193,14 @@ class ProgramRepository {
       }
       return (await getById(id))!;
     });
+    _notify();
+    return updated;
   }
 
   /// Удаляет программу вместе с днями и упражнениями (FK cascade).
   Future<void> delete(int id) async {
     await (_db.delete(_db.programs)..where((t) => t.id.equals(id))).go();
+    _notify();
   }
 
   /// Добавляет день в программу на позицию [dayIndex], сдвигая следующие дни.
@@ -199,7 +209,7 @@ class ProgramRepository {
     required int dayIndex,
     int? dayOfWeek,
   }) async {
-    return _db.transaction(() async {
+    final day = await _db.transaction(() async {
       final rows =
           await (_db.select(_db.programDays)
                 ..where((t) => t.programId.equals(programId))
@@ -223,6 +233,8 @@ class ProgramRepository {
       await _syncDaysCount(programId);
       return _toDay((await _dayById(id))!);
     });
+    _notify();
+    return day;
   }
 
   /// Обновляет день (день недели и/или индекс).
@@ -235,6 +247,7 @@ class ProgramRepository {
         dayOfWeek: Value(day.dayOfWeek),
       ),
     );
+    _notify();
     return _toDay((await _dayById(day.id!))!);
   }
 
@@ -264,6 +277,7 @@ class ProgramRepository {
       });
       await _syncDaysCount(day.programId);
     });
+    _notify();
   }
 
   /// Переиндексирует дни программы в порядке [dayIds].
@@ -277,6 +291,7 @@ class ProgramRepository {
         );
       }
     });
+    _notify();
   }
 
   /// Добавляет упражнение в день в конец набора ([isAlternative]).
@@ -302,6 +317,7 @@ class ProgramRepository {
             isAlternative: Value(isAlternative),
           ),
         );
+    _notify();
     return _toDayExercise((await _dayExerciseById(id))!);
   }
 
@@ -317,6 +333,7 @@ class ProgramRepository {
     await (_db.update(_db.programDayExercises)
           ..where((t) => t.id.equals(item.id!)))
         .write(_toDayExerciseCompanion(item));
+    _notify();
     return _toDayExercise((await _dayExerciseById(item.id!))!);
   }
 
@@ -325,6 +342,7 @@ class ProgramRepository {
     await (_db.delete(
       _db.programDayExercises,
     )..where((t) => t.id.equals(id))).go();
+    _notify();
   }
 
   /// Переиндексирует упражнения дня в порядке [itemIds].
@@ -338,6 +356,7 @@ class ProgramRepository {
         );
       }
     });
+    _notify();
   }
 
   Future<Map<int, int>> _exercisesCountByProgram() async {

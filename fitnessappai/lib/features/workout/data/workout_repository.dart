@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
@@ -15,9 +16,13 @@ class WorkoutSessionDetail {
 
 /// Репозиторий тренировок: запись сессий с результатами и отметки пропусков.
 class WorkoutRepository {
-  WorkoutRepository(this._db);
+  WorkoutRepository(this._db, {DataChangeNotifier? changes})
+    : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
+  final DataChangeNotifier _changes;
+
+  void _notify() => _changes.notifyChanged();
 
   /// Сохраняет сессию и результаты подходов в одной транзакции.
   ///
@@ -25,8 +30,8 @@ class WorkoutRepository {
   Future<WorkoutSessionDetail> saveSession(
     WorkoutSession session,
     List<WorkoutSetResult> results,
-  ) {
-    return _db.transaction(() async {
+  ) async {
+    final saved = await _db.transaction(() async {
       final sessionId = await _db
           .into(_db.workoutSessions)
           .insert(_toSessionCompanion(session));
@@ -40,6 +45,8 @@ class WorkoutRepository {
       });
       return (await getSession(sessionId))!;
     });
+    _notify();
+    return saved;
   }
 
   /// Сессии тренировочного дня за неделю с понедельником [weekStart].
@@ -135,6 +142,7 @@ class WorkoutRepository {
             status: ScheduleMarkStatus.skipped,
           ),
         );
+    _notify();
   }
 
   /// Убирает отметку пропуска дня на неделе [weekStart].
@@ -145,6 +153,7 @@ class WorkoutRepository {
               t.weekStart.equals(weekStart.millisecondsSinceEpoch),
         ))
         .go();
+    _notify();
   }
 
   /// Отметки пропусков за неделю с понедельником [weekStart].

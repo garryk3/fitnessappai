@@ -39,6 +39,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     );
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<void> _skip(WeekPlanItem item) => _controller.markSkipped(item);
 
   Future<void> _unskip(WeekPlanItem item) => _controller.clearSkip(item);

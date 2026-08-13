@@ -5,6 +5,8 @@ import 'package:fitnessappai/core/database/tables/program_days.dart';
 
 /// Упражнение внутри тренировочного дня.
 @DataClassName('ProgramDayExerciseRow')
+@TableIndex(name: 'program_day_exercises_day_idx', columns: {#dayId})
+@TableIndex(name: 'program_day_exercises_exercise_idx', columns: {#exerciseId})
 class ProgramDayExercises extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get dayId =>

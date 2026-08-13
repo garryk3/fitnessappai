@@ -55,6 +55,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
   @override
   void dispose() {
+    _controller.dispose();
     super.dispose();
   }
 

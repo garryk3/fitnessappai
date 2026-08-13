@@ -6,6 +6,7 @@ import 'package:fitnessappai/core/database/tables/program_days.dart';
 
 /// Отметка пропуска тренировочного дня на неделе.
 @DataClassName('ScheduleMarkRow')
+@TableIndex(name: 'schedule_marks_day_idx', columns: {#programDayId})
 class ScheduleMarks extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get programDayId =>

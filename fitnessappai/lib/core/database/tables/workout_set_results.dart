@@ -7,6 +7,8 @@ import 'package:fitnessappai/core/database/tables/workout_sessions.dart';
 
 /// Результат одного подхода в тренировочной сессии.
 @DataClassName('WorkoutSetResultRow')
+@TableIndex(name: 'workout_set_results_session_idx', columns: {#sessionId})
+@TableIndex(name: 'workout_set_results_exercise_idx', columns: {#exerciseId})
 class WorkoutSetResults extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get sessionId =>

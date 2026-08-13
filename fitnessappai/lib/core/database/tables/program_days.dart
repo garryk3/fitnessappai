@@ -4,6 +4,7 @@ import 'package:fitnessappai/core/database/tables/programs.dart';
 
 /// Тренировочный день программы.
 @DataClassName('ProgramDayRow')
+@TableIndex(name: 'program_days_program_idx', columns: {#programId})
 class ProgramDays extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get programId =>

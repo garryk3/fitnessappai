@@ -31,6 +31,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
 
   @override
   void dispose() {
+    _controller.dispose();
     super.dispose();
   }
 

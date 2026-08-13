@@ -4,6 +4,7 @@ import 'package:fitnessappai/core/database/tables/program_days.dart';
 
 /// Напоминание о тренировочном дне.
 @DataClassName('WorkoutReminderRow')
+@TableIndex(name: 'workout_reminders_day_idx', columns: {#programDayId})
 class WorkoutReminders extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get programDayId =>

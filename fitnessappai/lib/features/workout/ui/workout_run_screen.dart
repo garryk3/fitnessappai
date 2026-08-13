@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -9,6 +7,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
@@ -60,6 +59,7 @@ class WorkoutRunScreen extends StatefulWidget {
     this.programRepository,
     this.exerciseRepository,
     this.workoutRepository,
+    this.mediaCache,
     this.wakelockService = const WakelockPlusService(),
     this.clock,
     this.timerFactory,
@@ -70,6 +70,7 @@ class WorkoutRunScreen extends StatefulWidget {
   final ProgramRepository? programRepository;
   final ExerciseRepository? exerciseRepository;
   final WorkoutRepository? workoutRepository;
+  final MediaCache? mediaCache;
   final WakelockService wakelockService;
   final DateTime Function()? clock;
   final TimerFactory? timerFactory;
@@ -80,10 +81,12 @@ class WorkoutRunScreen extends StatefulWidget {
 
 class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
   late final WorkoutRunController _controller;
+  late final MediaCache _mediaCache;
 
   @override
   void initState() {
     super.initState();
+    _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
     _controller = WorkoutRunController(
       programDayId: widget.programDayId,
       variant: widget.variant,
@@ -211,7 +214,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          _ExerciseMedia(exercise: exercise.exercise),
+          _ExerciseMedia(exercise: exercise.exercise, mediaCache: _mediaCache),
           const SizedBox(height: 12),
           Text(
             exercise.name,
@@ -268,9 +271,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
 
 /// Анимация упражнения с плейсхолдером при отсутствии файла.
 class _ExerciseMedia extends StatelessWidget {
-  const _ExerciseMedia({required this.exercise});
+  const _ExerciseMedia({required this.exercise, required this.mediaCache});
 
   final Exercise exercise;
+  final MediaCache mediaCache;
 
   @override
   Widget build(BuildContext context) {
@@ -280,8 +284,8 @@ class _ExerciseMedia extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: Image.file(
-        File(path),
+      child: Image(
+        image: mediaCache.imageFor(path),
         height: 180,
         width: double.infinity,
         fit: BoxFit.cover,

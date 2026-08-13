@@ -5,6 +5,10 @@ import 'package:fitnessappai/core/database/tables/user_profiles.dart';
 
 /// Связь пользователя с тегом противопоказания (M2M).
 @DataClassName('UserContraindicationRow')
+@TableIndex(
+  name: 'user_contraindications_tag_idx',
+  columns: {#contraindicationTagId},
+)
 class UserContraindications extends Table {
   IntColumn get userId =>
       integer().references(UserProfiles, #id, onDelete: KeyAction.cascade)();

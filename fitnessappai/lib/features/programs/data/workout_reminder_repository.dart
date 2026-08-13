@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 
@@ -20,9 +21,11 @@ class ReminderSchedule {
 
 /// Репозиторий напоминаний о тренировочных днях.
 class WorkoutReminderRepository {
-  WorkoutReminderRepository(this._db);
+  WorkoutReminderRepository(this._db, {DataChangeNotifier? changes})
+    : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
+  final DataChangeNotifier _changes;
 
   /// Возвращает напоминание дня по [dayId] или `null`.
   Future<WorkoutReminder?> getForDay(int dayId) async {
@@ -56,11 +59,13 @@ class WorkoutReminderRepository {
               enabled: Value(enabled),
             ),
           );
+      _changes.notifyChanged();
       return _toReminder((await _reminderById(id))!);
     }
     await (_db.update(
       _db.workoutReminders,
     )..where((t) => t.id.equals(existing.id!))).write(values);
+    _changes.notifyChanged();
     return _toReminder((await _reminderById(existing.id!))!);
   }
 
@@ -69,6 +74,7 @@ class WorkoutReminderRepository {
     await (_db.delete(
       _db.workoutReminders,
     )..where((t) => t.programDayId.equals(dayId))).go();
+    _changes.notifyChanged();
   }
 
   /// Все напоминания с днём недели и названием программы — для

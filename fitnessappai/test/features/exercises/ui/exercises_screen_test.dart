@@ -176,4 +176,18 @@ void main() {
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(find.text('Противопоказания'), findsNothing);
   });
+
+  testWidgets('новое упражнение появляется без повторного открытия экрана', (
+    tester,
+  ) async {
+    await pumpExercises(tester);
+    expect(find.text('Список упражнений пуст'), findsOneWidget);
+
+    await repository.create(exercise('Новое упражнение'), const []);
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Список упражнений пуст'), findsNothing);
+    expect(find.text('Новое упражнение'), findsOneWidget);
+  });
 }

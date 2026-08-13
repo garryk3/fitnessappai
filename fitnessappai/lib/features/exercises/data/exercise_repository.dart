@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/contraindication_tag.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
@@ -10,10 +11,14 @@ import 'package:fitnessappai/core/media/media_store.dart';
 
 /// Репозиторий упражнений: CRUD, поиск/фильтр, мышцы и противопоказания.
 class ExerciseRepository {
-  ExerciseRepository(this._db, this._mediaStore);
+  ExerciseRepository(this._db, this._mediaStore, {DataChangeNotifier? changes})
+    : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
   final MediaStore _mediaStore;
+  final DataChangeNotifier _changes;
+
+  void _notify() => _changes.notifyChanged();
 
   /// Возвращает все упражнения, отсортированные по названию.
   Future<List<Exercise>> getAll() async {
@@ -75,13 +80,15 @@ class ExerciseRepository {
     Exercise exercise,
     List<ExerciseMuscle> muscles,
   ) async {
-    return _db.transaction(() async {
+    final created = await _db.transaction(() async {
       final id = await _db.into(_db.exercises).insert(_toCompanion(exercise));
       if (muscles.isNotEmpty) {
         await _insertMuscles(id, muscles);
       }
       return (await getById(id))!;
     });
+    _notify();
+    return created;
   }
 
   /// Обновляет упражнение. Если [muscles] передан, заменяет привязки мышц.
@@ -89,7 +96,7 @@ class ExerciseRepository {
     Exercise exercise, {
     List<ExerciseMuscle>? muscles,
   }) async {
-    return _db.transaction(() async {
+    final updated = await _db.transaction(() async {
       final id = exercise.id!;
       await (_db.update(
         _db.exercises,
@@ -99,6 +106,8 @@ class ExerciseRepository {
       }
       return (await getById(id))!;
     });
+    _notify();
+    return updated;
   }
 
   /// Удаляет упражнение вместе со связями (FK cascade) и файлами медиа.
@@ -111,6 +120,7 @@ class ExerciseRepository {
     for (final path in _mediaPaths(exercise)) {
       await _mediaStore.deleteFile(path);
     }
+    _notify();
   }
 
   /// Возвращает привязки мышц упражнения.
@@ -168,8 +178,9 @@ class ExerciseRepository {
   }
 
   /// Заменяет привязки мышц упражнения.
-  Future<void> setMuscles(int exerciseId, List<ExerciseMuscle> muscles) {
-    return _db.transaction(() => _replaceMuscles(exerciseId, muscles));
+  Future<void> setMuscles(int exerciseId, List<ExerciseMuscle> muscles) async {
+    await _db.transaction(() => _replaceMuscles(exerciseId, muscles));
+    _notify();
   }
 
   /// Возвращает теги противопоказаний упражнения.
@@ -189,8 +200,8 @@ class ExerciseRepository {
   }
 
   /// Заменяет теги противопоказаний упражнения.
-  Future<void> setContraindications(int exerciseId, List<int> tagIds) {
-    return _db.transaction(() async {
+  Future<void> setContraindications(int exerciseId, List<int> tagIds) async {
+    await _db.transaction(() async {
       await (_db.delete(
         _db.exerciseContraindications,
       )..where((t) => t.exerciseId.equals(exerciseId))).go();
@@ -204,6 +215,7 @@ class ExerciseRepository {
         ]);
       });
     });
+    _notify();
   }
 
   Future<void> _insertMuscles(int exerciseId, List<ExerciseMuscle> muscles) {

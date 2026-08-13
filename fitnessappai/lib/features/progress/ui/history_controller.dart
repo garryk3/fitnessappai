@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
@@ -17,11 +18,19 @@ class HistoryItem {
 
 /// Управляет экраном истории тренировок.
 class HistoryController {
-  HistoryController({required this.workoutRepository}) {
+  HistoryController({
+    required this.workoutRepository,
+    DataChangeNotifier? changes,
+  }) {
+    _reloadSubscription = ChangeReloadSubscription(
+      changes: changes ?? appDataChanges,
+      reload: _load,
+    );
     _load();
   }
 
   final WorkoutRepository workoutRepository;
+  late final ChangeReloadSubscription _reloadSubscription;
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<List<HistoryItem>> items = Signal(const []);
@@ -42,5 +51,9 @@ class HistoryController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void dispose() {
+    _reloadSubscription.dispose();
   }
 }

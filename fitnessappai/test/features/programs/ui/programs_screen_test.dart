@@ -130,4 +130,19 @@ void main() {
 
     expect(find.text('Сплит'), findsOneWidget);
   });
+
+  testWidgets('новая программа появляется без повторного открытия экрана', (
+    tester,
+  ) async {
+    await pumpPrograms(tester);
+    expect(find.text('Список программ пуст'), findsOneWidget);
+
+    await repository.create(program('Сплит'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Список программ пуст'), findsNothing);
+    expect(find.text('Сплит'), findsOneWidget);
+  });
 }

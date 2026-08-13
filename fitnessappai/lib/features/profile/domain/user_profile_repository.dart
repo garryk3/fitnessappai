@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/contraindication_tag.dart';
 import 'package:fitnessappai/core/domain/models/user_profile.dart';
@@ -9,9 +10,11 @@ import 'package:fitnessappai/core/domain/models/user_profile.dart';
 /// В БД профиль хранится одной строкой ([profileId]); [get] создаёт её при
 /// первом обращении и впоследствии всегда возвращает один и тот же профиль.
 class UserProfileRepository {
-  UserProfileRepository(this._db);
+  UserProfileRepository(this._db, {DataChangeNotifier? changes})
+    : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
+  final DataChangeNotifier _changes;
 
   /// Идентификатор единственной строки профиля.
   static const int profileId = 1;
@@ -65,6 +68,7 @@ class UserProfileRepository {
         );
       }
     });
+    _changes.notifyChanged();
   }
 
   /// Возвращает весь каталог тегов противопоказаний, отсортированный по id.

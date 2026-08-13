@@ -6862,6 +6862,54 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BodyMeasurementsTable bodyMeasurements = $BodyMeasurementsTable(
     this,
   );
+  late final Index exerciseMusclesMuscleGroupIdx = Index(
+    'exercise_muscles_muscle_group_idx',
+    'CREATE INDEX exercise_muscles_muscle_group_idx ON exercise_muscles (muscle_group_id)',
+  );
+  late final Index exerciseContraindicationsTagIdx = Index(
+    'exercise_contraindications_tag_idx',
+    'CREATE INDEX exercise_contraindications_tag_idx ON exercise_contraindications (contraindication_tag_id)',
+  );
+  late final Index userContraindicationsTagIdx = Index(
+    'user_contraindications_tag_idx',
+    'CREATE INDEX user_contraindications_tag_idx ON user_contraindications (contraindication_tag_id)',
+  );
+  late final Index programDaysProgramIdx = Index(
+    'program_days_program_idx',
+    'CREATE INDEX program_days_program_idx ON program_days (program_id)',
+  );
+  late final Index programDayExercisesDayIdx = Index(
+    'program_day_exercises_day_idx',
+    'CREATE INDEX program_day_exercises_day_idx ON program_day_exercises (day_id)',
+  );
+  late final Index programDayExercisesExerciseIdx = Index(
+    'program_day_exercises_exercise_idx',
+    'CREATE INDEX program_day_exercises_exercise_idx ON program_day_exercises (exercise_id)',
+  );
+  late final Index workoutRemindersDayIdx = Index(
+    'workout_reminders_day_idx',
+    'CREATE INDEX workout_reminders_day_idx ON workout_reminders (program_day_id)',
+  );
+  late final Index workoutSessionsProgramIdx = Index(
+    'workout_sessions_program_idx',
+    'CREATE INDEX workout_sessions_program_idx ON workout_sessions (program_id)',
+  );
+  late final Index workoutSessionsDayIdx = Index(
+    'workout_sessions_day_idx',
+    'CREATE INDEX workout_sessions_day_idx ON workout_sessions (program_day_id)',
+  );
+  late final Index workoutSetResultsSessionIdx = Index(
+    'workout_set_results_session_idx',
+    'CREATE INDEX workout_set_results_session_idx ON workout_set_results (session_id)',
+  );
+  late final Index workoutSetResultsExerciseIdx = Index(
+    'workout_set_results_exercise_idx',
+    'CREATE INDEX workout_set_results_exercise_idx ON workout_set_results (exercise_id)',
+  );
+  late final Index scheduleMarksDayIdx = Index(
+    'schedule_marks_day_idx',
+    'CREATE INDEX schedule_marks_day_idx ON schedule_marks (program_day_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6883,6 +6931,18 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     workoutSetResults,
     scheduleMarks,
     bodyMeasurements,
+    exerciseMusclesMuscleGroupIdx,
+    exerciseContraindicationsTagIdx,
+    userContraindicationsTagIdx,
+    programDaysProgramIdx,
+    programDayExercisesDayIdx,
+    programDayExercisesExerciseIdx,
+    workoutRemindersDayIdx,
+    workoutSessionsProgramIdx,
+    workoutSessionsDayIdx,
+    workoutSetResultsSessionIdx,
+    workoutSetResultsExerciseIdx,
+    scheduleMarksDayIdx,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
