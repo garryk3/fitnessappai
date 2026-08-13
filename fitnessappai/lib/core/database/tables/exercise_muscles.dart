@@ -6,6 +6,10 @@ import 'package:fitnessappai/core/database/tables/muscle_groups.dart';
 
 /// Связь упражнения с мышечной группой и степенью нагрузки.
 @DataClassName('ExerciseMuscleRow')
+@TableIndex(
+  name: 'exercise_muscles_muscle_group_idx',
+  columns: {#muscleGroupId},
+)
 class ExerciseMuscles extends Table {
   IntColumn get exerciseId =>
       integer().references(Exercises, #id, onDelete: KeyAction.cascade)();

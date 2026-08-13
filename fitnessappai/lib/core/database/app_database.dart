@@ -29,6 +29,10 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 
 part 'app_database.g.dart';
 
+/// Версия схемы БД; записывается в `PRAGMA user_version` и используется
+/// при валидации импортируемых файлов.
+const int appDatabaseSchemaVersion = 1;
+
 /// Точка входа в локальную БД SQLite.
 ///
 /// В проде используется файл `fitnessappai.sqlite` в documents-каталоге,
@@ -53,10 +57,6 @@ part 'app_database.g.dart';
     BodyMeasurements,
   ],
 )
-/// Версия схемы БД; записывается в `PRAGMA user_version` и используется
-/// при валидации импортируемых файлов.
-const int appDatabaseSchemaVersion = 1;
-
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor})
     : super(executor ?? driftDatabase(name: 'fitnessappai'));

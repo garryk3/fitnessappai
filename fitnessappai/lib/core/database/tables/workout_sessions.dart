@@ -7,6 +7,8 @@ import 'package:fitnessappai/core/database/tables/programs.dart';
 
 /// Проведённая тренировочная сессия.
 @DataClassName('WorkoutSessionRow')
+@TableIndex(name: 'workout_sessions_program_idx', columns: {#programId})
+@TableIndex(name: 'workout_sessions_day_idx', columns: {#programDayId})
 class WorkoutSessions extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get programId => integer().nullable().references(
