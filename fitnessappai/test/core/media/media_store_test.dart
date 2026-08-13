@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -84,6 +84,35 @@ void main() {
     expect(await s.importFromPicker(), isNull);
     expect(await mediaDir.exists(), isFalse);
   });
+
+  test(
+    'importFromPicker бросает MediaImportException при ошибке пикера',
+    () async {
+      final s = store(
+        assets: <String, Uint8List>{},
+        picker: () async =>
+            throw PlatformException(code: 'pick_failed', message: 'boom'),
+      );
+      await expectLater(
+        s.importFromPicker(),
+        throwsA(isA<MediaImportException>()),
+      );
+    },
+  );
+
+  test(
+    'importFromPicker бросает MediaImportException для несуществующего файла',
+    () async {
+      final s = store(
+        assets: <String, Uint8List>{},
+        picker: () async => p.join(tempDir.path, 'missing.gif'),
+      );
+      await expectLater(
+        s.importFromPicker(),
+        throwsA(isA<MediaImportException>()),
+      );
+    },
+  );
 
   test('deleteFile удаляет файл', () async {
     final bytes = Uint8List.fromList([1, 2, 3]);

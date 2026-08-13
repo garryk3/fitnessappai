@@ -27,7 +27,11 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   sl.registerLazySingleton<MediaStore>(() => MediaStore());
   sl.registerLazySingleton<MediaCache>(() => MediaCache());
   sl.registerLazySingleton<ExerciseRepository>(
-    () => ExerciseRepository(sl.get<AppDatabase>(), sl.get<MediaStore>()),
+    () => ExerciseRepository(
+      sl.get<AppDatabase>(),
+      sl.get<MediaStore>(),
+      mediaCache: sl.get<MediaCache>(),
+    ),
   );
   sl.registerLazySingleton<ProgramRepository>(
     () => ProgramRepository(sl.get<AppDatabase>()),

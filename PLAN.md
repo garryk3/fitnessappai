@@ -636,12 +636,13 @@ fitnessappai/
 - **Зависимости:** Этапы 2–5.
 
 ### Задача 9.2: Крах при выборе анимации упражнения
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** фичи/упражнения
 - **Ветка:** `task/9.2-exercise-form`
 - **Описание:** `_pickAnimation` (`exercise_form_screen.dart`) — `async void` без `try/catch`; `MediaStore.importFromPicker` не обрабатывает `PlatformException` (file_picker) и `FileSystemException` (несуществующий путь); `MediaCache` не чистится при удалении файла. Обработка ошибок + типизированное `MediaImportException`, SnackBar с l10n, `MediaCache.remove`.
 - **Критерии приемки:** клик «выбрать анимацию» не роняет приложение при любом исходе.
 - **Тесты:** `media_store_test` (пикер бросает ошибку → ошибка, отмена → null), `exercise_form_screen_test` (бросающий пикер → SnackBar, без unhandled exception).
+- **Реализация:** `lib/core/media/media_store.dart` — `MediaImportException` + `try/catch` в `importFromPicker` (ошибка пикера, чтения/копирования файла). `lib/core/media/media_cache.dart` — `remove(path)` (удаляет провайдеры файла из кэша, включая cacheWidth-варианты). `ExerciseRepository` принимает optional `MediaCache` и чистит кэш при `delete` (зарегистрирован в DI). `_pickAnimation` — `try/catch` + SnackBar с ключом `exerciseFormAnimationError` (добавлен в арб). Новые тесты: `media_store_test` (2), `media_cache_test` (2), `exercise_form_screen_test` (SnackBar без краха). Локально: format/analyze 0, `flutter test` 391 зелёных.
 
 ### Задача 9.3: Сохранение невалидной программы и попап
 - **Статус:** [ ] не начата
@@ -773,7 +774,7 @@ fitnessappai/
 | 8.2 | Оптимизация | [x] | task/8.2-perf | |
 | 8.3 | Финальная валидация и README | [x] | task/8.3-final | 2026-08-13 |
 | 9.1 | Реактивность списков | [x] | task/9.1-data-refresh | |
-| 9.2 | Крах при выборе анимации | [ ] | task/9.2-exercise-form | |
+| 9.2 | Крах при выборе анимации | [x] | task/9.2-exercise-form | |
 | 9.3 | Валидность программ + попап | [ ] | task/9.3-program-validation | |
 | 9.4 | Удалённая программа в плане + тултип | [ ] | task/9.4-week-plan | |
 | 9.5 | Селект «Динамика» | [ ] | task/9.5-profile-dropdown | |

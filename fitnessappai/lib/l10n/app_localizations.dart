@@ -520,6 +520,12 @@ abstract class AppLocalizations {
   /// **'Убрать анимацию'**
   String get exerciseFormAnimationRemove;
 
+  /// No description provided for @exerciseFormAnimationError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить файл. Попробуйте ещё раз.'**
+  String get exerciseFormAnimationError;
+
   /// No description provided for @exerciseFormNameRequired.
   ///
   /// In ru, this message translates to:
