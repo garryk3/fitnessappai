@@ -77,7 +77,10 @@ class MediaStore {
       return null;
     }
     try {
-      return _writeFile(p.basename(picked), await File(picked).readAsBytes());
+      return await _writeFile(
+        p.basename(picked),
+        await File(picked).readAsBytes(),
+      );
     } catch (e) {
       throw MediaImportException(
         'Не удалось скопировать файл "$picked"',
