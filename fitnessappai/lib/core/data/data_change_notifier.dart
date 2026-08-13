@@ -24,10 +24,7 @@ final DataChangeNotifier appDataChanges = DataChangeNotifier();
 /// микротаск — репозиторий, изменивший несколько таблиц, уведомляет один раз
 /// за кадр.
 class ChangeReloadSubscription {
-  ChangeReloadSubscription({
-    required this._changes,
-    required this._reload,
-  }) {
+  ChangeReloadSubscription({required this._changes, required this._reload}) {
     _changes?.addListener(_onChanged);
   }
 

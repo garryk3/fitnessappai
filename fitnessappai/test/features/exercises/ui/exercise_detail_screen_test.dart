@@ -282,9 +282,7 @@ void main() {
     await pumpDetail(tester, exerciseId: created.id!);
     expect(find.text('Старая техника'), findsOneWidget);
 
-    await repository.update(
-      created.copyWith(description: 'Новая техника'),
-    );
+    await repository.update(created.copyWith(description: 'Новая техника'));
     await tester.pumpAndSettle();
 
     expect(find.text('Новая техника'), findsOneWidget);

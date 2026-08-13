@@ -11,11 +11,8 @@ import 'package:fitnessappai/core/media/media_store.dart';
 
 /// Репозиторий упражнений: CRUD, поиск/фильтр, мышцы и противопоказания.
 class ExerciseRepository {
-  ExerciseRepository(
-    this._db,
-    this._mediaStore, {
-    DataChangeNotifier? changes,
-  }) : _changes = changes ?? appDataChanges;
+  ExerciseRepository(this._db, this._mediaStore, {DataChangeNotifier? changes})
+    : _changes = changes ?? appDataChanges;
 
   final AppDatabase _db;
   final MediaStore _mediaStore;
