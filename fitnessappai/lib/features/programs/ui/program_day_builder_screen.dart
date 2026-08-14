@@ -486,6 +486,10 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
         if (item.weightKg != null) {
           parts.add('${_trimNumber(item.weightKg!)} кг');
         }
+      case ExerciseType.bodyweight:
+        if (item.sets != null) {
+          parts.add('${item.sets} × ${item.reps ?? '?'}');
+        }
       case ExerciseType.plank:
         if (item.sets != null) {
           parts.add('${item.sets} × ${item.durationSeconds ?? '?'} с');
@@ -589,6 +593,7 @@ class _MusclePanel extends StatelessWidget {
 
 String _typeLabel(AppLocalizations l10n, ExerciseType type) => switch (type) {
   ExerciseType.strength => l10n.exerciseTypeStrength,
+  ExerciseType.bodyweight => l10n.exerciseTypeBodyweight,
   ExerciseType.plank => l10n.exerciseTypePlank,
   ExerciseType.running => l10n.exerciseTypeRunning,
 };

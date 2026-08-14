@@ -127,6 +127,37 @@ void main() {
     expect(field('Повторения'), findsNothing);
   });
 
+  testWidgets('bodyweight: набор полей по типу', (tester) async {
+    final positionId = await addPosition('Отжимания', ExerciseType.bodyweight);
+
+    await pumpParams(tester, positionId);
+
+    expect(field('Подходы'), findsOneWidget);
+    expect(field('Повторения'), findsOneWidget);
+    expect(field('Отдых (сек)'), findsOneWidget);
+    expect(field('Вес (кг)'), findsNothing);
+    expect(field('Время (сек)'), findsNothing);
+  });
+
+  testWidgets('сохранение bodyweight сохраняет повторы без веса', (
+    tester,
+  ) async {
+    final positionId = await addPosition('Отжимания', ExerciseType.bodyweight);
+
+    await pumpParams(tester, positionId);
+    await enterField(tester, 'Подходы', '3');
+    await enterField(tester, 'Повторения', '15');
+    await enterField(tester, 'Отдых (сек)', '45');
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final items = await _dayItems(programRepository, positionId);
+    expect(items.sets, 3);
+    expect(items.reps, 15);
+    expect(items.weightKg, isNull);
+    expect(items.restSeconds, 45);
+  });
+
   testWidgets('валидация: пустые обязательные поля не сохраняются', (
     tester,
   ) async {

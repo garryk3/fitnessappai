@@ -412,7 +412,7 @@ class _MetricChart extends StatelessWidget {
     return switch (type) {
       ExerciseType.running => [for (final v in values) v / 1000],
       ExerciseType.plank => [for (final v in values) v / 60],
-      ExerciseType.strength || null => values,
+      ExerciseType.bodyweight || ExerciseType.strength || null => values,
     };
   }
 

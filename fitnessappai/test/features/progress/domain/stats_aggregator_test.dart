@@ -235,6 +235,50 @@ void main() {
     });
 
     test(
+      'exerciseMetricPerSlice: bodyweight — сумма повторов в срезе',
+      () async {
+        final exercise = await exerciseRepo.create(
+          Exercise(
+            name: 'Отжимания',
+            type: ExerciseType.bodyweight,
+            createdAt: clock(),
+            updatedAt: clock(),
+          ),
+          const [],
+        );
+
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+          setResult(
+            exerciseId: exercise.id,
+            type: ExerciseType.bodyweight,
+            weightKg: null,
+            reps: 12,
+          ),
+          setResult(
+            exerciseId: exercise.id,
+            type: ExerciseType.bodyweight,
+            weightKg: null,
+            reps: 10,
+          ),
+          setResult(
+            exerciseId: exercise.id,
+            type: ExerciseType.bodyweight,
+            weightKg: null,
+            reps: 8,
+          ),
+        ]);
+
+        final metric = await aggregator.exerciseMetricPerSlice(
+          exercise.id!,
+          StatPeriod.week,
+        );
+        expect(metric[2], 30);
+        expect(metric.sublist(3), everyElement(0));
+        expect(metric.sublist(0, 2), everyElement(0));
+      },
+    );
+
+    test(
       'workoutCountPerSlice раскладывает тренировки по дням недели',
       () async {
         await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), []);

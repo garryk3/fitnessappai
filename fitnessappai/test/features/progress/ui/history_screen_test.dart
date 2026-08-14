@@ -151,6 +151,13 @@ void main() {
             durationSeconds: 900,
             distanceMeters: 3000,
           ),
+          setResult(
+            name: 'Отжимания',
+            type: ExerciseType.bodyweight,
+            reps: 15,
+            weightKg: null,
+            setIndex: 3,
+          ),
         ]);
 
     await pumpHistory(tester);
@@ -163,6 +170,7 @@ void main() {
     expect(find.text('2. 6 повт × 25 кг'), findsOneWidget);
     expect(find.text('1. 45 с'), findsOneWidget);
     expect(find.text('1. 3 км × 15 мин'), findsOneWidget);
+    expect(find.text('3. 15 повт'), findsOneWidget);
     expect(find.textContaining('40 мин'), findsOneWidget);
   });
 

@@ -721,12 +721,14 @@ fitnessappai/
 - **Тесты:** `program_day_builder_screen_test`, `program_builder_screen_test` (обновлённые).
 
 ### Задача 10.5: Тип упражнения «свой вес»
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** все фичи
 - **Ветка:** `task/10.5-bodyweight`
 - **Описание:** `ExerciseType.bodyweight` (без параметра веса); пройти все исчерпывающие switch (валидатор, параметры, day-builder, workout_run, контроллер, prepare, каталог, статистика); l10n `exerciseTypeBodyweight` = «Свой вес». Схема БД не меняется (TEXT by name).
 - **Критерии приемки:** новый тип создаётся, заполняется повторами без веса, считается в статистике.
 - **Тесты:** модели/конвертеры/валидатор/params/workout_run/контроллер/агрегатор.
+- **Реализация:** в `enum ExerciseType` добавлен `bodyweight` (схема не меняется — TEXT by name). Пройдены все исчерпывающие switch/выражения: `ProgramDayExerciseValidator` (sets+reps, вес игнорируется), `ProgramDayExerciseParamsScreen` (поля подходы+повторения, вес не выводится), `ProgramDayBuilderScreen._metricsSummary`/`_typeLabel`, `WorkoutPrepareScreen._paramsSummary` + иконки (`Icons.accessibility_new`), `WorkoutController._buildResult` (reps, без веса), `WorkoutRunScreen` (ввод повторов без веса, иконка), `StatsAggregator.exerciseMetricPerSlice` (bodyweight = сумма повторов в срезе), `ProgressScreen._displayValues`, `HistoryScreen._formatSet`, `_typeLabel` в каталоге/детали/форме, `integration_test/app_flow_test` (выбор «Свой вес»). l10n `exerciseTypeBodyweight` = «Свой вес». В `assets/data/exercises_seed.json` «Отжимания» и «Подтягивания» переведены на `bodyweight`.
+- **Тесты (факт):** `exercise_test` (ключ `bodyweight`), `program_day_exercise_validator_test` (3 новых: валидно sets+reps, без повторов невалидно, вес игнорируется), `exercise_seed_parser_test` (реальный seed содержит bodyweight — «Отжимания»), `params_screen_test` (набор полей bodyweight, сохранение повторов без веса), `day_builder_screen_test` (сводка «3 × 15 · отдых 45 с» без «кг»), `workout_prepare_screen_test` («3 × 15 повт» без веса), `workout_run_screen_test` (ввод повторов, нет «Вес (кг)»), `workout_controller_test` (фиксация повторов, weightKg null), `stats_aggregator_test` (метрика по срезам = 30 повторов в срезе), `history_screen_test` («3. 15 повт»). Всего 421 тест зелёные.
 
 ### Задача 10.6: Название, быстрый старт, README
 - **Статус:** [ ] не начата
@@ -792,7 +794,7 @@ fitnessappai/
 | 10.2 | Чекбокс «больше не показывать» | [x] | task/10.2-warning-dismiss | |
 | 10.3 | Углублённая статистика | [ ] | task/10.3-deep-stats | |
 | 10.4 | UX конструктора программ | [ ] | task/10.4-program-ux | |
-| 10.5 | Тип «свой вес» | [ ] | task/10.5-bodyweight | |
+| 10.5 | Тип «свой вес» | [x] | task/10.5-bodyweight | |
 | 10.6 | Название, быстрый старт, README | [ ] | task/10.6-app-name-quickstart | |
 
 ## Порядок выполнения

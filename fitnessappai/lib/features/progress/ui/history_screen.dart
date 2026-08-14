@@ -264,6 +264,8 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
           return '$base × ${_fmt(weight)} ${l10n.workoutUnitKg}';
         }
         return base;
+      case ExerciseType.bodyweight:
+        return '$index. ${result.reps ?? 0} ${l10n.workoutUnitReps}';
       case ExerciseType.plank:
         return '$index. ${result.durationSeconds ?? 0} '
             '${l10n.workoutUnitSeconds}';

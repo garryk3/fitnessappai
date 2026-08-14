@@ -149,6 +149,33 @@ void main() {
     expect(find.text('Альт 0'), findsOneWidget);
   });
 
+  testWidgets('свой вес: параметры без веса', (tester) async {
+    final created = await programRepo.create(
+      Program(
+        name: 'База',
+        daysCount: 1,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
+    final day = (await programRepo.getDays(created.id!)).first;
+    final exId = await insertExercise(
+      'Отжимания',
+      type: ExerciseType.bodyweight,
+    );
+    await programRepo.addExerciseToDay(day.id!, exId);
+    await programRepo.updateExercise(
+      (await programRepo.getExercises(
+        day.id!,
+      )).first.copyWith(sets: 3, reps: 15, restSeconds: 45),
+    );
+    await pumpPrepare(tester, day.id!);
+
+    expect(find.text('3 × 15 повт'), findsOneWidget);
+    expect(find.textContaining('кг'), findsNothing);
+  });
+
   testWidgets('переключатель скрыт без альтернативного набора', (tester) async {
     final dayId = await createDay();
     await pumpPrepare(tester, dayId);

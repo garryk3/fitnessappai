@@ -5,7 +5,8 @@ import 'package:fitnessappai/core/domain/validators/validation_result.dart';
 /// Валидация метрик упражнения в тренировочном дне по типу упражнения.
 ///
 /// Метрики по типам: strength → sets + reps + weightKg;
-/// plank → sets + durationSeconds; running → distanceMeters + durationSeconds.
+/// bodyweight → sets + reps; plank → sets + durationSeconds;
+/// running → distanceMeters + durationSeconds.
 class ProgramDayExerciseValidator {
   ValidationResult validate(ProgramDayExercise item, ExerciseType type) {
     final errors = <String>[];
@@ -19,6 +20,10 @@ class ProgramDayExerciseValidator {
         }
         if (item.weightKg != null && item.weightKg! < 0) {
           errors.add('Вес не может быть отрицательным');
+        }
+      case ExerciseType.bodyweight:
+        if (item.reps == null || item.reps! < 1) {
+          errors.add('Количество повторений должно быть >= 1');
         }
       case ExerciseType.plank:
         if (item.durationSeconds == null || item.durationSeconds! < 1) {

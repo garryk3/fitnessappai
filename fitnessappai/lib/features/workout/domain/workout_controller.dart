@@ -313,6 +313,16 @@ class WorkoutController {
           weightKg: input.weightKg,
           completedAt: now,
         );
+      case ExerciseType.bodyweight:
+        return WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          exerciseType: exercise.type,
+          setIndex: currentSet.value,
+          reps: input.reps,
+          completedAt: now,
+        );
       case ExerciseType.plank:
         return WorkoutSetResult(
           sessionId: 0,

@@ -527,6 +527,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
 String _typeLabel(AppLocalizations l10n, ExerciseType type) => switch (type) {
   ExerciseType.strength => l10n.exerciseTypeStrength,
+  ExerciseType.bodyweight => l10n.exerciseTypeBodyweight,
   ExerciseType.plank => l10n.exerciseTypePlank,
   ExerciseType.running => l10n.exerciseTypeRunning,
 };

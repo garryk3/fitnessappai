@@ -131,6 +131,25 @@ void main() {
     expect(find.byType(MuscleDiagram), findsNWidgets(2));
   });
 
+  testWidgets('сводка bodyweight без веса', (tester) async {
+    final exercise = await createExercise('Отжимания', ExerciseType.bodyweight);
+    final program = await createProgram('Сплит', 1);
+    final days = await programRepository.getDays(program.id!);
+    final item = await programRepository.addExerciseToDay(
+      days[0].id!,
+      exercise.id!,
+    );
+    await programRepository.updateExercise(
+      item.copyWith(sets: 3, reps: 15, restSeconds: 45),
+    );
+
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    expect(find.text('Отжимания'), findsOneWidget);
+    expect(find.text('3 × 15 · отдых 45 с'), findsOneWidget);
+    expect(find.textContaining('кг'), findsNothing);
+  });
+
   testWidgets('добавление упражнения через диалог выбора', (tester) async {
     final program = await createProgram('Сплит', 1);
     await createExercise('Приседания', ExerciseType.strength);

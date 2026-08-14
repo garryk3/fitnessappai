@@ -48,6 +48,7 @@ void main() {
 
   test('ExerciseType хранит текстовые ключи для БД', () {
     expect(ExerciseType.strength.name, 'strength');
+    expect(ExerciseType.bodyweight.name, 'bodyweight');
     expect(ExerciseType.plank.name, 'plank');
     expect(ExerciseType.running.name, 'running');
   });

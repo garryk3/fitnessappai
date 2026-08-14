@@ -307,6 +307,7 @@ class _ExerciseMedia extends StatelessWidget {
       child: Icon(
         switch (exercise.type) {
           ExerciseType.strength => Icons.fitness_center,
+          ExerciseType.bodyweight => Icons.accessibility_new,
           ExerciseType.plank => Icons.self_improvement,
           ExerciseType.running => Icons.directions_run,
         },
@@ -356,6 +357,9 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
       ExerciseType.strength => WorkoutSetInput(
         reps: int.parse(_reps.text.trim()),
         weightKg: _parseDouble(_weight.text),
+      ),
+      ExerciseType.bodyweight => WorkoutSetInput(
+        reps: int.parse(_reps.text.trim()),
       ),
       ExerciseType.plank => WorkoutSetInput(
         durationSeconds: int.parse(_duration.text.trim()),
@@ -419,6 +423,27 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                   final weight = _parseDouble(value ?? '');
                   if (weight != null && weight < 0) {
                     return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+            ],
+            ExerciseType.bodyweight => [
+              TextFormField(
+                controller: _reps,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsReps,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final reps = int.tryParse(value?.trim() ?? '');
+                  if (reps == null) {
+                    return l10n.exerciseParamsRequired;
+                  }
+                  if (reps < 1) {
+                    return l10n.exerciseParamsPositive;
                   }
                   return null;
                 },

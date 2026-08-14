@@ -112,14 +112,14 @@ class _ProgramDayExerciseParamsScreenState
       orderIndex: item.orderIndex,
       isAlternative: item.isAlternative,
       sets: type == ExerciseType.running ? 1 : int.parse(_setsController.text),
-      reps: type == ExerciseType.strength
+      reps: type == ExerciseType.strength || type == ExerciseType.bodyweight
           ? int.parse(_repsController.text)
           : null,
       weightKg: type == ExerciseType.strength
           ? _parseDouble(_weightController.text)
           : null,
       durationSeconds: switch (type) {
-        ExerciseType.strength => null,
+        ExerciseType.strength || ExerciseType.bodyweight => null,
         ExerciseType.plank => int.parse(_durationController.text),
         ExerciseType.running => int.parse(_durationController.text) * 60,
       },
@@ -229,18 +229,20 @@ class _ProgramDayExerciseParamsScreenState
               label: l10n.exerciseParamsSets,
               validator: _validateRequiredPositive,
             ),
-          if (type == ExerciseType.strength) ...[
+          if (type == ExerciseType.strength ||
+              type == ExerciseType.bodyweight) ...[
             _buildNumberField(
               controller: _repsController,
               label: l10n.exerciseParamsReps,
               validator: _validateRequiredPositive,
             ),
-            _buildNumberField(
-              controller: _weightController,
-              label: l10n.exerciseParamsWeightKg,
-              validator: _validateOptionalNotNegative,
-              decimals: true,
-            ),
+            if (type == ExerciseType.strength)
+              _buildNumberField(
+                controller: _weightController,
+                label: l10n.exerciseParamsWeightKg,
+                validator: _validateOptionalNotNegative,
+                decimals: true,
+              ),
           ],
           if (type == ExerciseType.plank)
             _buildNumberField(

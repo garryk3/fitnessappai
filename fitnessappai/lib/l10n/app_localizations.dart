@@ -190,6 +190,12 @@ abstract class AppLocalizations {
   /// **'Силовые'**
   String get exerciseTypeStrength;
 
+  /// No description provided for @exerciseTypeBodyweight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свой вес'**
+  String get exerciseTypeBodyweight;
+
   /// No description provided for @exerciseTypePlank.
   ///
   /// In ru, this message translates to:
