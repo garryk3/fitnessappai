@@ -64,6 +64,10 @@ class MuscleDiagramPainter extends CustomPainter {
     (key: 'neck', left: 44, top: 13, width: 12, height: 7),
     (key: 'shoulders', left: 12, top: 18, width: 16, height: 14),
     (key: 'shoulders', left: 72, top: 18, width: 16, height: 14),
+    (key: 'shoulders_front', left: 13, top: 19, width: 7, height: 12),
+    (key: 'shoulders_front', left: 80, top: 19, width: 7, height: 12),
+    (key: 'shoulders_middle', left: 20, top: 18, width: 6, height: 14),
+    (key: 'shoulders_middle', left: 74, top: 18, width: 6, height: 14),
     (key: 'biceps', left: 15, top: 31, width: 12, height: 19),
     (key: 'biceps', left: 73, top: 31, width: 12, height: 19),
     (key: 'forearms', left: 16, top: 49, width: 10, height: 17),
@@ -80,6 +84,8 @@ class MuscleDiagramPainter extends CustomPainter {
 
   static const List<MuscleRegion> _backRegions = [
     (key: 'neck', left: 44, top: 13, width: 12, height: 7),
+    (key: 'shoulders_rear', left: 16, top: 18, width: 10, height: 14),
+    (key: 'shoulders_rear', left: 74, top: 18, width: 10, height: 14),
     (key: 'traps', left: 24, top: 17, width: 52, height: 7),
     (key: 'lats', left: 24, top: 22, width: 14, height: 24),
     (key: 'lats', left: 62, top: 22, width: 14, height: 24),

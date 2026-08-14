@@ -40,6 +40,18 @@ class ReferenceSeeder {
           regionKey: 'shoulders',
         ),
         (
+          key: 'shoulders_front',
+          labelRu: 'Передняя дельта',
+          view: MuscleView.front,
+          regionKey: 'shoulders_front',
+        ),
+        (
+          key: 'shoulders_middle',
+          labelRu: 'Средняя дельта',
+          view: MuscleView.front,
+          regionKey: 'shoulders_middle',
+        ),
+        (
           key: 'biceps',
           labelRu: 'Бицепс',
           view: MuscleView.front,
@@ -50,6 +62,12 @@ class ReferenceSeeder {
           labelRu: 'Трицепс',
           view: MuscleView.back,
           regionKey: 'triceps',
+        ),
+        (
+          key: 'shoulders_rear',
+          labelRu: 'Задняя дельта',
+          view: MuscleView.back,
+          regionKey: 'shoulders_rear',
         ),
         (
           key: 'forearms',
@@ -119,6 +137,13 @@ class ReferenceSeeder {
         (key: 'pregnancy', labelRu: 'Беременность'),
       ];
 
+  /// Родительская группа для подгрупп (например, дельт).
+  static const Map<String, String> muscleParentKeys = {
+    'shoulders_front': 'shoulders',
+    'shoulders_middle': 'shoulders',
+    'shoulders_rear': 'shoulders',
+  };
+
   /// Вставляет справочники, пропуская уже существующие записи по `key`.
   Future<void> seed() async {
     await database.batch((batch) {
@@ -129,6 +154,7 @@ class ReferenceSeeder {
             labelRu: m.labelRu,
             view: m.view,
             regionKey: m.regionKey,
+            parentKey: Value(muscleParentKeys[m.key]),
           ),
       ], mode: InsertMode.insertOrIgnore);
       batch.insertAll(database.contraindicationTags, [

@@ -22,7 +22,7 @@ void main() {
             .select(database.muscleGroups)
             .get()
             .then((r) => r.length),
-        15,
+        18,
       );
       expect(
         await database
@@ -40,7 +40,7 @@ void main() {
             .select(database.muscleGroups)
             .get()
             .then((r) => r.length),
-        15,
+        18,
       );
       expect(
         await database
@@ -51,8 +51,33 @@ void main() {
       );
     });
 
+    test('дельты сидятся с parentKey на shoulders', () async {
+      final rows = await (database.select(
+        database.muscleGroups,
+      )..where((t) => t.parentKey.equals('shoulders'))).get();
+
+      expect(rows.map((r) => r.key), [
+        'shoulders_front',
+        'shoulders_middle',
+        'shoulders_rear',
+      ]);
+      expect(rows.map((r) => r.regionKey), [
+        'shoulders_front',
+        'shoulders_middle',
+        'shoulders_rear',
+      ]);
+      expect(
+        await database
+            .select(database.muscleGroups)
+            .get()
+            .then((r) => r.where((row) => row.parentKey != null).length),
+        3,
+      );
+    });
+
     test('наборы справочников непустые', () {
       expect(ReferenceSeeder.muscleGroups, isNotEmpty);
+      expect(ReferenceSeeder.muscleParentKeys, isNotEmpty);
       expect(ReferenceSeeder.contraindicationTags, isNotEmpty);
     });
   });

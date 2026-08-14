@@ -117,6 +117,16 @@
             "default_dart": null,
             "default_client_dart": null,
             "dsl_features": []
+          },
+          {
+            "name": "parent_key",
+            "getter_name": "parentKey",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
           }
         ],
         "is_virtual": false,
@@ -1920,7 +1930,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"muscle_groups\" (\"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \"key\" TEXT NOT NULL UNIQUE, \"label_ru\" TEXT NOT NULL, \"view\" TEXT NOT NULL, \"region_key\" TEXT NOT NULL);"
+          "sql": "CREATE TABLE IF NOT EXISTS \"muscle_groups\" (\"id\" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \"key\" TEXT NOT NULL UNIQUE, \"label_ru\" TEXT NOT NULL, \"view\" TEXT NOT NULL, \"region_key\" TEXT NOT NULL, \"parent_key\" TEXT NULL);"
         }
       ]
     },

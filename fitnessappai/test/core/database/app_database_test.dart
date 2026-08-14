@@ -27,8 +27,8 @@ void main() {
     await database.close();
   });
 
-  test('schemaVersion = 1', () {
-    expect(database.schemaVersion, 1);
+  test('schemaVersion = appDatabaseSchemaVersion', () {
+    expect(database.schemaVersion, appDatabaseSchemaVersion);
   });
 
   test('app_meta: insert и round-trip', () async {

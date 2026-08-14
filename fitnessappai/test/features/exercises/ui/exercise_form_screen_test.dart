@@ -269,6 +269,37 @@ void main() {
     expect(await repository.getAll(), hasLength(1));
   });
 
+  testWidgets('подгруппы дельт выводятся под «Плечи» и сохраняются', (
+    tester,
+  ) async {
+    final frontDeltId = await muscleId('shoulders_front');
+
+    await pumpForm(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название'),
+      'Жим гантелей',
+    );
+
+    await scrollFormTo(tester, find.text('Передняя дельта'));
+    expect(find.text('Плечи'), findsOneWidget);
+    expect(find.text('Передняя дельта'), findsOneWidget);
+    expect(find.text('Средняя дельта'), findsOneWidget);
+    expect(find.text('Задняя дельта'), findsOneWidget);
+    await tester.tap(chipInRow('Передняя дельта', 'Основная'));
+    await tester.pump();
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final created = (await repository.getAll()).single;
+    final muscles = await repository.getMuscles(created.id!);
+    expect(muscles, hasLength(1));
+    expect(muscles.single.muscleGroupId, frontDeltId);
+    expect(muscles.single.intensity, MuscleIntensity.primary);
+  });
+
   testWidgets('ошибка выбора анимации показывает SnackBar без краха', (
     tester,
   ) async {

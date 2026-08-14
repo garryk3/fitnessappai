@@ -31,7 +31,9 @@ part 'app_database.g.dart';
 
 /// Версия схемы БД; записывается в `PRAGMA user_version` и используется
 /// при валидации импортируемых файлов.
-const int appDatabaseSchemaVersion = 1;
+///
+/// v2: колонка `muscle_groups.parentKey` + подгруппы дельт.
+const int appDatabaseSchemaVersion = 2;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -69,6 +71,12 @@ class AppDatabase extends _$AppDatabase {
     onCreate: (m) async {
       await m.createAll();
       await ReferenceSeeder(this).seed();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(muscleGroups, muscleGroups.parentKey);
+        await ReferenceSeeder(this).seed();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

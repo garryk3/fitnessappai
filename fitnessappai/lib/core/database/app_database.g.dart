@@ -279,8 +279,26 @@ class $MuscleGroupsTable extends MuscleGroups
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _parentKeyMeta = const VerificationMeta(
+    'parentKey',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, key, labelRu, view, regionKey];
+  late final GeneratedColumn<String> parentKey = GeneratedColumn<String>(
+    'parent_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    key,
+    labelRu,
+    view,
+    regionKey,
+    parentKey,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -320,6 +338,12 @@ class $MuscleGroupsTable extends MuscleGroups
     } else if (isInserting) {
       context.missing(_regionKeyMeta);
     }
+    if (data.containsKey('parent_key')) {
+      context.handle(
+        _parentKeyMeta,
+        parentKey.isAcceptableOrUnknown(data['parent_key']!, _parentKeyMeta),
+      );
+    }
     return context;
   }
 
@@ -351,6 +375,10 @@ class $MuscleGroupsTable extends MuscleGroups
         DriftSqlType.string,
         data['${effectivePrefix}region_key'],
       )!,
+      parentKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent_key'],
+      ),
     );
   }
 
@@ -369,12 +397,16 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
   final String labelRu;
   final MuscleView view;
   final String regionKey;
+
+  /// Ключ родительской группы (например, дельты → `shoulders`) или `null`.
+  final String? parentKey;
   const MuscleGroupRow({
     required this.id,
     required this.key,
     required this.labelRu,
     required this.view,
     required this.regionKey,
+    this.parentKey,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -388,6 +420,9 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
       );
     }
     map['region_key'] = Variable<String>(regionKey);
+    if (!nullToAbsent || parentKey != null) {
+      map['parent_key'] = Variable<String>(parentKey);
+    }
     return map;
   }
 
@@ -398,6 +433,9 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
       labelRu: Value(labelRu),
       view: Value(view),
       regionKey: Value(regionKey),
+      parentKey: parentKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentKey),
     );
   }
 
@@ -412,6 +450,7 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
       labelRu: serializer.fromJson<String>(json['labelRu']),
       view: serializer.fromJson<MuscleView>(json['view']),
       regionKey: serializer.fromJson<String>(json['regionKey']),
+      parentKey: serializer.fromJson<String?>(json['parentKey']),
     );
   }
   @override
@@ -423,6 +462,7 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
       'labelRu': serializer.toJson<String>(labelRu),
       'view': serializer.toJson<MuscleView>(view),
       'regionKey': serializer.toJson<String>(regionKey),
+      'parentKey': serializer.toJson<String?>(parentKey),
     };
   }
 
@@ -432,12 +472,14 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
     String? labelRu,
     MuscleView? view,
     String? regionKey,
+    Value<String?> parentKey = const Value.absent(),
   }) => MuscleGroupRow(
     id: id ?? this.id,
     key: key ?? this.key,
     labelRu: labelRu ?? this.labelRu,
     view: view ?? this.view,
     regionKey: regionKey ?? this.regionKey,
+    parentKey: parentKey.present ? parentKey.value : this.parentKey,
   );
   MuscleGroupRow copyWithCompanion(MuscleGroupsCompanion data) {
     return MuscleGroupRow(
@@ -446,6 +488,7 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
       labelRu: data.labelRu.present ? data.labelRu.value : this.labelRu,
       view: data.view.present ? data.view.value : this.view,
       regionKey: data.regionKey.present ? data.regionKey.value : this.regionKey,
+      parentKey: data.parentKey.present ? data.parentKey.value : this.parentKey,
     );
   }
 
@@ -456,13 +499,14 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
           ..write('key: $key, ')
           ..write('labelRu: $labelRu, ')
           ..write('view: $view, ')
-          ..write('regionKey: $regionKey')
+          ..write('regionKey: $regionKey, ')
+          ..write('parentKey: $parentKey')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, key, labelRu, view, regionKey);
+  int get hashCode => Object.hash(id, key, labelRu, view, regionKey, parentKey);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -471,7 +515,8 @@ class MuscleGroupRow extends DataClass implements Insertable<MuscleGroupRow> {
           other.key == this.key &&
           other.labelRu == this.labelRu &&
           other.view == this.view &&
-          other.regionKey == this.regionKey);
+          other.regionKey == this.regionKey &&
+          other.parentKey == this.parentKey);
 }
 
 class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
@@ -480,12 +525,14 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
   final Value<String> labelRu;
   final Value<MuscleView> view;
   final Value<String> regionKey;
+  final Value<String?> parentKey;
   const MuscleGroupsCompanion({
     this.id = const Value.absent(),
     this.key = const Value.absent(),
     this.labelRu = const Value.absent(),
     this.view = const Value.absent(),
     this.regionKey = const Value.absent(),
+    this.parentKey = const Value.absent(),
   });
   MuscleGroupsCompanion.insert({
     this.id = const Value.absent(),
@@ -493,6 +540,7 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
     required String labelRu,
     required MuscleView view,
     required String regionKey,
+    this.parentKey = const Value.absent(),
   }) : key = Value(key),
        labelRu = Value(labelRu),
        view = Value(view),
@@ -503,6 +551,7 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
     Expression<String>? labelRu,
     Expression<String>? view,
     Expression<String>? regionKey,
+    Expression<String>? parentKey,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -510,6 +559,7 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
       if (labelRu != null) 'label_ru': labelRu,
       if (view != null) 'view': view,
       if (regionKey != null) 'region_key': regionKey,
+      if (parentKey != null) 'parent_key': parentKey,
     });
   }
 
@@ -519,6 +569,7 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
     Value<String>? labelRu,
     Value<MuscleView>? view,
     Value<String>? regionKey,
+    Value<String?>? parentKey,
   }) {
     return MuscleGroupsCompanion(
       id: id ?? this.id,
@@ -526,6 +577,7 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
       labelRu: labelRu ?? this.labelRu,
       view: view ?? this.view,
       regionKey: regionKey ?? this.regionKey,
+      parentKey: parentKey ?? this.parentKey,
     );
   }
 
@@ -549,6 +601,9 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
     if (regionKey.present) {
       map['region_key'] = Variable<String>(regionKey.value);
     }
+    if (parentKey.present) {
+      map['parent_key'] = Variable<String>(parentKey.value);
+    }
     return map;
   }
 
@@ -559,7 +614,8 @@ class MuscleGroupsCompanion extends UpdateCompanion<MuscleGroupRow> {
           ..write('key: $key, ')
           ..write('labelRu: $labelRu, ')
           ..write('view: $view, ')
-          ..write('regionKey: $regionKey')
+          ..write('regionKey: $regionKey, ')
+          ..write('parentKey: $parentKey')
           ..write(')'))
         .toString();
   }
@@ -7198,6 +7254,7 @@ typedef $$MuscleGroupsTableCreateCompanionBuilder =
       required String labelRu,
       required MuscleView view,
       required String regionKey,
+      Value<String?> parentKey,
     });
 typedef $$MuscleGroupsTableUpdateCompanionBuilder =
     MuscleGroupsCompanion Function({
@@ -7206,6 +7263,7 @@ typedef $$MuscleGroupsTableUpdateCompanionBuilder =
       Value<String> labelRu,
       Value<MuscleView> view,
       Value<String> regionKey,
+      Value<String?> parentKey,
     });
 
 final class $$MuscleGroupsTableReferences
@@ -7268,6 +7326,11 @@ class $$MuscleGroupsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get parentKey => $composableBuilder(
+    column: $table.parentKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> exerciseMusclesRefs(
     Expression<bool> Function($$ExerciseMusclesTableFilterComposer f) f,
   ) {
@@ -7327,6 +7390,11 @@ class $$MuscleGroupsTableOrderingComposer
     column: $table.regionKey,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get parentKey => $composableBuilder(
+    column: $table.parentKey,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MuscleGroupsTableAnnotationComposer
@@ -7352,6 +7420,9 @@ class $$MuscleGroupsTableAnnotationComposer
 
   GeneratedColumn<String> get regionKey =>
       $composableBuilder(column: $table.regionKey, builder: (column) => column);
+
+  GeneratedColumn<String> get parentKey =>
+      $composableBuilder(column: $table.parentKey, builder: (column) => column);
 
   Expression<T> exerciseMusclesRefs<T extends Object>(
     Expression<T> Function($$ExerciseMusclesTableAnnotationComposer a) f,
@@ -7412,12 +7483,14 @@ class $$MuscleGroupsTableTableManager
                 Value<String> labelRu = const Value.absent(),
                 Value<MuscleView> view = const Value.absent(),
                 Value<String> regionKey = const Value.absent(),
+                Value<String?> parentKey = const Value.absent(),
               }) => MuscleGroupsCompanion(
                 id: id,
                 key: key,
                 labelRu: labelRu,
                 view: view,
                 regionKey: regionKey,
+                parentKey: parentKey,
               ),
           createCompanionCallback:
               ({
@@ -7426,12 +7499,14 @@ class $$MuscleGroupsTableTableManager
                 required String labelRu,
                 required MuscleView view,
                 required String regionKey,
+                Value<String?> parentKey = const Value.absent(),
               }) => MuscleGroupsCompanion.insert(
                 id: id,
                 key: key,
                 labelRu: labelRu,
                 view: view,
                 regionKey: regionKey,
+                parentKey: parentKey,
               ),
           withReferenceMapper: (p0) => p0
               .map(
