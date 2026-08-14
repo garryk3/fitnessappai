@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -8,6 +9,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/data/seed/exercise_seeder.dart';
 import 'package:fitnessappai/features/llm/data/unsupported_generator.dart';
 import 'package:fitnessappai/features/llm/domain/exercise_content_generator.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
@@ -77,13 +79,32 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
 }
 
 /// Перестраивает контейнер после импорта БД: пересоздаёт базу из нового
-/// файла, заливает справочники и перепланирует напоминания.
+/// файла, заливает справочники, стартовые упражнения и перепланирует
+/// напоминания.
 Future<void> _rebuildAfterImport(ServiceLocator sl) async {
   sl.reset();
   registerCoreServices(sl);
   final database = sl.get<AppDatabase>();
   await ReferenceSeeder(database).seed();
+  await seedExercises(sl);
   final reminders = sl.get<ReminderService>();
   await reminders.initialize();
   await reminders.rescheduleAll();
+}
+
+/// Заливает стартовый набор упражнений из ассетов в БД из контейнера.
+///
+/// [mediaStore] и [seedJsonLoader] позволяют подставить тестовые зависимости.
+Future<void> seedExercises(
+  ServiceLocator sl, {
+  MediaStore? mediaStore,
+  Future<String> Function()? seedJsonLoader,
+}) async {
+  await ExerciseSeeder(
+    db: sl.get<AppDatabase>(),
+    mediaStore: mediaStore ?? sl.get<MediaStore>(),
+    seedJsonLoader:
+        seedJsonLoader ??
+        () => rootBundle.loadString(ExerciseSeeder.seedAssetPath),
+  ).seed();
 }
