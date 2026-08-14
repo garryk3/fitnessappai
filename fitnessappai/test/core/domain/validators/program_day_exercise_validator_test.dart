@@ -48,6 +48,33 @@ void main() {
     });
   });
 
+  group('bodyweight', () {
+    test('сетами и повторами валидно', () {
+      expect(
+        validator
+            .validate(build(reps: 15, weightKg: null), ExerciseType.bodyweight)
+            .isValid,
+        isTrue,
+      );
+    });
+
+    test('без повторений невалидно', () {
+      expect(
+        validator.validate(build(reps: null), ExerciseType.bodyweight).isValid,
+        isFalse,
+      );
+    });
+
+    test('вес не учитывается и может быть отрицательным без ошибки', () {
+      expect(
+        validator
+            .validate(build(weightKg: -1), ExerciseType.bodyweight)
+            .isValid,
+        isTrue,
+      );
+    });
+  });
+
   group('plank', () {
     test('время удержания обязательно', () {
       expect(validator.validate(build(), ExerciseType.plank).isValid, isFalse);

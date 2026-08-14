@@ -65,6 +65,17 @@ void main() {
     exercise: exercise(12, 'Бег', ExerciseType.running),
   );
 
+  WorkoutExercise bodyweightExercise({int sets = 3, int? reps = 15}) =>
+      WorkoutExercise(
+        position: ProgramDayExercise(
+          dayId: 1,
+          orderIndex: 0,
+          sets: sets,
+          reps: reps,
+        ),
+        exercise: exercise(13, 'Отжимания', ExerciseType.bodyweight),
+      );
+
   test('start: невалидно без упражнений', () {
     final controller = WorkoutController(clock: () => startTime);
     expect(
@@ -188,6 +199,22 @@ void main() {
     expect(result.exerciseType, ExerciseType.running);
     expect(result.durationSeconds, 1800);
     expect(result.distanceMeters, 5000);
+    controller.dispose();
+  });
+
+  test('bodyweight: фиксация повторов без веса', () {
+    final controller = WorkoutController(clock: () => startTime);
+    controller.start([bodyweightExercise(sets: 1)]);
+
+    controller.setResult(const WorkoutSetInput(reps: 15));
+    controller.confirmSet();
+
+    expect(controller.phase.value, WorkoutPhase.finished);
+    final result = controller.results.value.single;
+    expect(result.exerciseType, ExerciseType.bodyweight);
+    expect(result.reps, 15);
+    expect(result.weightKg, isNull);
+    expect(result.durationSeconds, isNull);
     controller.dispose();
   });
 

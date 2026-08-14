@@ -59,6 +59,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseTypeStrength => 'Силовые';
 
   @override
+  String get exerciseTypeBodyweight => 'Свой вес';
+
+  @override
   String get exerciseTypePlank => 'Планка';
 
   @override

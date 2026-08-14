@@ -189,6 +189,41 @@ void main() {
     expect(find.text('Отдых'), findsNothing);
   });
 
+  testWidgets('свой вес: ввод повторов без веса', (tester) async {
+    final created = await programRepo.create(
+      Program(
+        name: 'База',
+        daysCount: 1,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
+    final day = (await programRepo.getDays(created.id!)).first;
+    final exId = await insertExercise(
+      'Отжимания',
+      type: ExerciseType.bodyweight,
+    );
+    await programRepo.addExerciseToDay(day.id!, exId);
+    await programRepo.updateExercise(
+      (await programRepo.getExercises(
+        day.id!,
+      )).first.copyWith(sets: 3, reps: 15, restSeconds: 45),
+    );
+    await pumpRun(tester, day.id!);
+
+    expect(find.text('Отжимания'), findsOneWidget);
+    expect(find.text('Повторения'), findsOneWidget);
+    expect(find.text('Вес (кг)'), findsNothing);
+
+    await tester.enterText(find.byType(TextFormField).first, '12');
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pump();
+
+    expect(find.text('Отдых'), findsOneWidget);
+    expect(find.text('45'), findsOneWidget);
+  });
+
   testWidgets(
     'фиксация подхода запускает отдых, пропуск возвращает к подходу',
     (tester) async {

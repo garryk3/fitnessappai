@@ -244,6 +244,10 @@ class StatsAggregator {
             }
           }
           return max;
+        case ExerciseType.bodyweight:
+          return inSlice
+              .fold<int>(0, (sum, r) => sum + (r.reps ?? 0))
+              .toDouble();
         case ExerciseType.running:
           return inSlice.fold<double>(
             0,

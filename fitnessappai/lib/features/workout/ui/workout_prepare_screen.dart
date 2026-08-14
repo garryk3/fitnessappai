@@ -243,6 +243,10 @@ class _ExerciseCard extends StatelessWidget {
           return '$base × ${_fmt(weight)} ${l10n.workoutUnitKg}';
         }
         return base;
+      case ExerciseType.bodyweight:
+        return sets != null
+            ? '$sets × ${reps ?? 0} ${l10n.workoutUnitReps}'
+            : l10n.programBuilderNoMetrics;
       case ExerciseType.plank:
         return sets != null && duration != null
             ? '$sets × $duration ${l10n.workoutUnitSeconds}'
@@ -266,6 +270,7 @@ class _TypeIcon extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final icon = switch (type) {
       ExerciseType.strength => Icons.fitness_center,
+      ExerciseType.bodyweight => Icons.accessibility_new,
       ExerciseType.plank => Icons.self_improvement,
       ExerciseType.running => Icons.directions_run,
     };

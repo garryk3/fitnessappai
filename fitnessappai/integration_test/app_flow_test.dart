@@ -102,6 +102,7 @@ Future<void> createExercise(
   await tester.tap(
     find.text(switch (type) {
       ExerciseType.strength => 'Силовые',
+      ExerciseType.bodyweight => 'Свой вес',
       ExerciseType.plank => 'Планка',
       ExerciseType.running => 'Бег',
     }).last,

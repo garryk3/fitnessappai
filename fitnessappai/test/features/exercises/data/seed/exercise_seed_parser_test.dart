@@ -29,6 +29,9 @@ void main() {
     expect(squat.muscles.map((m) => m.key), contains('quads'));
     expect(squat.contraindications, containsAll(['knees', 'back']));
     expect(squat.instructions, isNotEmpty);
+
+    final pushUps = exercises.firstWhere((e) => e.name == 'Отжимания');
+    expect(pushUps.type, ExerciseType.bodyweight);
   });
 
   test('пропускает записи без названия', () {
