@@ -49,8 +49,22 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   Future<void> _unskip(WeekPlanItem item) => _controller.clearSkip(item);
 
-  void _start(WeekPlanItem item) =>
-      context.push('/workout/prepare/${item.programDayId}');
+  Future<void> _start(WeekPlanItem item) async {
+    final exists = await _controller.dayExists(item.programDayId);
+    if (!mounted) {
+      return;
+    }
+    if (!exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).workoutPrepareNotFound),
+        ),
+      );
+      await _controller.refresh();
+      return;
+    }
+    context.push('/workout/prepare/${item.programDayId}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,13 +144,14 @@ class _WeekSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
       child: Row(
         children: [
           IconButton(
             onPressed: onPrev,
-            tooltip: MaterialLocalizations.of(context).previousMonthTooltip,
+            tooltip: l10n.weekPlanPrevWeek,
             icon: const Icon(Icons.chevron_left),
           ),
           Expanded(
@@ -146,7 +161,7 @@ class _WeekSwitcher extends StatelessWidget {
           ),
           IconButton(
             onPressed: onNext,
-            tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
+            tooltip: l10n.weekPlanNextWeek,
             icon: const Icon(Icons.chevron_right),
           ),
         ],

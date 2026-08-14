@@ -84,6 +84,13 @@ void main() {
     expect(find.text('Нет запланированных тренировок'), findsOneWidget);
   });
 
+  testWidgets('тултипы переключения недели на русском', (tester) async {
+    await pumpPlan(tester);
+
+    expect(find.byTooltip('Предыдущая неделя'), findsOneWidget);
+    expect(find.byTooltip('Следующая неделя'), findsOneWidget);
+  });
+
   testWidgets('показывает запланированный день со статусом и действиями', (
     tester,
   ) async {
@@ -94,6 +101,20 @@ void main() {
     expect(find.text('Запланировано'), findsOneWidget);
     expect(find.text('Начать'), findsOneWidget);
     expect(find.text('Пропустить'), findsOneWidget);
+  });
+
+  testWidgets('после удаления программы айтем исчезает из плана', (
+    tester,
+  ) async {
+    final day = await createDay(DateTime.now().weekday, name: 'Сплит');
+    await pumpPlan(tester);
+    expect(find.text('Сплит'), findsOneWidget);
+
+    await programRepo.delete(day.programId);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Сплит'), findsNothing);
+    expect(find.text('Нет запланированных тренировок'), findsOneWidget);
   });
 
   testWidgets('перенос на сегодня запускает подготовку к тренировке', (

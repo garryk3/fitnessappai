@@ -70,12 +70,24 @@ class WeekPlanController {
     _load();
   }
 
+  /// Проверяет, существует ли тренировочный день в базе.
+  Future<bool> dayExists(int programDayId) async =>
+      await programRepository.getDay(programDayId) != null;
+
   Future<void> markSkipped(WeekPlanItem item) async {
+    if (!await dayExists(item.programDayId)) {
+      await _load();
+      return;
+    }
     await workoutRepository.markSkipped(item.programDayId, weekStart.value);
     await _load();
   }
 
   Future<void> clearSkip(WeekPlanItem item) async {
+    if (!await dayExists(item.programDayId)) {
+      await _load();
+      return;
+    }
     await workoutRepository.clearSkip(item.programDayId, weekStart.value);
     await _load();
   }
