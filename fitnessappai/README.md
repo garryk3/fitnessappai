@@ -3,6 +3,22 @@
 Мобильное приложение для планирования и отслеживания спортивных тренировок.
 Offline-first, Android 12+ (minSdk 31), Material 3 (тёмная тема), локализация — русский.
 
+## Быстрый старт
+
+```bash
+cd fitnessappai
+flutter pub get                 # установка зависимостей
+flutter gen-l10n                # генерация локализации (app_localizations*.dart)
+dart run build_runner build     # генерация кода drift (app_database.g.dart)
+flutter run                     # запуск приложения
+flutter test                    # тесты
+flutter build apk --debug       # сборка Android APK
+```
+
+Генерируемые файлы (drift, локализация) закоммичены: при обычном запуске и
+сборке они создаются автоматически (`generate: true`). Команды генерации нужны
+только после изменения схемы БД или `app_ru.arb`.
+
 ## Возможности
 
 - **Упражнения**: встроенная база (15+ упражнений из открытой БД wger, 3 типа —

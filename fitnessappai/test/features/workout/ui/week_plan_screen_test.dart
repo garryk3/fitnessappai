@@ -137,6 +137,8 @@ void main() {
     await createDay(DateTime.now().weekday);
     await pumpPlan(tester);
 
+    await tester.ensureVisible(find.text('Пропустить'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Пропустить'));
     await tester.pumpAndSettle();
 
@@ -144,11 +146,42 @@ void main() {
     expect(find.text('Отменить пропуск'), findsOneWidget);
     expect(find.text('Начать'), findsNothing);
 
+    await tester.ensureVisible(find.text('Отменить пропуск'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Отменить пропуск'));
     await tester.pumpAndSettle();
 
     expect(find.text('Запланировано'), findsOneWidget);
     expect(find.text('Начать'), findsOneWidget);
+  });
+
+  testWidgets(
+    'быстрый старт: кнопка видна при pending-дне и открывает подготовку',
+    (tester) async {
+      final day = await createDay(DateTime.now().weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      expect(find.text('Быстрый старт'), findsOneWidget);
+
+      await tester.tap(find.text('Быстрый старт'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('prepare-${day.id}'), findsOneWidget);
+    },
+  );
+
+  testWidgets('быстрый старт: кнопка скрыта без pending-дней', (tester) async {
+    final weekday = DateTime.now().weekday;
+    final day = await createDay(weekday);
+    final scheduledDate = mondayOf(
+      DateTime.now(),
+    ).add(Duration(days: weekday - 1));
+    await saveSession(workoutRepo, day, scheduledDate);
+
+    await pumpPlan(tester);
+
+    expect(find.text('Быстрый старт'), findsNothing);
+    expect(find.text('Выполнено'), findsOneWidget);
   });
 
   testWidgets('сессия в закреплённый день даёт статус «Выполнено»', (

@@ -21,7 +21,7 @@ class FitnessAppAi extends StatelessWidget {
       valueListenable: appRestartTick,
       builder: (context, tick, _) => MaterialApp.router(
         key: ValueKey<int>(tick),
-        title: 'FitnessAppAI',
+        title: 'Личный тренер',
         themeMode: ThemeMode.dark,
         theme: AppTheme.dark(),
         darkTheme: AppTheme.dark(),

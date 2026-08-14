@@ -310,6 +310,12 @@ abstract class AppLocalizations {
   /// **'Следующая неделя'**
   String get weekPlanNextWeek;
 
+  /// No description provided for @weekPlanQuickStart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Быстрый старт'**
+  String get weekPlanQuickStart;
+
   /// No description provided for @muscleAbs.
   ///
   /// In ru, this message translates to:

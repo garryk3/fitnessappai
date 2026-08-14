@@ -121,4 +121,34 @@ void main() {
 
     controller.dispose();
   });
+
+  test(
+    'nextPending: возвращает ближайший pending день, начиная с сегодня',
+    () async {
+      final today = DateTime.now();
+      final weekday = today.weekday;
+      final past = await createDay(weekday >= 2 ? weekday - 1 : 7);
+      final upcoming = await createDay(weekday >= 7 ? 1 : weekday + 1);
+
+      final controller = WeekPlanController(
+        programRepository: programRepo,
+        workoutRepository: workoutRepo,
+      );
+      await controller.refresh();
+
+      final next = controller.nextPending;
+      expect(next, isNotNull);
+      expect(next!.programDayId, upcoming.id);
+      expect(next.scheduledDate.isBefore(today), isFalse);
+
+      await controller.markSkipped(
+        itemFor(upcoming.id!, controller.weekStart.value),
+      );
+      await controller.refresh();
+
+      expect(controller.nextPending!.programDayId, past.id);
+
+      controller.dispose();
+    },
+  );
 }

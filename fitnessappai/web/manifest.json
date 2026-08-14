@@ -1,6 +1,6 @@
 {
-    "name": "fitnessappai",
-    "short_name": "fitnessappai",
+    "name": "Личный тренер",
+    "short_name": "Личный тренер",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

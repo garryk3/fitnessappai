@@ -64,6 +64,25 @@ class WeekPlanController {
 
   Future<void> refresh() => _load();
 
+  /// Ближайшая запланированная (pending) тренировка или `null`, если такой нет.
+  ///
+  /// Сначала возвращает ближайшую по дате начиная с сегодняшнего дня, иначе —
+  /// первую pending в отображаемой неделе.
+  WeekPlanItem? get nextPending {
+    final now = _dateOnly(_now());
+    WeekPlanItem? earliest;
+    for (final item in items.value) {
+      if (item.status != WeekPlanStatus.pending) {
+        continue;
+      }
+      if (!item.scheduledDate.isBefore(now)) {
+        return item;
+      }
+      earliest ??= item;
+    }
+    return earliest;
+  }
+
   /// Смещает отображаемую неделю на [delta] недель.
   void shiftWeek(int delta) {
     weekStart.value = weekStart.value.add(Duration(days: 7 * delta));

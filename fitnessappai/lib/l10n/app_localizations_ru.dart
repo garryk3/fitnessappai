@@ -120,6 +120,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanNextWeek => 'Следующая неделя';
 
   @override
+  String get weekPlanQuickStart => 'Быстрый старт';
+
+  @override
   String get muscleAbs => 'Пресс';
 
   @override

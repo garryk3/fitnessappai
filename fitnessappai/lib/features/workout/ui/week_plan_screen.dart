@@ -89,6 +89,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           onPrev: () => controller.shiftWeek(-1),
           onNext: () => controller.shiftWeek(1),
         ),
+        if (controller.nextPending case final next?)
+          _QuickStartBar(item: next, onStart: _start),
         Expanded(child: _buildContent(context, days)),
       ],
     );
@@ -171,6 +173,30 @@ class _WeekSwitcher extends StatelessWidget {
 }
 
 typedef _WorkoutAction = void Function(WeekPlanItem item);
+
+/// Кнопка быстрого старта ближайшей запланированной тренировки.
+class _QuickStartBar extends StatelessWidget {
+  const _QuickStartBar({required this.item, required this.onStart});
+
+  final WeekPlanItem item;
+  final _WorkoutAction onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: FilledButton.icon(
+        onPressed: () => onStart(item),
+        icon: const Icon(Icons.play_arrow),
+        label: Text(l10n.weekPlanQuickStart),
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+      ),
+    );
+  }
+}
 
 class _WeekGrid extends StatelessWidget {
   const _WeekGrid({
