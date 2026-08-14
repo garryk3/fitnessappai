@@ -735,12 +735,14 @@ fitnessappai/
 - **Тесты (факт):** `exercise_test` (ключ `bodyweight`), `program_day_exercise_validator_test` (3 новых: валидно sets+reps, без повторов невалидно, вес игнорируется), `exercise_seed_parser_test` (реальный seed содержит bodyweight — «Отжимания»), `params_screen_test` (набор полей bodyweight, сохранение повторов без веса), `day_builder_screen_test` (сводка «3 × 15 · отдых 45 с» без «кг»), `workout_prepare_screen_test` («3 × 15 повт» без веса), `workout_run_screen_test` (ввод повторов, нет «Вес (кг)»), `workout_controller_test` (фиксация повторов, weightKg null), `stats_aggregator_test` (метрика по срезам = 30 повторов в срезе), `history_screen_test` («3. 15 повт»). Всего 421 тест зелёные.
 
 ### Задача 10.6: Название, быстрый старт, README
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** проект
 - **Ветка:** `task/10.6-app-name-quickstart`
 - **Описание:** Отображаемое имя приложения «Личный тренер» (android:label, MaterialApp title, iOS/web); кнопка «Быстрый старт» ближайшей тренировки на экране плана (`nextPending` в WeekPlanController → `/workout/prepare/:programDayId`); README приложения — раздел «Быстрый старт» (команды запуска, генерация файлов, тесты, сборка).
 - **Критерии приемки:** имя в лаунчере «Личный тренер», кнопка старта видна только при наличии pending-дня, README покрывает быстрый старт.
 - **Тесты:** widget-тест заголовка, `week_plan_screen_test` (кнопка быстрого старта).
+- **Реализация:** имя «Личный тренер» установлено в `MaterialApp.title`, `android:label` (AndroidManifest), `web/index.html` (title + apple-mobile-web-app-title) и `web/manifest.json` (name/short_name); iOS-каталога в проекте нет. В `WeekPlanController` добавлен геттер `nextPending` — ближайший pending-день начиная с сегодня (иначе первый pending недели). На `WeekPlanScreen` под переключателем недели добавлена кнопка «Быстрый старт» (отображается только при наличии pending-дня), ведёт на `/workout/prepare/:programDayId`. README приложения (`fitnessappai/README.md`): раздел «Быстрый старт» с командами (pub get, gen-l10n, build_runner, run, test, build apk) и пояснением про закоммиченные генерируемые файлы.
+- **Тесты (факт):** `test/app/app_title_test.dart` (новый, title = «Личный тренер»); `week_plan_screen_test` +2 (кнопка видна при pending-дне и открывает подготовку; скрыта без pending-дней), тест «пропуск и отмена пропуска» дополнен `ensureVisible`; `week_plan_controller_test` +1 (nextPending: возвращает ближайший с сегодня, после пропуска — предыдущий pending). Всего 438 тестов зелёные.
 
 ---
 
@@ -799,7 +801,7 @@ fitnessappai/
 | 10.3 | Углублённая статистика | [x] | task/10.3-deep-stats | PR #46 |
 | 10.4 | UX конструктора программ | [x] | task/10.4-program-ux | PR #47 |
 | 10.5 | Тип «свой вес» | [x] | task/10.5-bodyweight | |
-| 10.6 | Название, быстрый старт, README | [ ] | task/10.6-app-name-quickstart | |
+| 10.6 | Название, быстрый старт, README | [x] | task/10.6-app-name-quickstart | PR #48 |
 
 ## Порядок выполнения
 
