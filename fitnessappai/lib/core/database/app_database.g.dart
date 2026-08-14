@@ -6886,6 +6886,277 @@ class BodyMeasurementsCompanion extends UpdateCompanion<BodyMeasurementRow> {
   }
 }
 
+class $ProgramWarningDismissalsTable extends ProgramWarningDismissals
+    with TableInfo<$ProgramWarningDismissalsTable, ProgramWarningDismissalRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProgramWarningDismissalsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _programIdMeta = const VerificationMeta(
+    'programId',
+  );
+  @override
+  late final GeneratedColumn<int> programId = GeneratedColumn<int>(
+    'program_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES programs (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime, int> dismissedAt =
+      GeneratedColumn<int>(
+        'dismissed_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<DateTime>(
+        $ProgramWarningDismissalsTable.$converterdismissedAt,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [id, programId, dismissedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'program_warning_dismissals';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProgramWarningDismissalRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('program_id')) {
+      context.handle(
+        _programIdMeta,
+        programId.isAcceptableOrUnknown(data['program_id']!, _programIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_programIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ProgramWarningDismissalRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProgramWarningDismissalRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      programId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}program_id'],
+      )!,
+      dismissedAt: $ProgramWarningDismissalsTable.$converterdismissedAt.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}dismissed_at'],
+        )!,
+      ),
+    );
+  }
+
+  @override
+  $ProgramWarningDismissalsTable createAlias(String alias) {
+    return $ProgramWarningDismissalsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, int> $converterdismissedAt =
+      const DateTimeConverter();
+}
+
+class ProgramWarningDismissalRow extends DataClass
+    implements Insertable<ProgramWarningDismissalRow> {
+  final int id;
+  final int programId;
+  final DateTime dismissedAt;
+  const ProgramWarningDismissalRow({
+    required this.id,
+    required this.programId,
+    required this.dismissedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['program_id'] = Variable<int>(programId);
+    {
+      map['dismissed_at'] = Variable<int>(
+        $ProgramWarningDismissalsTable.$converterdismissedAt.toSql(dismissedAt),
+      );
+    }
+    return map;
+  }
+
+  ProgramWarningDismissalsCompanion toCompanion(bool nullToAbsent) {
+    return ProgramWarningDismissalsCompanion(
+      id: Value(id),
+      programId: Value(programId),
+      dismissedAt: Value(dismissedAt),
+    );
+  }
+
+  factory ProgramWarningDismissalRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProgramWarningDismissalRow(
+      id: serializer.fromJson<int>(json['id']),
+      programId: serializer.fromJson<int>(json['programId']),
+      dismissedAt: serializer.fromJson<DateTime>(json['dismissedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'programId': serializer.toJson<int>(programId),
+      'dismissedAt': serializer.toJson<DateTime>(dismissedAt),
+    };
+  }
+
+  ProgramWarningDismissalRow copyWith({
+    int? id,
+    int? programId,
+    DateTime? dismissedAt,
+  }) => ProgramWarningDismissalRow(
+    id: id ?? this.id,
+    programId: programId ?? this.programId,
+    dismissedAt: dismissedAt ?? this.dismissedAt,
+  );
+  ProgramWarningDismissalRow copyWithCompanion(
+    ProgramWarningDismissalsCompanion data,
+  ) {
+    return ProgramWarningDismissalRow(
+      id: data.id.present ? data.id.value : this.id,
+      programId: data.programId.present ? data.programId.value : this.programId,
+      dismissedAt: data.dismissedAt.present
+          ? data.dismissedAt.value
+          : this.dismissedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProgramWarningDismissalRow(')
+          ..write('id: $id, ')
+          ..write('programId: $programId, ')
+          ..write('dismissedAt: $dismissedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, programId, dismissedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProgramWarningDismissalRow &&
+          other.id == this.id &&
+          other.programId == this.programId &&
+          other.dismissedAt == this.dismissedAt);
+}
+
+class ProgramWarningDismissalsCompanion
+    extends UpdateCompanion<ProgramWarningDismissalRow> {
+  final Value<int> id;
+  final Value<int> programId;
+  final Value<DateTime> dismissedAt;
+  const ProgramWarningDismissalsCompanion({
+    this.id = const Value.absent(),
+    this.programId = const Value.absent(),
+    this.dismissedAt = const Value.absent(),
+  });
+  ProgramWarningDismissalsCompanion.insert({
+    this.id = const Value.absent(),
+    required int programId,
+    required DateTime dismissedAt,
+  }) : programId = Value(programId),
+       dismissedAt = Value(dismissedAt);
+  static Insertable<ProgramWarningDismissalRow> custom({
+    Expression<int>? id,
+    Expression<int>? programId,
+    Expression<int>? dismissedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (programId != null) 'program_id': programId,
+      if (dismissedAt != null) 'dismissed_at': dismissedAt,
+    });
+  }
+
+  ProgramWarningDismissalsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? programId,
+    Value<DateTime>? dismissedAt,
+  }) {
+    return ProgramWarningDismissalsCompanion(
+      id: id ?? this.id,
+      programId: programId ?? this.programId,
+      dismissedAt: dismissedAt ?? this.dismissedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (programId.present) {
+      map['program_id'] = Variable<int>(programId.value);
+    }
+    if (dismissedAt.present) {
+      map['dismissed_at'] = Variable<int>(
+        $ProgramWarningDismissalsTable.$converterdismissedAt.toSql(
+          dismissedAt.value,
+        ),
+      );
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProgramWarningDismissalsCompanion(')
+          ..write('id: $id, ')
+          ..write('programId: $programId, ')
+          ..write('dismissedAt: $dismissedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6918,6 +7189,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BodyMeasurementsTable bodyMeasurements = $BodyMeasurementsTable(
     this,
   );
+  late final $ProgramWarningDismissalsTable programWarningDismissals =
+      $ProgramWarningDismissalsTable(this);
   late final Index exerciseMusclesMuscleGroupIdx = Index(
     'exercise_muscles_muscle_group_idx',
     'CREATE INDEX exercise_muscles_muscle_group_idx ON exercise_muscles (muscle_group_id)',
@@ -6987,6 +7260,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     workoutSetResults,
     scheduleMarks,
     bodyMeasurements,
+    programWarningDismissals,
     exerciseMusclesMuscleGroupIdx,
     exerciseContraindicationsTagIdx,
     userContraindicationsTagIdx,
@@ -7110,6 +7384,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('schedule_marks', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'programs',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('program_warning_dismissals', kind: UpdateKind.delete),
+      ],
     ),
   ]);
 }
@@ -10282,6 +10565,31 @@ final class $$ProgramsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $ProgramWarningDismissalsTable,
+    List<ProgramWarningDismissalRow>
+  >
+  _programWarningDismissalsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.programWarningDismissals,
+        aliasName: 'programs__id__program_warning_dismissals__program_id',
+      );
+
+  $$ProgramWarningDismissalsTableProcessedTableManager
+  get programWarningDismissalsRefs {
+    final manager = $$ProgramWarningDismissalsTableTableManager(
+      $_db,
+      $_db.programWarningDismissals,
+    ).filter((f) => f.programId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _programWarningDismissalsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ProgramsTableFilterComposer
@@ -10372,6 +10680,33 @@ class $$ProgramsTableFilterComposer
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> programWarningDismissalsRefs(
+    Expression<bool> Function($$ProgramWarningDismissalsTableFilterComposer f)
+    f,
+  ) {
+    final $$ProgramWarningDismissalsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.programWarningDismissals,
+          getReferencedColumn: (t) => t.programId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ProgramWarningDismissalsTableFilterComposer(
+                $db: $db,
+                $table: $db.programWarningDismissals,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 }
@@ -10494,6 +10829,33 @@ class $$ProgramsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> programWarningDismissalsRefs<T extends Object>(
+    Expression<T> Function($$ProgramWarningDismissalsTableAnnotationComposer a)
+    f,
+  ) {
+    final $$ProgramWarningDismissalsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.programWarningDismissals,
+          getReferencedColumn: (t) => t.programId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ProgramWarningDismissalsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.programWarningDismissals,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ProgramsTableTableManager
@@ -10512,6 +10874,7 @@ class $$ProgramsTableTableManager
           PrefetchHooks Function({
             bool programDaysRefs,
             bool workoutSessionsRefs,
+            bool programWarningDismissalsRefs,
           })
         > {
   $$ProgramsTableTableManager(_$AppDatabase db, $ProgramsTable table)
@@ -10566,12 +10929,18 @@ class $$ProgramsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({programDaysRefs = false, workoutSessionsRefs = false}) {
+              ({
+                programDaysRefs = false,
+                workoutSessionsRefs = false,
+                programWarningDismissalsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (programDaysRefs) db.programDays,
                     if (workoutSessionsRefs) db.workoutSessions,
+                    if (programWarningDismissalsRefs)
+                      db.programWarningDismissals,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -10618,6 +10987,27 @@ class $$ProgramsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (programWarningDismissalsRefs)
+                        await $_getPrefetchedData<
+                          ProgramRow,
+                          $ProgramsTable,
+                          ProgramWarningDismissalRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProgramsTableReferences
+                              ._programWarningDismissalsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProgramsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).programWarningDismissalsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.programId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -10638,7 +11028,11 @@ typedef $$ProgramsTableProcessedTableManager =
       $$ProgramsTableUpdateCompanionBuilder,
       (ProgramRow, $$ProgramsTableReferences),
       ProgramRow,
-      PrefetchHooks Function({bool programDaysRefs, bool workoutSessionsRefs})
+      PrefetchHooks Function({
+        bool programDaysRefs,
+        bool workoutSessionsRefs,
+        bool programWarningDismissalsRefs,
+      })
     >;
 typedef $$ProgramDaysTableCreateCompanionBuilder =
     ProgramDaysCompanion Function({
@@ -14001,6 +14395,308 @@ typedef $$BodyMeasurementsTableProcessedTableManager =
       BodyMeasurementRow,
       PrefetchHooks Function()
     >;
+typedef $$ProgramWarningDismissalsTableCreateCompanionBuilder =
+    ProgramWarningDismissalsCompanion Function({
+      Value<int> id,
+      required int programId,
+      required DateTime dismissedAt,
+    });
+typedef $$ProgramWarningDismissalsTableUpdateCompanionBuilder =
+    ProgramWarningDismissalsCompanion Function({
+      Value<int> id,
+      Value<int> programId,
+      Value<DateTime> dismissedAt,
+    });
+
+final class $$ProgramWarningDismissalsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ProgramWarningDismissalsTable,
+          ProgramWarningDismissalRow
+        > {
+  $$ProgramWarningDismissalsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ProgramsTable _programIdTable(_$AppDatabase db) => db.programs
+      .createAlias('program_warning_dismissals__program_id__programs__id');
+
+  $$ProgramsTableProcessedTableManager get programId {
+    final $_column = $_itemColumn<int>('program_id')!;
+
+    final manager = $$ProgramsTableTableManager(
+      $_db,
+      $_db.programs,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_programIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ProgramWarningDismissalsTableFilterComposer
+    extends Composer<_$AppDatabase, $ProgramWarningDismissalsTable> {
+  $$ProgramWarningDismissalsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<DateTime, DateTime, int> get dismissedAt =>
+      $composableBuilder(
+        column: $table.dismissedAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  $$ProgramsTableFilterComposer get programId {
+    final $$ProgramsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programId,
+      referencedTable: $db.programs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProgramsTableFilterComposer(
+            $db: $db,
+            $table: $db.programs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProgramWarningDismissalsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProgramWarningDismissalsTable> {
+  $$ProgramWarningDismissalsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dismissedAt => $composableBuilder(
+    column: $table.dismissedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProgramsTableOrderingComposer get programId {
+    final $$ProgramsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programId,
+      referencedTable: $db.programs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProgramsTableOrderingComposer(
+            $db: $db,
+            $table: $db.programs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProgramWarningDismissalsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProgramWarningDismissalsTable> {
+  $$ProgramWarningDismissalsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime, int> get dismissedAt =>
+      $composableBuilder(
+        column: $table.dismissedAt,
+        builder: (column) => column,
+      );
+
+  $$ProgramsTableAnnotationComposer get programId {
+    final $$ProgramsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programId,
+      referencedTable: $db.programs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProgramsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.programs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProgramWarningDismissalsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ProgramWarningDismissalsTable,
+          ProgramWarningDismissalRow,
+          $$ProgramWarningDismissalsTableFilterComposer,
+          $$ProgramWarningDismissalsTableOrderingComposer,
+          $$ProgramWarningDismissalsTableAnnotationComposer,
+          $$ProgramWarningDismissalsTableCreateCompanionBuilder,
+          $$ProgramWarningDismissalsTableUpdateCompanionBuilder,
+          (
+            ProgramWarningDismissalRow,
+            $$ProgramWarningDismissalsTableReferences,
+          ),
+          ProgramWarningDismissalRow,
+          PrefetchHooks Function({bool programId})
+        > {
+  $$ProgramWarningDismissalsTableTableManager(
+    _$AppDatabase db,
+    $ProgramWarningDismissalsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProgramWarningDismissalsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$ProgramWarningDismissalsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ProgramWarningDismissalsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> programId = const Value.absent(),
+                Value<DateTime> dismissedAt = const Value.absent(),
+              }) => ProgramWarningDismissalsCompanion(
+                id: id,
+                programId: programId,
+                dismissedAt: dismissedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int programId,
+                required DateTime dismissedAt,
+              }) => ProgramWarningDismissalsCompanion.insert(
+                id: id,
+                programId: programId,
+                dismissedAt: dismissedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ProgramWarningDismissalsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({programId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (programId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.programId,
+                                referencedTable:
+                                    $$ProgramWarningDismissalsTableReferences
+                                        ._programIdTable(db),
+                                referencedColumn:
+                                    $$ProgramWarningDismissalsTableReferences
+                                        ._programIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ProgramWarningDismissalsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ProgramWarningDismissalsTable,
+      ProgramWarningDismissalRow,
+      $$ProgramWarningDismissalsTableFilterComposer,
+      $$ProgramWarningDismissalsTableOrderingComposer,
+      $$ProgramWarningDismissalsTableAnnotationComposer,
+      $$ProgramWarningDismissalsTableCreateCompanionBuilder,
+      $$ProgramWarningDismissalsTableUpdateCompanionBuilder,
+      (ProgramWarningDismissalRow, $$ProgramWarningDismissalsTableReferences),
+      ProgramWarningDismissalRow,
+      PrefetchHooks Function({bool programId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14040,4 +14736,9 @@ class $AppDatabaseManager {
       $$ScheduleMarksTableTableManager(_db, _db.scheduleMarks);
   $$BodyMeasurementsTableTableManager get bodyMeasurements =>
       $$BodyMeasurementsTableTableManager(_db, _db.bodyMeasurements);
+  $$ProgramWarningDismissalsTableTableManager get programWarningDismissals =>
+      $$ProgramWarningDismissalsTableTableManager(
+        _db,
+        _db.programWarningDismissals,
+      );
 }

@@ -467,4 +467,46 @@ void main() {
       );
     });
   });
+
+  group('предупреждения о противопоказаниях', () {
+    test('isWarningDismissed без отметки false, после dismiss true', () async {
+      final created = await repo.create(program(), [day(dayIndex: 0)]);
+
+      expect(await repo.isWarningDismissed(created.id!), isFalse);
+
+      await repo.dismissWarnings(created.id!);
+
+      expect(await repo.isWarningDismissed(created.id!), isTrue);
+    });
+
+    test('повторный dismiss не ломает отметку', () async {
+      final created = await repo.create(program(), [day(dayIndex: 0)]);
+
+      await repo.dismissWarnings(created.id!);
+      await repo.dismissWarnings(created.id!);
+
+      expect(await repo.isWarningDismissed(created.id!), isTrue);
+    });
+
+    test('отметки разных программ независимы', () async {
+      final first = await repo.create(program(), [day(dayIndex: 0)]);
+      final second = await repo.create(program(name: 'Вторая'), [
+        day(dayIndex: 0),
+      ]);
+
+      await repo.dismissWarnings(first.id!);
+
+      expect(await repo.isWarningDismissed(first.id!), isTrue);
+      expect(await repo.isWarningDismissed(second.id!), isFalse);
+    });
+
+    test('отметка каскадно удаляется при удалении программы', () async {
+      final created = await repo.create(program(), [day(dayIndex: 0)]);
+      await repo.dismissWarnings(created.id!);
+
+      await repo.delete(created.id!);
+
+      expect(await repo.isWarningDismissed(created.id!), isFalse);
+    });
+  });
 }
