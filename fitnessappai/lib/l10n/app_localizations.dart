@@ -742,11 +742,29 @@ abstract class AppLocalizations {
   /// **'Укажите параметры упражнения перед сохранением'**
   String get programBuilderMetricsInvalid;
 
-  /// No description provided for @programBuilderFillAllDays.
+  /// No description provided for @programValidationTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Заполните все дни программы перед сохранением'**
-  String get programBuilderFillAllDays;
+  /// **'Недостаточно данных для сохранения'**
+  String get programValidationTitle;
+
+  /// No description provided for @programValidationMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполните недостающее:'**
+  String get programValidationMessage;
+
+  /// No description provided for @programValidationContinue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжить редактирование'**
+  String get programValidationContinue;
+
+  /// No description provided for @programValidationExit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти'**
+  String get programValidationExit;
 
   /// No description provided for @programBuilderNoMetrics.
   ///

@@ -168,7 +168,10 @@
     }
   },
   "programBuilderMetricsInvalid": "Укажите параметры упражнения перед сохранением",
-  "programBuilderFillAllDays": "Заполните все дни программы перед сохранением",
+  "programValidationTitle": "Недостаточно данных для сохранения",
+  "programValidationMessage": "Заполните недостающее:",
+  "programValidationContinue": "Продолжить редактирование",
+  "programValidationExit": "Выйти",
   "programBuilderNoMetrics": "Параметры не заданы",
   "exerciseParamsSets": "Подходы",
   "exerciseParamsReps": "Повторения",
