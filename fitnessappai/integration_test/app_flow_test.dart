@@ -299,9 +299,9 @@ Future<void> expectWorkoutCount(WidgetTester tester, String count) async {
 }
 
 Future<void> reloadWeekPlan(WidgetTester tester) async {
-  await tester.tap(find.byTooltip('Предыдущий месяц'));
+  await tester.tap(find.byTooltip('Предыдущая неделя'));
   await tester.pumpAndSettle();
-  await tester.tap(find.byTooltip('Следующий месяц'));
+  await tester.tap(find.byTooltip('Следующая неделя'));
   await tester.pumpAndSettle();
 }
 

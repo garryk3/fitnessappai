@@ -41,6 +41,8 @@
   "weekPlanUnskip": "Отменить пропуск",
   "weekPlanEmpty": "Нет запланированных тренировок",
   "weekPlanHint": "Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане",
+  "weekPlanPrevWeek": "Предыдущая неделя",
+  "weekPlanNextWeek": "Следующая неделя",
   "muscleAbs": "Пресс",
   "muscleObliques": "Косые",
   "muscleChest": "Грудь",

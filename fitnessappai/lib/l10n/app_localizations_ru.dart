@@ -111,6 +111,12 @@ class AppLocalizationsRu extends AppLocalizations {
       'Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане';
 
   @override
+  String get weekPlanPrevWeek => 'Предыдущая неделя';
+
+  @override
+  String get weekPlanNextWeek => 'Следующая неделя';
+
+  @override
   String get muscleAbs => 'Пресс';
 
   @override
