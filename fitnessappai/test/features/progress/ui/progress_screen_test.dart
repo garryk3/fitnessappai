@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -17,6 +18,8 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
+import 'package:fitnessappai/features/progress/ui/day_detail_screen.dart';
+import 'package:fitnessappai/features/progress/ui/exercise_progression_screen.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -278,5 +281,96 @@ void main() {
       find.descendant(of: statCard('Тренировок'), matching: find.text('1')),
       findsOneWidget,
     );
+  });
+
+  GoRouter router() => GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => ProgressScreen(
+          statsAggregator: aggregator,
+          exerciseRepository: exerciseRepo,
+        ),
+      ),
+      GoRoute(
+        path: '/progress/exercise/:id',
+        builder: (context, state) => ExerciseProgressionScreen(
+          exerciseId: int.parse(state.pathParameters['id']!),
+          statsAggregator: aggregator,
+          exerciseRepository: exerciseRepo,
+        ),
+      ),
+      GoRoute(
+        path: '/progress/day',
+        builder: (context, state) => DayDetailScreen(
+          start: DateTime.fromMillisecondsSinceEpoch(
+            int.parse(state.uri.queryParameters['start']!),
+          ),
+          end: DateTime.fromMillisecondsSinceEpoch(
+            int.parse(state.uri.queryParameters['end']!),
+          ),
+          workoutRepository: workoutRepo,
+        ),
+      ),
+    ],
+  );
+
+  Future<void> pumpProgressRouter(WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        routerConfig: router(),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('кнопка динамики открывает экран прогрессии упражнения', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Приседания');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId, reps: 8, weightKg: 40),
+    ]);
+
+    await pumpProgressRouter(tester);
+
+    await tester.tap(find.byTooltip('Открыть динамику'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ExerciseProgressionScreen), findsOneWidget);
+    expect(find.text('Максимум: 40 кг'), findsOneWidget);
+    expect(find.byType(LineChart), findsOneWidget);
+  });
+
+  testWidgets('тап по бару графика открывает детали дня', (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Приседания');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+
+    await pumpProgressRouter(tester);
+
+    final chartRect = tester.getRect(find.byType(BarChart));
+    final usableH = chartRect.height - 24;
+    final groupCenterX = chartRect.left + (chartRect.width - 84) / 8 + 6;
+    await tester.tapAt(Offset(groupCenterX, chartRect.top + usableH * 0.75));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DayDetailScreen), findsOneWidget);
+    expect(find.text('База'), findsOneWidget);
+    expect(find.text('10 августа 2026'), findsWidgets);
   });
 }

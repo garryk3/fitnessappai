@@ -1066,6 +1066,42 @@ abstract class AppLocalizations {
   /// **'Нет тренировок за период'**
   String get progressEmpty;
 
+  /// No description provided for @progressProgression.
+  ///
+  /// In ru, this message translates to:
+  /// **'Динамика упражнения'**
+  String get progressProgression;
+
+  /// No description provided for @progressProgressionOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть динамику'**
+  String get progressProgressionOpen;
+
+  /// No description provided for @progressProgressionEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё нет тренировок с этим упражнением'**
+  String get progressProgressionEmpty;
+
+  /// No description provided for @progressProgressionMax.
+  ///
+  /// In ru, this message translates to:
+  /// **'Максимум'**
+  String get progressProgressionMax;
+
+  /// No description provided for @progressDayDetail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировки за день'**
+  String get progressDayDetail;
+
+  /// No description provided for @progressDayEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет тренировок за этот день'**
+  String get progressDayEmpty;
+
   /// No description provided for @monthShortJan.
   ///
   /// In ru, this message translates to:
