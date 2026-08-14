@@ -381,34 +381,65 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          for (final muscle in _allMuscles)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      muscle.labelRu,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  _intensityChip(
-                    l10n.exerciseFormMusclePrimary,
-                    MuscleIntensity.primary,
-                    muscle.id!,
-                  ),
-                  const SizedBox(width: 4),
-                  _intensityChip(
-                    l10n.exerciseFormMuscleSecondary,
-                    MuscleIntensity.secondary,
-                    muscle.id!,
-                  ),
-                ],
-              ),
-            ),
+          for (final group in _groupedMuscles) ..._muscleGroupRows(l10n, group),
         ],
       ),
     );
+  }
+
+  /// Мышечные группы, сгруппированные по [MuscleGroup.parentKey]: первым идёт
+  /// родитель, за ним — его подгруппы.
+  List<List<MuscleGroup>> get _groupedMuscles {
+    final parents = _allMuscles
+        .where((m) => m.parentKey == null)
+        .toList(growable: false);
+    final children = _allMuscles
+        .where((m) => m.parentKey != null)
+        .toList(growable: false);
+    return [
+      for (final parent in parents)
+        [parent, ...children.where((c) => c.parentKey == parent.key)],
+    ];
+  }
+
+  /// Строки выбора интенсивности для группы мышц. Подгруппы выводятся
+  /// с отступом под родительской строкой.
+  List<Widget> _muscleGroupRows(
+    AppLocalizations l10n,
+    List<MuscleGroup> group,
+  ) {
+    return [
+      for (var i = 0; i < group.length; i++)
+        Padding(
+          padding: EdgeInsets.only(left: i == 0 ? 0 : 16, bottom: 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  group[i].labelRu,
+                  style: i == 0
+                      ? null
+                      : Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _intensityChip(
+                l10n.exerciseFormMusclePrimary,
+                MuscleIntensity.primary,
+                group[i].id!,
+              ),
+              const SizedBox(width: 4),
+              _intensityChip(
+                l10n.exerciseFormMuscleSecondary,
+                MuscleIntensity.secondary,
+                group[i].id!,
+              ),
+            ],
+          ),
+        ),
+    ];
   }
 
   Widget _intensityChip(String label, MuscleIntensity intensity, int muscleId) {

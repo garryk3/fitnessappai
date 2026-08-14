@@ -684,12 +684,14 @@ fitnessappai/
 # Этап 10. Доработки
 
 ### Задача 10.1: Детализация групп мышц
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** core + фичи/упражнения
 - **Ветка:** `task/10.1-muscles-detail`
 - **Описание:** Колонка `parentKey` в `muscle_groups`, schemaVersion 1→2 + миграция + реген `app_database.g.dart`/`drift_schemas`; дельты: `shoulders_front`/`middle` (front), `shoulders_rear` (back); регионы в `MuscleDiagram`; группировка в форме упражнения.
 - **Критерии приемки:** выбор подгрупп дельт, корректная подсветка на схеме.
 - **Тесты:** `reference_seeder_test`, `muscle_diagram_test`, `exercise_form_screen_test`, round-trip/миграция.
+- **Реализация:** `muscle_groups.parentKey` (nullable text), `appDatabaseSchemaVersion` 1→2, `onUpgrade`: `m.addColumn` + повторный `ReferenceSeeder.seed()` (добавляет подгруппы). `ReferenceSeeder.muscleParentKeys` — карта `shoulders_*` → `shoulders`, сидится 3 дельты (всего 18 групп). `MuscleDiagram._frontRegions`: подрегионы `shoulders_front`/`shoulders_middle` поверх полных «плеч»; `_backRegions`: новый `shoulders_rear`. Форма упражнения: `_groupedMuscles` группирует по `parentKey`, подгруппы с отступом под родителем, у родителя «Плечи» остаются чипы выбора. Заодно починен устаревший `drift_schemas/drift_schema_v1.json` (был только `app_meta`) и добавлен `drift_schema_v2.json`.
+- **Тесты (факт):** `migration_test.dart` — открытие v1-БД (raw sqlite, user_version=1) → после миграции 3 дельты с `parentKey=shoulders` и `user_version=2`; `reference_seeder_test` — 18 групп, `parentKey` на дельтах, идемпотентность; `muscle_diagram_test` — 18 регионов, дельты разнесены по видам; `exercise_form_screen_test` — подгруппы видны под «Плечи», выбор «Передняя дельта» сохраняется в `exercise_muscles`. Всего 404 теста зелёные.
 
 ### Задача 10.2: Чекбокс «больше не показывать» предупреждения
 - **Статус:** [ ] не начата
@@ -784,7 +786,7 @@ fitnessappai/
 | 9.4 | Удалённая программа в плане + тултип | [x] | task/9.4-week-plan | |
 | 9.5 | Селект «Динамика» | [x] | task/9.5-profile-dropdown | |
 | 9.6 | Стартовый набор упражнений | [x] | task/9.6-exercise-seed | |
-| 10.1 | Детализация мышц | [ ] | task/10.1-muscles-detail | |
+| 10.1 | Детализация мышц | [x] | task/10.1-muscles-detail | |
 | 10.2 | Чекбокс «больше не показывать» | [ ] | task/10.2-warning-dismiss | |
 | 10.3 | Углублённая статистика | [ ] | task/10.3-deep-stats | |
 | 10.4 | UX конструктора программ | [ ] | task/10.4-program-ux | |

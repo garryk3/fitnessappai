@@ -11,6 +11,9 @@ void main() {
     'obliques',
     'chest',
     'shoulders',
+    'shoulders_front',
+    'shoulders_middle',
+    'shoulders_rear',
     'biceps',
     'triceps',
     'forearms',
@@ -81,11 +84,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test('регионы front и back покрывают все 15 групп', () {
+  test('регионы front и back покрывают все 18 групп', () {
     final front = MuscleDiagramPainter.regionKeysFor(MuscleView.front);
     final back = MuscleDiagramPainter.regionKeysFor(MuscleView.back);
 
     expect(front.union(back), expectedRegionKeys);
+  });
+
+  test('дельты разнесены по видам: front/middle спереди, rear сзади', () {
+    final front = MuscleDiagramPainter.regionKeysFor(MuscleView.front);
+    final back = MuscleDiagramPainter.regionKeysFor(MuscleView.back);
+
+    expect(front, containsAll({'shoulders_front', 'shoulders_middle'}));
+    expect(back, contains('shoulders_rear'));
+    expect(front, isNot(contains('shoulders_rear')));
+    expect(back, isNot(containsAll({'shoulders_front', 'shoulders_middle'})));
   });
 
   test('shouldRepaint учитывает изменение highlights', () {

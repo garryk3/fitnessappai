@@ -292,5 +292,6 @@ class ExerciseRepository {
     labelRu: row.labelRu,
     view: row.view,
     regionKey: row.regionKey,
+    parentKey: row.parentKey,
   );
 }
