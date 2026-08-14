@@ -673,12 +673,13 @@ fitnessappai/
 - **Реализация:** `_MetricChartCard` в `profile_screen.dart` обёрнут в собственный `SignalBuilder` — `selectedMetric` и `chartPoints` читаются внутри его замыкания и передаются в `_MetricLineChart` как неизменяемый параметр `points` (ранее читались в `build` карточки/графика, из-за чего сигналы не отслеживались и селект не обновлял ни себя, ни график). Слабый тест «график строится по выбранной метрике» переписан в «выбор метрики меняет Dropdown и график»: проверяет `DropdownButton.value == BodyMetric.height` и y-координаты точек графика `[180, 179, 180]` (на старом коде падает — `Actual: weight`).
 
 ### Задача 9.6: Стартовый набор упражнений
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** core/exercises
 - **Ветка:** `task/9.6-exercise-seed`
 - **Описание:** `ExerciseSeeder` (16 упражнений, `assets/data/exercises_seed.json`, анимации) нигде не вызывается. Вынести bootstrap в `lib/app/bootstrap.dart` (registerCoreServices → ExerciseSeeder.seed → ReminderService.initialize), `main()` ждёт до `runApp`; вызов в `_rebuildAfterImport`.
 - **Критерии приемки:** при первом запуске в БД 16 упражнений с мышцами/тегами, повторный запуск не дублирует.
 - **Тесты:** `test/app/bootstrap_test.dart` (bootstrap на memory-БД → 16 упражнений, флаг в app_meta, идемпотентность).
+- **Реализация:** `lib/app/bootstrap.dart` — `bootstrap({container, database, mediaStore, seedJsonLoader})`: `registerCoreServices` → `seedExercises` → `ReminderService.initialize` (в `catch (_)` — напоминания не блокируют запуск). `main()`: `await bootstrap()` перед `runApp`. `register_core_services.dart`: новый `seedExercises(sl, …)` (ExerciseSeeder с `rootBundle.loadString(ExerciseSeeder.seedAssetPath)`) вызывается и в `_rebuildAfterImport` после `ReferenceSeeder` — импортированная БД тоже получает стартовый набор. `ExerciseSeeder.seedAssetPath` — общий путь к `assets/data/exercises_seed.json`. Тест `bootstrap_test`: `TestWidgetsFlutterBinding.ensureInitialized()`, bootstrap на memory-БД + фейковый MediaStore/загрузчик JSON → 16 упражнений и флаг `exercises_seeded` в app_meta; повторный bootstrap не дублирует.
 
 # Этап 10. Доработки
 
@@ -782,7 +783,7 @@ fitnessappai/
 | 9.3 | Валидность программ + попап | [x] | task/9.3-program-validation | |
 | 9.4 | Удалённая программа в плане + тултип | [x] | task/9.4-week-plan | |
 | 9.5 | Селект «Динамика» | [x] | task/9.5-profile-dropdown | |
-| 9.6 | Стартовый набор упражнений | [ ] | task/9.6-exercise-seed | |
+| 9.6 | Стартовый набор упражнений | [x] | task/9.6-exercise-seed | |
 | 10.1 | Детализация мышц | [ ] | task/10.1-muscles-detail | |
 | 10.2 | Чекбокс «больше не показывать» | [ ] | task/10.2-warning-dismiss | |
 | 10.3 | Углублённая статистика | [ ] | task/10.3-deep-stats | |

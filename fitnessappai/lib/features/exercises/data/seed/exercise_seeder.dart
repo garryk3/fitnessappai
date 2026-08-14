@@ -24,6 +24,9 @@ class ExerciseSeeder {
   static const String seededFlagKey = 'exercises_seeded';
   static const String exercisesAssetDir = 'assets/exercises';
 
+  /// Путь к seed-файлу упражнений в ассетах приложения.
+  static const String seedAssetPath = 'assets/data/exercises_seed.json';
+
   final AppDatabase _db;
   final MediaStore _mediaStore;
   final Future<String> Function() _seedJsonLoader;
