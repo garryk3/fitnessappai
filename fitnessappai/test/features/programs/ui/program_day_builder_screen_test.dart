@@ -274,10 +274,25 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Недостаточно данных для сохранения'), findsOneWidget);
     expect(
-      find.text('Заполните все дни программы перед сохранением'),
+      find.text('У дня 2 должно быть хотя бы одно основное упражнение'),
       findsOneWidget,
     );
+    expect(find.text('Продолжить редактирование'), findsOneWidget);
+    expect(find.text('Выйти'), findsOneWidget);
+    expect(
+      find.text('Заполните все дни программы перед сохранением'),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('Продолжить редактирование'));
+    await tester.pumpAndSettle();
+    expect(find.text('Недостаточно данных для сохранения'), findsNothing);
+    expect(find.text('День 1'), findsOneWidget);
+
+    final detail = await programRepository.getProgram(program.id!);
+    expect(detail!.days[0].mainExercises, hasLength(1));
   });
 
   testWidgets(

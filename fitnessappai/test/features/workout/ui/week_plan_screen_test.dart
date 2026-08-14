@@ -104,6 +104,8 @@ void main() {
 
     expect(find.text('Перенести на сегодня'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Перенести на сегодня'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Перенести на сегодня'));
     await tester.pumpAndSettle();
 

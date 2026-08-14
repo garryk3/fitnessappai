@@ -364,8 +364,16 @@ class AppLocalizationsRu extends AppLocalizations {
       'Укажите параметры упражнения перед сохранением';
 
   @override
-  String get programBuilderFillAllDays =>
-      'Заполните все дни программы перед сохранением';
+  String get programValidationTitle => 'Недостаточно данных для сохранения';
+
+  @override
+  String get programValidationMessage => 'Заполните недостающее:';
+
+  @override
+  String get programValidationContinue => 'Продолжить редактирование';
+
+  @override
+  String get programValidationExit => 'Выйти';
 
   @override
   String get programBuilderNoMetrics => 'Параметры не заданы';

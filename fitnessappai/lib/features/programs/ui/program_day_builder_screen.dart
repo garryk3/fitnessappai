@@ -12,6 +12,7 @@ import 'package:fitnessappai/core/domain/validators/program_day_exercise_validat
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/ui/program_validation_dialog.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Второй шаг конструктора программы: наполнение тренировочного дня.
@@ -290,9 +291,16 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       if (mounted) {
         Navigator.of(context).pop(true);
       }
-    } on ProgramValidationException {
+    } on ProgramValidationException catch (e) {
       if (mounted) {
-        _showMessage(l10n.programBuilderFillAllDays);
+        setState(() => _saving = false);
+        final exit = await showProgramValidationDialog(
+          context,
+          errors: e.errors,
+        );
+        if (exit == true && mounted) {
+          Navigator.of(context).pop();
+        }
       }
     } finally {
       if (mounted) {

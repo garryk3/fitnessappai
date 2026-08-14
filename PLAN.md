@@ -645,12 +645,14 @@ fitnessappai/
 - **Реализация:** `lib/core/media/media_store.dart` — `MediaImportException` + `try/catch` в `importFromPicker` (ошибка пикера, чтения/копирования файла). `lib/core/media/media_cache.dart` — `remove(path)` (удаляет провайдеры файла из кэша, включая cacheWidth-варианты). `ExerciseRepository` принимает optional `MediaCache` и чистит кэш при `delete` (зарегистрирован в DI). `_pickAnimation` — `try/catch` + SnackBar с ключом `exerciseFormAnimationError` (добавлен в арб). Новые тесты: `media_store_test` (2), `media_cache_test` (2), `exercise_form_screen_test` (SnackBar без краха). Локально: format/analyze 0, `flutter test` 391 зелёных.
 
 ### Задача 9.3: Сохранение невалидной программы и попап
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** фичи/программы
 - **Ветка:** `task/9.3-program-validation`
 - **Описание:** `ProgramBuilderScreen._persist` валидирует только имя; `create/update(days:)` не проверяет упражнения. Полный `ProgramValidator.validate` перед записью в обеих save-точках; при `!isValid` — `AlertDialog` со списком ошибок и действиями «Продолжить редактирование»/«Выйти» (вместо SnackBar day-builder'а). Запрет сохранения пустой программы.
 - **Критерии приемки:** программа без основного упражнения в дне не сохраняется; показывается, что именно заполнить.
 - **Тесты:** `program_builder_screen_test` (попап для каждого сценария недостаточных данных, «Продолжить»/«Выйти», валидная сохраняется), `program_day_builder_screen_test` (попап вместо SnackBar + список ошибок).
+- **Реализация:** новый `lib/features/programs/ui/program_validation_dialog.dart` — общий `AlertDialog` (список ошибок + «Продолжить редактирование»/«Выйти»). `ProgramBuilderScreen._save` — сначала `_structureErrors()` (полный `ProgramValidator.validate`: имя, дни, упражнения из БД по индексу дня); при ошибках — диалог (без спиннера), «Выйти» покидает построитель. `ProgramDayBuilderScreen._save` — `ProgramValidationException` показывает тот же диалог вместо SnackBar (спиннер останавливается до показа). Ключи l10n `programValidation*`, ключ `programBuilderFillAllDays` удалён. Заодно поправлен дате-зависимый флейк `week_plan_screen_test` (tap мимо вьюпорта → `ensureVisible`). Локально: format/analyze 0, `flutter test` 392 зелёных.
+- **Зависимости:** Этапы 2–5, 9.1.
 
 ### Задача 9.4: Удалённая программа в плане недели + тултип
 - **Статус:** [ ] не начата
@@ -775,7 +777,7 @@ fitnessappai/
 | 8.3 | Финальная валидация и README | [x] | task/8.3-final | 2026-08-13 |
 | 9.1 | Реактивность списков | [x] | task/9.1-data-refresh | |
 | 9.2 | Крах при выборе анимации | [x] | task/9.2-exercise-form | |
-| 9.3 | Валидность программ + попап | [ ] | task/9.3-program-validation | |
+| 9.3 | Валидность программ + попап | [x] | task/9.3-program-validation | |
 | 9.4 | Удалённая программа в плане + тултип | [ ] | task/9.4-week-plan | |
 | 9.5 | Селект «Динамика» | [ ] | task/9.5-profile-dropdown | |
 | 9.6 | Стартовый набор упражнений | [ ] | task/9.6-exercise-seed | |

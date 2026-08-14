@@ -6,9 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/domain/models/exercise.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
@@ -17,10 +21,12 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 void main() {
   late AppDatabase db;
   late ProgramRepository repository;
+  late ExerciseRepository exerciseRepository;
 
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
     repository = ProgramRepository(db);
+    exerciseRepository = ExerciseRepository(db, MediaStore());
     locator.reset();
     locator.registerLazySingleton<WorkoutReminderRepository>(
       () => WorkoutReminderRepository(db),
@@ -31,6 +37,18 @@ void main() {
     );
     addTearDown(() => db.close());
   });
+
+  Future<Exercise> createExercise(String name, ExerciseType type) {
+    return exerciseRepository.create(
+      Exercise(
+        name: name,
+        type: type,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      const [],
+    );
+  }
 
   Future<void> pumpBuilder(WidgetTester tester, {int? programId}) async {
     await tester.pumpWidget(
@@ -65,7 +83,32 @@ void main() {
   }
 
   testWidgets('создание программы: выбор дней и день недели', (tester) async {
-    await pumpBuilder(tester);
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final router = GoRouter(
+      initialLocation: '/programs/new',
+      routes: [
+        GoRoute(
+          path: '/programs/new',
+          builder: (context, state) =>
+              ProgramBuilderScreen(repository: repository),
+        ),
+        GoRoute(
+          path: '/programs/:id/day/:dayIndex',
+          builder: (context, state) =>
+              Scaffold(appBar: AppBar(title: const Text('Наполнение дня'))),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
 
     expect(find.text('День 1'), findsOneWidget);
     expect(find.text('Без привязки'), findsOneWidget);
@@ -88,6 +131,17 @@ void main() {
     await tester.pumpAndSettle();
 
     await enterName(tester, 'Сплит');
+
+    await tester.tap(find.byIcon(Icons.playlist_add).at(0));
+    await tester.pumpAndSettle();
+    expect(find.text('Наполнение дня'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    final programId = (await repository.getPrograms()).single.program.id!;
+    final day = (await repository.getDays(programId)).first;
+    await repository.addExerciseToDay(day.id!, exercise.id!);
+
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
     await tester.pumpAndSettle();
 
@@ -101,6 +155,66 @@ void main() {
     expect(days[0].dayIndex, 0);
     expect(days[1].dayOfWeek, isNull);
   });
+
+  testWidgets(
+    'пустая программа: диалог с ошибками, «Продолжить»/«Выйти» не сохраняют',
+    (tester) async {
+      final router = GoRouter(
+        initialLocation: '/home/programs/new',
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) =>
+                const Scaffold(body: Center(child: Text('Программы'))),
+            routes: [
+              GoRoute(
+                path: 'programs/new',
+                builder: (context, state) =>
+                    ProgramBuilderScreen(repository: repository),
+              ),
+            ],
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await enterName(tester, 'Сплит');
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Недостаточно данных для сохранения'), findsOneWidget);
+      expect(
+        find.text('У дня 1 должно быть хотя бы одно основное упражнение'),
+        findsOneWidget,
+      );
+      expect(find.text('Продолжить редактирование'), findsOneWidget);
+      expect(find.text('Выйти'), findsOneWidget);
+      expect(await repository.getPrograms(), isEmpty);
+
+      await tester.tap(find.text('Продолжить редактирование'));
+      await tester.pumpAndSettle();
+      expect(find.text('Недостаточно данных для сохранения'), findsNothing);
+      expect(find.text('День 1'), findsOneWidget);
+      expect(await repository.getPrograms(), isEmpty);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Выйти'));
+      await tester.pumpAndSettle();
+      expect(find.text('Программы'), findsOneWidget);
+      expect(await repository.getPrograms(), isEmpty);
+    },
+  );
 
   testWidgets('валидация: пустое название блокирует сохранение', (
     tester,
@@ -117,10 +231,14 @@ void main() {
   testWidgets('редактирование: загружает и сохраняет изменения', (
     tester,
   ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
     final created = await repository.create(program('Сплит', daysCount: 2), [
       ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),
       ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: 4),
     ]);
+    final createdDays = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(createdDays[0].id!, exercise.id!);
+    await repository.addExerciseToDay(createdDays[1].id!, exercise.id!);
 
     await pumpBuilder(tester, programId: created.id);
 

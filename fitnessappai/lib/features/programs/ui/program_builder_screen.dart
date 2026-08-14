@@ -6,10 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
+import 'package:fitnessappai/core/domain/validators/program_validator.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
+import 'package:fitnessappai/features/programs/ui/program_validation_dialog.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Конструктор программы: параметры и тренировочные дни.
@@ -250,7 +253,66 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     return saved;
   }
 
+  /// Проверяет полную структуру черновика (дни + упражнения).
+  ///
+  /// Возвращает список ошибок или `null`, если структура валидна.
+  Future<List<String>?> _structureErrors() async {
+    final now = DateTime.now();
+    final program = Program(
+      id: _programId,
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.trim(),
+      daysCount: _days.length,
+      createdAt: _createdAt ?? now,
+      updatedAt: now,
+    );
+    final days = [
+      for (var i = 0; i < _days.length; i++)
+        ProgramDay(programId: 0, dayIndex: i, dayOfWeek: _days[i].dayOfWeek),
+    ];
+    final exercisesByDayIndex = await _loadExercisesByDayIndex();
+    final result = ProgramValidator().validate(
+      program: program,
+      days: days,
+      exercisesByDayIndex: exercisesByDayIndex,
+    );
+    return result.isValid ? null : result.errors;
+  }
+
+  /// Загружает сохранённые упражнения программы по индексу дня.
+  Future<Map<int, List<ProgramDayExercise>>> _loadExercisesByDayIndex() async {
+    final programId = _programId;
+    if (programId == null) {
+      return {};
+    }
+    final detail = await _repository.getProgram(programId);
+    if (detail == null) {
+      return {};
+    }
+    return {
+      for (final day in detail.days)
+        day.day.dayIndex: [...day.mainExercises, ...day.alternativeExercises],
+    };
+  }
+
   Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    final errors = await _structureErrors();
+    if (errors != null) {
+      if (!mounted) {
+        return;
+      }
+      final exit = await showProgramValidationDialog(context, errors: errors);
+      if (exit == true) {
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context).pop();
+      }
+      return;
+    }
     setState(() => _saving = true);
     try {
       final previousReminders = await _previousReminders();

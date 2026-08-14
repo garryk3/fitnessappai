@@ -9,9 +9,13 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/domain/models/exercise.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
@@ -23,6 +27,7 @@ class _MockNotificationsPlugin extends Mock
 void main() {
   late AppDatabase db;
   late ProgramRepository repository;
+  late ExerciseRepository exerciseRepository;
   late WorkoutReminderRepository reminderRepository;
   late _MockNotificationsPlugin plugin;
   late ReminderService reminderService;
@@ -38,6 +43,7 @@ void main() {
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
     repository = ProgramRepository(db);
+    exerciseRepository = ExerciseRepository(db, MediaStore());
     reminderRepository = WorkoutReminderRepository(db);
     plugin = _MockNotificationsPlugin();
     reminderService = ReminderService(
@@ -104,11 +110,29 @@ void main() {
     );
   }
 
-  Future<int> createDay({int? dayOfWeek, int hour = 9, int minute = 0}) async {
+  /// Создаёт программу на 1 день с основным упражнением (валидную для
+  /// сохранения) и возвращает её id.
+  Future<int> createValidProgram() async {
+    final exercise = await exerciseRepository.create(
+      Exercise(
+        name: 'Жим штанги',
+        type: ExerciseType.strength,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      const [],
+    );
     final created = await repository.create(program('Сплит'), [
-      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: dayOfWeek),
+      ProgramDay(programId: 0, dayIndex: 0),
     ]);
     final day = (await repository.getDays(created.id!)).single;
+    await repository.addExerciseToDay(day.id!, exercise.id!);
+    return created.id!;
+  }
+
+  Future<int> createDay({int? dayOfWeek, int hour = 9, int minute = 0}) async {
+    final programId = await createValidProgram();
+    final day = (await repository.getDays(programId)).single;
     if (dayOfWeek != null) {
       await reminderRepository.saveForDay(
         day.id!,
@@ -137,7 +161,8 @@ void main() {
   testWidgets(
     'создание программы: включение напоминания планирует уведомление',
     (tester) async {
-      await pumpBuilder(tester);
+      final programId = await createValidProgram();
+      await pumpBuilder(tester, programId: programId);
       await enterName(tester, 'Сплит');
 
       await tester.tap(find.text('День 1'));
@@ -216,7 +241,8 @@ void main() {
   testWidgets('создание программы: без включения напоминание не создаётся', (
     tester,
   ) async {
-    await pumpBuilder(tester);
+    final programId = await createValidProgram();
+    await pumpBuilder(tester, programId: programId);
     await enterName(tester, 'Сплит');
 
     await tester.tap(find.text('День 1'));
