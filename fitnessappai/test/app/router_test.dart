@@ -51,6 +51,30 @@ void main() {
       expect(find.text('Пока нет тренировок'), findsOneWidget);
     });
 
+    testWidgets('deep-link на динамику упражнения открывает экран', (
+      WidgetTester tester,
+    ) async {
+      final GoRouter router = AppRouter.create();
+      await tester.pumpWidget(buildApp(router));
+
+      router.go('/progress/exercise/42');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Упражнение не найдено'), findsOneWidget);
+    });
+
+    testWidgets('deep-link на детали дня открывает экран', (
+      WidgetTester tester,
+    ) async {
+      final GoRouter router = AppRouter.create();
+      await tester.pumpWidget(buildApp(router));
+
+      router.go('/progress/day?start=0&end=0');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Нет тренировок за этот день'), findsOneWidget);
+    });
+
     testWidgets('deep-link с параметром открывает экран упражнения', (
       WidgetTester tester,
     ) async {

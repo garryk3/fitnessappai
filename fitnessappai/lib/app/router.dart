@@ -8,6 +8,8 @@ import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
 import 'package:fitnessappai/features/profile/ui/contraindications_screen.dart';
 import 'package:fitnessappai/features/profile/ui/measurement_form_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
+import 'package:fitnessappai/features/progress/ui/day_detail_screen.dart';
+import 'package:fitnessappai/features/progress/ui/exercise_progression_screen.dart';
 import 'package:fitnessappai/features/progress/ui/history_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
@@ -140,6 +142,25 @@ class AppRouter {
           builder: (context, state) => HistoryDetailScreen(
             sessionId: int.tryParse(state.pathParameters['id'] ?? '') ?? -1,
           ),
+        ),
+        GoRoute(
+          path: '/progress/exercise/:id',
+          builder: (context, state) => ExerciseProgressionScreen(
+            exerciseId: int.tryParse(state.pathParameters['id'] ?? '') ?? -1,
+          ),
+        ),
+        GoRoute(
+          path: '/progress/day',
+          builder: (context, state) {
+            final startMs =
+                int.tryParse(state.uri.queryParameters['start'] ?? '') ?? 0;
+            final endMs =
+                int.tryParse(state.uri.queryParameters['end'] ?? '') ?? 0;
+            return DayDetailScreen(
+              start: DateTime.fromMillisecondsSinceEpoch(startMs),
+              end: DateTime.fromMillisecondsSinceEpoch(endMs),
+            );
+          },
         ),
         GoRoute(path: '/sync', builder: (context, state) => const SyncScreen()),
         GoRoute(

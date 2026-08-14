@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
@@ -225,7 +226,43 @@ class _WorkoutsChart extends StatelessWidget {
               child: BarChart(
                 BarChartData(
                   maxY: maxY,
-                  barTouchData: BarTouchData(enabled: false),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) => theme.colorScheme.inverseSurface,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final index = group.x.toInt();
+                        final label = index < 0 || index >= labels.length
+                            ? ''
+                            : labels[index];
+                        return BarTooltipItem(
+                          '$label\n${rod.toY.toInt()}',
+                          TextStyle(color: theme.colorScheme.onInverseSurface),
+                        );
+                      },
+                    ),
+                    touchCallback: (event, response) {
+                      if (event is! FlTapUpEvent) {
+                        return;
+                      }
+                      final touched = response?.spot;
+                      if (touched == null) {
+                        return;
+                      }
+                      final index = touched.touchedBarGroupIndex;
+                      final slices = controller.statsAggregator.slices(
+                        controller.period.value,
+                      );
+                      if (index < 0 || index >= slices.length) {
+                        return;
+                      }
+                      final (start, end) = slices[index];
+                      context.push(
+                        '/progress/day'
+                        '?start=${start.millisecondsSinceEpoch}'
+                        '&end=${end.millisecondsSinceEpoch}',
+                      );
+                    },
+                  ),
                   borderData: FlBorderData(show: false),
                   gridData: FlGridData(show: false),
                   titlesData: FlTitlesData(
@@ -325,7 +362,23 @@ class _MetricChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.progressMetricChart, style: theme.textTheme.titleSmall),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.progressMetricChart,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.trending_up),
+                  tooltip: l10n.progressProgressionOpen,
+                  onPressed: selectedId == null
+                      ? null
+                      : () => context.push('/progress/exercise/$selectedId'),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             DropdownButton<int>(
               value: selectedId,

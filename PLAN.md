@@ -704,13 +704,15 @@ fitnessappai/
 - **Тесты (факт):** `migration_test` — путь 1→3 (parentKey+сид+createTable) и отдельный 2→3 (вставка/чтение dismissal, `user_version=3`); `program_repository_test` — 4 теста dismiss (false→true, повторный dismiss идемпотентен, независимость программ, каскад при удалении программы); `workout_prepare_screen_test` — чекбокс скрывает диалог при повторном старте, без чекбокса отметка не сохраняется. Всего 411 тестов зелёные.
 
 ### Задача 10.3: Углублённая статистика
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** фичи/прогресс
 - **Ветка:** `task/10.3-deep-stats`
 - **Описание:** `StatsAggregator.exerciseProgression` (max вес/время/дистанция/повторы по датам); из прогресса — деталь дня/сессии и экран динамики упражнения (fl_chart).
 - **Критерии приемки:** из прогресса видно состав тренировки за день и прогресс по упражнению.
 - **Тесты:** `stats_aggregator_test`, widget-тесты навигации/графика. (Зависит от 10.5.)
 - **Зависимости:** 10.5.
+- **Реализация:** в `StatsAggregator` добавлен `ProgressionPoint` (date + metric) и `exerciseProgression(exerciseId)` — прогрессия за всё время по датам тренировок, сортировка по дате: strength — max вес за дату, bodyweight — сумма повторов, running — сумма дистанции, plank — сумма времени. Новый экран `ExerciseProgressionScreen` (`/progress/exercise/:id`): LineChart (fl_chart) с датами по оси X, значением метрики по типам упражнения, максимумом и списком дат с единицами. Новый экран `DayDetailScreen` (`/progress/day?start=&end=`) — сессии в диапазоне среза (день/неделя/месяц) со составом и длительностью, тап открывает детали сессии `/history/:id`. Входные точки на `ProgressScreen`: тап по бару графика «Тренировки по срезам» (с тултипом) и кнопка `trending_up` «Открыть динамику» на карточке «Прогресс метрики». l10n: `progressProgression`, `progressProgressionOpen`, `progressProgressionEmpty`, `progressProgressionMax`, `progressDayEmpty`. В `test_services` зарегистрирован `StatsAggregator` для deep-link тестов роутера.
+- **Тесты (факт):** `stats_aggregator_test` (3 новых: max вес по датам с сортировкой, сумма повторов bodyweight по датам, неизвестное упражнение — пусто); `exercise_progression_screen_test` (3: график/максимум/список дат, пусто, не найдено); `day_detail_screen_test` (3: сессии диапазона со составом, заголовок одиночного дня + пусто, тап открывает детали сессии); `progress_screen_test` (2: кнопка динамики открывает экран, тап по бару открывает деталь дня); `router_test` (2 deep-link: динамика упражнения и детали дня). Всего 434 теста зелёные.
 
 ### Задача 10.4: UX конструктора программ
 - **Статус:** [ ] не начата
@@ -792,7 +794,7 @@ fitnessappai/
 | 9.6 | Стартовый набор упражнений | [x] | task/9.6-exercise-seed | |
 | 10.1 | Детализация мышц | [x] | task/10.1-muscles-detail | |
 | 10.2 | Чекбокс «больше не показывать» | [x] | task/10.2-warning-dismiss | |
-| 10.3 | Углублённая статистика | [ ] | task/10.3-deep-stats | |
+| 10.3 | Углублённая статистика | [x] | task/10.3-deep-stats | PR #46 |
 | 10.4 | UX конструктора программ | [ ] | task/10.4-program-ux | |
 | 10.5 | Тип «свой вес» | [x] | task/10.5-bodyweight | |
 | 10.6 | Название, быстрый старт, README | [ ] | task/10.6-app-name-quickstart | |

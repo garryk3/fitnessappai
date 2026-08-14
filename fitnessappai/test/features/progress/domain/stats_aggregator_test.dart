@@ -57,13 +57,16 @@ void main() {
     endedAt: performedDate.add(const Duration(hours: 18, minutes: 40)),
   );
 
-  Future<int> insertExercise(String name) {
+  Future<int> insertExercise(
+    String name, {
+    ExerciseType type = ExerciseType.strength,
+  }) {
     return db
         .into(db.exercises)
         .insert(
           ExercisesCompanion.insert(
             name: name,
-            type: ExerciseType.strength,
+            type: type,
             createdAt: clock(),
             updatedAt: clock(),
           ),
@@ -275,6 +278,76 @@ void main() {
         expect(metric[2], 30);
         expect(metric.sublist(3), everyElement(0));
         expect(metric.sublist(0, 2), everyElement(0));
+      },
+    );
+
+    test(
+      'exerciseProgression: max вес по датам, отсортирован по дате',
+      () async {
+        final id = await insertExercise('Приседания');
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+          setResult(exerciseId: id, reps: 8, weightKg: 40),
+          setResult(exerciseId: id, reps: 6, weightKg: 50),
+        ]);
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 12)), [
+          setResult(exerciseId: id, reps: 5, weightKg: 45),
+        ]);
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 20)), [
+          setResult(exerciseId: id, reps: 3, weightKg: 60),
+        ]);
+
+        final points = await aggregator.exerciseProgression(id);
+        expect(points, hasLength(3));
+        expect(points[0].date, DateTime(2026, 8, 10));
+        expect(points[0].metric, 50);
+        expect(points[1].date, DateTime(2026, 8, 12));
+        expect(points[1].metric, 45);
+        expect(points[2].date, DateTime(2026, 8, 20));
+        expect(points[2].metric, 60);
+      },
+    );
+
+    test(
+      'exerciseProgression: bodyweight суммирует повторы по датам',
+      () async {
+        final id = await insertExercise(
+          'Отжимания',
+          type: ExerciseType.bodyweight,
+        );
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+          setResult(
+            exerciseId: id,
+            type: ExerciseType.bodyweight,
+            weightKg: null,
+            reps: 12,
+          ),
+          setResult(
+            exerciseId: id,
+            type: ExerciseType.bodyweight,
+            weightKg: null,
+            reps: 10,
+          ),
+        ]);
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 12)), [
+          setResult(
+            exerciseId: id,
+            type: ExerciseType.bodyweight,
+            weightKg: null,
+            reps: 8,
+          ),
+        ]);
+
+        final points = await aggregator.exerciseProgression(id);
+        expect(points, hasLength(2));
+        expect(points[0].metric, 22);
+        expect(points[1].metric, 8);
+      },
+    );
+
+    test(
+      'exerciseProgression: неизвестное упражнение — пустой список',
+      () async {
+        expect(await aggregator.exerciseProgression(999), isEmpty);
       },
     );
 

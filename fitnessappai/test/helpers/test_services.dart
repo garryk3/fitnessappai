@@ -11,6 +11,7 @@ import 'package:fitnessappai/features/profile/domain/body_measurement_validator.
 import 'package:fitnessappai/features/profile/domain/contraindication_service.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Регистрирует в глобальном [locator] сервисы на in-memory БД.
@@ -26,6 +27,12 @@ void registerTestServices() {
   );
   locator.registerLazySingleton<ProgramRepository>(() => ProgramRepository(db));
   locator.registerLazySingleton<WorkoutRepository>(() => WorkoutRepository(db));
+  locator.registerLazySingleton<StatsAggregator>(
+    () => StatsAggregator(
+      workoutRepository: locator.get<WorkoutRepository>(),
+      exerciseRepository: locator.get<ExerciseRepository>(),
+    ),
+  );
   locator.registerLazySingleton<UserProfileRepository>(
     () => UserProfileRepository(db),
   );

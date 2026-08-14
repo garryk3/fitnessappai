@@ -546,6 +546,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get progressEmpty => 'Нет тренировок за период';
 
   @override
+  String get progressProgression => 'Динамика упражнения';
+
+  @override
+  String get progressProgressionOpen => 'Открыть динамику';
+
+  @override
+  String get progressProgressionEmpty =>
+      'Ещё нет тренировок с этим упражнением';
+
+  @override
+  String get progressProgressionMax => 'Максимум';
+
+  @override
+  String get progressDayDetail => 'Тренировки за день';
+
+  @override
+  String get progressDayEmpty => 'Нет тренировок за этот день';
+
+  @override
   String get monthShortJan => 'Янв';
 
   @override

@@ -21,6 +21,17 @@ class MuscleLoad {
       'MuscleLoad(${muscleGroup.key}: ${percent.toStringAsFixed(1)}%)';
 }
 
+/// Точка прогрессии упражнения: дата тренировки и значение метрики.
+class ProgressionPoint {
+  const ProgressionPoint({required this.date, required this.metric});
+
+  final DateTime date;
+  final double metric;
+
+  @override
+  String toString() => 'ProgressionPoint(${date.toIso8601String()}: $metric)';
+}
+
 /// Агрегация статистики тренировок за период.
 ///
 /// Границы периода: неделя — с понедельника, месяц — с 1-го числа,
@@ -260,6 +271,48 @@ class StatsAggregator {
           );
       }
     }).toList();
+  }
+
+  /// Прогрессия упражнения по датам выполнения за всё время.
+  ///
+  /// strength — максимальный вес за дату (кг), bodyweight — суммарные
+  /// повторения, running — суммарная дистанция (м), plank — суммарное
+  /// время (с). Точки отсортированы по дате.
+  Future<List<ProgressionPoint>> exerciseProgression(int exerciseId) async {
+    final exercise = await exerciseRepository.getById(exerciseId);
+    if (exercise == null) {
+      return const [];
+    }
+    final values = <DateTime, double>{};
+    for (final session in await workoutRepository.getAllSessions()) {
+      final detail = await workoutRepository.getSession(session.id!);
+      if (detail == null) {
+        continue;
+      }
+      final date = DateTime(
+        session.performedDate.year,
+        session.performedDate.month,
+        session.performedDate.day,
+      );
+      for (final r in detail.results) {
+        if (r.exerciseId != exerciseId) {
+          continue;
+        }
+        final current = values[date] ?? 0.0;
+        values[date] = switch (exercise.type) {
+          ExerciseType.strength when (r.weightKg ?? 0) > current => r.weightKg!,
+          ExerciseType.strength => current,
+          ExerciseType.bodyweight => current + (r.reps ?? 0),
+          ExerciseType.running => current + (r.distanceMeters ?? 0),
+          ExerciseType.plank => current + (r.durationSeconds ?? 0),
+        };
+      }
+    }
+    final points = [
+      for (final entry in values.entries)
+        ProgressionPoint(date: entry.key, metric: entry.value),
+    ]..sort((a, b) => a.date.compareTo(b.date));
+    return points;
   }
 
   Future<List<WorkoutSession>> _sessions(StatPeriod period) {
