@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
+import 'package:fitnessappai/features/profile/domain/metric_point.dart';
 import 'package:fitnessappai/features/profile/ui/profile_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -207,64 +208,74 @@ class _MetricChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final points = controller.chartPoints.value;
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.profileMetricChart, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            DropdownButton<BodyMetric>(
-              value: controller.selectedMetric.value,
-              isExpanded: true,
-              items: [
-                for (final metric in BodyMetric.values)
-                  DropdownMenuItem(value: metric, child: Text(metric.labelRu)),
-              ],
-              onChanged: (metric) {
-                if (metric != null) {
-                  controller.selectMetric(metric);
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-            if (points.length < 2)
-              SizedBox(
-                height: 120,
-                child: Center(
-                  child: Text(
-                    l10n.profileChartEmpty,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+      child: SignalBuilder(
+        builder: (context) {
+          final selectedMetric = controller.selectedMetric.value;
+          final points = controller.chartPoints.value;
+          return Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.profileMetricChart,
+                  style: theme.textTheme.titleSmall,
                 ),
-              )
-            else
-              SizedBox(
-                height: 160,
-                child: _MetricLineChart(controller: controller),
-              ),
-          ],
-        ),
+                const SizedBox(height: 8),
+                DropdownButton<BodyMetric>(
+                  value: selectedMetric,
+                  isExpanded: true,
+                  items: [
+                    for (final metric in BodyMetric.values)
+                      DropdownMenuItem(
+                        value: metric,
+                        child: Text(metric.labelRu),
+                      ),
+                  ],
+                  onChanged: (metric) {
+                    if (metric != null) {
+                      controller.selectMetric(metric);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                if (points.length < 2)
+                  SizedBox(
+                    height: 120,
+                    child: Center(
+                      child: Text(
+                        l10n.profileChartEmpty,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )
+                else
+                  SizedBox(
+                    height: 160,
+                    child: _MetricLineChart(points: points),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 }
 
 class _MetricLineChart extends StatelessWidget {
-  const _MetricLineChart({required this.controller});
+  const _MetricLineChart({required this.points});
 
-  final ProfileController controller;
+  final List<MetricPoint> points;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final points = controller.chartPoints.value;
     final labels = [
       for (final point in points) DateFormat('d.M', 'ru').format(point.date),
     ];

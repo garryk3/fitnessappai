@@ -113,7 +113,7 @@ void main() {
     expect(await repo.getAll(), isEmpty);
   });
 
-  testWidgets('график строится по выбранной метрике', (tester) async {
+  testWidgets('выбор метрики меняет Dropdown и график', (tester) async {
     await repo.add(
       measurement(date: DateTime(2026, 8, 1), weightKg: 84, heightCm: 180),
     );
@@ -127,16 +127,18 @@ void main() {
     await pumpProfile(tester);
 
     expect(find.byType(LineChart), findsOneWidget);
-    expect(find.text('Текущие значения'), findsOneWidget);
-    expect(find.text('84 кг'), findsOneWidget);
+    expect(_chartYs(tester), [84, 82, 81]);
 
     await tester.tap(find.byType(DropdownButton<BodyMetric>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Рост').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('180 см'), findsWidgets);
-    expect(find.byType(LineChart), findsOneWidget);
+    final dropdown = tester.widget<DropdownButton<BodyMetric>>(
+      find.byType(DropdownButton<BodyMetric>),
+    );
+    expect(dropdown.value, BodyMetric.height);
+    expect(_chartYs(tester), [180, 179, 180]);
   });
 
   testWidgets('удаление замера с подтверждением', (tester) async {
@@ -169,4 +171,10 @@ void main() {
     expect(await repo.getAll(), hasLength(1));
     expect(find.text('80 кг'), findsWidgets);
   });
+}
+
+List<double> _chartYs(WidgetTester tester) {
+  final chart = tester.widget<LineChart>(find.byType(LineChart));
+  final spots = chart.data.lineBarsData.first.spots;
+  return [for (final spot in spots) spot.y];
 }
