@@ -657,6 +657,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutWarningsProceed => 'Продолжить';
 
   @override
+  String get workoutWarningsDontShow =>
+      'Больше не показывать для этой программы';
+
+  @override
   String get contraindicationDescKnees => 'Избегайте приседаний и прыжков.';
 
   @override

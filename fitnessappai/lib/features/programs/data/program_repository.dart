@@ -359,6 +359,32 @@ class ProgramRepository {
     _notify();
   }
 
+  /// Возвращает `true`, если предупреждения для программы скрыты.
+  Future<bool> isWarningDismissed(int programId) async {
+    final row = await (_db.select(
+      _db.programWarningDismissals,
+    )..where((t) => t.programId.equals(programId))).getSingleOrNull();
+    return row != null;
+  }
+
+  /// Запоминает отметку «не показывать предупреждения» для программы.
+  Future<void> dismissWarnings(int programId) async {
+    await _db.transaction(() async {
+      await (_db.delete(
+        _db.programWarningDismissals,
+      )..where((t) => t.programId.equals(programId))).go();
+      await _db
+          .into(_db.programWarningDismissals)
+          .insert(
+            ProgramWarningDismissalsCompanion.insert(
+              programId: programId,
+              dismissedAt: DateTime.now(),
+            ),
+          );
+    });
+    _notify();
+  }
+
   Future<Map<int, int>> _exercisesCountByProgram() async {
     final query = _db.selectOnly(_db.programDayExercises)
       ..addColumns([

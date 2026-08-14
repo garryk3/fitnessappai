@@ -49,39 +49,22 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
   }
 
   Future<void> _start() async {
-    final l10n = AppLocalizations.of(context);
     final warnings = _controller.visibleWarnings;
-    if (warnings.isNotEmpty) {
+    final programId = _controller.programId.value;
+    final dismissed =
+        programId != null &&
+        await _controller.programRepository.isWarningDismissed(programId);
+    if (!mounted) {
+      return;
+    }
+    if (warnings.isNotEmpty && !dismissed) {
       final proceed = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n.workoutWarningsTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.workoutWarningsBody),
-              const SizedBox(height: 8),
-              for (final warning in warnings)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '• ${warning.exerciseName} — '
-                    '${warning.tagLabels.join(', ')}',
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l10n.workoutWarningsProceed),
-            ),
-          ],
+        builder: (context) => _WarningDialog(
+          warnings: warnings,
+          onDismiss: programId == null
+              ? null
+              : () => _controller.programRepository.dismissWarnings(programId),
         ),
       );
       if (proceed != true || !mounted) {
@@ -300,3 +283,68 @@ class _TypeIcon extends StatelessWidget {
 String _fmt(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toString();
+
+/// Диалог предупреждений о противопоказаниях с отметкой «больше не показывать».
+class _WarningDialog extends StatefulWidget {
+  const _WarningDialog({required this.warnings, this.onDismiss});
+
+  final List<WorkoutWarning> warnings;
+  final Future<void> Function()? onDismiss;
+
+  @override
+  State<_WarningDialog> createState() => _WarningDialogState();
+}
+
+class _WarningDialogState extends State<_WarningDialog> {
+  bool _dontShowAgain = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.workoutWarningsTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.workoutWarningsBody),
+          const SizedBox(height: 8),
+          for (final warning in widget.warnings)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                '• ${warning.exerciseName} — '
+                '${warning.tagLabels.join(', ')}',
+              ),
+            ),
+          if (widget.onDismiss != null)
+            CheckboxListTile(
+              value: _dontShowAgain,
+              onChanged: (value) => setState(() {
+                _dontShowAgain = value ?? false;
+              }),
+              title: Text(l10n.workoutWarningsDontShow),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () async {
+            final dismiss = _dontShowAgain;
+            Navigator.of(context).pop(true);
+            if (dismiss) {
+              await widget.onDismiss?.call();
+            }
+          },
+          child: Text(l10n.workoutWarningsProceed),
+        ),
+      ],
+    );
+  }
+}

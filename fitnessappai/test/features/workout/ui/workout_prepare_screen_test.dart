@@ -243,4 +243,60 @@ void main() {
     expect(find.text('Противопоказания'), findsNothing);
     expect(find.text('run-main'), findsOneWidget);
   });
+
+  testWidgets('чекбокс «не показывать» скрывает диалог при повторном старте', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    final tagId = (await db.select(db.contraindicationTags).get())
+        .firstWhere((t) => t.key == 'knees')
+        .id;
+    final exerciseId = (await exerciseRepo.getAll()).single.id!;
+    await exerciseRepo.setContraindications(exerciseId, [tagId]);
+    await profileRepo.setContraindicationTags(['knees']);
+
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+    expect(find.text('Противопоказания'), findsOneWidget);
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    await tester.tap(find.text('Продолжить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('run-main'), findsOneWidget);
+
+    final program = (await programRepo.getPrograms()).single;
+    expect(await programRepo.isWarningDismissed(program.program.id!), isTrue);
+
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Противопоказания'), findsNothing);
+    expect(find.text('run-main'), findsOneWidget);
+  });
+
+  testWidgets('без чекбокса отметка не сохраняется', (tester) async {
+    final dayId = await createDay();
+    final tagId = (await db.select(db.contraindicationTags).get())
+        .firstWhere((t) => t.key == 'knees')
+        .id;
+    final exerciseId = (await exerciseRepo.getAll()).single.id!;
+    await exerciseRepo.setContraindications(exerciseId, [tagId]);
+    await profileRepo.setContraindicationTags(['knees']);
+
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Продолжить'));
+    await tester.pumpAndSettle();
+
+    final program = (await programRepo.getPrograms()).single;
+    expect(await programRepo.isWarningDismissed(program.program.id!), isFalse);
+  });
 }

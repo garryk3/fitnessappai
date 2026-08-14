@@ -14,6 +14,7 @@ import 'package:fitnessappai/core/database/tables/exercises.dart';
 import 'package:fitnessappai/core/database/tables/muscle_groups.dart';
 import 'package:fitnessappai/core/database/tables/program_day_exercises.dart';
 import 'package:fitnessappai/core/database/tables/program_days.dart';
+import 'package:fitnessappai/core/database/tables/program_warning_dismissals.dart';
 import 'package:fitnessappai/core/database/tables/programs.dart';
 import 'package:fitnessappai/core/database/tables/schedule_marks.dart';
 import 'package:fitnessappai/core/database/tables/user_contraindications.dart';
@@ -33,7 +34,8 @@ part 'app_database.g.dart';
 /// при валидации импортируемых файлов.
 ///
 /// v2: колонка `muscle_groups.parentKey` + подгруппы дельт.
-const int appDatabaseSchemaVersion = 2;
+/// v3: таблица `program_warning_dismissals`.
+const int appDatabaseSchemaVersion = 3;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -57,6 +59,7 @@ const int appDatabaseSchemaVersion = 2;
     WorkoutSetResults,
     ScheduleMarks,
     BodyMeasurements,
+    ProgramWarningDismissals,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -76,6 +79,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.addColumn(muscleGroups, muscleGroups.parentKey);
         await ReferenceSeeder(this).seed();
+      }
+      if (from < 3) {
+        await m.createTable(programWarningDismissals);
       }
     },
     beforeOpen: (details) async {

@@ -694,12 +694,14 @@ fitnessappai/
 - **Тесты (факт):** `migration_test.dart` — открытие v1-БД (raw sqlite, user_version=1) → после миграции 3 дельты с `parentKey=shoulders` и `user_version=2`; `reference_seeder_test` — 18 групп, `parentKey` на дельтах, идемпотентность; `muscle_diagram_test` — 18 регионов, дельты разнесены по видам; `exercise_form_screen_test` — подгруппы видны под «Плечи», выбор «Передняя дельта» сохраняется в `exercise_muscles`. Всего 404 теста зелёные.
 
 ### Задача 10.2: Чекбокс «больше не показывать» предупреждения
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** фичи/workout
 - **Ветка:** `task/10.2-warning-dismiss`
 - **Описание:** Таблица `program_warning_dismissals` (programId FK cascade), schemaVersion→3, `isDismissed`/`dismiss`; попап при старте показывается, только если `visibleWarnings.notEmpty && !dismissed`; `CheckboxListTile` в диалоге.
 - **Критерии приемки:** отметка «не показывать» для программы запоминается, повторно попап не выводится.
 - **Тесты:** `workout_prepare_screen_test` (чекбокс, persist, повторный старт без диалога), репозиторий dismiss.
+- **Реализация:** таблица `program_warning_dismissals` (`program_id` FK cascade, `dismissed_at`), `appDatabaseSchemaVersion` 2→3, `onUpgrade`: `m.createTable`. `ProgramRepository.isWarningDismissed`/`dismissWarnings` (идимпотентный delete+insert в транзакции, `_notify`). `WorkoutPrepareController.programId` — новый сигнал (выставляется из `day.programId`). `_start`: диалог показывается только при `visibleWarnings.notEmpty && !dismissed`; выделенный `_WarningDialog` (StatefulWidget) с `CheckboxListTile` «Больше не показывать для этой программы» (новый ключ `workoutWarningsDontShow`), при продолжении с чекбоксом вызывает `dismissWarnings`. Дроп `drift_schema_v3.json`.
+- **Тесты (факт):** `migration_test` — путь 1→3 (parentKey+сид+createTable) и отдельный 2→3 (вставка/чтение dismissal, `user_version=3`); `program_repository_test` — 4 теста dismiss (false→true, повторный dismiss идемпотентен, независимость программ, каскад при удалении программы); `workout_prepare_screen_test` — чекбокс скрывает диалог при повторном старте, без чекбокса отметка не сохраняется. Всего 411 тестов зелёные.
 
 ### Задача 10.3: Углублённая статистика
 - **Статус:** [ ] не начата
@@ -787,7 +789,7 @@ fitnessappai/
 | 9.5 | Селект «Динамика» | [x] | task/9.5-profile-dropdown | |
 | 9.6 | Стартовый набор упражнений | [x] | task/9.6-exercise-seed | |
 | 10.1 | Детализация мышц | [x] | task/10.1-muscles-detail | |
-| 10.2 | Чекбокс «больше не показывать» | [ ] | task/10.2-warning-dismiss | |
+| 10.2 | Чекбокс «больше не показывать» | [x] | task/10.2-warning-dismiss | |
 | 10.3 | Углублённая статистика | [ ] | task/10.3-deep-stats | |
 | 10.4 | UX конструктора программ | [ ] | task/10.4-program-ux | |
 | 10.5 | Тип «свой вес» | [ ] | task/10.5-bodyweight | |

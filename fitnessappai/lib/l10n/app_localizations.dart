@@ -1258,6 +1258,12 @@ abstract class AppLocalizations {
   /// **'Продолжить'**
   String get workoutWarningsProceed;
 
+  /// No description provided for @workoutWarningsDontShow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Больше не показывать для этой программы'**
+  String get workoutWarningsDontShow;
+
   /// No description provided for @contraindicationDescKnees.
   ///
   /// In ru, this message translates to:

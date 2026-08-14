@@ -46,6 +46,7 @@ class WorkoutPrepareController {
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> notFound = Signal(false);
   final Signal<String> programName = Signal('');
+  final Signal<int?> programId = Signal(null);
   final Signal<int> dayIndex = Signal(0);
   final Signal<WorkoutVariant> variant = Signal(WorkoutVariant.main);
 
@@ -80,6 +81,7 @@ class WorkoutPrepareController {
         notFound.value = true;
         return;
       }
+      programId.value = day.programId;
       final program = await programRepository.getById(day.programId);
       programName.value = program?.name ?? '';
       dayIndex.value = day.dayIndex;

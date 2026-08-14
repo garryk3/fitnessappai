@@ -324,6 +324,7 @@
   "workoutWarningsTitle": "Противопоказания",
   "workoutWarningsBody": "В программе есть упражнения с противопоказаниями:",
   "workoutWarningsProceed": "Продолжить",
+  "workoutWarningsDontShow": "Больше не показывать для этой программы",
   "contraindicationDescKnees": "Избегайте приседаний и прыжков.",
   "contraindicationDescBack": "Избегайте осевых нагрузок на позвоночник.",
   "contraindicationDescNeck": "Избегайте нагрузки на шейный отдел.",
