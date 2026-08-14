@@ -120,7 +120,15 @@ void main() {
     expect(find.text('День 2'), findsOneWidget);
     expect(find.text('День 3'), findsOneWidget);
 
+    await enterName(tester, 'Сплит');
+
     await tester.tap(find.text('День 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Наполнение дня'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune).at(0));
     await tester.pumpAndSettle();
     expect(find.text('Настройка дня'), findsOneWidget);
     await tester.tap(find.byType(DropdownButtonFormField<int?>));
@@ -129,8 +137,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
     await tester.pumpAndSettle();
-
-    await enterName(tester, 'Сплит');
 
     await tester.tap(find.byIcon(Icons.playlist_add).at(0));
     await tester.pumpAndSettle();
@@ -247,7 +253,7 @@ void main() {
     expect(find.text('Вт'), findsOneWidget);
     expect(find.text('Чт'), findsOneWidget);
 
-    await tester.tap(find.text('День 2'));
+    await tester.tap(find.byIcon(Icons.tune).at(1));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<int?>));
     await tester.pumpAndSettle();
@@ -299,7 +305,7 @@ void main() {
       await tester.tap(find.text('2'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('День 1'));
+      await tester.tap(find.byIcon(Icons.tune).at(0));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButtonFormField<int?>));
       await tester.pumpAndSettle();
@@ -319,7 +325,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('День 2'));
+      await tester.tap(find.byIcon(Icons.tune).at(1));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButtonFormField<int?>));
       await tester.pumpAndSettle();

@@ -166,20 +166,22 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     if (selected == null || !mounted) {
       return;
     }
+    final draft = _ItemDraft(
+      key: 'new-${_nextTempKey++}',
+      item: ProgramDayExercise(
+        dayId: _currentDay?.day.id ?? 0,
+        exerciseId: selected.id,
+        orderIndex: _currentItems.length,
+        isAlternative: _isAlternative,
+      ),
+    );
     setState(() {
-      _currentItems.add(
-        _ItemDraft(
-          key: 'new-${_nextTempKey++}',
-          item: ProgramDayExercise(
-            dayId: _currentDay?.day.id ?? 0,
-            exerciseId: selected.id,
-            orderIndex: _currentItems.length,
-            isAlternative: _isAlternative,
-          ),
-        ),
-      );
+      _currentItems.add(draft);
     });
     await _loadMusclesFor(selected.id!);
+    if (mounted) {
+      await _openExerciseParams(draft);
+    }
   }
 
   void _removeItem(_ItemDraft draft) {

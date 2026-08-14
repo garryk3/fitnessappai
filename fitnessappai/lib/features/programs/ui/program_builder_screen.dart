@@ -434,7 +434,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: ListTile(
-          onTap: () => _openDaySettings(day),
+          onTap: () => _openDayFill(index),
           leading: ReorderableDragStartListener(
             index: index,
             child: const Icon(Icons.drag_indicator),

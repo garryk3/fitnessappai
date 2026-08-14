@@ -148,7 +148,7 @@ void main() {
     tester,
   ) async {
     await pumpBuilder(tester);
-    await tester.tap(find.text('День 1'));
+    await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
 
     final tile = tester.widget<SwitchListTile>(
@@ -165,7 +165,7 @@ void main() {
       await pumpBuilder(tester, programId: programId);
       await enterName(tester, 'Сплит');
 
-      await tester.tap(find.text('День 1'));
+      await tester.tap(find.byIcon(Icons.tune));
       await tester.pumpAndSettle();
       await setWeekday(tester, 'Пн');
       await tester.tap(find.text('Напоминать'));
@@ -205,7 +205,7 @@ void main() {
       programId: (await repository.getPrograms()).single.program.id,
     );
 
-    await tester.tap(find.text('День 1'));
+    await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
     expect(find.text('18:45'), findsOneWidget);
 
@@ -228,7 +228,7 @@ void main() {
     final programId = (await repository.getPrograms()).single.program.id!;
     await pumpBuilder(tester, programId: programId);
 
-    await tester.tap(find.text('День 1'));
+    await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
 
     final tile = tester.widget<SwitchListTile>(
@@ -245,7 +245,7 @@ void main() {
     await pumpBuilder(tester, programId: programId);
     await enterName(tester, 'Сплит');
 
-    await tester.tap(find.text('День 1'));
+    await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
     await setWeekday(tester, 'Вт');
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);

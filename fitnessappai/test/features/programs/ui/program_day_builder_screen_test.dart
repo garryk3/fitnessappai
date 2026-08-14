@@ -85,18 +85,41 @@ void main() {
     required int programId,
     int dayIndex = 0,
   }) async {
+    final router = GoRouter(
+      initialLocation: '/programs/$programId/edit/day/$dayIndex',
+      routes: [
+        GoRoute(
+          path: '/programs/:id/edit',
+          builder: (context, state) => const Scaffold(body: SizedBox()),
+          routes: [
+            GoRoute(
+              path: 'day/:dayIndex',
+              builder: (context, state) => ProgramDayBuilderScreen(
+                programId: int.parse(state.pathParameters['id']!),
+                dayIndex: int.parse(state.pathParameters['dayIndex']!),
+                repository: programRepository,
+                exerciseRepository: exerciseRepository,
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/program-day/:id/exercise-params',
+          builder: (context, state) => ProgramDayExerciseParamsScreen(
+            positionId: int.parse(state.pathParameters['id']!),
+            repository: programRepository,
+            exerciseRepository: exerciseRepository,
+          ),
+        ),
+      ],
+    );
     await tester.pumpWidget(
-      MaterialApp(
+      MaterialApp.router(
         theme: AppTheme.dark(),
+        routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
-        home: ProgramDayBuilderScreen(
-          programId: programId,
-          dayIndex: dayIndex,
-          repository: programRepository,
-          exerciseRepository: exerciseRepository,
-        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -106,6 +129,11 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.text(name));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> closeParams(WidgetTester tester) async {
+    await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
   }
 
@@ -150,7 +178,9 @@ void main() {
     expect(find.textContaining('кг'), findsNothing);
   });
 
-  testWidgets('добавление упражнения через диалог выбора', (tester) async {
+  testWidgets('добавление упражнения сразу открывает экран параметров', (
+    tester,
+  ) async {
     final program = await createProgram('Сплит', 1);
     await createExercise('Приседания', ExerciseType.strength);
 
@@ -158,6 +188,11 @@ void main() {
     expect(find.text('В этом дне пока нет упражнений'), findsOneWidget);
 
     await addExercise(tester, 'Приседания');
+
+    expect(find.text('Параметры упражнения'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Подходы'), findsOneWidget);
+
+    await closeParams(tester);
 
     expect(find.text('Приседания'), findsOneWidget);
     expect(find.text('Параметры не заданы'), findsOneWidget);
@@ -171,10 +206,12 @@ void main() {
 
     await pumpDayBuilder(tester, programId: program.id!);
     await addExercise(tester, 'Приседания');
+    await closeParams(tester);
 
     await tester.tap(find.text('Альтернативный набор'));
     await tester.pumpAndSettle();
     await addExercise(tester, 'Рывок гири');
+    await closeParams(tester);
 
     expect(find.text('Рывок гири'), findsOneWidget);
     expect(find.text('Приседания'), findsNothing);
@@ -241,7 +278,7 @@ void main() {
     expect(firstDiagramHighlights(), isEmpty);
 
     await addExercise(tester, 'Жим штанги');
-    await tester.pumpAndSettle();
+    await closeParams(tester);
 
     expect(firstDiagramHighlights(), containsPair('chest', 1.0));
   });
@@ -252,6 +289,7 @@ void main() {
 
     await pumpDayBuilder(tester, programId: program.id!);
     await addExercise(tester, 'Приседания');
+    await closeParams(tester);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
@@ -261,7 +299,10 @@ void main() {
       findsOneWidget,
     );
     final detail = await programRepository.getProgram(program.id!);
-    expect(detail!.days[0].mainExercises, isEmpty);
+    final items = detail!.days[0].mainExercises;
+    expect(items, hasLength(1));
+    expect(items.single.sets, isNull);
+    expect(items.single.reps, isNull);
   });
 
   testWidgets('сохранение валидного дня сохраняет упражнения', (tester) async {
@@ -314,93 +355,45 @@ void main() {
     expect(detail!.days[0].mainExercises, hasLength(1));
   });
 
-  testWidgets(
-    'новое упражнение: параметры задаются через экран и день сохраняется',
-    (tester) async {
-      final exercise = await createExercise(
-        'Приседания',
-        ExerciseType.strength,
-      );
-      final program = await createProgram('Сплит', 1);
+  testWidgets('новое упражнение: параметры задаются сразу и день сохраняется', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Приседания', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1);
 
-      final router = GoRouter(
-        initialLocation: '/programs/${program.id}/edit/day/0',
-        routes: [
-          GoRoute(
-            path: '/programs/:id/edit',
-            builder: (context, state) => const Scaffold(body: SizedBox()),
-            routes: [
-              GoRoute(
-                path: 'day/:dayIndex',
-                builder: (context, state) => ProgramDayBuilderScreen(
-                  programId: int.parse(state.pathParameters['id']!),
-                  dayIndex: int.parse(state.pathParameters['dayIndex']!),
-                  repository: programRepository,
-                  exerciseRepository: exerciseRepository,
-                ),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: '/program-day/:id/exercise-params',
-            builder: (context, state) => ProgramDayExerciseParamsScreen(
-              positionId: int.parse(state.pathParameters['id']!),
-              repository: programRepository,
-              exerciseRepository: exerciseRepository,
-            ),
-          ),
-        ],
-      );
+    await pumpDayBuilder(tester, programId: program.id!);
 
-      await tester.pumpWidget(
-        MaterialApp.router(
-          theme: AppTheme.dark(),
-          routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('ru'),
-        ),
-      );
-      await tester.pumpAndSettle();
+    await addExercise(tester, 'Приседания');
 
-      await addExercise(tester, 'Приседания');
+    expect(find.text('Параметры упражнения'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.tune));
-      await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Подходы'), '3');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Повторения'),
+      '10',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Вес (кг)'),
+      '20',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Отдых (сек)'),
+      '60',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Параметры упражнения'), findsOneWidget);
+    expect(find.text('Параметры упражнения'), findsNothing);
+    expect(find.text('Приседания'), findsOneWidget);
 
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Подходы'),
-        '3',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Повторения'),
-        '10',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Вес (кг)'),
-        '20',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Отдых (сек)'),
-        '60',
-      );
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Параметры упражнения'), findsNothing);
-      expect(find.text('Приседания'), findsOneWidget);
-
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
-      await tester.pumpAndSettle();
-
-      final detail = await programRepository.getProgram(program.id!);
-      final items = detail!.days[0].mainExercises;
-      expect(items, hasLength(1));
-      expect(items.single.exerciseId, exercise.id);
-      expect(items.single.sets, 3);
-      expect(items.single.reps, 10);
-    },
-  );
+    final detail = await programRepository.getProgram(program.id!);
+    final items = detail!.days[0].mainExercises;
+    expect(items, hasLength(1));
+    expect(items.single.exerciseId, exercise.id);
+    expect(items.single.sets, 3);
+    expect(items.single.reps, 10);
+  });
 }
