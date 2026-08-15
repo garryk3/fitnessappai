@@ -25,6 +25,12 @@ void main() {
     testWidgets('вкладки переключаются', (WidgetTester tester) async {
       final GoRouter router = AppRouter.create();
       await tester.pumpWidget(buildApp(router));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Нет программ'), findsOneWidget);
+
+      await tester.tap(find.text('Упражнения'));
+      await tester.pumpAndSettle();
 
       expect(find.text('Поиск упражнений'), findsOneWidget);
 

@@ -84,11 +84,16 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
               onEdit: () => context.push('/programs/${item.program.id}/edit'),
               onDelete: () => _confirmDelete(context, item.program),
               onCopyJson: () => _copyProgramJson(context, item.program),
+              onSetActive: () => _makeActive(context, item.program),
             ),
           );
         },
       ),
     );
+  }
+
+  Future<void> _makeActive(BuildContext context, Program program) async {
+    await _controller.setActive(program.id!);
   }
 
   Future<void> _copyProgramJson(BuildContext context, Program program) async {
@@ -137,12 +142,14 @@ class _ProgramCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onCopyJson,
+    required this.onSetActive,
   });
 
   final ProgramListItem item;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onCopyJson;
+  final VoidCallback onSetActive;
 
   @override
   Widget build(BuildContext context) {
@@ -161,11 +168,21 @@ class _ProgramCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      program.name,
-                      style: theme.textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            program.name,
+                            style: theme.textTheme.titleMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (program.isActive) ...[
+                          const SizedBox(width: 8),
+                          _ActiveBadge(label: l10n.programActive),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -203,9 +220,16 @@ class _ProgramCard extends StatelessWidget {
                     onDelete();
                   } else if (value == 'copy-json') {
                     onCopyJson();
+                  } else if (value == 'set-active') {
+                    onSetActive();
                   }
                 },
                 itemBuilder: (context) => [
+                  if (!program.isActive)
+                    PopupMenuItem(
+                      value: 'set-active',
+                      child: Text(l10n.programMakeActive),
+                    ),
                   PopupMenuItem(value: 'edit', child: Text(l10n.commonEdit)),
                   PopupMenuItem(
                     value: 'copy-json',
@@ -219,6 +243,31 @@ class _ProgramCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveBadge extends StatelessWidget {
+  const _ActiveBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: colorScheme.onPrimary,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

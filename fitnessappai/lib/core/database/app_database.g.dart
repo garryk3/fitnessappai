@@ -2957,6 +2957,21 @@ class $ProgramsTable extends Programs
         type: DriftSqlType.int,
         requiredDuringInsert: true,
       ).withConverter<DateTime>($ProgramsTable.$converterupdatedAt);
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2965,6 +2980,7 @@ class $ProgramsTable extends Programs
     daysCount,
     createdAt,
     updatedAt,
+    isActive,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3004,6 +3020,12 @@ class $ProgramsTable extends Programs
         daysCount.isAcceptableOrUnknown(data['days_count']!, _daysCountMeta),
       );
     }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
     return context;
   }
 
@@ -3041,6 +3063,10 @@ class $ProgramsTable extends Programs
           data['${effectivePrefix}updated_at'],
         )!,
       ),
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
     );
   }
 
@@ -3062,6 +3088,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
   final int daysCount;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isActive;
   const ProgramRow({
     required this.id,
     required this.name,
@@ -3069,6 +3096,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     required this.daysCount,
     required this.createdAt,
     required this.updatedAt,
+    required this.isActive,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3087,6 +3115,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
         $ProgramsTable.$converterupdatedAt.toSql(updatedAt),
       );
     }
+    map['is_active'] = Variable<bool>(isActive);
     return map;
   }
 
@@ -3098,6 +3127,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       daysCount: Value(daysCount),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      isActive: Value(isActive),
     );
   }
 
@@ -3113,6 +3143,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       daysCount: serializer.fromJson<int>(json['daysCount']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
     );
   }
   @override
@@ -3125,6 +3156,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       'daysCount': serializer.toJson<int>(daysCount),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isActive': serializer.toJson<bool>(isActive),
     };
   }
 
@@ -3135,6 +3167,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     int? daysCount,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isActive,
   }) => ProgramRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -3142,6 +3175,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     daysCount: daysCount ?? this.daysCount,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    isActive: isActive ?? this.isActive,
   );
   ProgramRow copyWithCompanion(ProgramsCompanion data) {
     return ProgramRow(
@@ -3153,6 +3187,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       daysCount: data.daysCount.present ? data.daysCount.value : this.daysCount,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
     );
   }
 
@@ -3164,14 +3199,22 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
           ..write('description: $description, ')
           ..write('daysCount: $daysCount, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isActive: $isActive')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, description, daysCount, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    description,
+    daysCount,
+    createdAt,
+    updatedAt,
+    isActive,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3181,7 +3224,8 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
           other.description == this.description &&
           other.daysCount == this.daysCount &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.isActive == this.isActive);
 }
 
 class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
@@ -3191,6 +3235,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
   final Value<int> daysCount;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<bool> isActive;
   const ProgramsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -3198,6 +3243,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     this.daysCount = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.isActive = const Value.absent(),
   });
   ProgramsCompanion.insert({
     this.id = const Value.absent(),
@@ -3206,6 +3252,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     this.daysCount = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.isActive = const Value.absent(),
   }) : name = Value(name),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
@@ -3216,6 +3263,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     Expression<int>? daysCount,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
+    Expression<bool>? isActive,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3224,6 +3272,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
       if (daysCount != null) 'days_count': daysCount,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (isActive != null) 'is_active': isActive,
     });
   }
 
@@ -3234,6 +3283,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     Value<int>? daysCount,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
+    Value<bool>? isActive,
   }) {
     return ProgramsCompanion(
       id: id ?? this.id,
@@ -3242,6 +3292,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
       daysCount: daysCount ?? this.daysCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -3270,6 +3321,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
         $ProgramsTable.$converterupdatedAt.toSql(updatedAt.value),
       );
     }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
     return map;
   }
 
@@ -3281,7 +3335,8 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
           ..write('description: $description, ')
           ..write('daysCount: $daysCount, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isActive: $isActive')
           ..write(')'))
         .toString();
   }
@@ -10588,6 +10643,7 @@ typedef $$ProgramsTableCreateCompanionBuilder =
       Value<int> daysCount,
       required DateTime createdAt,
       required DateTime updatedAt,
+      Value<bool> isActive,
     });
 typedef $$ProgramsTableUpdateCompanionBuilder =
     ProgramsCompanion Function({
@@ -10597,6 +10653,7 @@ typedef $$ProgramsTableUpdateCompanionBuilder =
       Value<int> daysCount,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
+      Value<bool> isActive,
     });
 
 final class $$ProgramsTableReferences
@@ -10707,6 +10764,11 @@ class $$ProgramsTableFilterComposer
         column: $table.updatedAt,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
 
   Expression<bool> programDaysRefs(
     Expression<bool> Function($$ProgramDaysTableFilterComposer f) f,
@@ -10824,6 +10886,11 @@ class $$ProgramsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProgramsTableAnnotationComposer
@@ -10854,6 +10921,9 @@ class $$ProgramsTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<DateTime, int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
 
   Expression<T> programDaysRefs<T extends Object>(
     Expression<T> Function($$ProgramDaysTableAnnotationComposer a) f,
@@ -10971,6 +11041,7 @@ class $$ProgramsTableTableManager
                 Value<int> daysCount = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
               }) => ProgramsCompanion(
                 id: id,
                 name: name,
@@ -10978,6 +11049,7 @@ class $$ProgramsTableTableManager
                 daysCount: daysCount,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                isActive: isActive,
               ),
           createCompanionCallback:
               ({
@@ -10987,6 +11059,7 @@ class $$ProgramsTableTableManager
                 Value<int> daysCount = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
+                Value<bool> isActive = const Value.absent(),
               }) => ProgramsCompanion.insert(
                 id: id,
                 name: name,
@@ -10994,6 +11067,7 @@ class $$ProgramsTableTableManager
                 daysCount: daysCount,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                isActive: isActive,
               ),
           withReferenceMapper: (p0) => p0
               .map(

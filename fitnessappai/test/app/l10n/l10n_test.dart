@@ -13,9 +13,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const FitnessAppAi());
+    await tester.pumpAndSettle();
 
-    expect(find.text('Поиск упражнений'), findsOneWidget);
-    expect(find.text('Упражнения'), findsWidgets);
+    expect(find.text('Главная'), findsWidgets);
+    expect(find.text('Нет программ'), findsOneWidget);
   });
 
   testWidgets('delegates и supportedLocales настроены', (

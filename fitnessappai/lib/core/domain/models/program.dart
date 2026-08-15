@@ -7,6 +7,7 @@ class Program {
     required this.daysCount,
     required this.createdAt,
     required this.updatedAt,
+    this.isActive = false,
   });
 
   final int? id;
@@ -16,6 +17,9 @@ class Program {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// Является ли программа активной (для домашнего экрана).
+  final bool isActive;
+
   Program copyWith({
     int? id,
     String? name,
@@ -23,6 +27,7 @@ class Program {
     int? daysCount,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isActive,
     bool clearId = false,
   }) {
     return Program(
@@ -32,6 +37,7 @@ class Program {
       daysCount: daysCount ?? this.daysCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -44,12 +50,20 @@ class Program {
             other.description == description &&
             other.daysCount == daysCount &&
             other.createdAt == createdAt &&
-            other.updatedAt == updatedAt;
+            other.updatedAt == updatedAt &&
+            other.isActive == isActive;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, description, daysCount, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    description,
+    daysCount,
+    createdAt,
+    updatedAt,
+    isActive,
+  );
 
   @override
   String toString() => 'Program(id: $id, name: $name, daysCount: $daysCount)';

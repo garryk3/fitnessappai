@@ -202,6 +202,72 @@ void main() {
       expect(copiedJson, startsWith('{"type": "program"'));
     },
   );
+
+  testWidgets('активная программа показывает бейдж и пункт скрыт', (
+    tester,
+  ) async {
+    final created = await repository.create(program('Сплит'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await repository.setActive(created.id!);
+    await pumpPrograms(tester);
+
+    expect(find.text('Активная'), findsOneWidget);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenuButton<String>),
+        matching: find.byType(IconButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Сделать активной'), findsNothing);
+  });
+
+  testWidgets('«Сделать активной» помечает программу и показывает бейдж', (
+    tester,
+  ) async {
+    await repository.create(program('Сплит'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await pumpPrograms(tester);
+
+    expect(find.text('Активная'), findsNothing);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenuButton<String>),
+        matching: find.byType(IconButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Сделать активной'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Активная'), findsOneWidget);
+
+    final programs = await repository.getPrograms();
+    expect(programs.single.program.isActive, isTrue);
+  });
+
+  testWidgets('при новой активной бейдж переходит к другой программе', (
+    tester,
+  ) async {
+    final first = await repository.create(program('Первая'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await repository.create(program('Вторая'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await repository.setActive(first.id!);
+    await pumpPrograms(tester);
+
+    expect(find.text('Активная'), findsOneWidget);
+
+    final cards = tester.widgetList(find.byType(Card));
+    expect(cards, hasLength(2));
+  });
 }
 
 /// Сервис экспорта, возвращающий фиксированный JSON без обращения к БД.

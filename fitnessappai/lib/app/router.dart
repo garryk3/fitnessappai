@@ -5,6 +5,7 @@ import 'package:fitnessappai/app/screens/not_found_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
+import 'package:fitnessappai/features/home/ui/home_screen.dart';
 import 'package:fitnessappai/features/profile/ui/contraindications_screen.dart';
 import 'package:fitnessappai/features/profile/ui/measurement_form_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
@@ -26,13 +27,21 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 class AppRouter {
   static GoRouter create() {
     return GoRouter(
-      initialLocation: '/exercises',
+      initialLocation: '/home',
       errorBuilder: (context, state) => const NotFoundScreen(),
       routes: [
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
               AdaptiveNavigation(navigationShell: navigationShell),
           branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/home',
+                  builder: (context, state) => const HomeScreen(),
+                ),
+              ],
+            ),
             StatefulShellBranch(
               routes: [
                 GoRoute(

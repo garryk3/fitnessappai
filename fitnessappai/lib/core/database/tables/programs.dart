@@ -11,4 +11,5 @@ class Programs extends Table {
   IntColumn get daysCount => integer().withDefault(const Constant(0))();
   IntColumn get createdAt => integer().map(const DateTimeConverter())();
   IntColumn get updatedAt => integer().map(const DateTimeConverter())();
+  BoolColumn get isActive => boolean().withDefault(const Constant(false))();
 }

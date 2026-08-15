@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
@@ -507,6 +508,45 @@ void main() {
       await repo.delete(created.id!);
 
       expect(await repo.isWarningDismissed(created.id!), isFalse);
+    });
+  });
+
+  group('активная программа', () {
+    test('getActiveProgram возвращает null, пока ни одна не активна', () async {
+      await repo.create(program(), [day(dayIndex: 0)]);
+
+      expect(await repo.getActiveProgram(), isNull);
+    });
+
+    test('setActive помечает программу и снимает остальные', () async {
+      final first = await repo.create(program(), [day(dayIndex: 0)]);
+      final second = await repo.create(program(name: 'Вторая'), [
+        day(dayIndex: 0),
+      ]);
+
+      await repo.setActive(first.id!);
+      expect((await repo.getById(first.id!))!.isActive, isTrue);
+      expect((await repo.getById(second.id!))!.isActive, isFalse);
+
+      await repo.setActive(second.id!);
+      expect((await repo.getById(first.id!))!.isActive, isFalse);
+      expect((await repo.getById(second.id!))!.isActive, isTrue);
+
+      expect((await repo.getActiveProgram())!.id, second.id);
+    });
+
+    test('setActive уведомляет подписчиков', () async {
+      final changes = DataChangeNotifier();
+      final notifyingRepo = ProgramRepository(db, changes: changes);
+      final created = await notifyingRepo.create(program(), [day(dayIndex: 0)]);
+      var notifications = 0;
+      void onChanged() => notifications++;
+      changes.addListener(onChanged);
+
+      await notifyingRepo.setActive(created.id!);
+
+      expect(notifications, greaterThan(0));
+      changes.removeListener(onChanged);
     });
   });
 }
