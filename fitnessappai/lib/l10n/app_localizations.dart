@@ -472,6 +472,18 @@ abstract class AppLocalizations {
   /// **'Удалить упражнение «{name}»?'**
   String exerciseDetailDeleteConfirm(String name);
 
+  /// Заголовок диалога при попытке удалить упражнение, используемое в программах
+  ///
+  /// In ru, this message translates to:
+  /// **'Нельзя удалить «{name}»'**
+  String exerciseDetailDeleteBlocked(String name);
+
+  /// Пояснение в диалоге блокировки удаления упражнения
+  ///
+  /// In ru, this message translates to:
+  /// **'Упражнение используется в программах:'**
+  String get exerciseDetailDeleteBlockedHint;
+
   /// No description provided for @exerciseFormName.
   ///
   /// In ru, this message translates to:

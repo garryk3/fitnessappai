@@ -10,8 +10,11 @@ import 'package:fitnessappai/core/domain/models/contraindication_tag.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -300,6 +303,35 @@ void main() {
       final created = await repo.create(exercise(), const []);
       await repo.delete(created.id!);
       expect(await File(unused).exists(), isTrue);
+    });
+  });
+
+  group('использование в программах', () {
+    test(
+      'referencedPrograms возвращает названия программ с упражнением',
+      () async {
+        final created = await repo.create(exercise(), const []);
+        final programRepo = ProgramRepository(db);
+        final program = await programRepo.create(
+          Program(
+            name: 'База',
+            daysCount: 1,
+            createdAt: DateTime(2026, 1, 1),
+            updatedAt: DateTime(2026, 1, 1),
+          ),
+          [ProgramDay(programId: 0, dayIndex: 0)],
+        );
+        final day = (await programRepo.getDays(program.id!)).first;
+        await programRepo.addExerciseToDay(day.id!, created.id!);
+
+        final names = await repo.referencedPrograms(created.id!);
+        expect(names, ['База']);
+      },
+    );
+
+    test('referencedPrograms пуст для неиспользуемого упражнения', () async {
+      final created = await repo.create(exercise(), const []);
+      expect(await repo.referencedPrograms(created.id!), isEmpty);
     });
   });
 }
