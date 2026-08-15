@@ -364,12 +364,21 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
       ExerciseType.plank => WorkoutSetInput(
         durationSeconds: int.parse(_duration.text.trim()),
       ),
-      ExerciseType.running => WorkoutSetInput(
-        durationSeconds: int.parse(_minutes.text.trim()) * 60,
-        distanceMeters: _parseDouble(_distance.text)! * 1000,
-      ),
+      ExerciseType.running => _buildRunningInput(),
     };
     widget.onConfirm(input);
+  }
+
+  WorkoutSetInput _buildRunningInput() {
+    final distanceKm = _parseDouble(_distance.text);
+    final minutes = int.tryParse(_minutes.text.trim());
+    if (distanceKm == null || minutes == null) {
+      throw StateError('Валидатор пропустил пустую дистанцию/время бега');
+    }
+    return WorkoutSetInput(
+      durationSeconds: minutes * 60,
+      distanceMeters: distanceKm * 1000,
+    );
   }
 
   double? _parseDouble(String value) {
