@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
 import 'package:fitnessappai/features/profile/domain/body_measurement_validator.dart';
 import 'package:fitnessappai/features/profile/domain/contraindication_service.dart';
@@ -35,6 +36,13 @@ void registerTestServices() {
   );
   locator.registerLazySingleton<ProgramRepository>(() => ProgramRepository(db));
   locator.registerLazySingleton<WorkoutRepository>(() => WorkoutRepository(db));
+  locator.registerLazySingleton<LlmExportService>(
+    () => LlmExportService(
+      programRepository: locator.get<ProgramRepository>(),
+      exerciseRepository: locator.get<ExerciseRepository>(),
+      workoutRepository: locator.get<WorkoutRepository>(),
+    ),
+  );
   locator.registerLazySingleton<StatsAggregator>(
     () => StatsAggregator(
       workoutRepository: locator.get<WorkoutRepository>(),

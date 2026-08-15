@@ -12,6 +12,7 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/data/seed/exercise_seeder.dart';
+import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/llm/data/unsupported_generator.dart';
 import 'package:fitnessappai/features/llm/domain/exercise_content_generator.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
@@ -48,6 +49,13 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   );
   sl.registerLazySingleton<WorkoutRepository>(
     () => WorkoutRepository(sl.get<AppDatabase>()),
+  );
+  sl.registerLazySingleton<LlmExportService>(
+    () => LlmExportService(
+      programRepository: sl.get<ProgramRepository>(),
+      exerciseRepository: sl.get<ExerciseRepository>(),
+      workoutRepository: sl.get<WorkoutRepository>(),
+    ),
   );
   sl.registerLazySingleton<StatsAggregator>(
     () => StatsAggregator(

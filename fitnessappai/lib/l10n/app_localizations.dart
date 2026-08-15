@@ -670,6 +670,24 @@ abstract class AppLocalizations {
   /// **'Новая программа'**
   String get programListCreate;
 
+  /// No description provided for @programCopyJson.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать JSON'**
+  String get programCopyJson;
+
+  /// No description provided for @copyJsonCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'JSON скопирован в буфер обмена'**
+  String get copyJsonCopied;
+
+  /// No description provided for @copyJsonNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось скопировать JSON'**
+  String get copyJsonNotFound;
+
   /// Подтверждение удаления программы
   ///
   /// In ru, this message translates to:
@@ -1287,6 +1305,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Тренировка не найдена'**
   String get historySessionNotFound;
+
+  /// No description provided for @historyCopyJson.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать JSON'**
+  String get historyCopyJson;
+
+  /// No description provided for @historyCopyJsonTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать историю в JSON'**
+  String get historyCopyJsonTooltip;
 
   /// Количество упражнений в сессии истории
   ///
