@@ -47,6 +47,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   final Set<int> _selectedContraindicationIds = {};
 
   ExerciseType _type = ExerciseType.strength;
+  String? _thumbnailPath;
   String? _animationPath;
   bool _saving = false;
   bool _isCustom = true;
@@ -111,7 +112,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     _descriptionController.text = exercise.description;
     _instructionsController.text = exercise.instructions;
     _type = exercise.type;
-    _animationPath = exercise.animationPath ?? exercise.thumbnailPath;
+    _thumbnailPath = exercise.thumbnailPath;
+    _animationPath = exercise.animationPath;
     _isCustom = exercise.isCustom;
     _hideOptional = exercise.hideOptional;
     _createdAt = exercise.createdAt;
@@ -160,6 +162,25 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     }
   }
 
+  void _pickThumbnail() async {
+    try {
+      final path = await _mediaStore.importFromPicker(
+        fileType: MediaFileType.image,
+      );
+      if (path != null && mounted) {
+        setState(() => _thumbnailPath = path);
+      }
+    } on MediaImportException {
+      if (!mounted) {
+        return;
+      }
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.exerciseFormAnimationError)));
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -176,6 +197,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             if (controller.text.trim().isNotEmpty) controller.text.trim(),
         ],
         type: _type,
+        thumbnailPath: _thumbnailPath,
         animationPath: _animationPath,
         isCustom: _isCustom,
         hideOptional: _hideOptional,
@@ -244,6 +266,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   _musclesEditor(l10n),
                   const SizedBox(height: 16),
                   _contraindicationsEditor(l10n),
+                  const SizedBox(height: 16),
+                  _thumbnailEditor(l10n),
                   const SizedBox(height: 16),
                   _animationEditor(l10n),
                   const SizedBox(height: 8),
@@ -494,6 +518,49 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 }
               }),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _thumbnailEditor(AppLocalizations l10n) {
+    return _Section(
+      title: l10n.exerciseFormThumbnail,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_thumbnailPath != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image(
+                image: _mediaCache.imageFor(_thumbnailPath!),
+                height: 120,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => Container(
+                  height: 120,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  child: const Center(child: Icon(Icons.broken_image_outlined)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: _pickThumbnail,
+                icon: const Icon(Icons.image_outlined),
+                label: Text(l10n.exerciseFormThumbnailPick),
+              ),
+              if (_thumbnailPath != null) ...[
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () => setState(() => _thumbnailPath = null),
+                  child: Text(l10n.exerciseFormThumbnailRemove),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );

@@ -279,7 +279,7 @@ class _Thumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const size = 56.0;
-    final path = exercise.animationPath ?? exercise.thumbnailPath;
+    final path = exercise.thumbnailPath ?? exercise.animationPath;
     if (path == null) {
       return _placeholder(context, size);
     }

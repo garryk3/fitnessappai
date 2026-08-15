@@ -11,6 +11,9 @@ typedef MediaDirectoryProvider = Future<Directory> Function();
 /// Загрузчик ассета по пути в bundle.
 typedef AssetLoader = Future<Uint8List> Function(String assetPath);
 
+/// Тип медиафайла, выбираемого системным пикером.
+enum MediaFileType { any, image }
+
 /// Пикер файлов; возвращает путь выбранного файла или `null` при отмене.
 typedef MediaFilePicker = Future<String?> Function();
 
@@ -35,7 +38,7 @@ class MediaStore {
   MediaStore({
     MediaDirectoryProvider directoryProvider = _defaultDirectoryProvider,
     AssetLoader assetLoader = _defaultAssetLoader,
-    MediaFilePicker filePicker = _defaultFilePicker,
+    MediaFilePicker? filePicker,
   }) : this._(directoryProvider, assetLoader, filePicker);
 
   MediaStore._(this._directoryProvider, this._assetLoader, this._filePicker);
@@ -44,7 +47,7 @@ class MediaStore {
 
   final MediaDirectoryProvider _directoryProvider;
   final AssetLoader _assetLoader;
-  final MediaFilePicker _filePicker;
+  final MediaFilePicker? _filePicker;
 
   /// Возвращает директорию приложения для медиа, создавая её при необходимости.
   Future<Directory> ensureAppMediaDir() async {
@@ -66,10 +69,15 @@ class MediaStore {
   ///
   /// Возвращает путь к созданному файлу или `null`, если выбор отменён.
   /// При ошибке пикера, чтения или копирования бросает [MediaImportException].
-  Future<String?> importFromPicker() async {
+  Future<String?> importFromPicker({
+    MediaFileType fileType = MediaFileType.any,
+  }) async {
     final String? picked;
     try {
-      picked = await _filePicker();
+      final injected = _filePicker;
+      picked = injected != null
+          ? await injected()
+          : await _platformPicker(fileType);
     } catch (e) {
       throw MediaImportException('Не удалось открыть выбор файла', cause: e);
     }
@@ -126,8 +134,13 @@ Future<Uint8List> _defaultAssetLoader(String assetPath) async {
   return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 }
 
-Future<String?> _defaultFilePicker() async {
-  final result = await FilePicker.platform.pickFiles(type: FileType.any);
+/// Системный пикер файлов с фильтром по [fileType].
+Future<String?> _platformPicker(MediaFileType fileType) async {
+  final type = switch (fileType) {
+    MediaFileType.any => FileType.any,
+    MediaFileType.image => FileType.image,
+  };
+  final result = await FilePicker.platform.pickFiles(type: type);
   if (result == null || result.files.isEmpty) {
     return null;
   }
