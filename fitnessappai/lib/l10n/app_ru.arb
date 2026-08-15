@@ -79,6 +79,19 @@
       }
     }
   },
+  "exerciseDetailDeleteBlocked": "Нельзя удалить «{name}»",
+  "@exerciseDetailDeleteBlocked": {
+    "description": "Заголовок диалога при попытке удалить упражнение, используемое в программах",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "exerciseDetailDeleteBlockedHint": "Упражнение используется в программах:",
+  "@exerciseDetailDeleteBlockedHint": {
+    "description": "Пояснение в диалоге блокировки удаления упражнения"
+  },
   "exerciseFormName": "Название",
   "exerciseFormType": "Тип",
   "exerciseFormDescription": "Описание",

@@ -11,12 +11,15 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -216,7 +219,7 @@ void main() {
     expect(find.text('Упражнение не найдено'), findsOneWidget);
   });
 
-  testWidgets('кнопки редактирования и удаления видны только для кастомных', (
+  testWidgets('редактирование видно только для кастомных, удаление — всегда', (
     tester,
   ) async {
     final builtIn = await repository.create(exercise('Жим штанги'), const []);
@@ -227,7 +230,7 @@ void main() {
 
     await pumpDetail(tester, exerciseId: builtIn.id!);
     expect(find.byIcon(Icons.edit_outlined), findsNothing);
-    expect(find.byIcon(Icons.delete_outline), findsNothing);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
 
     await pumpDetail(tester, exerciseId: custom.id!);
     expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
@@ -252,6 +255,53 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await repository.getById(custom.id!), isNull);
+  });
+
+  testWidgets('удаление встроенного неиспользуемого упражнения работает', (
+    tester,
+  ) async {
+    final builtIn = await repository.create(exercise('Жим штанги'), const []);
+
+    await pumpDetail(tester, exerciseId: builtIn.id!);
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    expect(find.text('Удалить упражнение «Жим штанги»?'), findsOneWidget);
+
+    await tester.tap(find.text('Удалить'));
+    await tester.pumpAndSettle();
+
+    expect(await repository.getById(builtIn.id!), isNull);
+  });
+
+  testWidgets('удаление блокируется, если упражнение в программе', (
+    tester,
+  ) async {
+    final created = await repository.create(exercise('Приседания'), const []);
+    final programRepo = ProgramRepository(db);
+    final program = await programRepo.create(
+      Program(
+        name: 'База ног',
+        daysCount: 1,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
+    final day = (await programRepo.getDays(program.id!)).first;
+    await programRepo.addExerciseToDay(day.id!, created.id!);
+
+    await pumpDetail(tester, exerciseId: created.id!);
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Нельзя удалить «Приседания»'), findsOneWidget);
+    expect(find.text('Упражнение используется в программах:'), findsOneWidget);
+    expect(find.text('• База ног'), findsOneWidget);
+    expect(await repository.getById(created.id!), isNotNull);
+
+    await tester.tap(find.text('ОК'));
+    await tester.pumpAndSettle();
+    expect(find.text('Нельзя удалить «Приседания»'), findsNothing);
   });
 
   testWidgets('редактирование ведёт на форму', (tester) async {

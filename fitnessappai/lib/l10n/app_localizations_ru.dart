@@ -203,6 +203,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String exerciseDetailDeleteBlocked(String name) {
+    return 'Нельзя удалить «$name»';
+  }
+
+  @override
+  String get exerciseDetailDeleteBlockedHint =>
+      'Упражнение используется в программах:';
+
+  @override
   String get exerciseFormName => 'Название';
 
   @override

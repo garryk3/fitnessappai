@@ -130,6 +130,26 @@ class ExerciseRepository {
     _notify();
   }
 
+  /// Возвращает отсортированные названия программ, в которых используется
+  /// упражнение [exerciseId].
+  Future<List<String>> referencedPrograms(int exerciseId) async {
+    final query =
+        (_db.select(_db.programs).join([
+            innerJoin(
+              _db.programDays,
+              _db.programDays.programId.equalsExp(_db.programs.id),
+            ),
+            innerJoin(
+              _db.programDayExercises,
+              _db.programDayExercises.dayId.equalsExp(_db.programDays.id),
+            ),
+          ])
+          ..where(_db.programDayExercises.exerciseId.equals(exerciseId))
+          ..orderBy([OrderingTerm.asc(_db.programs.name)]));
+    final rows = await query.get();
+    return rows.map((row) => row.readTable(_db.programs).name).toList();
+  }
+
   /// Возвращает привязки мышц упражнения.
   Future<List<ExerciseMuscle>> getMuscles(int exerciseId) async {
     final rows = await (_db.select(

@@ -65,6 +65,16 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     if (data == null) {
       return;
     }
+    final referencedPrograms = await _repository.referencedPrograms(
+      widget.exerciseId,
+    );
+    if (!mounted) {
+      return;
+    }
+    if (referencedPrograms.isNotEmpty) {
+      await _showReferencedDialog(data.exercise.name, referencedPrograms);
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -91,6 +101,34 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     Navigator.of(context).pop();
   }
 
+  Future<void> _showReferencedDialog(
+    String exerciseName,
+    List<String> programNames,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.exerciseDetailDeleteBlocked(exerciseName)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.exerciseDetailDeleteBlockedHint),
+            const SizedBox(height: 8),
+            for (final name in programNames) Text('• $name'),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.commonOk),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -102,19 +140,18 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           appBar: AppBar(
             title: Text(l10n.exerciseDetail),
             actions: [
-              if (canEdit) ...[
+              if (canEdit)
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: l10n.commonEdit,
                   onPressed: () =>
                       context.push('/exercises/${widget.exerciseId}/edit'),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  tooltip: l10n.commonDelete,
-                  onPressed: _confirmDelete,
-                ),
-              ],
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                tooltip: l10n.commonDelete,
+                onPressed: _confirmDelete,
+              ),
             ],
           ),
           body: SignalBuilder(
