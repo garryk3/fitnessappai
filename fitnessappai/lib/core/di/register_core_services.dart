@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:fitnessappai/app/theme/theme_controller.dart';
+import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/database/app_database_path.dart';
 import 'package:fitnessappai/core/database/seed/reference_seeder.dart';
@@ -28,6 +30,12 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   sl.registerLazySingleton<AppDatabase>(() => database ?? AppDatabase());
   sl.registerLazySingleton<MediaStore>(() => MediaStore());
   sl.registerLazySingleton<MediaCache>(() => MediaCache());
+  sl.registerLazySingleton<ThemeSettingsRepository>(
+    () => ThemeSettingsRepository(sl.get<AppDatabase>()),
+  );
+  sl.registerLazySingleton<ThemeController>(
+    () => ThemeController(sl.get<ThemeSettingsRepository>()),
+  );
   sl.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(
       sl.get<AppDatabase>(),

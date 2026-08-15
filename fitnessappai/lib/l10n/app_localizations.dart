@@ -196,11 +196,17 @@ abstract class AppLocalizations {
   /// **'Тема'**
   String get settingsThemeSection;
 
-  /// No description provided for @settingsThemePlaceholder.
+  /// No description provided for @settingsThemeDark.
   ///
   /// In ru, this message translates to:
-  /// **'Выбор темы появится позже'**
-  String get settingsThemePlaceholder;
+  /// **'Тёмная'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Светлая'**
+  String get settingsThemeLight;
 
   /// No description provided for @commonClose.
   ///

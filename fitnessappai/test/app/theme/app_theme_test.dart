@@ -1,7 +1,11 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/app/theme/theme_controller.dart';
+import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
+import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/main.dart';
 
 import '../../helpers/test_services.dart';
@@ -14,6 +18,12 @@ void main() {
       final ThemeData theme = AppTheme.dark();
 
       expect(theme.colorScheme.brightness, Brightness.dark);
+    });
+
+    test('light возвращает тему с brightness=light', () {
+      final ThemeData theme = AppTheme.light();
+
+      expect(theme.colorScheme.brightness, Brightness.light);
     });
 
     test('используется seed-цвет', () {
@@ -49,6 +59,22 @@ void main() {
 
       final BuildContext context = tester.element(find.byType(NavigationBar));
       expect(Theme.of(context).brightness, Brightness.dark);
+    });
+
+    testWidgets('смена темы меняет brightness приложения', (
+      WidgetTester tester,
+    ) async {
+      final db = AppDatabase(executor: NativeDatabase.memory());
+      addTearDown(db.close);
+      final controller = ThemeController(ThemeSettingsRepository(db));
+
+      await tester.pumpWidget(FitnessAppAi(themeController: controller));
+
+      controller.setMode(ThemeMode.light);
+      await tester.pumpAndSettle();
+
+      final BuildContext context = tester.element(find.byType(NavigationBar));
+      expect(Theme.of(context).brightness, Brightness.light);
     });
   });
 }

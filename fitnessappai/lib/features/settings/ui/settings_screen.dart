@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/app_restart.dart';
+import 'package:fitnessappai/app/theme/theme_controller.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Экран «Настройки»: синхронизация и настройки темы.
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, this.syncController});
+  const SettingsScreen({super.key, this.syncController, this.themeController});
 
   final SyncController? syncController;
+  final ThemeController? themeController;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -17,11 +20,13 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final SyncController _syncController;
+  late final ThemeController _themeController;
 
   @override
   void initState() {
     super.initState();
     _syncController = widget.syncController ?? SyncController();
+    _themeController = widget.themeController ?? locator.get<ThemeController>();
   }
 
   @override
@@ -39,13 +44,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
           Text(l10n.settingsThemeSection, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: ListTile(
-              leading: const Icon(Icons.brightness_6_outlined),
-              title: Text(l10n.settingsThemePlaceholder),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: _themeController,
+            builder: (context, mode, _) => SegmentedButton<ThemeMode>(
+              segments: [
+                ButtonSegment(
+                  value: ThemeMode.dark,
+                  icon: const Icon(Icons.dark_mode_outlined),
+                  label: Text(l10n.settingsThemeDark),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.light,
+                  icon: const Icon(Icons.light_mode_outlined),
+                  label: Text(l10n.settingsThemeLight),
+                ),
+              ],
+              selected: {mode},
+              onSelectionChanged: (selection) {
+                _themeController.setMode(selection.first);
+              },
             ),
           ),
         ],

@@ -1,7 +1,11 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/app/theme/theme_controller.dart';
+import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
+import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/features/settings/ui/settings_screen.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
@@ -34,11 +38,16 @@ void main() {
   late _FakeSyncService service;
   late String? pickedPath;
   late String? sharedPath;
+  late AppDatabase db;
+  late ThemeController themeController;
 
   setUp(() {
     service = _FakeSyncService();
     pickedPath = null;
     sharedPath = null;
+    db = AppDatabase(executor: NativeDatabase.memory());
+    themeController = ThemeController(ThemeSettingsRepository(db));
+    addTearDown(db.close);
   });
 
   Future<void> pumpScreen(
@@ -58,8 +67,11 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark(),
-        home: SettingsScreen(syncController: controller),
+        theme: AppTheme.light(),
+        home: SettingsScreen(
+          syncController: controller,
+          themeController: themeController,
+        ),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
@@ -74,11 +86,25 @@ void main() {
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('Синхронизация'), findsOneWidget);
     expect(find.text('Тема'), findsOneWidget);
-    expect(find.text('Выбор темы появится позже'), findsOneWidget);
+    expect(find.text('Тёмная'), findsOneWidget);
+    expect(find.text('Светлая'), findsOneWidget);
+    expect(find.byType(SegmentedButton<ThemeMode>), findsOneWidget);
     expect(find.text('Экспортировать БД'), findsOneWidget);
     expect(find.text('Импортировать БД'), findsOneWidget);
     expect(find.text('Облачная синхронизация появится позже.'), findsOneWidget);
     expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets('выбор темы сохраняется и переключает контроллер', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await tester.tap(find.text('Светлая'));
+    await tester.pumpAndSettle();
+
+    expect(themeController.value, ThemeMode.light);
+    expect(await ThemeSettingsRepository(db).getThemeMode(), ThemeMode.light);
   });
 
   testWidgets('экспорт делится файлом и показывает статус', (tester) async {

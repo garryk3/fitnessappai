@@ -821,7 +821,7 @@ fitnessappai/
 - **Тесты:** роутер `/settings`, настройки показывают экспорт/импорт, ссылка профиля.
 
 ### Задача 11.10: Переключение темы (светлая/тёмная)
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена
 - **Модуль:** app/theme + settings
 - **Ветка:** `task/11.10-theme-toggle`
 - **Описание:** `AppTheme.light()`; `ThemeSettingsRepository` на `app_meta` (ключ `theme_mode`); `ThemeController` (ValueNotifier<ThemeMode>), загрузка до `runApp`; `MaterialApp` слушает контроллер. В настройках — `SegmentedButton` «Тёмная/Светлая».
@@ -929,7 +929,7 @@ fitnessappai/
 | 11.7 | Ошибка создания тренировки в debug | [x] | task/11.7-workout-debug | PR #55 |
 | 11.8 | Удаление базовых упражнений | [x] | task/11.8-exercise-delete | PR #56 |
 | 11.9 | Экран настроек + перенос синхронизации | [x] | task/11.9-settings | PR #57 |
-| 11.10 | Переключение темы | [ ] | task/11.10-theme-toggle | |
+| 11.10 | Переключение темы | [x] | task/11.10-theme-toggle | PR #58 |
 | 11.11 | Проверка отступов | [ ] | task/11.11-spacing | |
 | 11.12 | Экспорт JSON для LLM | [ ] | task/11.12-llm-export | |
 | 11.13 | Перенос кнопки быстрого старта | [ ] | task/11.13-quickstart-move | |
