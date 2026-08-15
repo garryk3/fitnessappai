@@ -120,4 +120,38 @@ void main() {
       reason: 'изменение вида требует перерисовки',
     );
   });
+
+  testWidgets('подсветка анимируется плавно к целевой интенсивности', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        const MuscleDiagram(view: MuscleView.front, highlights: {'chest': 1.0}),
+      ),
+    );
+
+    double currentIntensity() {
+      final customPaint = tester.widget<CustomPaint>(
+        find.descendant(
+          of: find.byType(MuscleDiagram),
+          matching: find.byType(CustomPaint),
+        ),
+      );
+      return (customPaint.painter! as MuscleDiagramPainter)
+              .highlights['chest'] ??
+          0.0;
+    }
+
+    expect(currentIntensity(), 0.0);
+
+    await tester.pump(MuscleDiagram.animationDuration ~/ 2);
+
+    final mid = currentIntensity();
+    expect(mid, greaterThan(0.0));
+    expect(mid, lessThan(1.0));
+
+    await tester.pumpAndSettle();
+
+    expect(currentIntensity(), 1.0);
+  });
 }
