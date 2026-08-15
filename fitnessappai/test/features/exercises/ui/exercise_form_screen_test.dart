@@ -148,6 +148,15 @@ void main() {
     expect(exercises, isEmpty);
   });
 
+  testWidgets('поле названия отмечено звёздочкой как обязательное', (
+    tester,
+  ) async {
+    await pumpForm(tester);
+    await tester.pump();
+
+    expect(find.text('Название *', findRichText: true), findsWidgets);
+  });
+
   testWidgets('создаёт упражнение с мышцами и тегами', (tester) async {
     final chestId = await muscleId('chest');
     final kneesTag = await tagId('knees');
@@ -155,7 +164,7 @@ void main() {
     await pumpForm(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Название'),
+      find.widgetWithText(TextFormField, 'Название *'),
       'Жим штанги',
     );
     await tester.enterText(
@@ -202,7 +211,7 @@ void main() {
     await pumpForm(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Название'),
+      find.widgetWithText(TextFormField, 'Название *'),
       'Бег трусцой',
     );
     await tester.tap(find.text('Силовые'));
@@ -221,7 +230,7 @@ void main() {
     await pumpForm(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Название'),
+      find.widgetWithText(TextFormField, 'Название *'),
       'С анимацией',
     );
     await scrollFormTo(tester, find.text('Выбрать анимацию'));
@@ -256,7 +265,7 @@ void main() {
     await tester.pump();
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Название'),
+      find.widgetWithText(TextFormField, 'Название *'),
       'Жим штанги лёжа',
     );
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
@@ -277,7 +286,7 @@ void main() {
     await pumpForm(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Название'),
+      find.widgetWithText(TextFormField, 'Название *'),
       'Жим гантелей',
     );
 
