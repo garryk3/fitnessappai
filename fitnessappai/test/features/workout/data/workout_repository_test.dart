@@ -116,6 +116,13 @@ void main() {
     expect(detail.results[1].distanceMeters, 5000);
   });
 
+  test('saveSession сохраняет сессию с пустыми результатами', () async {
+    final detail = await repo.saveSession(session(), const []);
+
+    expect(detail.session.id, isNotNull);
+    expect(detail.results, isEmpty);
+  });
+
   test('getSession возвращает сессию с результатами по id', () async {
     final saved = await repo.saveSession(session(), [
       setResult(),
