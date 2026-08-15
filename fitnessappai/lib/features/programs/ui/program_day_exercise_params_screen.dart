@@ -280,7 +280,7 @@ class _ProgramDayExerciseParamsScreenState
     bool decimals = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         keyboardType: TextInputType.numberWithOptions(decimal: decimals),

@@ -135,7 +135,7 @@ class _ProgramCard extends StatelessWidget {
       child: InkWell(
         onTap: onEdit,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
           child: Row(
             children: [
               Expanded(

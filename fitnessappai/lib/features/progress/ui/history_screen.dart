@@ -65,7 +65,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: items.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) => _HistoryCard(item: items[index]),
     );
   }
@@ -89,7 +89,7 @@ class _HistoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: () => context.push('/history/${session.id}'),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

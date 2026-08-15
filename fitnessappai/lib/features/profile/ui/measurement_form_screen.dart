@@ -67,7 +67,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                 onTap: _pickDate,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             for (final metric in BodyMetric.values) ...[
               _MetricField(
                 metric: metric,
@@ -77,7 +77,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                     : l10n.profileUnitCm,
                 errorText: l10n.measurementFormNumberError,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
             ],
             FilledButton.icon(
               onPressed: _save,

@@ -350,11 +350,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _nameField(l10n),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     _descriptionField(l10n),
                     const SizedBox(height: 16),
                     _daysCountField(l10n),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                   ],
                 ),
                 itemCount: _days.length,
@@ -430,7 +430,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final day = _days[index];
     return Padding(
       key: ValueKey('day-${day.key}'),
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: ListTile(
