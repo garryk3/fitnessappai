@@ -265,6 +265,7 @@ class ExerciseRepository {
     thumbnailPath: Value(e.thumbnailPath),
     animationPath: Value(e.animationPath),
     isCustom: Value(e.isCustom),
+    hideOptional: Value(e.hideOptional),
     createdAt: Value(e.createdAt),
     updatedAt: Value(e.updatedAt),
   );
@@ -279,6 +280,7 @@ class ExerciseRepository {
     thumbnailPath: row.thumbnailPath,
     animationPath: row.animationPath,
     isCustom: row.isCustom,
+    hideOptional: row.hideOptional,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   );

@@ -562,6 +562,18 @@ abstract class AppLocalizations {
   /// **'Сохранить'**
   String get exerciseFormSave;
 
+  /// No description provided for @exerciseFormHideOptional.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скрывать необязательные поля в тренировке'**
+  String get exerciseFormHideOptional;
+
+  /// No description provided for @exerciseFormHideOptionalHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание, техника и параметры не будут показываться при выполнении'**
+  String get exerciseFormHideOptionalHelp;
+
   /// No description provided for @exerciseParams.
   ///
   /// In ru, this message translates to:

@@ -35,7 +35,8 @@ part 'app_database.g.dart';
 ///
 /// v2: колонка `muscle_groups.parentKey` + подгруппы дельт.
 /// v3: таблица `program_warning_dismissals`.
-const int appDatabaseSchemaVersion = 3;
+/// v4: колонка `exercises.hideOptional` — скрытие необязательных полей.
+const int appDatabaseSchemaVersion = 4;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -82,6 +83,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.createTable(programWarningDismissals);
+      }
+      if (from < 4) {
+        await m.addColumn(exercises, exercises.hideOptional);
       }
     },
     beforeOpen: (details) async {

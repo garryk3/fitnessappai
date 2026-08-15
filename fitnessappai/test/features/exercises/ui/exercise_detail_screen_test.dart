@@ -73,6 +73,7 @@ void main() {
     String instructions = '',
     List<String> commonMistakes = const [],
     bool isCustom = false,
+    bool hideOptional = false,
   }) {
     return Exercise(
       name: name,
@@ -81,6 +82,7 @@ void main() {
       instructions: instructions,
       commonMistakes: commonMistakes,
       isCustom: isCustom,
+      hideOptional: hideOptional,
       createdAt: DateTime(2024, 1, 1),
       updatedAt: DateTime(2024, 1, 1),
     );
@@ -138,6 +140,28 @@ void main() {
 
     expect(find.text('Противопоказания'), findsOneWidget);
     expect(find.text('Колени'), findsOneWidget);
+  });
+
+  testWidgets('скрывает секции при включённом hideOptional', (tester) async {
+    final created = await repository.create(
+      exercise(
+        'Жим штанги',
+        description: 'Классический жим',
+        instructions: '1. Лягте. 2. Выжмите.',
+        commonMistakes: ['Отрыв таза'],
+        hideOptional: true,
+      ),
+      const [],
+    );
+
+    await pumpDetail(tester, exerciseId: created.id!);
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Описание'), findsNothing);
+    expect(find.text('Классический жим'), findsNothing);
+    expect(find.text('Техника выполнения'), findsNothing);
+    expect(find.text('Частые ошибки'), findsNothing);
+    expect(find.text('Отрыв таза'), findsNothing);
   });
 
   testWidgets('подсвечивает противопоказания, пересекающиеся с профилем', (

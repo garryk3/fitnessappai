@@ -981,6 +981,21 @@ class $ExercisesTable extends Exercises
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _hideOptionalMeta = const VerificationMeta(
+    'hideOptional',
+  );
+  @override
+  late final GeneratedColumn<bool> hideOptional = GeneratedColumn<bool>(
+    'hide_optional',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("hide_optional" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   late final GeneratedColumnWithTypeConverter<DateTime, int> createdAt =
       GeneratedColumn<int>(
@@ -1010,6 +1025,7 @@ class $ExercisesTable extends Exercises
     thumbnailPath,
     animationPath,
     isCustom,
+    hideOptional,
     createdAt,
     updatedAt,
   ];
@@ -1078,6 +1094,15 @@ class $ExercisesTable extends Exercises
         isCustom.isAcceptableOrUnknown(data['is_custom']!, _isCustomMeta),
       );
     }
+    if (data.containsKey('hide_optional')) {
+      context.handle(
+        _hideOptionalMeta,
+        hideOptional.isAcceptableOrUnknown(
+          data['hide_optional']!,
+          _hideOptionalMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1127,6 +1152,10 @@ class $ExercisesTable extends Exercises
         DriftSqlType.bool,
         data['${effectivePrefix}is_custom'],
       )!,
+      hideOptional: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}hide_optional'],
+      )!,
       createdAt: $ExercisesTable.$convertercreatedAt.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.int,
@@ -1167,6 +1196,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
   final String? thumbnailPath;
   final String? animationPath;
   final bool isCustom;
+  final bool hideOptional;
   final DateTime createdAt;
   final DateTime updatedAt;
   const ExerciseRow({
@@ -1179,6 +1209,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     this.thumbnailPath,
     this.animationPath,
     required this.isCustom,
+    required this.hideOptional,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1206,6 +1237,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       map['animation_path'] = Variable<String>(animationPath);
     }
     map['is_custom'] = Variable<bool>(isCustom);
+    map['hide_optional'] = Variable<bool>(hideOptional);
     {
       map['created_at'] = Variable<int>(
         $ExercisesTable.$convertercreatedAt.toSql(createdAt),
@@ -1234,6 +1266,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           ? const Value.absent()
           : Value(animationPath),
       isCustom: Value(isCustom),
+      hideOptional: Value(hideOptional),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1254,6 +1287,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       thumbnailPath: serializer.fromJson<String?>(json['thumbnailPath']),
       animationPath: serializer.fromJson<String?>(json['animationPath']),
       isCustom: serializer.fromJson<bool>(json['isCustom']),
+      hideOptional: serializer.fromJson<bool>(json['hideOptional']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1271,6 +1305,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       'thumbnailPath': serializer.toJson<String?>(thumbnailPath),
       'animationPath': serializer.toJson<String?>(animationPath),
       'isCustom': serializer.toJson<bool>(isCustom),
+      'hideOptional': serializer.toJson<bool>(hideOptional),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1286,6 +1321,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     Value<String?> thumbnailPath = const Value.absent(),
     Value<String?> animationPath = const Value.absent(),
     bool? isCustom,
+    bool? hideOptional,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => ExerciseRow(
@@ -1302,6 +1338,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
         ? animationPath.value
         : this.animationPath,
     isCustom: isCustom ?? this.isCustom,
+    hideOptional: hideOptional ?? this.hideOptional,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1326,6 +1363,9 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           ? data.animationPath.value
           : this.animationPath,
       isCustom: data.isCustom.present ? data.isCustom.value : this.isCustom,
+      hideOptional: data.hideOptional.present
+          ? data.hideOptional.value
+          : this.hideOptional,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1343,6 +1383,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           ..write('thumbnailPath: $thumbnailPath, ')
           ..write('animationPath: $animationPath, ')
           ..write('isCustom: $isCustom, ')
+          ..write('hideOptional: $hideOptional, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1360,6 +1401,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     thumbnailPath,
     animationPath,
     isCustom,
+    hideOptional,
     createdAt,
     updatedAt,
   );
@@ -1376,6 +1418,7 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           other.thumbnailPath == this.thumbnailPath &&
           other.animationPath == this.animationPath &&
           other.isCustom == this.isCustom &&
+          other.hideOptional == this.hideOptional &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1390,6 +1433,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
   final Value<String?> thumbnailPath;
   final Value<String?> animationPath;
   final Value<bool> isCustom;
+  final Value<bool> hideOptional;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const ExercisesCompanion({
@@ -1402,6 +1446,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     this.thumbnailPath = const Value.absent(),
     this.animationPath = const Value.absent(),
     this.isCustom = const Value.absent(),
+    this.hideOptional = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -1415,6 +1460,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     this.thumbnailPath = const Value.absent(),
     this.animationPath = const Value.absent(),
     this.isCustom = const Value.absent(),
+    this.hideOptional = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : name = Value(name),
@@ -1431,6 +1477,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     Expression<String>? thumbnailPath,
     Expression<String>? animationPath,
     Expression<bool>? isCustom,
+    Expression<bool>? hideOptional,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
   }) {
@@ -1444,6 +1491,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
       if (thumbnailPath != null) 'thumbnail_path': thumbnailPath,
       if (animationPath != null) 'animation_path': animationPath,
       if (isCustom != null) 'is_custom': isCustom,
+      if (hideOptional != null) 'hide_optional': hideOptional,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -1459,6 +1507,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     Value<String?>? thumbnailPath,
     Value<String?>? animationPath,
     Value<bool>? isCustom,
+    Value<bool>? hideOptional,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -1472,6 +1521,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
       animationPath: animationPath ?? this.animationPath,
       isCustom: isCustom ?? this.isCustom,
+      hideOptional: hideOptional ?? this.hideOptional,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -1511,6 +1561,9 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     if (isCustom.present) {
       map['is_custom'] = Variable<bool>(isCustom.value);
     }
+    if (hideOptional.present) {
+      map['hide_optional'] = Variable<bool>(hideOptional.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<int>(
         $ExercisesTable.$convertercreatedAt.toSql(createdAt.value),
@@ -1536,6 +1589,7 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
           ..write('thumbnailPath: $thumbnailPath, ')
           ..write('animationPath: $animationPath, ')
           ..write('isCustom: $isCustom, ')
+          ..write('hideOptional: $hideOptional, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -8271,6 +8325,7 @@ typedef $$ExercisesTableCreateCompanionBuilder =
       Value<String?> thumbnailPath,
       Value<String?> animationPath,
       Value<bool> isCustom,
+      Value<bool> hideOptional,
       required DateTime createdAt,
       required DateTime updatedAt,
     });
@@ -8285,6 +8340,7 @@ typedef $$ExercisesTableUpdateCompanionBuilder =
       Value<String?> thumbnailPath,
       Value<String?> animationPath,
       Value<bool> isCustom,
+      Value<bool> hideOptional,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -8437,6 +8493,11 @@ class $$ExercisesTableFilterComposer
 
   ColumnFilters<bool> get isCustom => $composableBuilder(
     column: $table.isCustom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hideOptional => $composableBuilder(
+    column: $table.hideOptional,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8609,6 +8670,11 @@ class $$ExercisesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get hideOptional => $composableBuilder(
+    column: $table.hideOptional,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -8666,6 +8732,11 @@ class $$ExercisesTableAnnotationComposer
 
   GeneratedColumn<bool> get isCustom =>
       $composableBuilder(column: $table.isCustom, builder: (column) => column);
+
+  GeneratedColumn<bool> get hideOptional => $composableBuilder(
+    column: $table.hideOptional,
+    builder: (column) => column,
+  );
 
   GeneratedColumnWithTypeConverter<DateTime, int> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -8820,6 +8891,7 @@ class $$ExercisesTableTableManager
                 Value<String?> thumbnailPath = const Value.absent(),
                 Value<String?> animationPath = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
+                Value<bool> hideOptional = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ExercisesCompanion(
@@ -8832,6 +8904,7 @@ class $$ExercisesTableTableManager
                 thumbnailPath: thumbnailPath,
                 animationPath: animationPath,
                 isCustom: isCustom,
+                hideOptional: hideOptional,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -8846,6 +8919,7 @@ class $$ExercisesTableTableManager
                 Value<String?> thumbnailPath = const Value.absent(),
                 Value<String?> animationPath = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
+                Value<bool> hideOptional = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
               }) => ExercisesCompanion.insert(
@@ -8858,6 +8932,7 @@ class $$ExercisesTableTableManager
                 thumbnailPath: thumbnailPath,
                 animationPath: animationPath,
                 isCustom: isCustom,
+                hideOptional: hideOptional,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
