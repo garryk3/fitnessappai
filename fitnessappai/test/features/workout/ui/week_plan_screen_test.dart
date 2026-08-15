@@ -18,6 +18,9 @@ void main() {
   late ProgramRepository programRepo;
   late WorkoutRepository workoutRepo;
 
+  /// Фиксированная «сегодня»-дата (понедельник) для детерминированных тестов.
+  final DateTime fixedNow = DateTime(2026, 8, 10);
+
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
     programRepo = ProgramRepository(db);
@@ -37,6 +40,7 @@ void main() {
           builder: (context, state) => WeekPlanScreen(
             programRepository: programRepo,
             workoutRepository: workoutRepo,
+            clock: () => fixedNow,
           ),
         ),
         GoRoute(
@@ -94,7 +98,7 @@ void main() {
   testWidgets('показывает запланированный день со статусом и действиями', (
     tester,
   ) async {
-    await createDay(DateTime.now().weekday, name: 'Сплит');
+    await createDay(fixedNow.weekday, name: 'Сплит');
     await pumpPlan(tester);
 
     expect(find.text('Сплит'), findsOneWidget);
@@ -106,7 +110,7 @@ void main() {
   testWidgets('после удаления программы айтем исчезает из плана', (
     tester,
   ) async {
-    final day = await createDay(DateTime.now().weekday, name: 'Сплит');
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
     await pumpPlan(tester);
     expect(find.text('Сплит'), findsOneWidget);
 
@@ -120,7 +124,7 @@ void main() {
   testWidgets('перенос на сегодня запускает подготовку к тренировке', (
     tester,
   ) async {
-    final day = await createDay(_weekdayAfter(DateTime.now().weekday));
+    final day = await createDay(_weekdayAfter(fixedNow.weekday));
     await pumpPlan(tester);
 
     expect(find.text('Перенести на сегодня'), findsOneWidget);
@@ -134,7 +138,7 @@ void main() {
   });
 
   testWidgets('пропуск и отмена пропуска меняют статус', (tester) async {
-    await createDay(DateTime.now().weekday);
+    await createDay(fixedNow.weekday);
     await pumpPlan(tester);
 
     await tester.ensureVisible(find.text('Пропустить'));
@@ -158,7 +162,7 @@ void main() {
   testWidgets(
     'быстрый старт: кнопка видна при pending-дне и открывает подготовку',
     (tester) async {
-      final day = await createDay(DateTime.now().weekday, name: 'Сплит');
+      final day = await createDay(fixedNow.weekday, name: 'Сплит');
       await pumpPlan(tester);
 
       expect(find.text('Быстрый старт'), findsOneWidget);
@@ -171,11 +175,9 @@ void main() {
   );
 
   testWidgets('быстрый старт: кнопка скрыта без pending-дней', (tester) async {
-    final weekday = DateTime.now().weekday;
+    final weekday = fixedNow.weekday;
     final day = await createDay(weekday);
-    final scheduledDate = mondayOf(
-      DateTime.now(),
-    ).add(Duration(days: weekday - 1));
+    final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
     await saveSession(workoutRepo, day, scheduledDate);
 
     await pumpPlan(tester);
@@ -187,11 +189,9 @@ void main() {
   testWidgets('сессия в закреплённый день даёт статус «Выполнено»', (
     tester,
   ) async {
-    final weekday = DateTime.now().weekday;
+    final weekday = fixedNow.weekday;
     final day = await createDay(weekday);
-    final scheduledDate = mondayOf(
-      DateTime.now(),
-    ).add(Duration(days: weekday - 1));
+    final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
     await saveSession(workoutRepo, day, scheduledDate);
 
     await pumpPlan(tester);
@@ -201,11 +201,9 @@ void main() {
   });
 
   testWidgets('сессия в другой день даёт статус «Перенесено»', (tester) async {
-    final weekday = _weekdayAfter(DateTime.now().weekday);
+    final weekday = _weekdayAfter(fixedNow.weekday);
     final day = await createDay(weekday);
-    final scheduledDate = mondayOf(
-      DateTime.now(),
-    ).add(Duration(days: weekday - 1));
+    final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
     await saveSession(
       workoutRepo,
       day,

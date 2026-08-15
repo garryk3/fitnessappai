@@ -16,10 +16,14 @@ class WeekPlanScreen extends StatefulWidget {
     super.key,
     this.programRepository,
     this.workoutRepository,
+    this.clock,
   });
 
   final ProgramRepository? programRepository;
   final WorkoutRepository? workoutRepository;
+
+  /// Часы для детерминированных тестов: «сегодня» внутри экрана.
+  final DateTime Function()? clock;
 
   @override
   State<WeekPlanScreen> createState() => _WeekPlanScreenState();
@@ -36,6 +40,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           widget.programRepository ?? locator.get<ProgramRepository>(),
       workoutRepository:
           widget.workoutRepository ?? locator.get<WorkoutRepository>(),
+      clock: widget.clock,
     );
   }
 
@@ -316,6 +321,7 @@ class _DayColumn extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: _PlannedWorkoutCard(
                 item: items[index],
+                isToday: isToday,
                 onStart: onStart,
                 onSkip: onSkip,
                 onUnskip: onUnskip,
@@ -361,6 +367,7 @@ class _DayCard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: _PlannedWorkoutCard(
                     item: item,
+                    isToday: isToday,
                     onStart: onStart,
                     onSkip: onSkip,
                     onUnskip: onUnskip,
@@ -428,12 +435,14 @@ class _DayHeader extends StatelessWidget {
 class _PlannedWorkoutCard extends StatelessWidget {
   const _PlannedWorkoutCard({
     required this.item,
+    required this.isToday,
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
   });
 
   final WeekPlanItem item;
+  final bool isToday;
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
@@ -443,7 +452,6 @@ class _PlannedWorkoutCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final status = item.status;
-    final isToday = _sameDay(item.scheduledDate, DateTime.now());
 
     return Card(
       margin: EdgeInsets.zero,

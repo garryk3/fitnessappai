@@ -268,7 +268,20 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     return TextFormField(
       controller: _nameController,
       decoration: InputDecoration(
-        labelText: l10n.exerciseFormName,
+        label: Text.rich(
+          TextSpan(
+            text: l10n.exerciseFormName,
+            children: [
+              TextSpan(
+                text: ' *',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
         border: const OutlineInputBorder(),
       ),
       validator: (value) => (value == null || value.trim().isEmpty)
