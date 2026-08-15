@@ -243,6 +243,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось загрузить файл. Попробуйте ещё раз.';
 
   @override
+  String get exerciseFormThumbnail => 'Миниатюра';
+
+  @override
+  String get exerciseFormThumbnailPick => 'Выбрать изображение';
+
+  @override
+  String get exerciseFormThumbnailRemove => 'Убрать изображение';
+
+  @override
   String get exerciseFormNameRequired => 'Введите название';
 
   @override

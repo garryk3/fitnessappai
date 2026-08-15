@@ -58,10 +58,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Exercise exercise(String name, {ExerciseType type = ExerciseType.strength}) {
+  Exercise exercise(
+    String name, {
+    ExerciseType type = ExerciseType.strength,
+    String? thumbnailPath,
+  }) {
     return Exercise(
       name: name,
       type: type,
+      thumbnailPath: thumbnailPath,
       createdAt: DateTime(2024, 1, 1),
       updatedAt: DateTime(2024, 1, 1),
     );
@@ -189,5 +194,28 @@ void main() {
 
     expect(find.text('Список упражнений пуст'), findsNothing);
     expect(find.text('Новое упражнение'), findsOneWidget);
+  });
+
+  testWidgets('миниатюра показывается в карточке упражнения', (tester) async {
+    await repository.create(
+      exercise('Жим штанги', thumbnailPath: '${tempDir.path}/media/thumb.png'),
+      const [],
+    );
+    await repository.create(exercise('Приседания'), const []);
+
+    await pumpExercises(tester);
+
+    expect(find.byType(Image), findsOneWidget);
+    final image = tester.widget<Image>(find.byType(Image));
+    expect(image.image, isNotNull);
+  });
+
+  testWidgets('без медиа показывается плейсхолдер', (tester) async {
+    await repository.create(exercise('Приседания'), const []);
+
+    await pumpExercises(tester);
+
+    expect(find.byType(Image), findsNothing);
+    expect(find.byIcon(Icons.fitness_center), findsOneWidget);
   });
 }

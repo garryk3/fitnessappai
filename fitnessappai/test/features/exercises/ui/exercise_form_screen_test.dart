@@ -77,6 +77,8 @@ void main() {
     List<String> commonMistakes = const [],
     bool isCustom = true,
     bool hideOptional = false,
+    String? thumbnailPath,
+    String? animationPath,
   }) {
     return Exercise(
       name: name,
@@ -85,6 +87,8 @@ void main() {
       commonMistakes: commonMistakes,
       isCustom: isCustom,
       hideOptional: hideOptional,
+      thumbnailPath: thumbnailPath,
+      animationPath: animationPath,
       createdAt: DateTime(2024, 1, 1),
       updatedAt: DateTime(2024, 1, 1),
     );
@@ -296,6 +300,84 @@ void main() {
 
     final created = (await repository.getAll()).single;
     expect(created.animationPath, '${tempDir.path}/media/dummy.webp');
+  });
+
+  testWidgets('выбор миниатюры сохраняет путь', (tester) async {
+    await pumpForm(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название *'),
+      'С миниатюрой',
+    );
+    await scrollFormTo(tester, find.text('Выбрать изображение'));
+    lastPickedPath = pickedFilePath;
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Выбрать изображение'));
+      for (var i = 0; i < 50; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        if (find.text('Убрать изображение').evaluate().isNotEmpty) {
+          return;
+        }
+      }
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('Убрать изображение'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final created = (await repository.getAll()).single;
+    expect(created.thumbnailPath, '${tempDir.path}/media/dummy.webp');
+    expect(created.animationPath, isNull);
+  });
+
+  testWidgets('редактирование сохраняет thumbnail и animation раздельно', (
+    tester,
+  ) async {
+    final saved = await repository.create(
+      exercise(
+        'С медиа',
+        thumbnailPath: '${tempDir.path}/media/thumb.png',
+        animationPath: '${tempDir.path}/media/anim.webp',
+      ),
+      const [],
+    );
+
+    await pumpForm(tester, exerciseId: saved.id);
+    await scrollFormTo(tester, find.text('Выбрать изображение'));
+
+    expect(find.text('Убрать изображение'), findsOneWidget);
+    expect(find.text('Убрать анимацию'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final updated = await repository.getById(saved.id!);
+    expect(updated!.thumbnailPath, '${tempDir.path}/media/thumb.png');
+    expect(updated.animationPath, '${tempDir.path}/media/anim.webp');
+  });
+
+  testWidgets('редактирование не копирует thumbnail в animationPath', (
+    tester,
+  ) async {
+    final saved = await repository.create(
+      exercise(
+        'Только миниатюра',
+        thumbnailPath: '${tempDir.path}/media/thumb.png',
+      ),
+      const [],
+    );
+
+    await pumpForm(tester, exerciseId: saved.id);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final updated = await repository.getById(saved.id!);
+    expect(updated!.thumbnailPath, '${tempDir.path}/media/thumb.png');
+    expect(updated.animationPath, isNull);
   });
 
   testWidgets('редактирование сохраняет существующее упражнение', (

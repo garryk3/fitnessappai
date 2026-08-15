@@ -550,6 +550,24 @@ abstract class AppLocalizations {
   /// **'Не удалось загрузить файл. Попробуйте ещё раз.'**
   String get exerciseFormAnimationError;
 
+  /// No description provided for @exerciseFormThumbnail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Миниатюра'**
+  String get exerciseFormThumbnail;
+
+  /// No description provided for @exerciseFormThumbnailPick.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать изображение'**
+  String get exerciseFormThumbnailPick;
+
+  /// No description provided for @exerciseFormThumbnailRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать изображение'**
+  String get exerciseFormThumbnailRemove;
+
   /// No description provided for @exerciseFormNameRequired.
   ///
   /// In ru, this message translates to:
