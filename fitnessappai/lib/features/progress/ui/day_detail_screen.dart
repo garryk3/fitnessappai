@@ -88,7 +88,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) =>
                   _SessionCard(item: _items[index]),
             ),

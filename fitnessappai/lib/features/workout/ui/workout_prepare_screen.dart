@@ -184,7 +184,7 @@ class _ExerciseCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             _TypeIcon(type: exercise.type),
