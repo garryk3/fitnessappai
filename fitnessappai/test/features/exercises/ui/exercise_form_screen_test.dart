@@ -251,9 +251,7 @@ void main() {
     expect(created.hideOptional, isTrue);
   });
 
-  testWidgets('редактирование восстанавливает чекбокс скрытия', (
-    tester,
-  ) async {
+  testWidgets('редактирование восстанавливает чекбокс скрытия', (tester) async {
     final saved = await repository.create(
       exercise('Скрытое', description: 'Описание', hideOptional: true),
       const [],
