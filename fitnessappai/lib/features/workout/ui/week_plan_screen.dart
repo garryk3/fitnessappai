@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
@@ -7,6 +6,7 @@ import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/ui/quick_start_bar.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -54,22 +54,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   Future<void> _unskip(WeekPlanItem item) => _controller.clearSkip(item);
 
-  Future<void> _start(WeekPlanItem item) async {
-    final exists = await _controller.dayExists(item.programDayId);
-    if (!mounted) {
-      return;
-    }
-    if (!exists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).workoutPrepareNotFound),
-        ),
-      );
-      await _controller.refresh();
-      return;
-    }
-    context.push('/workout/prepare/${item.programDayId}');
-  }
+  Future<void> _start(WeekPlanItem item) =>
+      startPlannedWorkout(context, _controller, item);
 
   @override
   Widget build(BuildContext context) {
@@ -94,8 +80,6 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           onPrev: () => controller.shiftWeek(-1),
           onNext: () => controller.shiftWeek(1),
         ),
-        if (controller.nextPending case final next?)
-          _QuickStartBar(item: next, onStart: _start),
         Expanded(child: _buildContent(context, days)),
       ],
     );
@@ -178,30 +162,6 @@ class _WeekSwitcher extends StatelessWidget {
 }
 
 typedef _WorkoutAction = void Function(WeekPlanItem item);
-
-/// Кнопка быстрого старта ближайшей запланированной тренировки.
-class _QuickStartBar extends StatelessWidget {
-  const _QuickStartBar({required this.item, required this.onStart});
-
-  final WeekPlanItem item;
-  final _WorkoutAction onStart;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: FilledButton.icon(
-        onPressed: () => onStart(item),
-        icon: const Icon(Icons.play_arrow),
-        label: Text(l10n.weekPlanQuickStart),
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
-    );
-  }
-}
 
 class _WeekGrid extends StatelessWidget {
   const _WeekGrid({
