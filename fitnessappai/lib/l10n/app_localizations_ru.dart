@@ -44,6 +44,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonDelete => 'Удалить';
 
   @override
+  String get commonAll => 'Все';
+
+  @override
   String get commonEdit => 'Редактировать';
 
   @override
@@ -379,6 +382,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programBuilderMuscles => 'Задействованные мышцы';
+
+  @override
+  String get programBuilderMuscleFilter => 'Мышцы';
 
   @override
   String get programBuilderEmptyDay => 'В этом дне пока нет упражнений';

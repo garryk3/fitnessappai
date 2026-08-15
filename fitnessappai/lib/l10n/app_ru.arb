@@ -19,6 +19,7 @@
   "commonCancel": "Отмена",
   "commonOk": "ОК",
   "commonDelete": "Удалить",
+  "commonAll": "Все",
   "commonEdit": "Редактировать",
   "commonAdd": "Добавить",
   "commonClose": "Закрыть",
@@ -163,6 +164,7 @@
   "programBuilderMainSet": "Основной набор",
   "programBuilderAlternativeSet": "Альтернативный набор",
   "programBuilderMuscles": "Задействованные мышцы",
+  "programBuilderMuscleFilter": "Мышцы",
   "programBuilderEmptyDay": "В этом дне пока нет упражнений",
   "programBuilderDayProgress": "Заполнено {filled} из {total} дней",
   "@programBuilderDayProgress": {

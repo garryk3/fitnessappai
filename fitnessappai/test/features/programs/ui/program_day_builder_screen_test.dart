@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
@@ -395,5 +396,28 @@ void main() {
     expect(items.single.exerciseId, exercise.id);
     expect(items.single.sets, 3);
     expect(items.single.reps, 10);
+  });
+
+  testWidgets('фильтр диалога выбора по мышечной группе', (tester) async {
+    final chest = await muscleId('chest');
+    final quads = await muscleId('quads');
+    await createExercise('Жим штанги', ExerciseType.strength, muscles: [chest]);
+    await createExercise('Приседания', ExerciseType.strength, muscles: [quads]);
+    final program = await createProgram('Сплит', 1);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Приседания'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButtonFormField<MuscleGroup?>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Грудь').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Приседания'), findsNothing);
   });
 }

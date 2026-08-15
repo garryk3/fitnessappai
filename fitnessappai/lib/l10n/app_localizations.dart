@@ -160,6 +160,12 @@ abstract class AppLocalizations {
   /// **'Удалить'**
   String get commonDelete;
 
+  /// No description provided for @commonAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get commonAll;
+
   /// No description provided for @commonEdit.
   ///
   /// In ru, this message translates to:
@@ -777,6 +783,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Задействованные мышцы'**
   String get programBuilderMuscles;
+
+  /// No description provided for @programBuilderMuscleFilter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мышцы'**
+  String get programBuilderMuscleFilter;
 
   /// No description provided for @programBuilderEmptyDay.
   ///
