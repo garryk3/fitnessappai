@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,6 +50,7 @@ void main() {
   Future<int> insertExercise(
     String name, {
     ExerciseType type = ExerciseType.strength,
+    bool hideOptional = false,
   }) {
     return db
         .into(db.exercises)
@@ -56,6 +58,7 @@ void main() {
           ExercisesCompanion.insert(
             name: name,
             type: type,
+            hideOptional: Value(hideOptional),
             createdAt: DateTime(2024, 1, 1),
             updatedAt: DateTime(2024, 1, 1),
           ),
@@ -131,6 +134,32 @@ void main() {
     expect(find.text('3 × 8 повт × 20 кг'), findsOneWidget);
     expect(find.text('Отдых 60 с'), findsOneWidget);
     expect(find.text('Начать тренировку'), findsOneWidget);
+  });
+
+  testWidgets('hideOptional скрывает параметры и отдых', (tester) async {
+    final created = await programRepo.create(
+      Program(
+        name: 'База',
+        daysCount: 1,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
+    final day = (await programRepo.getDays(created.id!)).first;
+    final exId = await insertExercise('Приседания', hideOptional: true);
+    await programRepo.addExerciseToDay(day.id!, exId);
+    await programRepo.updateExercise(
+      (await programRepo.getExercises(
+        day.id!,
+      )).first.copyWith(sets: 3, reps: 8, weightKg: 20, restSeconds: 60),
+    );
+
+    await pumpPrepare(tester, day.id!);
+
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('3 × 8 повт × 20 кг'), findsNothing);
+    expect(find.text('Отдых 60 с'), findsNothing);
   });
 
   testWidgets('переключатель варианта меняет список упражнений', (

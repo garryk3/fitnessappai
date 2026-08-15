@@ -12,6 +12,7 @@ class Exercise {
     this.thumbnailPath,
     this.animationPath,
     this.isCustom = false,
+    this.hideOptional = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -25,6 +26,7 @@ class Exercise {
   final String? thumbnailPath;
   final String? animationPath;
   final bool isCustom;
+  final bool hideOptional;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -38,6 +40,7 @@ class Exercise {
     String? thumbnailPath,
     String? animationPath,
     bool? isCustom,
+    bool? hideOptional,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool clearId = false,
@@ -52,6 +55,7 @@ class Exercise {
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
       animationPath: animationPath ?? this.animationPath,
       isCustom: isCustom ?? this.isCustom,
+      hideOptional: hideOptional ?? this.hideOptional,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -70,6 +74,7 @@ class Exercise {
             other.thumbnailPath == thumbnailPath &&
             other.animationPath == animationPath &&
             other.isCustom == isCustom &&
+            other.hideOptional == hideOptional &&
             other.createdAt == createdAt &&
             other.updatedAt == updatedAt;
   }
@@ -86,6 +91,7 @@ class Exercise {
       thumbnailPath,
       animationPath,
       isCustom,
+      hideOptional,
       createdAt,
       updatedAt,
     );

@@ -76,6 +76,7 @@ void main() {
     String description = '',
     List<String> commonMistakes = const [],
     bool isCustom = true,
+    bool hideOptional = false,
   }) {
     return Exercise(
       name: name,
@@ -83,6 +84,7 @@ void main() {
       description: description,
       commonMistakes: commonMistakes,
       isCustom: isCustom,
+      hideOptional: hideOptional,
       createdAt: DateTime(2024, 1, 1),
       updatedAt: DateTime(2024, 1, 1),
     );
@@ -224,6 +226,47 @@ void main() {
 
     final created = (await repository.getAll()).single;
     expect(created.type, ExerciseType.running);
+  });
+
+  testWidgets('чекбокс скрытия необязательных полей сохраняется', (
+    tester,
+  ) async {
+    await pumpForm(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название *'),
+      'Скрытое',
+    );
+    await scrollFormTo(
+      tester,
+      find.textContaining('Скрывать необязательные поля'),
+    );
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final created = (await repository.getAll()).single;
+    expect(created.hideOptional, isTrue);
+  });
+
+  testWidgets('редактирование восстанавливает чекбокс скрытия', (tester) async {
+    final saved = await repository.create(
+      exercise('Скрытое', description: 'Описание', hideOptional: true),
+      const [],
+    );
+
+    await pumpForm(tester, exerciseId: saved.id);
+    await scrollFormTo(
+      tester,
+      find.textContaining('Скрывать необязательные поля'),
+    );
+
+    final checkbox = tester.widget<CheckboxListTile>(
+      find.byType(CheckboxListTile),
+    );
+    expect(checkbox.value, isTrue);
   });
 
   testWidgets('выбор анимации сохраняет путь', (tester) async {

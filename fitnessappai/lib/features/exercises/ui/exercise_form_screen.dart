@@ -50,6 +50,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   String? _animationPath;
   bool _saving = false;
   bool _isCustom = true;
+  bool _hideOptional = false;
   DateTime? _createdAt;
 
   List<MuscleGroup> _allMuscles = const [];
@@ -112,6 +113,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     _type = exercise.type;
     _animationPath = exercise.animationPath ?? exercise.thumbnailPath;
     _isCustom = exercise.isCustom;
+    _hideOptional = exercise.hideOptional;
     _createdAt = exercise.createdAt;
     for (final mistake in exercise.commonMistakes) {
       _mistakeControllers.add(TextEditingController(text: mistake));
@@ -176,6 +178,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         type: _type,
         animationPath: _animationPath,
         isCustom: _isCustom,
+        hideOptional: _hideOptional,
         createdAt: _createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -243,6 +246,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   _contraindicationsEditor(l10n),
                   const SizedBox(height: 16),
                   _animationEditor(l10n),
+                  const SizedBox(height: 8),
+                  _hideOptionalField(l10n),
                 ],
               ),
             ),
@@ -534,6 +539,17 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _hideOptionalField(AppLocalizations l10n) {
+    return CheckboxListTile(
+      value: _hideOptional,
+      onChanged: (value) => setState(() => _hideOptional = value ?? false),
+      title: Text(l10n.exerciseFormHideOptional),
+      subtitle: Text(l10n.exerciseFormHideOptionalHelp),
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
     );
   }
 }

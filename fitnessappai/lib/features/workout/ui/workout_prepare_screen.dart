@@ -199,17 +199,19 @@ class _ExerciseCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _paramsSummary(l10n, exercise.type, item.params),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  if (!exercise.hideOptional) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _paramsSummary(l10n, exercise.type, item.params),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
-            if (item.params.restSeconds != null) ...[
+            if (!exercise.hideOptional && item.params.restSeconds != null) ...[
               const SizedBox(width: 8),
               Text(
                 l10n.workoutPrepareRest(item.params.restSeconds!),

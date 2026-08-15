@@ -94,6 +94,8 @@
   "exerciseFormAnimationError": "Не удалось загрузить файл. Попробуйте ещё раз.",
   "exerciseFormNameRequired": "Введите название",
   "exerciseFormSave": "Сохранить",
+  "exerciseFormHideOptional": "Скрывать необязательные поля в тренировке",
+  "exerciseFormHideOptionalHelp": "Описание, техника и параметры не будут показываться при выполнении",
   "exerciseParams": "Параметры упражнения",
   "programNew": "Новая программа",
   "programEdit": "Редактирование программы",
