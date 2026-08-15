@@ -395,10 +395,10 @@ class _LinksCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           ListTile(
-            leading: const Icon(Icons.sync),
-            title: Text(l10n.sync),
+            leading: const Icon(Icons.settings_outlined),
+            title: Text(l10n.settings),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/sync'),
+            onTap: () => context.push('/settings'),
           ),
         ],
       ),

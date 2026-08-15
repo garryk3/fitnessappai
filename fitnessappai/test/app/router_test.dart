@@ -87,6 +87,19 @@ void main() {
       expect(find.text('Упражнение не найдено'), findsOneWidget);
     });
 
+    testWidgets('deep-link на настройки открывает экран', (
+      WidgetTester tester,
+    ) async {
+      final GoRouter router = AppRouter.create();
+      await tester.pumpWidget(buildApp(router));
+
+      router.go('/settings');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Настройки'), findsOneWidget);
+      expect(find.text('Экспортировать БД'), findsOneWidget);
+    });
+
     testWidgets('неизвестный маршрут показывает 404', (
       WidgetTester tester,
     ) async {

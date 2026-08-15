@@ -53,6 +53,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonAdd => 'Добавить';
 
   @override
+  String get settings => 'Настройки';
+
+  @override
+  String get settingsSyncSection => 'Синхронизация';
+
+  @override
+  String get settingsThemeSection => 'Тема';
+
+  @override
+  String get settingsThemePlaceholder => 'Выбор темы появится позже';
+
+  @override
   String get commonClose => 'Закрыть';
 
   @override
