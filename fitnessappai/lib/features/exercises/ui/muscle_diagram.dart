@@ -16,6 +16,7 @@ typedef MuscleRegion = ({
 ///
 /// [highlights] — карта `regionKey → интенсивность 0..1`. Интенсивность
 /// управляет прозрачностью подсветки: 0 — группа не задействована.
+/// Изменение подсветки анимируется плавно.
 class MuscleDiagram extends StatelessWidget {
   const MuscleDiagram({
     super.key,
@@ -24,6 +25,9 @@ class MuscleDiagram extends StatelessWidget {
     this.size = const Size(200, 400),
   });
 
+  /// Длительность анимации смены подсветки.
+  static const Duration animationDuration = Duration(milliseconds: 450);
+
   final MuscleView view;
   final Map<String, double> highlights;
   final Size size;
@@ -31,16 +35,39 @@ class MuscleDiagram extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return CustomPaint(
-      size: size,
-      painter: MuscleDiagramPainter(
-        view: view,
-        highlights: highlights,
-        baseColor: colorScheme.surfaceContainerHighest,
-        highlightColor: colorScheme.primary,
-        outlineColor: colorScheme.outlineVariant,
+    return TweenAnimationBuilder<Map<String, double>>(
+      tween: _HighlightsTween(begin: const {}, end: highlights),
+      duration: animationDuration,
+      curve: Curves.easeInOut,
+      builder: (context, animated, child) => CustomPaint(
+        size: size,
+        painter: MuscleDiagramPainter(
+          view: view,
+          highlights: animated,
+          baseColor: colorScheme.surfaceContainerHighest,
+          highlightColor: colorScheme.primary,
+          outlineColor: colorScheme.outlineVariant,
+        ),
       ),
     );
+  }
+}
+
+/// Tween, интерполирующий карту интенсивностей подсветки по ключам.
+class _HighlightsTween extends Tween<Map<String, double>> {
+  _HighlightsTween({required super.begin, required super.end});
+
+  @override
+  Map<String, double> lerp(double t) {
+    final from = begin ?? const <String, double>{};
+    final to = end ?? const <String, double>{};
+    final result = <String, double>{};
+    for (final key in {...from.keys, ...to.keys}) {
+      final start = from[key] ?? 0.0;
+      final finish = to[key] ?? 0.0;
+      result[key] = start + (finish - start) * t;
+    }
+    return result;
   }
 }
 
@@ -125,11 +152,31 @@ class MuscleDiagramPainter extends CustomPainter {
       );
       final rrect = RRect.fromRectAndRadius(rect, radius);
 
+      if (intensity > 0) {
+        final glow = Paint()
+          ..style = PaintingStyle.fill
+          ..color = highlightColor.withValues(alpha: 0.35 * intensity)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect.inflate(3), radius),
+          glow,
+        );
+      }
+
       final fill = Paint()
         ..style = PaintingStyle.fill
-        ..color = intensity == 0
-            ? baseColor
-            : Color.lerp(baseColor, highlightColor, intensity)!;
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            intensity == 0
+                ? baseColor
+                : Color.lerp(baseColor, highlightColor, intensity * 0.6)!,
+            intensity == 0
+                ? baseColor
+                : Color.lerp(baseColor, highlightColor, intensity)!,
+          ],
+        ).createShader(rect);
       canvas.drawRRect(rrect, fill);
 
       final stroke = Paint()
