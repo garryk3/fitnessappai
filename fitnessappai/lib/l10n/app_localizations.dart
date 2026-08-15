@@ -178,6 +178,30 @@ abstract class AppLocalizations {
   /// **'Добавить'**
   String get commonAdd;
 
+  /// No description provided for @settings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get settings;
+
+  /// No description provided for @settingsSyncSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Синхронизация'**
+  String get settingsSyncSection;
+
+  /// No description provided for @settingsThemeSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тема'**
+  String get settingsThemeSection;
+
+  /// No description provided for @settingsThemePlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбор темы появится позже'**
+  String get settingsThemePlaceholder;
+
   /// No description provided for @commonClose.
   ///
   /// In ru, this message translates to:

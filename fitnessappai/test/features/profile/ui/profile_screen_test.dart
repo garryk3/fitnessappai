@@ -57,6 +57,11 @@ void main() {
           builder: (context, state) =>
               MeasurementFormScreen(measurementRepository: repo),
         ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) =>
+              const Scaffold(body: Text('SETTINGS_SCREEN')),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -78,7 +83,16 @@ void main() {
     expect(find.byType(LineChart), findsNothing);
     expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.text('Противопоказания'), findsOneWidget);
-    expect(find.text('Синхронизация'), findsOneWidget);
+    expect(find.text('Настройки'), findsOneWidget);
+  });
+
+  testWidgets('ссылка «Настройки» ведёт на экран настроек', (tester) async {
+    await pumpProfile(tester);
+
+    await tester.tap(find.text('Настройки'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SETTINGS_SCREEN'), findsOneWidget);
   });
 
   testWidgets('форма добавляет замер', (tester) async {

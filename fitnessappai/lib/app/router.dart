@@ -16,7 +16,7 @@ import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dar
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
-import 'package:fitnessappai/features/sync/ui/sync_screen.dart';
+import 'package:fitnessappai/features/settings/ui/settings_screen.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
@@ -162,7 +162,10 @@ class AppRouter {
             );
           },
         ),
-        GoRoute(path: '/sync', builder: (context, state) => const SyncScreen()),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
         GoRoute(
           path: '/contraindications',
           builder: (context, state) => const ContraindicationsScreen(),

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/features/settings/ui/settings_screen.dart';
+import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
-import 'package:fitnessappai/features/sync/ui/sync_controller.dart';
-import 'package:fitnessappai/features/sync/ui/sync_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 class _FakeSyncService implements SyncService {
@@ -59,7 +59,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
-        home: SyncScreen(controller: controller),
+        home: SettingsScreen(syncController: controller),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
@@ -68,10 +68,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('показывает кнопки экспорта и импорта', (tester) async {
+  testWidgets('показывает секции синхронизации и темы', (tester) async {
     await pumpScreen(tester);
 
+    expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('Синхронизация'), findsOneWidget);
+    expect(find.text('Тема'), findsOneWidget);
+    expect(find.text('Выбор темы появится позже'), findsOneWidget);
     expect(find.text('Экспортировать БД'), findsOneWidget);
     expect(find.text('Импортировать БД'), findsOneWidget);
     expect(find.text('Облачная синхронизация появится позже.'), findsOneWidget);
