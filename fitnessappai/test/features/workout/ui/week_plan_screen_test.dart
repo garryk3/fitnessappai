@@ -159,20 +159,15 @@ void main() {
     expect(find.text('Начать'), findsOneWidget);
   });
 
-  testWidgets(
-    'быстрый старт: кнопка видна при pending-дне и открывает подготовку',
-    (tester) async {
-      final day = await createDay(fixedNow.weekday, name: 'Сплит');
-      await pumpPlan(tester);
+  testWidgets('быстрый старт: кнопки нет на плане при pending-дне', (
+    tester,
+  ) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
 
-      expect(find.text('Быстрый старт'), findsOneWidget);
-
-      await tester.tap(find.text('Быстрый старт'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('prepare-${day.id}'), findsOneWidget);
-    },
-  );
+    expect(find.text('Начать'), findsOneWidget);
+    expect(find.text('Быстрый старт'), findsNothing);
+  });
 
   testWidgets('быстрый старт: кнопка скрыта без pending-дней', (tester) async {
     final weekday = fixedNow.weekday;
