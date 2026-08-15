@@ -123,6 +123,9 @@
   "programEdit": "Редактирование программы",
   "programListEmpty": "Список программ пуст",
   "programListCreate": "Новая программа",
+  "programCopyJson": "Скопировать JSON",
+  "copyJsonCopied": "JSON скопирован в буфер обмена",
+  "copyJsonNotFound": "Не удалось скопировать JSON",
   "programDeleteConfirm": "Удалить программу «{name}»?",
   "@programDeleteConfirm": {
     "description": "Подтверждение удаления программы",
@@ -324,6 +327,8 @@
   "historyDetail": "Детали тренировки",
   "historyEmpty": "Пока нет тренировок",
   "historySessionNotFound": "Тренировка не найдена",
+  "historyCopyJson": "Скопировать JSON",
+  "historyCopyJsonTooltip": "Скопировать историю в JSON",
   "historyExercisesCount": "{count, plural, one{1 упражнение} few{{count} упражнения} other{{count} упражнений}}",
   "@historyExercisesCount": {
     "description": "Количество упражнений в сессии истории",

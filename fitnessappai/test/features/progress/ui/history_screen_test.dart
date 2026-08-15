@@ -1,14 +1,20 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
+import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/progress/ui/history_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -201,4 +207,64 @@ void main() {
     expect(find.text('Пока нет тренировок'), findsNothing);
     expect(find.text('База'), findsOneWidget);
   });
+
+  testWidgets('«Скопировать JSON» копирует историю и показывает SnackBar', (
+    tester,
+  ) async {
+    locator.registerInstance<LlmExportService>(
+      _StubExportService(
+        programRepository: ProgramRepository(db),
+        exerciseRepository: ExerciseRepository(db, MediaStore()),
+        workoutRepository: workoutRepo,
+      ),
+    );
+    addTearDown(locator.reset);
+
+    String? copiedJson;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copiedJson = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(2026, 8, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    await tester.tap(find.byTooltip('Скопировать историю в JSON'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('JSON скопирован в буфер обмена'), findsOneWidget);
+    expect(copiedJson, isNotNull);
+    expect(copiedJson, startsWith('{"type": "history"'));
+  });
+}
+
+/// Сервис экспорта, возвращающий фиксированный JSON без обращения к БД.
+class _StubExportService extends LlmExportService {
+  _StubExportService({
+    required super.programRepository,
+    required super.exerciseRepository,
+    required super.workoutRepository,
+  });
+
+  @override
+  Future<String?> programToJson(int id) async =>
+      '{"type": "program", "id": $id}';
+
+  @override
+  Future<String> historyToJson() async => '{"type": "history"}';
 }

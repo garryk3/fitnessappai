@@ -308,6 +308,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programListCreate => 'Новая программа';
 
   @override
+  String get programCopyJson => 'Скопировать JSON';
+
+  @override
+  String get copyJsonCopied => 'JSON скопирован в буфер обмена';
+
+  @override
+  String get copyJsonNotFound => 'Не удалось скопировать JSON';
+
+  @override
   String programDeleteConfirm(String name) {
     return 'Удалить программу «$name»?';
   }
@@ -661,6 +670,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get historySessionNotFound => 'Тренировка не найдена';
+
+  @override
+  String get historyCopyJson => 'Скопировать JSON';
+
+  @override
+  String get historyCopyJsonTooltip => 'Скопировать историю в JSON';
 
   @override
   String historyExercisesCount(int count) {

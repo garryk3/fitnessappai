@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -81,11 +83,26 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
               item: item,
               onEdit: () => context.push('/programs/${item.program.id}/edit'),
               onDelete: () => _confirmDelete(context, item.program),
+              onCopyJson: () => _copyProgramJson(context, item.program),
             ),
           );
         },
       ),
     );
+  }
+
+  Future<void> _copyProgramJson(BuildContext context, Program program) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final json = await locator.get<LlmExportService>().programToJson(
+      program.id!,
+    );
+    if (json == null) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.copyJsonNotFound)));
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: json));
+    messenger.showSnackBar(SnackBar(content: Text(l10n.copyJsonCopied)));
   }
 
   Future<void> _confirmDelete(BuildContext context, Program program) async {
@@ -119,11 +136,13 @@ class _ProgramCard extends StatelessWidget {
     required this.item,
     required this.onEdit,
     required this.onDelete,
+    required this.onCopyJson,
   });
 
   final ProgramListItem item;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onCopyJson;
 
   @override
   Widget build(BuildContext context) {
@@ -182,10 +201,16 @@ class _ProgramCard extends StatelessWidget {
                     onEdit();
                   } else if (value == 'delete') {
                     onDelete();
+                  } else if (value == 'copy-json') {
+                    onCopyJson();
                   }
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem(value: 'edit', child: Text(l10n.commonEdit)),
+                  PopupMenuItem(
+                    value: 'copy-json',
+                    child: Text(l10n.programCopyJson),
+                  ),
                   PopupMenuItem(
                     value: 'delete',
                     child: Text(l10n.commonDelete),

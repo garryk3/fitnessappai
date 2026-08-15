@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
@@ -7,6 +8,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
+import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -43,9 +45,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.history)),
+      appBar: AppBar(
+        title: Text(l10n.history),
+        actions: [
+          IconButton(
+            tooltip: l10n.historyCopyJsonTooltip,
+            icon: const Icon(Icons.copy_all_outlined),
+            onPressed: () => _copyHistoryJson(context),
+          ),
+        ],
+      ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
+  }
+
+  Future<void> _copyHistoryJson(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final json = await locator.get<LlmExportService>().historyToJson();
+    await Clipboard.setData(ClipboardData(text: json));
+    messenger.showSnackBar(SnackBar(content: Text(l10n.copyJsonCopied)));
   }
 
   Widget _buildBody(BuildContext context) {
