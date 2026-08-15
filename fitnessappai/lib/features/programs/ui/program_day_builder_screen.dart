@@ -63,6 +63,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
   final Map<int, Exercise> _exercisesById = {};
   final Map<int, MuscleGroup> _muscleGroupsById = {};
+  final List<MuscleGroup> _allMuscleGroups = [];
   final Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
 
   List<_ItemDraft> get _currentItems => _isAlternative ? _altItems : _mainItems;
@@ -116,6 +117,9 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       _muscleGroupsById
         ..clear()
         ..addEntries(groups.map((g) => MapEntry(g.id!, g)));
+      _allMuscleGroups
+        ..clear()
+        ..addAll(groups);
       _loading = false;
     });
 
@@ -158,10 +162,18 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
   }
 
   Future<void> _addExercise() async {
+    final musclesByExercise = await _exerciseRepository
+        .muscleGroupsByExercise();
+    if (!mounted) {
+      return;
+    }
     final selected = await showDialog<Exercise>(
       context: context,
-      builder: (context) =>
-          _ExercisePickerDialog(exercises: _exercisesById.values.toList()),
+      builder: (context) => _ExercisePickerDialog(
+        exercises: _exercisesById.values.toList(),
+        muscleGroups: _allMuscleGroups,
+        musclesByExercise: musclesByExercise,
+      ),
     );
     if (selected == null || !mounted) {
       return;
@@ -521,10 +533,42 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 }
 
 /// Диалог выбора упражнения из каталога для добавления в день.
-class _ExercisePickerDialog extends StatelessWidget {
-  const _ExercisePickerDialog({required this.exercises});
+///
+/// Позволяет отфильтровать список по мышечной группе.
+class _ExercisePickerDialog extends StatefulWidget {
+  const _ExercisePickerDialog({
+    required this.exercises,
+    required this.muscleGroups,
+    required this.musclesByExercise,
+  });
 
   final List<Exercise> exercises;
+  final List<MuscleGroup> muscleGroups;
+
+  /// Карта «id упражнения → его мышечные группы».
+  final Map<int, List<MuscleGroup>> musclesByExercise;
+
+  @override
+  State<_ExercisePickerDialog> createState() => _ExercisePickerDialogState();
+}
+
+class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
+  MuscleGroup? _selectedGroup;
+
+  List<Exercise> get _filtered {
+    final group = _selectedGroup;
+    if (group == null) {
+      return widget.exercises;
+    }
+    return [
+      for (final exercise in widget.exercises)
+        if (widget.musclesByExercise[exercise.id]?.any(
+              (g) => g.id == group.id,
+            ) ??
+            false)
+          exercise,
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -534,19 +578,47 @@ class _ExercisePickerDialog extends StatelessWidget {
       content: SizedBox(
         width: double.maxFinite,
         height: 360,
-        child: exercises.isEmpty
-            ? Center(child: Text(l10n.exerciseListEmpty))
-            : ListView.builder(
-                itemCount: exercises.length,
-                itemBuilder: (context, index) {
-                  final exercise = exercises[index];
-                  return ListTile(
-                    title: Text(exercise.name),
-                    subtitle: Text(_typeLabel(l10n, exercise.type)),
-                    onTap: () => Navigator.of(context).pop(exercise),
-                  );
-                },
+        child: Column(
+          children: [
+            DropdownButtonFormField<MuscleGroup?>(
+              initialValue: _selectedGroup,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: l10n.programBuilderMuscleFilter,
+                border: const OutlineInputBorder(),
+                isDense: true,
               ),
+              items: [
+                DropdownMenuItem<MuscleGroup?>(
+                  value: null,
+                  child: Text(l10n.commonAll),
+                ),
+                for (final group in widget.muscleGroups)
+                  DropdownMenuItem<MuscleGroup?>(
+                    value: group,
+                    child: Text(group.labelRu),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _selectedGroup = value),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _filtered.isEmpty
+                  ? Center(child: Text(l10n.exerciseListEmpty))
+                  : ListView.builder(
+                      itemCount: _filtered.length,
+                      itemBuilder: (context, index) {
+                        final exercise = _filtered[index];
+                        return ListTile(
+                          title: Text(exercise.name),
+                          subtitle: Text(_typeLabel(l10n, exercise.type)),
+                          onTap: () => Navigator.of(context).pop(exercise),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
