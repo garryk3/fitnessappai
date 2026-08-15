@@ -120,6 +120,27 @@ class ProgramRepository {
     return row == null ? null : _toProgram(row);
   }
 
+  /// Возвращает активную программу или `null`, если активной нет.
+  Future<Program?> getActiveProgram() async {
+    final row = await (_db.select(
+      _db.programs,
+    )..where((t) => t.isActive.equals(true))).getSingleOrNull();
+    return row == null ? null : _toProgram(row);
+  }
+
+  /// Делает программу [id] активной, сбрасывая флаг у остальных программ.
+  Future<void> setActive(int id) async {
+    await _db.transaction(() async {
+      await (_db.update(_db.programs)..where((t) => t.id.isNotValue(id))).write(
+        ProgramsCompanion(isActive: const Value(false)),
+      );
+      await (_db.update(_db.programs)..where((t) => t.id.equals(id))).write(
+        ProgramsCompanion(isActive: const Value(true)),
+      );
+    });
+    _notify();
+  }
+
   /// Возвращает день программы по [id] или `null`, если его нет.
   Future<ProgramDay?> getDay(int id) async {
     final row = await _dayById(id);
@@ -558,6 +579,7 @@ class ProgramRepository {
     daysCount: Value(p.daysCount),
     createdAt: Value(p.createdAt),
     updatedAt: Value(p.updatedAt),
+    isActive: Value(p.isActive),
   );
 
   ProgramDayExercisesCompanion _toDayExerciseCompanion(ProgramDayExercise e) =>
@@ -582,6 +604,7 @@ class ProgramRepository {
     daysCount: row.daysCount,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    isActive: row.isActive,
   );
 
   ProgramDay _toDay(ProgramDayRow row) => ProgramDay(

@@ -106,6 +106,12 @@ abstract class AppLocalizations {
   /// **'Раздел «{tab}» в разработке'**
   String placeholderTab(String tab);
 
+  /// No description provided for @navHome.
+  ///
+  /// In ru, this message translates to:
+  /// **'Главная'**
+  String get navHome;
+
   /// No description provided for @navExercises.
   ///
   /// In ru, this message translates to:
@@ -669,6 +675,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Новая программа'**
   String get programListCreate;
+
+  /// No description provided for @programMakeActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сделать активной'**
+  String get programMakeActive;
+
+  /// No description provided for @programActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активная'**
+  String get programActive;
 
   /// No description provided for @programCopyJson.
   ///
@@ -1305,6 +1323,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Тренировка не найдена'**
   String get historySessionNotFound;
+
+  /// No description provided for @homeActiveProgram.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активная программа'**
+  String get homeActiveProgram;
+
+  /// No description provided for @homeUpcomingDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ближайший день'**
+  String get homeUpcomingDay;
+
+  /// No description provided for @homeRecentWorkouts.
+  ///
+  /// In ru, this message translates to:
+  /// **'Последние тренировки'**
+  String get homeRecentWorkouts;
+
+  /// No description provided for @homeNoProgramsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет программ'**
+  String get homeNoProgramsTitle;
+
+  /// No description provided for @homeNoProgramsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создайте программу тренировок, чтобы видеть её здесь.'**
+  String get homeNoProgramsHint;
+
+  /// No description provided for @homeGoToPrograms.
+  ///
+  /// In ru, this message translates to:
+  /// **'К программам'**
+  String get homeGoToPrograms;
+
+  /// No description provided for @homeNoActiveProgramHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сделайте программу активной, чтобы видеть её здесь.'**
+  String get homeNoActiveProgramHint;
+
+  /// No description provided for @homeNoWorkoutsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выполните первую тренировку — она появится здесь.'**
+  String get homeNoWorkoutsHint;
+
+  /// No description provided for @homeViewAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вся история'**
+  String get homeViewAll;
+
+  /// No description provided for @homeGoToHistory.
+  ///
+  /// In ru, this message translates to:
+  /// **'К истории'**
+  String get homeGoToHistory;
 
   /// No description provided for @historyCopyJson.
   ///

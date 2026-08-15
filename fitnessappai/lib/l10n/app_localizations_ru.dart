@@ -17,6 +17,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get navHome => 'Главная';
+
+  @override
   String get navExercises => 'Упражнения';
 
   @override
@@ -306,6 +309,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programListCreate => 'Новая программа';
+
+  @override
+  String get programMakeActive => 'Сделать активной';
+
+  @override
+  String get programActive => 'Активная';
 
   @override
   String get programCopyJson => 'Скопировать JSON';
@@ -670,6 +679,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get historySessionNotFound => 'Тренировка не найдена';
+
+  @override
+  String get homeActiveProgram => 'Активная программа';
+
+  @override
+  String get homeUpcomingDay => 'Ближайший день';
+
+  @override
+  String get homeRecentWorkouts => 'Последние тренировки';
+
+  @override
+  String get homeNoProgramsTitle => 'Нет программ';
+
+  @override
+  String get homeNoProgramsHint =>
+      'Создайте программу тренировок, чтобы видеть её здесь.';
+
+  @override
+  String get homeGoToPrograms => 'К программам';
+
+  @override
+  String get homeNoActiveProgramHint =>
+      'Сделайте программу активной, чтобы видеть её здесь.';
+
+  @override
+  String get homeNoWorkoutsHint =>
+      'Выполните первую тренировку — она появится здесь.';
+
+  @override
+  String get homeViewAll => 'Вся история';
+
+  @override
+  String get homeGoToHistory => 'К истории';
 
   @override
   String get historyCopyJson => 'Скопировать JSON';

@@ -24,6 +24,18 @@ class AdaptiveNavigation extends StatelessWidget {
     return [
       (
         bar: NavigationDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: l10n.navHome,
+        ),
+        rail: NavigationRailDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: Text(l10n.navHome),
+        ),
+      ),
+      (
+        bar: NavigationDestination(
           icon: const Icon(Icons.fitness_center_outlined),
           selectedIcon: const Icon(Icons.fitness_center),
           label: l10n.navExercises,

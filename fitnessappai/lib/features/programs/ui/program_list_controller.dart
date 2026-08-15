@@ -40,6 +40,8 @@ class ProgramListController {
 
   Future<void> deleteProgram(int programId) => _repository.delete(programId);
 
+  Future<void> setActive(int programId) => _repository.setActive(programId);
+
   Future<void> _load() async {
     isLoading.value = true;
     try {
