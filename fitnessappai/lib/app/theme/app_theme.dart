@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
-/// Тёмная Material 3 тема приложения.
+/// Material 3 темы приложения: светлая и тёмная.
 abstract final class AppTheme {
   static const Color seedColor = Color(0xFF7E57C2);
 
-  static ThemeData dark() {
+  /// Светлая тема.
+  static ThemeData light() => _build(Brightness.light);
+
+  /// Тёмная тема.
+  static ThemeData dark() => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
     final ColorScheme colorScheme = ColorScheme.fromSeed(
       seedColor: seedColor,
-      brightness: Brightness.dark,
+      brightness: brightness,
     );
     return ThemeData(
       colorScheme: colorScheme,

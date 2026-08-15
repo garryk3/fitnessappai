@@ -1,6 +1,8 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fitnessappai/app/theme/theme_controller.dart';
+import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
@@ -22,6 +24,12 @@ void registerTestServices() {
   final db = AppDatabase(executor: NativeDatabase.memory());
   locator.registerInstance<AppDatabase>(db);
   locator.registerLazySingleton<MediaCache>(() => MediaCache());
+  locator.registerLazySingleton<ThemeSettingsRepository>(
+    () => ThemeSettingsRepository(db),
+  );
+  locator.registerLazySingleton<ThemeController>(
+    () => ThemeController(locator.get<ThemeSettingsRepository>()),
+  );
   locator.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(db, MediaStore()),
   );

@@ -1,3 +1,4 @@
+import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/register_core_services.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
@@ -23,6 +24,7 @@ Future<void> bootstrap({
     mediaStore: mediaStore,
     seedJsonLoader: seedJsonLoader,
   );
+  await sl.get<ThemeController>().load();
   try {
     await sl.get<ReminderService>().initialize();
   } catch (_) {
