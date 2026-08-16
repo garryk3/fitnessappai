@@ -269,6 +269,7 @@ void main() {
     await startWorkout(tester);
 
     expect(find.textContaining('Удержание'), findsOneWidget);
+    expect(find.textContaining('Цель: 45 с'), findsOneWidget);
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Время (сек)'),

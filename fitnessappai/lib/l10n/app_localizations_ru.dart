@@ -560,6 +560,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String workoutRunHoldTarget(int seconds) {
+    return 'Цель: $seconds с';
+  }
+
+  @override
   String get workoutRunExitTitle => 'Выйти из тренировки?';
 
   @override

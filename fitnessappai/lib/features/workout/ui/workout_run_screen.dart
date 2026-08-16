@@ -195,7 +195,8 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
     final currentSet = workout.currentSet.value;
     final totalSets = _controller.totalSets;
     final completed = workout.completedSets.value;
-    final hold = workout.holdRemainingSeconds.value;
+    final holdElapsed = workout.holdElapsedSeconds.value;
+    final holdTarget = workout.holdTargetSeconds.value;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -221,12 +222,19 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
             style: theme.textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
-          if (exercise.type == ExerciseType.plank && hold != null) ...[
+          if (exercise.type == ExerciseType.plank && holdTarget != null) ...[
             const SizedBox(height: 8),
             Text(
-              l10n.workoutRunHold(hold),
+              l10n.workoutRunHold(holdElapsed),
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.primary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              l10n.workoutRunHoldTarget(holdTarget),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
