@@ -200,6 +200,7 @@
   "programBuilderAlternativeSet": "Альтернативный набор",
   "programBuilderMuscles": "Задействованные мышцы",
   "programBuilderMuscleFilter": "Мышцы",
+  "programBuilderTypeFilter": "Категория",
   "programBuilderEmptyDay": "В этом дне пока нет упражнений",
   "programBuilderDayProgress": "Заполнено {filled} из {total} дней",
   "@programBuilderDayProgress": {

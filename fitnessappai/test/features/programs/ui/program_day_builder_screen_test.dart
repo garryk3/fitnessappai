@@ -420,4 +420,57 @@ void main() {
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(find.text('Приседания'), findsNothing);
   });
+
+  testWidgets('фильтр диалога выбора по категории', (tester) async {
+    await createExercise('Жим штанги', ExerciseType.strength);
+    await createExercise('Подтягивания', ExerciseType.bodyweight);
+    await createExercise('Бег трусцой', ExerciseType.running);
+    final program = await createProgram('Сплит', 1);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Подтягивания'), findsOneWidget);
+    expect(find.text('Бег трусцой'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButtonFormField<ExerciseType?>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Бег').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Бег трусцой'), findsOneWidget);
+    expect(find.text('Жим штанги'), findsNothing);
+    expect(find.text('Подтягивания'), findsNothing);
+  });
+
+  testWidgets('фильтр выбора: категория комбинируется с мышцами', (
+    tester,
+  ) async {
+    final chest = await muscleId('chest');
+    final quads = await muscleId('quads');
+    await createExercise('Жим штанги', ExerciseType.strength, muscles: [chest]);
+    await createExercise('Приседания', ExerciseType.strength, muscles: [quads]);
+    await createExercise('Бег трусцой', ExerciseType.running, muscles: [chest]);
+    final program = await createProgram('Сплит', 1);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<MuscleGroup?>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Грудь').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<ExerciseType?>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Силовые').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Бег трусцой'), findsNothing);
+    expect(find.text('Приседания'), findsNothing);
+  });
 }
