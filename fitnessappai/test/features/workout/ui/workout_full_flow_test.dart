@@ -272,6 +272,10 @@ void main() {
     expect(find.textContaining('Цель: 45 с'), findsOneWidget);
     expect(find.text('Начать'), findsOneWidget);
 
+    // Счётчик выводится крупным стилем в выделенном блоке.
+    final counterText = tester.widget<Text>(find.text('Удержание 0 с'));
+    expect(counterText.style?.fontSize, greaterThanOrEqualTo(40));
+
     // До старта счётчик стоит на нуле.
     await tester.pump(const Duration(seconds: 3));
     expect(find.text('Удержание 0 с'), findsOneWidget);
@@ -288,6 +292,8 @@ void main() {
       find.widgetWithText(TextFormField, 'Время (сек)'),
       '40',
     );
+    await tester.ensureVisible(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Подход выполнен'));
     await tester.pumpAndSettle();
 
@@ -330,6 +336,8 @@ void main() {
       await tester.pump(const Duration(seconds: 7));
       expect(find.text('Удержание 7 с'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Подход выполнен'));
       await tester.pumpAndSettle();
 
