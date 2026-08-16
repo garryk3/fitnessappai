@@ -78,18 +78,32 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              _weekPlanController.nextPending != null ? 88 : 16,
+            ),
             children: [
-              if (_weekPlanController.nextPending case final next?)
-                QuickStartBar(
-                  item: next,
-                  onStart: () =>
-                      startPlannedWorkout(context, _weekPlanController, next),
-                ),
               _buildProgramSection(context),
               const SizedBox(height: 24),
               _buildWorkoutsSection(context),
             ],
+          );
+        },
+      ),
+      floatingActionButton: SignalBuilder(
+        builder: (context) {
+          final next = _weekPlanController.nextPending;
+          if (next == null) {
+            return const SizedBox.shrink();
+          }
+          return FloatingActionButton.extended(
+            heroTag: 'home-fab',
+            onPressed: () =>
+                startPlannedWorkout(context, _weekPlanController, next),
+            icon: const Icon(Icons.play_arrow),
+            label: Text(l10n.weekPlanQuickStart),
           );
         },
       ),

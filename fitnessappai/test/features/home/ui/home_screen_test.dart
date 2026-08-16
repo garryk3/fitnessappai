@@ -147,6 +147,7 @@ void main() {
 
     expect(find.text('Нет программ'), findsOneWidget);
     expect(find.text('К программам'), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsNothing);
   });
 
   testWidgets('переход к программам из пустого состояния', (
@@ -206,7 +207,7 @@ void main() {
     expect(find.text('history-route'), findsOneWidget);
   });
 
-  testWidgets('кнопка быстрого старта показывается при pending-дне', (
+  testWidgets('FAB быстрого старта показывается при pending-дне', (
     WidgetTester tester,
   ) async {
     final program = await createProgram(name: 'Силовая', dayOfWeek: 1);
@@ -214,6 +215,7 @@ void main() {
 
     await pumpHome(tester);
 
+    expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.text('Быстрый старт'), findsOneWidget);
 
     await tester.tap(find.text('Быстрый старт'));
