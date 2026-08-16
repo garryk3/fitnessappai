@@ -39,7 +39,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navProfile)),
+      appBar: AppBar(
+        title: Text(l10n.navProfile),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l10n.settings,
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'profile-fab',
         onPressed: () async {
@@ -378,29 +387,18 @@ class _HistoryTile extends StatelessWidget {
   }
 }
 
-/// Ссылки на противопоказания и синхронизацию.
+/// Ссылка на экран противопоказаний.
 class _LinksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Card(
       margin: EdgeInsets.zero,
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.health_and_safety_outlined),
-            title: Text(l10n.contraindications),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/contraindications'),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.settings_outlined),
-            title: Text(l10n.settings),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/settings'),
-          ),
-        ],
+      child: ListTile(
+        leading: const Icon(Icons.health_and_safety_outlined),
+        title: Text(l10n.contraindications),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push('/contraindications'),
       ),
     );
   }
