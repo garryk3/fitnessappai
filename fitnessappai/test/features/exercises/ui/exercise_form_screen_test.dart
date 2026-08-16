@@ -172,6 +172,23 @@ void main() {
     expect(exercises, isEmpty);
   });
 
+  testWidgets('ошибка валидации названия очищается при вводе', (tester) async {
+    await pumpForm(tester);
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pump();
+    expect(find.text('Введите название'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название *'),
+      'Жим штанги',
+    );
+    await tester.pump();
+
+    expect(find.text('Введите название'), findsNothing);
+  });
+
   testWidgets('поле названия отмечено звёздочкой как обязательное', (
     tester,
   ) async {

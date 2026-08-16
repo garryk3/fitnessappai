@@ -259,6 +259,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
