@@ -85,12 +85,19 @@ void main() {
   testWidgets('создание программы: выбор дней и день недели', (tester) async {
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
     final router = GoRouter(
-      initialLocation: '/programs/new',
+      initialLocation: '/home/programs/new',
       routes: [
         GoRoute(
-          path: '/programs/new',
+          path: '/home',
           builder: (context, state) =>
-              ProgramBuilderScreen(repository: repository),
+              const Scaffold(body: Center(child: Text('Программы'))),
+          routes: [
+            GoRoute(
+              path: 'programs/new',
+              builder: (context, state) =>
+                  ProgramBuilderScreen(repository: repository),
+            ),
+          ],
         ),
         GoRoute(
           path: '/programs/:id/day/:dayIndex',
@@ -144,26 +151,38 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
 
+    expect(find.text('Заполнить день 1'), findsOneWidget);
+
     final programId = (await repository.getPrograms()).single.program.id!;
-    final day = (await repository.getDays(programId)).first;
-    await repository.addExerciseToDay(day.id!, exercise.id!);
+    final days = await repository.getDays(programId);
+    for (final day in days) {
+      await repository.addExerciseToDay(day.id!, exercise.id!);
+    }
+
+    await tester.tap(find.text('Заполнить день 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Наполнение дня'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
     await tester.pumpAndSettle();
+
+    expect(find.text('Программы'), findsOneWidget);
 
     final programs = await repository.getPrograms();
     expect(programs, hasLength(1));
     final created = programs.single.program;
     expect(created.name, 'Сплит');
     expect(created.daysCount, 3);
-    final days = await repository.getDays(created.id!);
-    expect(days[0].dayOfWeek, 1);
-    expect(days[0].dayIndex, 0);
-    expect(days[1].dayOfWeek, isNull);
+    final savedDays = await repository.getDays(created.id!);
+    expect(savedDays[0].dayOfWeek, 1);
+    expect(savedDays[0].dayIndex, 0);
+    expect(savedDays[1].dayOfWeek, isNull);
   });
 
   testWidgets(
-    'пустая программа: диалог с ошибками, «Продолжить»/«Выйти» не сохраняют',
+    'пустая программа: кнопка «Заполнить день 1», без названия не открывает наполнение',
     (tester) async {
       final router = GoRouter(
         initialLocation: '/home/programs/new',
@@ -193,31 +212,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await enterName(tester, 'Сплит');
+      expect(find.text('Заполнить день 1'), findsOneWidget);
+      expect(find.text('Сохранить'), findsNothing);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.tap(find.text('Заполнить день 1'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Недостаточно данных для сохранения'), findsOneWidget);
-      expect(
-        find.text('У дня 1 должно быть хотя бы одно основное упражнение'),
-        findsOneWidget,
-      );
-      expect(find.text('Продолжить редактирование'), findsOneWidget);
-      expect(find.text('Выйти'), findsOneWidget);
-      expect(await repository.getPrograms(), isEmpty);
-
-      await tester.tap(find.text('Продолжить редактирование'));
-      await tester.pumpAndSettle();
-      expect(find.text('Недостаточно данных для сохранения'), findsNothing);
-      expect(find.text('День 1'), findsOneWidget);
-      expect(await repository.getPrograms(), isEmpty);
-
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Выйти'));
-      await tester.pumpAndSettle();
-      expect(find.text('Программы'), findsOneWidget);
+      expect(find.text('Введите название'), findsOneWidget);
+      expect(find.text('Наполнение дня'), findsNothing);
       expect(await repository.getPrograms(), isEmpty);
     },
   );
@@ -227,7 +229,7 @@ void main() {
   ) async {
     await pumpBuilder(tester);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.tap(find.text('Заполнить день 1'));
     await tester.pumpAndSettle();
 
     expect(find.text('Введите название'), findsOneWidget);
@@ -344,6 +346,71 @@ void main() {
       final days = await repository.getDays(programId);
       expect(days[0].dayOfWeek, 1);
       expect(days[1].dayOfWeek, 3);
+    },
+  );
+
+  testWidgets(
+    'незаполненный день: кнопка «Заполнить день N», после заполнения — «Сохранить»',
+    (tester) async {
+      final exercise = await createExercise(
+        'Жим штанги',
+        ExerciseType.strength,
+      );
+      final created = await repository.create(program('Сплит', daysCount: 2), [
+        ProgramDay(programId: 0, dayIndex: 0),
+        ProgramDay(programId: 0, dayIndex: 1),
+      ]);
+      final createdDays = await repository.getDays(created.id!);
+      await repository.addExerciseToDay(createdDays[0].id!, exercise.id!);
+
+      final router = GoRouter(
+        initialLocation: '/programs/edit',
+        routes: [
+          GoRoute(
+            path: '/programs/edit',
+            builder: (context, state) => ProgramBuilderScreen(
+              repository: repository,
+              programId: created.id,
+            ),
+          ),
+          GoRoute(
+            path: '/programs/:id/day/:dayIndex',
+            builder: (context, state) =>
+                Scaffold(appBar: AppBar(title: const Text('Наполнение дня'))),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Заполнить день 2'), findsOneWidget);
+      expect(find.text('Сохранить'), findsNothing);
+
+      await tester.tap(find.text('Заполнить день 2'));
+      await tester.pumpAndSettle();
+      expect(find.text('Наполнение дня'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Заполнить день 2'), findsOneWidget);
+
+      await repository.addExerciseToDay(createdDays[1].id!, exercise.id!);
+      await tester.tap(find.text('Заполнить день 2'));
+      await tester.pumpAndSettle();
+      expect(find.text('Наполнение дня'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Заполнить день 2'), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Сохранить'), findsOneWidget);
     },
   );
 }

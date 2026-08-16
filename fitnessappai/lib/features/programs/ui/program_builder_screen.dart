@@ -54,6 +54,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final List<_DayDraft> _days = [];
+  final Set<int> _filledDayIndexes = {};
   int _nextDayKey = -1;
   bool _loading = true;
   bool _saving = false;
@@ -94,6 +95,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                 dayOfWeek: day.day.dayOfWeek,
               ),
           ]);
+        _filledDayIndexes
+          ..clear()
+          ..addAll({
+            for (final day in detail.days)
+              if (day.mainExercises.any((e) => !e.isAlternative))
+                day.day.dayIndex,
+          });
         await _loadReminders();
         if (_days.isEmpty) {
           _addDay();
@@ -223,8 +231,45 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final saved = await _persist();
     final programId = saved?.id;
     if (programId != null && mounted) {
-      context.push('/programs/$programId/day/$dayIndex');
+      await context.push('/programs/$programId/day/$dayIndex');
+      if (mounted) {
+        await _refreshFilledDays();
+      }
     }
+  }
+
+  /// Пересчитывает, какие дни заполнены, после возврата из наполнения дня.
+  Future<void> _refreshFilledDays() async {
+    final programId = _programId;
+    if (programId == null) {
+      if (mounted) {
+        setState(_filledDayIndexes.clear);
+      }
+      return;
+    }
+    final detail = await _repository.getProgram(programId);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _filledDayIndexes
+        ..clear()
+        ..addAll({
+          for (final day in detail?.days ?? const <ProgramDayDetail>[])
+            if (day.mainExercises.any((e) => !e.isAlternative))
+              day.day.dayIndex,
+        });
+    });
+  }
+
+  /// Индекс первого дня без основного упражнения или `null`, если все заполнены.
+  int? _firstUnfilledDayIndex() {
+    for (var i = 0; i < _days.length; i++) {
+      if (!_filledDayIndexes.contains(i)) {
+        return i;
+      }
+    }
+    return null;
   }
 
   /// Создаёт или обновляет черновик программы. Возвращает `null` при
@@ -335,6 +380,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isEditing = _programId != null;
+    final nextDay = _firstUnfilledDayIndex();
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? l10n.programEdit : l10n.programNew),
@@ -366,14 +412,22 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: FilledButton(
-            onPressed: _saving ? null : _save,
+            onPressed: _saving
+                ? null
+                : nextDay == null
+                ? _save
+                : () => _openDayFill(nextDay),
             child: _saving
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(l10n.programBuilderSave),
+                : Text(
+                    nextDay == null
+                        ? l10n.programBuilderSave
+                        : l10n.programBuilderFillNextDay(nextDay + 1),
+                  ),
           ),
         ),
       ),

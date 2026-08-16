@@ -414,6 +414,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderSave => 'Сохранить';
 
   @override
+  String programBuilderFillNextDay(int dayNumber) {
+    return 'Заполнить день $dayNumber';
+  }
+
+  @override
   String get programBuilderAddExercise => 'Добавить упражнение';
 
   @override
