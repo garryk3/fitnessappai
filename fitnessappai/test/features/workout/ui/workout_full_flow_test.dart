@@ -305,4 +305,47 @@ void main() {
     final detail = await workoutRepo.getSession(sessions.first.id!);
     expect(detail!.results.single.durationSeconds, 40);
   });
+
+  testWidgets(
+    'полный флоу plank: пустое поле — в результат идёт время удержания',
+    (tester) async {
+      final dayId = await createDay(
+        name: 'Планка',
+        type: ExerciseType.plank,
+        durationSeconds: 45,
+      );
+      await pumpFlow(tester, dayId);
+
+      await startWorkout(tester);
+
+      // Пустое поле валидно: подсказка разрешает пропустить ручной ввод.
+      expect(
+        find.textContaining('время удержания со счётчика'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Начать'));
+      await tester.pump();
+
+      await tester.pump(const Duration(seconds: 7));
+      expect(find.text('Удержание 7 с'), findsOneWidget);
+
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+
+      await tester.tap(find.text('Завершить тренировку'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Тренировка сохранена'), findsOneWidget);
+
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      final detail = await workoutRepo.getSession(sessions.first.id!);
+      expect(detail!.results.single.durationSeconds, 7);
+    },
+  );
 }
