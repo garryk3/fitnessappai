@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,12 +22,12 @@ void main() {
   late Directory tempDir;
   late ExerciseRepository repository;
   late String pickedFilePath;
-  String? lastPickedPath;
+  XFile? lastPicked;
 
   setUp(() async {
     db = AppDatabase(executor: NativeDatabase.memory());
     tempDir = await Directory.systemTemp.createTemp('exercise_form_test');
-    lastPickedPath = null;
+    lastPicked = null;
     pickedFilePath = '${tempDir.path}/dummy.webp';
     await File(pickedFilePath).writeAsBytes([0, 0, 0, 0]);
     repository = ExerciseRepository(
@@ -34,7 +35,7 @@ void main() {
       MediaStore(
         directoryProvider: () async => tempDir,
         assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
-        filePicker: () async => lastPickedPath,
+        filePicker: () async => lastPicked,
       ),
     );
     addTearDown(() async {
@@ -61,7 +62,7 @@ void main() {
           mediaStore: MediaStore(
             directoryProvider: () async => tempDir,
             assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
-            filePicker: picker ?? () async => lastPickedPath,
+            filePicker: picker ?? () async => lastPicked,
           ),
           mediaCache: MediaCache(),
         ),
@@ -281,7 +282,7 @@ void main() {
       'С анимацией',
     );
     await scrollFormTo(tester, find.text('Выбрать анимацию'));
-    lastPickedPath = pickedFilePath;
+    lastPicked = XFile(pickedFilePath);
     await tester.runAsync(() async {
       await tester.tap(find.text('Выбрать анимацию'));
       for (var i = 0; i < 50; i++) {
@@ -310,7 +311,7 @@ void main() {
       'С миниатюрой',
     );
     await scrollFormTo(tester, find.text('Выбрать изображение'));
-    lastPickedPath = pickedFilePath;
+    lastPicked = XFile(pickedFilePath);
     await tester.runAsync(() async {
       await tester.tap(find.text('Выбрать изображение'));
       for (var i = 0; i < 50; i++) {

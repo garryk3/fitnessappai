@@ -907,7 +907,7 @@ fitnessappai/
 - **Тесты:** `stats_aggregator_test`/`progress_screen_test` — каталог из 3 упражнений, выполнено 2 → в списке только 2; ни одного — график скрыт.
 
 ### Задача 12.6: Выбор миниатюры/анимации без ложной ошибки
-- **Статус:** [ ] не начата
+- **Статус:** [x] выполнена (2026-08-16)
 - **Модуль:** core/media + фичи/exercises
 - **Ветка:** `task/12.6-media-pick`
 - **Описание:** `MediaStore.importFromPicker` копирует файл через `File(picked).readAsBytes()` в `getApplicationDocumentsDirectory()` — в debug на Linux `path_provider` бросает `MissingPlatformDirectoryException` (нет XDG-каталогов), на Android content-URI не читаются `File`. В итоге пикер работает, но форма показывает `exerciseFormAnimationError`. Сделать чтение через `XFile(picked)` (поддержка content://), директорию провайдера с фолбэком (documents → support → temp), ошибку показывать только при реальном сбое копирования.
@@ -1017,7 +1017,7 @@ fitnessappai/
 | 12.3 | Импорт/экспорт БД без исключений в debug | [x] | task/12.3-sync-errors | 2026-08-16 |
 | 12.4 | Иконка настроек в AppBar профиля | [x] | task/12.4-profile-settings | 2026-08-16 |
 | 12.5 | Прогресс-метрики по выполненным упражнениям | [x] | task/12.5-progress-performed | 2026-08-16 |
-| 12.6 | Выбор миниатюры/анимации без ложной ошибки | [ ] | task/12.6-media-pick | |
+| 12.6 | Выбор миниатюры/анимации без ложной ошибки | [x] | task/12.6-media-pick | 2026-08-16 |
 | 12.7 | Обязательные мышцы в форме упражнения | [ ] | task/12.7-muscles-required | |
 | 12.8 | Кнопка «следующий день» в конструкторе | [ ] | task/12.8-builder-next-day | |
 | 12.9 | Фильтр по категориям в выборе упражнения | [ ] | task/12.9-type-filter | |

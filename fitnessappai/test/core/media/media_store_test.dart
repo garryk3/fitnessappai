@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 void main() {
   late Directory tempDir;
@@ -72,7 +75,7 @@ void main() {
     await source.writeAsBytes(bytes);
     final path = await store(
       assets: <String, Uint8List>{},
-      picker: () async => source.path,
+      picker: () async => XFile(source.path),
     ).importFromPicker();
     expect(path, isNotNull);
     expect(await File(path!).readAsBytes(), bytes);
@@ -105,7 +108,7 @@ void main() {
     () async {
       final s = store(
         assets: <String, Uint8List>{},
-        picker: () async => p.join(tempDir.path, 'missing.gif'),
+        picker: () async => XFile(p.join(tempDir.path, 'missing.gif')),
       );
       await expectLater(
         s.importFromPicker(),
@@ -127,4 +130,36 @@ void main() {
     final s = store(assets: <String, Uint8List>{});
     await expectLater(s.deleteFile('nonexistent.png'), completes);
   });
+
+  group('defaultDirectoryProvider', () {
+    test('при сбое documents и support использует temp', () async {
+      final original = PathProviderPlatform.instance;
+      PathProviderPlatform.instance = _FailingPathProvider(tempDir.path);
+      addTearDown(() => PathProviderPlatform.instance = original);
+
+      final dir = await MediaStore().ensureAppMediaDir();
+
+      expect(dir.path, p.join(tempDir.path, MediaStore.mediaSubDir));
+      expect(await dir.exists(), isTrue);
+    });
+  });
+}
+
+/// Путь-провайдер, у которого documents и support недоступны — как в Linux
+/// без XDG-каталогов в debug. temp при этом работает.
+class _FailingPathProvider extends PathProviderPlatform {
+  _FailingPathProvider(this.tempPath);
+
+  final String tempPath;
+
+  @override
+  Future<String?> getTemporaryPath() async => tempPath;
+
+  @override
+  Future<String?> getApplicationDocumentsPath() async =>
+      throw MissingPlatformDirectoryException('no documents');
+
+  @override
+  Future<String?> getApplicationSupportPath() async =>
+      throw MissingPlatformDirectoryException('no support');
 }

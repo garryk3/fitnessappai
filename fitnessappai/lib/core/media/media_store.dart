@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
@@ -14,8 +15,8 @@ typedef AssetLoader = Future<Uint8List> Function(String assetPath);
 /// Тип медиафайла, выбираемого системным пикером.
 enum MediaFileType { any, image }
 
-/// Пикер файлов; возвращает путь выбранного файла или `null` при отмене.
-typedef MediaFilePicker = Future<String?> Function();
+/// Пикер файлов; возвращает выбранный файл или `null` при отмене.
+typedef MediaFilePicker = Future<XFile?> Function();
 
 /// Бросается при неудачном импорте медиафайла (ошибка пикера, чтения или
 /// копирования файла).
@@ -72,7 +73,7 @@ class MediaStore {
   Future<String?> importFromPicker({
     MediaFileType fileType = MediaFileType.any,
   }) async {
-    final String? picked;
+    final XFile? picked;
     try {
       final injected = _filePicker;
       picked = injected != null
@@ -85,13 +86,10 @@ class MediaStore {
       return null;
     }
     try {
-      return await _writeFile(
-        p.basename(picked),
-        await File(picked).readAsBytes(),
-      );
+      return await _writeFile(picked.name, await picked.readAsBytes());
     } catch (e) {
       throw MediaImportException(
-        'Не удалось скопировать файл "$picked"',
+        'Не удалось скопировать файл "${picked.path}"',
         cause: e,
       );
     }
@@ -126,8 +124,28 @@ class MediaStore {
   }
 }
 
-Future<Directory> _defaultDirectoryProvider() =>
-    getApplicationDocumentsDirectory();
+/// Директория приложения для медиа: documents, при сбое — support, затем temp.
+Future<Directory> _defaultDirectoryProvider() async {
+  try {
+    return await getApplicationDocumentsDirectory();
+  } on PlatformException {
+    return _fallbackDirectory();
+  } catch (_) {
+    return _fallbackDirectory();
+  }
+}
+
+Future<Directory> _fallbackDirectory() async {
+  try {
+    return await getApplicationSupportDirectory();
+  } on PlatformException {
+    return _tempDirectory();
+  } catch (_) {
+    return _tempDirectory();
+  }
+}
+
+Future<Directory> _tempDirectory() async => getTemporaryDirectory();
 
 Future<Uint8List> _defaultAssetLoader(String assetPath) async {
   final data = await rootBundle.load(assetPath);
@@ -135,14 +153,20 @@ Future<Uint8List> _defaultAssetLoader(String assetPath) async {
 }
 
 /// Системный пикер файлов с фильтром по [fileType].
-Future<String?> _platformPicker(MediaFileType fileType) async {
+///
+/// Байты читаются через `withData`, поэтому результат работает и с
+/// content-URI (Android) без обращения к `File`.
+Future<XFile?> _platformPicker(MediaFileType fileType) async {
   final type = switch (fileType) {
     MediaFileType.any => FileType.any,
     MediaFileType.image => FileType.image,
   };
-  final result = await FilePicker.platform.pickFiles(type: type);
+  final result = await FilePicker.platform.pickFiles(
+    type: type,
+    withData: true,
+  );
   if (result == null || result.files.isEmpty) {
     return null;
   }
-  return result.files.single.path;
+  return result.files.single.xFile;
 }
