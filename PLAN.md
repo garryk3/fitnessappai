@@ -891,7 +891,7 @@ fitnessappai/
 - **Тесты:** `settings_screen_test` — инъекция `shareFile`/`pickFile`, бросающих `Error` → контроллер возвращает `false`, статус ошибки, без rethrow.
 
 ### Задача 12.4: Иконка настроек в AppBar профиля
-- **Статус:** [ ] не начата
+- **Статус:** [x] реализована
 - **Модуль:** фичи/profile
 - **Ветка:** `task/12.4-profile-settings`
 - **Описание:** Перенести пункт «Настройки» из `_LinksCard` (`ProfileScreen`) в `AppBar.actions` — `IconButton` с `Icons.settings_outlined` на уровне заголовка справа, тап → `context.push('/settings')`. Из `_LinksCard` оставить только «Противопоказания».
@@ -1015,7 +1015,7 @@ fitnessappai/
 | 12.1 | FAB быстрого старта на главной | [x] | task/12.1-home-fab | 2026-08-16 |
 | 12.2 | Контраст бейджа «Перенесено» | [x] | task/12.2-rescheduled-color | 2026-08-16 |
 | 12.3 | Импорт/экспорт БД без исключений в debug | [x] | task/12.3-sync-errors | 2026-08-16 |
-| 12.4 | Иконка настроек в AppBar профиля | [ ] | task/12.4-profile-settings | |
+| 12.4 | Иконка настроек в AppBar профиля | [x] | task/12.4-profile-settings | 2026-08-16 |
 | 12.5 | Прогресс-метрики по выполненным упражнениям | [ ] | task/12.5-progress-performed | |
 | 12.6 | Выбор миниатюры/анимации без ложной ошибки | [ ] | task/12.6-media-pick | |
 | 12.7 | Обязательные мышцы в форме упражнения | [ ] | task/12.7-muscles-required | |
