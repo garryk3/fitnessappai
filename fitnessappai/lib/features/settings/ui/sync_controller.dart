@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:signals/signals.dart';
 
@@ -44,8 +45,8 @@ class SyncController {
       statusText.value = 'Резервная копия создана и отправлена';
       hasError.value = false;
       return true;
-    } on Exception catch (error) {
-      statusText.value = 'Ошибка экспорта: $error';
+    } catch (error) {
+      statusText.value = _operationError('Ошибка экспорта', error);
       hasError.value = true;
       return false;
     } finally {
@@ -58,7 +59,14 @@ class SyncController {
     if (isBusy.value) {
       return false;
     }
-    final source = await _pickFile();
+    String? source;
+    try {
+      source = await _pickFile();
+    } catch (error) {
+      statusText.value = _operationError('Ошибка импорта', error);
+      hasError.value = true;
+      return false;
+    }
     if (source == null) {
       return false;
     }
@@ -72,13 +80,22 @@ class SyncController {
       statusText.value = error.message;
       hasError.value = true;
       return false;
-    } on Exception catch (error) {
-      statusText.value = 'Ошибка импорта: $error';
+    } catch (error) {
+      statusText.value = _operationError('Ошибка импорта', error);
       hasError.value = true;
       return false;
     } finally {
       isBusy.value = false;
     }
+  }
+
+  /// Текст ошибки операции: для платформенных «нет поддержки» — человекочитаемое
+  /// сообщение, иначе — исходная ошибка.
+  static String _operationError(String action, Object error) {
+    if (error is UnimplementedError || error is MissingPluginException) {
+      return '$action: операция недоступна на этой платформе';
+    }
+    return '$action: $error';
   }
 
   static SyncService _defaultService() => locator.get<SyncService>();
