@@ -105,6 +105,7 @@
   "exerciseFormMistakes": "Частые ошибки",
   "exerciseFormMistakeAdd": "Добавить ошибку",
   "exerciseFormMuscles": "Задействованные мышцы",
+  "exerciseFormMusclesRequired": "Выберите хотя бы одну мышцу",
   "exerciseFormMusclePrimary": "Основная",
   "exerciseFormMuscleSecondary": "Вспомогательная",
   "exerciseFormContraindications": "Противопоказания",

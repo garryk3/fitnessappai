@@ -143,6 +143,23 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Выбирает «Грудь → Основная» как обязательную мышцу перед сохранением.
+  Future<void> selectChestMuscle(WidgetTester tester) async {
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    scrollable.position.jumpTo(0);
+    await tester.pump();
+    await scrollFormTo(tester, find.text('Грудь'));
+    await tester.tap(chipInRow('Грудь', 'Основная'));
+    await tester.pump();
+  }
+
   testWidgets('пустое название не сохраняется', (tester) async {
     await pumpForm(tester);
     await tester.pump();
@@ -214,6 +231,35 @@ void main() {
     expect(tags.map((t) => t.id), [kneesTag]);
   });
 
+  testWidgets('сохранение без мышц блокируется и показывает ошибку', (
+    tester,
+  ) async {
+    await pumpForm(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название *'),
+      'Без мышц',
+    );
+    await scrollFormTo(tester, find.text('Задействованные мышцы'));
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Выберите хотя бы одну мышцу'), findsOneWidget);
+    expect(await repository.getAll(), isEmpty);
+
+    await tester.tap(chipInRow('Грудь', 'Основная'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Выберите хотя бы одну мышцу'), findsNothing);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final created = (await repository.getAll()).single;
+    expect(created.name, 'Без мышц');
+  });
+
   testWidgets('выбор типа меняет тип упражнения', (tester) async {
     await pumpForm(tester);
 
@@ -226,6 +272,7 @@ void main() {
     await tester.tap(find.text('Бег').last);
     await tester.pumpAndSettle();
 
+    await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
@@ -249,6 +296,7 @@ void main() {
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pumpAndSettle();
 
+    await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
@@ -296,6 +344,7 @@ void main() {
 
     expect(find.text('Убрать анимацию'), findsOneWidget);
 
+    await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
@@ -325,6 +374,7 @@ void main() {
 
     expect(find.text('Убрать изображение'), findsOneWidget);
 
+    await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
@@ -351,6 +401,7 @@ void main() {
     expect(find.text('Убрать изображение'), findsOneWidget);
     expect(find.text('Убрать анимацию'), findsOneWidget);
 
+    await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
@@ -373,6 +424,7 @@ void main() {
     await pumpForm(tester, exerciseId: saved.id);
     await tester.pumpAndSettle();
 
+    await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
@@ -394,6 +446,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Название *'),
       'Жим штанги лёжа',
     );
+    await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
