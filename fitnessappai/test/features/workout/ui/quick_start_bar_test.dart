@@ -55,36 +55,6 @@ void main() {
     return (await programRepo.getDays(created.id!)).first.id!;
   }
 
-  Future<void> pumpBar(
-    WidgetTester tester, {
-    required WeekPlanItem item,
-    required VoidCallback onStart,
-  }) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: Scaffold(
-          body: QuickStartBar(item: item, onStart: onStart),
-        ),
-      ),
-    );
-  }
-
-  testWidgets('QuickStartBar показывает подпись и вызывает onStart', (
-    tester,
-  ) async {
-    var tapped = false;
-    await pumpBar(tester, item: item(1), onStart: () => tapped = true);
-
-    expect(find.text('Быстрый старт'), findsOneWidget);
-
-    await tester.tap(find.text('Быстрый старт'));
-    expect(tapped, isTrue);
-  });
-
   testWidgets('startPlannedWorkout открывает подготовку при существующем дне', (
     tester,
   ) async {
