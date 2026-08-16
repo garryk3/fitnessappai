@@ -197,6 +197,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
     final completed = workout.completedSets.value;
     final holdElapsed = workout.holdElapsedSeconds.value;
     final holdTarget = workout.holdTargetSeconds.value;
+    final holdRunning = workout.holdRunning.value;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -238,6 +239,14 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
               ),
               textAlign: TextAlign.center,
             ),
+            if (!holdRunning) ...[
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: workout.startHoldTimer,
+                icon: const Icon(Icons.play_arrow),
+                label: Text(l10n.workoutRunHoldStart),
+              ),
+            ],
           ],
           const SizedBox(height: 16),
           _ExerciseInputForm(

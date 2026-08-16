@@ -150,33 +150,54 @@ void main() {
     });
   });
 
-  test('plank: счётчик удержания растёт от нуля до цели', () {
-    fakeAsync((async) {
-      final controller = WorkoutController(clock: () => startTime);
-      controller.start([plankExercise(duration: 45)]);
+  test(
+    'plank: без «Начать» счётчик не запускается, после — растёт от нуля',
+    () {
+      fakeAsync((async) {
+        final controller = WorkoutController(clock: () => startTime);
+        controller.start([plankExercise(duration: 45)]);
 
-      expect(controller.holdTargetSeconds.value, 45);
-      expect(controller.holdElapsedSeconds.value, 0);
-      async.elapse(const Duration(seconds: 5));
-      expect(controller.holdElapsedSeconds.value, 5);
-      // Счёт продолжается и после достижения цели: пользователь может держать
-      // планку дольше, и фактическое время попадёт в результат (задача 13.5).
-      async.elapse(const Duration(seconds: 60));
-      expect(controller.holdElapsedSeconds.value, 65);
+        expect(controller.holdTargetSeconds.value, 45);
+        expect(controller.holdRunning.value, isFalse);
+        expect(controller.holdElapsedSeconds.value, 0);
 
-      controller.dispose();
-    });
-  });
+        // Авто-старта нет: время не идёт, пока не нажата кнопка «Начать».
+        async.elapse(const Duration(seconds: 10));
+        expect(controller.holdRunning.value, isFalse);
+        expect(controller.holdElapsedSeconds.value, 0);
+
+        controller.startHoldTimer();
+        expect(controller.holdRunning.value, isTrue);
+        expect(controller.holdElapsedSeconds.value, 0);
+
+        async.elapse(const Duration(seconds: 5));
+        expect(controller.holdElapsedSeconds.value, 5);
+        // Счёт продолжается и после достижения цели: пользователь может держать
+        // планку дольше, и фактическое время попадёт в результат (задача 13.5).
+        async.elapse(const Duration(seconds: 60));
+        expect(controller.holdElapsedSeconds.value, 65);
+
+        // Повторный запуск — не сбрасывает счётчик.
+        controller.startHoldTimer();
+        async.elapse(const Duration(seconds: 2));
+        expect(controller.holdElapsedSeconds.value, 67);
+
+        controller.dispose();
+      });
+    },
+  );
 
   test('plank: фиксация подхода останавливает счётчик удержания', () {
     fakeAsync((async) {
       final controller = WorkoutController(clock: () => startTime);
       controller.start([plankExercise(duration: 45)]);
+      controller.startHoldTimer();
 
       controller.setResult(const WorkoutSetInput(durationSeconds: 40));
       controller.confirmSet();
 
       expect(controller.phase.value, WorkoutPhase.finished);
+      expect(controller.holdRunning.value, isFalse);
       expect(controller.holdTargetSeconds.value, isNull);
       expect(controller.holdElapsedSeconds.value, 0);
       expect(controller.results.value.single.durationSeconds, 40);
@@ -197,6 +218,11 @@ void main() {
 
       expect(controller.holdTargetSeconds.value, isNull);
       expect(controller.holdElapsedSeconds.value, 0);
+      expect(controller.holdRunning.value, isFalse);
+
+      // Запуск для не-планки — без эффекта.
+      controller.startHoldTimer();
+      expect(controller.holdRunning.value, isFalse);
 
       async.elapse(const Duration(seconds: 5));
       expect(controller.holdElapsedSeconds.value, 0);
@@ -409,9 +435,15 @@ void main() {
     );
     controller.start([plankExercise(duration: 45)]);
 
-    expect(timers, hasLength(1));
+    // Авто-старта нет — таймер создаётся только после «Начать».
+    expect(timers, isEmpty);
     expect(controller.holdTargetSeconds.value, 45);
     expect(controller.holdElapsedSeconds.value, 0);
+    expect(controller.holdRunning.value, isFalse);
+
+    controller.startHoldTimer();
+    expect(timers, hasLength(1));
+    expect(controller.holdRunning.value, isTrue);
 
     for (var i = 0; i < 50; i++) {
       timers[0].fire();

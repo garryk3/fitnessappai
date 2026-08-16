@@ -295,6 +295,10 @@
       }
     }
   },
+  "workoutRunHoldStart": "Начать",
+  "@workoutRunHoldStart": {
+    "description": "Кнопка запуска отсчёта удержания планки"
+  },
   "workoutRunExitTitle": "Выйти из тренировки?",
   "workoutRunExitBody": "Тренировка не будет сохранена. Выйти?",
   "workoutRunExit": "Выйти",
