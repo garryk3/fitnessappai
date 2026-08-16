@@ -251,6 +251,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseFormMuscles => 'Задействованные мышцы';
 
   @override
+  String get exerciseFormMusclesRequired => 'Выберите хотя бы одну мышцу';
+
+  @override
   String get exerciseFormMusclePrimary => 'Основная';
 
   @override

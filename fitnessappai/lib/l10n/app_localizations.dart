@@ -562,6 +562,12 @@ abstract class AppLocalizations {
   /// **'Задействованные мышцы'**
   String get exerciseFormMuscles;
 
+  /// No description provided for @exerciseFormMusclesRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите хотя бы одну мышцу'**
+  String get exerciseFormMusclesRequired;
+
   /// No description provided for @exerciseFormMusclePrimary.
   ///
   /// In ru, this message translates to:

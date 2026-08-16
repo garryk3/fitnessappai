@@ -44,6 +44,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   final _instructionsController = TextEditingController();
   final List<TextEditingController> _mistakeControllers = [];
   final Map<int, MuscleIntensity> _muscleSelections = {};
+  String? _musclesError;
   final Set<int> _selectedContraindicationIds = {};
 
   ExerciseType _type = ExerciseType.strength;
@@ -183,6 +184,14 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    if (_muscleSelections.isEmpty) {
+      setState(
+        () => _musclesError = AppLocalizations.of(
+          context,
+        ).exerciseFormMusclesRequired,
+      );
       return;
     }
     setState(() => _saving = true);
@@ -424,6 +433,16 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ),
           const SizedBox(height: 8),
           for (final group in _groupedMuscles) ..._muscleGroupRows(l10n, group),
+          if (_musclesError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _musclesError!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -495,6 +514,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         } else {
           _muscleSelections[muscleId] = intensity;
         }
+        _musclesError = null;
       }),
     );
   }
