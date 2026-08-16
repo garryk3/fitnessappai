@@ -38,11 +38,15 @@ class DaySettings {
 
 /// Черновик дня с уникальным стабильным ключом для реордера.
 class _DayDraft {
-  _DayDraft(this.key, {this.dayOfWeek});
+  _DayDraft(this.key, {this.dayOfWeek, this.reminder, this.filled = false});
 
+  /// Идентификатор дня в БД (или отрицательный временный ключ для новых дней).
   final int key;
   int? dayOfWeek;
   WorkoutReminder? reminder;
+
+  /// Имеет ли день хотя бы одно основное упражнение.
+  bool filled;
 }
 
 class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
@@ -54,7 +58,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final List<_DayDraft> _days = [];
-  final Set<int> _filledDayIndexes = {};
   int _nextDayKey = -1;
   bool _loading = true;
   bool _saving = false;
@@ -93,15 +96,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               _DayDraft(
                 day.day.id ?? _nextDayKey--,
                 dayOfWeek: day.day.dayOfWeek,
+                filled: day.mainExercises.any((e) => !e.isAlternative),
               ),
           ]);
-        _filledDayIndexes
-          ..clear()
-          ..addAll({
-            for (final day in detail.days)
-              if (day.mainExercises.any((e) => !e.isAlternative))
-                day.day.dayIndex,
-          });
         await _loadReminders();
         if (_days.isEmpty) {
           _addDay();
@@ -243,7 +240,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final programId = _programId;
     if (programId == null) {
       if (mounted) {
-        setState(_filledDayIndexes.clear);
+        setState(() {
+          for (final day in _days) {
+            day.filled = false;
+          }
+        });
       }
       return;
     }
@@ -252,20 +253,20 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       return;
     }
     setState(() {
-      _filledDayIndexes
-        ..clear()
-        ..addAll({
-          for (final day in detail?.days ?? const <ProgramDayDetail>[])
-            if (day.mainExercises.any((e) => !e.isAlternative))
-              day.day.dayIndex,
-        });
+      final filledDayIds = {
+        for (final day in detail?.days ?? const <ProgramDayDetail>[])
+          if (day.mainExercises.any((e) => !e.isAlternative)) day.day.id,
+      };
+      for (final draft in _days) {
+        draft.filled = filledDayIds.contains(draft.key);
+      }
     });
   }
 
   /// Индекс первого дня без основного упражнения или `null`, если все заполнены.
   int? _firstUnfilledDayIndex() {
     for (var i = 0; i < _days.length; i++) {
-      if (!_filledDayIndexes.contains(i)) {
+      if (!_days[i].filled) {
         return i;
       }
     }
@@ -295,7 +296,31 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         ? await _repository.create(program, days)
         : await _repository.update(program, days: days);
     _programId = saved.id;
+    await _syncDayKeys();
     return saved;
+  }
+
+  /// Приводит ключи черновиков в соответствие с реальными id дней в БД, чтобы
+  /// статус заполненности определялся по стабильному id, а не по позиции.
+  Future<void> _syncDayKeys() async {
+    final programId = _programId;
+    if (programId == null) {
+      return;
+    }
+    final savedDays = await _repository.getDays(programId);
+    if (savedDays.length != _days.length || !mounted) {
+      return;
+    }
+    setState(() {
+      for (var i = 0; i < _days.length; i++) {
+        _days[i] = _DayDraft(
+          savedDays[i].id!,
+          dayOfWeek: _days[i].dayOfWeek,
+          reminder: _days[i].reminder,
+          filled: _days[i].filled,
+        );
+      }
+    });
   }
 
   /// Проверяет полную структуру черновика (дни + упражнения).

@@ -16,6 +16,8 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
+import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
+import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -414,6 +416,66 @@ void main() {
     },
   );
 
+  testWidgets(
+    'реордер дней не ломает статус заполненности: кнопка ведёт к пустому дню',
+    (tester) async {
+      final exercise = await createExercise(
+        'Жим штанги',
+        ExerciseType.strength,
+      );
+      final created = await repository.create(program('Сплит', daysCount: 3), [
+        ProgramDay(programId: 0, dayIndex: 0),
+        ProgramDay(programId: 0, dayIndex: 1),
+        ProgramDay(programId: 0, dayIndex: 2),
+      ]);
+      final createdDays = await repository.getDays(created.id!);
+      await repository.addExerciseToDay(createdDays[0].id!, exercise.id!);
+
+      final router = GoRouter(
+        initialLocation: '/programs/edit',
+        routes: [
+          GoRoute(
+            path: '/programs/edit',
+            builder: (context, state) => ProgramBuilderScreen(
+              repository: repository,
+              programId: created.id,
+            ),
+          ),
+          GoRoute(
+            path: '/programs/:id/day/:dayIndex',
+            builder: (context, state) =>
+                Scaffold(appBar: AppBar(title: const Text('Наполнение дня'))),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // День 1 заполнен, следующие — нет.
+      expect(find.text('Заполнить день 2'), findsOneWidget);
+
+      // Переносим заполненный день 1 (позиция 0) в конец списка.
+      await tester.timedDrag(
+        find.byIcon(Icons.drag_indicator).at(0),
+        const Offset(0, 220),
+        const Duration(milliseconds: 400),
+      );
+      await tester.pumpAndSettle();
+
+      // Заполненность следует за днём: на позиции 0 остался пустой день.
+      expect(find.text('Заполнить день 1'), findsOneWidget);
+      expect(find.text('Заполнить день 2'), findsNothing);
+    },
+  );
+
   testWidgets('ошибка валидации названия очищается при вводе', (tester) async {
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
     final created = await repository.create(program('Название', daysCount: 1), [
@@ -435,4 +497,96 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Введите название'), findsNothing);
   });
+
+  testWidgets(
+    'заполненный день: кнопка ведёт к следующему незаполненному дню',
+    (tester) async {
+      await createExercise('Жим штанги', ExerciseType.strength);
+      final router = GoRouter(
+        initialLocation: '/home/programs/new',
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) =>
+                const Scaffold(body: Center(child: Text('Программы'))),
+            routes: [
+              GoRoute(
+                path: 'programs/new',
+                builder: (context, state) =>
+                    ProgramBuilderScreen(repository: repository),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/programs/:id/day/:dayIndex',
+            builder: (context, state) => ProgramDayBuilderScreen(
+              programId: int.parse(state.pathParameters['id']!),
+              dayIndex: int.parse(state.pathParameters['dayIndex']!),
+              repository: repository,
+              exerciseRepository: exerciseRepository,
+            ),
+          ),
+          GoRoute(
+            path: '/program-day/:id/exercise-params',
+            builder: (context, state) => ProgramDayExerciseParamsScreen(
+              positionId: int.parse(state.pathParameters['id']!),
+              repository: repository,
+              exerciseRepository: exerciseRepository,
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await enterName(tester, 'Сплит');
+      await tester.tap(find.text('3'));
+      await tester.pumpAndSettle();
+
+      // Заполняем первый день через реальный флоу day-builder.
+      await tester.tap(find.text('Заполнить день 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('День 1'), findsOneWidget);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Жим штанги'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Подходы'),
+        '3',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Повторения'),
+        '10',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Вес (кг)'),
+        '20',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      // День сохранён в БД через параметры, но структурно программа неполная:
+      // валидатор просит заполнить остальные дни. Пользователь выходит.
+      await tester.tap(find.text('Выйти'));
+      await tester.pumpAndSettle();
+
+      // В конструкторе кнопка ведёт к следующему незаполненному дню.
+      expect(find.text('Заполнить день 2'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Сохранить'), findsNothing);
+    },
+  );
 }
