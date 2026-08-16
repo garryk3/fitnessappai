@@ -224,29 +224,13 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
             textAlign: TextAlign.center,
           ),
           if (exercise.type == ExerciseType.plank && holdTarget != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              l10n.workoutRunHold(holdElapsed),
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
-              textAlign: TextAlign.center,
+            const SizedBox(height: 12),
+            _PlankHoldPanel(
+              elapsed: holdElapsed,
+              target: holdTarget,
+              running: holdRunning,
+              onStart: workout.startHoldTimer,
             ),
-            Text(
-              l10n.workoutRunHoldTarget(holdTarget),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (!holdRunning) ...[
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: workout.startHoldTimer,
-                icon: const Icon(Icons.play_arrow),
-                label: Text(l10n.workoutRunHoldStart),
-              ),
-            ],
           ],
           const SizedBox(height: 16),
           _ExerciseInputForm(
@@ -331,6 +315,71 @@ class _ExerciseMedia extends StatelessWidget {
         },
         size: 56,
         color: colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+/// Выделенный блок таймера удержания планки: крупный счётчик, цель в скобках,
+/// кнопка запуска до старта.
+class _PlankHoldPanel extends StatelessWidget {
+  const _PlankHoldPanel({
+    required this.elapsed,
+    required this.target,
+    required this.running,
+    required this.onStart,
+  });
+
+  final int elapsed;
+  final int target;
+  final bool running;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final reached = running && elapsed >= target;
+    final counterColor = reached
+        ? theme.colorScheme.tertiary
+        : theme.colorScheme.primary;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      decoration: BoxDecoration(
+        color: reached
+            ? theme.colorScheme.tertiaryContainer
+            : theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            l10n.workoutRunHold(elapsed),
+            style: theme.textTheme.displayLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: counterColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.workoutRunHoldTarget(target),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (!running) ...[
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onStart,
+              icon: const Icon(Icons.play_arrow),
+              label: Text(l10n.workoutRunHoldStart),
+            ),
+          ],
+        ],
       ),
     );
   }
