@@ -875,7 +875,7 @@ fitnessappai/
 - **Тесты:** `home_screen_test` — FAB видна, тап запускает тренировку; без `nextPending` FAB нет; `week_plan_screen_test` не регрессирует.
 
 ### Задача 12.2: Контраст бейджа «Перенесено» на плане недели
-- **Статус:** [ ] не начата
+- **Статус:** [x] реализована
 - **Модуль:** фичи/workout
 - **Ветка:** `task/12.2-rescheduled-color`
 - **Описание:** В `_StatusBadge` (`week_plan_screen.dart`) текст всех статусов раскрашен `onSurfaceVariant` — на фонах `tertiary` («Перенесено») и `primary` («Выполнено») он плохо читается в обеих темах. Сменить на пер-статусный цвет: `pending` → `onSurfaceVariant`, `performed` → `onPrimary`, `rescheduled` → `onTertiary`, `skipped` → `onError`.
@@ -1013,7 +1013,7 @@ fitnessappai/
 | 11.13 | Перенос кнопки быстрого старта | [x] | task/11.13-quickstart-move | PR #61 |
 | 11.14 | Домашний экран | [x] | task/11.14-home / PR #62 | 2026-08-15 |
 | 12.1 | FAB быстрого старта на главной | [x] | task/12.1-home-fab | 2026-08-16 |
-| 12.2 | Контраст бейджа «Перенесено» | [ ] | task/12.2-rescheduled-color | |
+| 12.2 | Контраст бейджа «Перенесено» | [x] | task/12.2-rescheduled-color | 2026-08-16 |
 | 12.3 | Импорт/экспорт БД без исключений в debug | [ ] | task/12.3-sync-errors | |
 | 12.4 | Иконка настроек в AppBar профиля | [ ] | task/12.4-profile-settings | |
 | 12.5 | Прогресс-метрики по выполненным упражнениям | [ ] | task/12.5-progress-performed | |

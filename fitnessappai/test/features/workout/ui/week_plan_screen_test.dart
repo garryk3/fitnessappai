@@ -31,7 +31,7 @@ void main() {
     await db.close();
   });
 
-  Future<void> pumpPlan(WidgetTester tester) async {
+  Future<void> pumpPlan(WidgetTester tester, {ThemeData? theme}) async {
     final router = GoRouter(
       initialLocation: '/plan',
       routes: [
@@ -53,7 +53,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp.router(
-        theme: AppTheme.dark(),
+        theme: theme ?? AppTheme.dark(),
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -210,6 +210,68 @@ void main() {
     expect(find.text('Перенесено'), findsOneWidget);
     expect(find.text('Начать'), findsNothing);
   });
+
+  for (final theme in [AppTheme.light(), AppTheme.dark()]) {
+    final themeName = theme.brightness == Brightness.light
+        ? 'светлая'
+        : 'тёмная';
+
+    Color badgeColor(WidgetTester tester, String label) {
+      final text = tester.widget<Text>(find.text(label));
+      return text.style!.color!;
+    }
+
+    testWidgets('бейдж «Запланировано» контрастен ($themeName)', (
+      tester,
+    ) async {
+      await createDay(fixedNow.weekday);
+      await pumpPlan(tester, theme: theme);
+
+      final cs = Theme.of(
+        tester.element(find.text('Запланировано')),
+      ).colorScheme;
+      expect(badgeColor(tester, 'Запланировано'), cs.onSurfaceVariant);
+    });
+
+    testWidgets('бейдж «Выполнено» контрастен ($themeName)', (tester) async {
+      final weekday = fixedNow.weekday;
+      final day = await createDay(weekday);
+      final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
+      await saveSession(workoutRepo, day, scheduledDate);
+      await pumpPlan(tester, theme: theme);
+
+      final cs = Theme.of(tester.element(find.text('Выполнено'))).colorScheme;
+      expect(badgeColor(tester, 'Выполнено'), cs.onPrimary);
+    });
+
+    testWidgets('бейдж «Перенесено» контрастен ($themeName)', (tester) async {
+      final weekday = _weekdayAfter(fixedNow.weekday);
+      final day = await createDay(weekday);
+      final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
+      await saveSession(
+        workoutRepo,
+        day,
+        scheduledDate.add(const Duration(days: 1)),
+      );
+      await pumpPlan(tester, theme: theme);
+
+      final cs = Theme.of(tester.element(find.text('Перенесено'))).colorScheme;
+      expect(badgeColor(tester, 'Перенесено'), cs.onTertiary);
+    });
+
+    testWidgets('бейдж «Пропущено» контрастен ($themeName)', (tester) async {
+      await createDay(fixedNow.weekday);
+      await pumpPlan(tester, theme: theme);
+
+      await tester.ensureVisible(find.text('Пропустить'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Пропустить'));
+      await tester.pumpAndSettle();
+
+      final cs = Theme.of(tester.element(find.text('Пропущено'))).colorScheme;
+      expect(badgeColor(tester, 'Пропущено'), cs.onError);
+    });
+  }
 }
 
 Future<void> saveSession(

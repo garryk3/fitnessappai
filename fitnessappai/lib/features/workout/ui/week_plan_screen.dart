@@ -485,17 +485,27 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final (label, color) = switch (status) {
+    final (label, color, foreground) = switch (status) {
       WeekPlanStatus.pending => (
         l10n.schedulePending,
         colorScheme.surfaceContainerHighest,
+        colorScheme.onSurfaceVariant,
       ),
-      WeekPlanStatus.performed => (l10n.schedulePerformed, colorScheme.primary),
+      WeekPlanStatus.performed => (
+        l10n.schedulePerformed,
+        colorScheme.primary,
+        colorScheme.onPrimary,
+      ),
       WeekPlanStatus.rescheduled => (
         l10n.scheduleRescheduled,
         colorScheme.tertiary,
+        colorScheme.onTertiary,
       ),
-      WeekPlanStatus.skipped => (l10n.scheduleSkipped, colorScheme.error),
+      WeekPlanStatus.skipped => (
+        l10n.scheduleSkipped,
+        colorScheme.error,
+        colorScheme.onError,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -506,7 +516,7 @@ class _StatusBadge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
+          color: foreground,
           fontWeight: FontWeight.w600,
         ),
       ),
