@@ -124,6 +124,9 @@ class AdaptiveNavigation extends StatelessWidget {
           bottomNavigationBar: NavigationBar(
             selectedIndex: navigationShell.currentIndex,
             onDestinationSelected: _onDestinationSelected,
+            labelBehavior: AppBreakpoints.hidesBarLabels(constraints.maxWidth)
+                ? NavigationDestinationLabelBehavior.alwaysHide
+                : NavigationDestinationLabelBehavior.alwaysShow,
             destinations: _destinations(context).map((d) => d.bar).toList(),
           ),
         );

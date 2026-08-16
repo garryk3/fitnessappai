@@ -15,6 +15,17 @@ void main() {
     await tester.pumpWidget(const FitnessAppAi());
   }
 
+  double navLabelOpacity(WidgetTester tester, String label) {
+    final text = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text(label),
+    );
+    final fade = tester.widget<FadeTransition>(
+      find.ancestor(of: text, matching: find.byType(FadeTransition)).first,
+    );
+    return fade.opacity.value;
+  }
+
   testWidgets('на узком экране — NavigationBar', (tester) async {
     await pumpAtSize(tester, const Size(480, 800));
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -45,6 +56,32 @@ void main() {
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
     expect(find.text('Профиль'), findsWidgets);
+  });
+
+  testWidgets('на узком экране (<400dp) подписи навигации скрыты', (
+    tester,
+  ) async {
+    await pumpAtSize(tester, const Size(360, 800));
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.text('Главная'), findsWidgets);
+    expect(navLabelOpacity(tester, 'Главная'), 0.0);
+    expect(navLabelOpacity(tester, 'Программы'), 0.0);
+    expect(find.byIcon(Icons.fitness_center_outlined), findsOneWidget);
+  });
+
+  testWidgets('на широком экране подписи навигации присутствуют', (
+    tester,
+  ) async {
+    await pumpAtSize(tester, const Size(800, 800));
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Главная'),
+      ),
+      findsOneWidget,
+    );
+    expect(navLabelOpacity(tester, 'Главная'), 1.0);
   });
 
   testWidgets('на самом узком экране (320dp) нет overflow', (tester) async {
