@@ -150,22 +150,25 @@ void main() {
     });
   });
 
-  test('plank: запускается таймер удержания', () {
+  test('plank: счётчик удержания растёт от нуля до цели', () {
     fakeAsync((async) {
       final controller = WorkoutController(clock: () => startTime);
       controller.start([plankExercise(duration: 45)]);
 
-      expect(controller.holdRemainingSeconds.value, 45);
+      expect(controller.holdTargetSeconds.value, 45);
+      expect(controller.holdElapsedSeconds.value, 0);
       async.elapse(const Duration(seconds: 5));
-      expect(controller.holdRemainingSeconds.value, 40);
-      async.elapse(const Duration(seconds: 40));
-      expect(controller.holdRemainingSeconds.value, 0);
+      expect(controller.holdElapsedSeconds.value, 5);
+      // Счёт продолжается и после достижения цели: пользователь может держать
+      // планку дольше, и фактическое время попадёт в результат (задача 13.5).
+      async.elapse(const Duration(seconds: 60));
+      expect(controller.holdElapsedSeconds.value, 65);
 
       controller.dispose();
     });
   });
 
-  test('plank: фиксация подхода останавливает таймер удержания', () {
+  test('plank: фиксация подхода останавливает счётчик удержания', () {
     fakeAsync((async) {
       final controller = WorkoutController(clock: () => startTime);
       controller.start([plankExercise(duration: 45)]);
@@ -174,13 +177,29 @@ void main() {
       controller.confirmSet();
 
       expect(controller.phase.value, WorkoutPhase.finished);
-      expect(controller.holdRemainingSeconds.value, isNull);
+      expect(controller.holdTargetSeconds.value, isNull);
+      expect(controller.holdElapsedSeconds.value, 0);
       expect(controller.results.value.single.durationSeconds, 40);
       expect(controller.results.value.single.exerciseName, 'Планка');
       expect(controller.results.value.single.setIndex, 1);
 
       async.elapse(const Duration(seconds: 100));
-      expect(controller.holdRemainingSeconds.value, isNull);
+      expect(controller.holdTargetSeconds.value, isNull);
+      expect(controller.holdElapsedSeconds.value, 0);
+      controller.dispose();
+    });
+  });
+
+  test('для не-планки счётчик и цель удержания не задаются', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start([strengthExercise(sets: 1)]);
+
+      expect(controller.holdTargetSeconds.value, isNull);
+      expect(controller.holdElapsedSeconds.value, 0);
+
+      async.elapse(const Duration(seconds: 5));
+      expect(controller.holdElapsedSeconds.value, 0);
       controller.dispose();
     });
   });
@@ -391,15 +410,13 @@ void main() {
     controller.start([plankExercise(duration: 45)]);
 
     expect(timers, hasLength(1));
-    expect(controller.holdRemainingSeconds.value, 45);
+    expect(controller.holdTargetSeconds.value, 45);
+    expect(controller.holdElapsedSeconds.value, 0);
 
-    for (var i = 0; i < 44; i++) {
+    for (var i = 0; i < 50; i++) {
       timers[0].fire();
     }
-    expect(controller.holdRemainingSeconds.value, 1);
-
-    timers[0].fire();
-    expect(controller.holdRemainingSeconds.value, 0);
+    expect(controller.holdElapsedSeconds.value, 50);
     controller.dispose();
   });
 }

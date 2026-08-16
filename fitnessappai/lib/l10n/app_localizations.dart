@@ -1096,11 +1096,17 @@ abstract class AppLocalizations {
   /// **'Тренировка завершена'**
   String get workoutRunFinished;
 
-  /// Обратный отсчёт удержания планки
+  /// Текущее время удержания планки
   ///
   /// In ru, this message translates to:
   /// **'Удержание {seconds} с'**
   String workoutRunHold(int seconds);
+
+  /// Целевая длительность удержания планки
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель: {seconds} с'**
+  String workoutRunHoldTarget(int seconds);
 
   /// No description provided for @workoutRunExitTitle.
   ///

@@ -279,7 +279,16 @@
   "workoutRunFinished": "Тренировка завершена",
   "workoutRunHold": "Удержание {seconds} с",
   "@workoutRunHold": {
-    "description": "Обратный отсчёт удержания планки",
+    "description": "Текущее время удержания планки",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutRunHoldTarget": "Цель: {seconds} с",
+  "@workoutRunHoldTarget": {
+    "description": "Целевая длительность удержания планки",
     "placeholders": {
       "seconds": {
         "type": "int"

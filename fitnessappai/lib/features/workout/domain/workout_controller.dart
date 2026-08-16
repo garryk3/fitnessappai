@@ -58,8 +58,11 @@ class WorkoutController {
   final Signal<List<WorkoutSetResult>> results = Signal(<WorkoutSetResult>[]);
   final Signal<int?> restRemainingSeconds = Signal(null);
 
-  /// Обратный отсчёт времени удержания планки (0 — время вышло).
-  final Signal<int?> holdRemainingSeconds = Signal(null);
+  /// Время удержания планки, прошедшее с начала отсчёта (0 — не запущен).
+  final Signal<int> holdElapsedSeconds = Signal(0);
+
+  /// Целевая длительность удержания планки (null — упражнение не планка).
+  final Signal<int?> holdTargetSeconds = Signal(null);
 
   final List<WorkoutExercise> _exercises = [];
   WorkoutSessionContext? _context;
@@ -93,7 +96,7 @@ class WorkoutController {
   WorkoutSessionContext? get context => _context;
   WorkoutSetInput? get draft => _draft;
 
-  /// Начинает тренировку. Сбрасывает состояние и запускает отсчёт удержания,
+  /// Начинает тренировку. Сбрасывает состояние и запускает счётчик удержания,
   /// если первое упражнение — планка.
   void start(
     List<WorkoutExercise> exercises, {
@@ -145,7 +148,8 @@ class WorkoutController {
 
     _holdTimer?.cancel();
     _holdTimer = null;
-    holdRemainingSeconds.value = null;
+    holdElapsedSeconds.value = 0;
+    holdTargetSeconds.value = null;
     _draft = null;
 
     results.value = [...results.value, _buildResult(exercise, input, _clock())];
@@ -239,7 +243,8 @@ class WorkoutController {
     completedSets.value = 0;
     results.value = [];
     restRemainingSeconds.value = null;
-    holdRemainingSeconds.value = null;
+    holdElapsedSeconds.value = 0;
+    holdTargetSeconds.value = null;
   }
 
   void dispose() {
@@ -272,7 +277,8 @@ class WorkoutController {
   void _startHoldTimerIfPlank() {
     _holdTimer?.cancel();
     _holdTimer = null;
-    holdRemainingSeconds.value = null;
+    holdElapsedSeconds.value = 0;
+    holdTargetSeconds.value = null;
     final exercise = currentExercise;
     if (exercise == null ||
         exercise.type != ExerciseType.plank ||
@@ -283,16 +289,9 @@ class WorkoutController {
     if (duration == null || duration <= 0) {
       return;
     }
-    holdRemainingSeconds.value = duration;
+    holdTargetSeconds.value = duration;
     _holdTimer = _timerFactory(const Duration(seconds: 1), (timer) {
-      final remaining = (holdRemainingSeconds.value ?? 0) - 1;
-      if (remaining <= 0) {
-        timer.cancel();
-        _holdTimer = null;
-        holdRemainingSeconds.value = 0;
-      } else {
-        holdRemainingSeconds.value = remaining;
-      }
+      holdElapsedSeconds.value++;
     });
   }
 
