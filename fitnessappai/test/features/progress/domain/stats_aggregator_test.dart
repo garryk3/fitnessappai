@@ -149,6 +149,24 @@ void main() {
       expect(await aggregator.workoutCount(StatPeriod.year), 4);
     });
 
+    test(
+      'performedExerciseIds возвращает только выполнявшиеся упражнения',
+      () async {
+        final a = await insertExercise('Приседания');
+        final b = await insertExercise('Жим');
+        await insertExercise('Планка');
+
+        expect(await aggregator.performedExerciseIds(), isEmpty);
+
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+          setResult(exerciseId: a),
+          setResult(exerciseId: b),
+        ]);
+
+        expect(await aggregator.performedExerciseIds(), {a, b});
+      },
+    );
+
     test('пустой период даёт нули', () async {
       expect(await aggregator.workoutCount(StatPeriod.week), 0);
       expect(await aggregator.totalDistance(StatPeriod.week), 0);

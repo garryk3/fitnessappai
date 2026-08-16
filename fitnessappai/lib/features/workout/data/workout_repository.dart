@@ -121,6 +121,14 @@ class WorkoutRepository {
     );
   }
 
+  /// Множество id упражнений, которые выполнялись хотя бы раз (за всё время).
+  Future<Set<int>> getPerformedExerciseIds() async {
+    final rows = await (_db.select(
+      _db.workoutSetResults,
+    )..where((t) => t.exerciseId.isNotNull())).get();
+    return {for (final row in rows) row.exerciseId!};
+  }
+
   /// Отмечает день пропущенным на неделе [weekStart]. Идемпотентно.
   Future<void> markSkipped(int programDayId, DateTime weekStart) async {
     final existing =

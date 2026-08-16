@@ -58,10 +58,12 @@ class ProgressController {
   Future<void> _load() async {
     isLoading.value = true;
     try {
-      exercises.value = await exerciseRepository.getAll();
-      if (exercises.value.isNotEmpty) {
-        selectedExerciseId.value = exercises.value.first.id;
-      }
+      final performedIds = await statsAggregator.performedExerciseIds();
+      final all = await exerciseRepository.getAll();
+      exercises.value = all.where((e) => performedIds.contains(e.id)).toList();
+      selectedExerciseId.value = exercises.value.isNotEmpty
+          ? exercises.value.first.id
+          : null;
       await _loadStats();
     } finally {
       isLoading.value = false;
