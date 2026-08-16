@@ -838,6 +838,12 @@ abstract class AppLocalizations {
   /// **'Сохранить'**
   String get programBuilderSave;
 
+  /// Кнопка перехода к заполнению следующего незаполненного дня
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполнить день {dayNumber}'**
+  String programBuilderFillNextDay(int dayNumber);
+
   /// No description provided for @programBuilderAddExercise.
   ///
   /// In ru, this message translates to:

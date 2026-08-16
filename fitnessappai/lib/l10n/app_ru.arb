@@ -184,6 +184,16 @@
   "reminderToggle": "Напоминать",
   "reminderTime": "Время напоминания",
   "programBuilderSave": "Сохранить",
+  "programBuilderFillNextDay": "Заполнить день {dayNumber}",
+  "@programBuilderFillNextDay": {
+    "description": "Кнопка перехода к заполнению следующего незаполненного дня",
+    "placeholders": {
+      "dayNumber": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
   "programBuilderAddExercise": "Добавить упражнение",
   "programBuilderPickExercise": "Выберите упражнение",
   "programBuilderMainSet": "Основной набор",
