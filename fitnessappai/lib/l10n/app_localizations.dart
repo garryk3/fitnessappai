@@ -1108,6 +1108,12 @@ abstract class AppLocalizations {
   /// **'Цель: {seconds} с'**
   String workoutRunHoldTarget(int seconds);
 
+  /// Кнопка запуска отсчёта удержания планки
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать'**
+  String get workoutRunHoldStart;
+
   /// No description provided for @workoutRunExitTitle.
   ///
   /// In ru, this message translates to:

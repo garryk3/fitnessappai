@@ -64,6 +64,9 @@ class WorkoutController {
   /// Целевая длительность удержания планки (null — упражнение не планка).
   final Signal<int?> holdTargetSeconds = Signal(null);
 
+  /// Идёт ли отсчёт удержания планки (запущен кнопкой «Начать»).
+  final Signal<bool> holdRunning = Signal(false);
+
   final List<WorkoutExercise> _exercises = [];
   WorkoutSessionContext? _context;
   WorkoutSetInput? _draft;
@@ -118,7 +121,7 @@ class WorkoutController {
     completedSets.value = 0;
     results.value = [];
     restRemainingSeconds.value = null;
-    _startHoldTimerIfPlank();
+    _prepareHoldTimer();
   }
 
   /// Сохраняет введённые значения текущего подхода.
@@ -148,6 +151,7 @@ class WorkoutController {
 
     _holdTimer?.cancel();
     _holdTimer = null;
+    holdRunning.value = false;
     holdElapsedSeconds.value = 0;
     holdTargetSeconds.value = null;
     _draft = null;
@@ -162,7 +166,7 @@ class WorkoutController {
       currentExerciseIndex.value++;
       currentSet.value = 1;
       phase.value = WorkoutPhase.exercise;
-      _startHoldTimerIfPlank();
+      _prepareHoldTimer();
     } else {
       phase.value = WorkoutPhase.finished;
     }
@@ -186,7 +190,7 @@ class WorkoutController {
     _restTimer = null;
     restRemainingSeconds.value = null;
     phase.value = WorkoutPhase.exercise;
-    _startHoldTimerIfPlank();
+    _prepareHoldTimer();
   }
 
   /// Переходит к следующему упражнению, пропуская оставшийся отдых.
@@ -201,7 +205,7 @@ class WorkoutController {
     currentExerciseIndex.value++;
     currentSet.value = 1;
     phase.value = WorkoutPhase.exercise;
-    _startHoldTimerIfPlank();
+    _prepareHoldTimer();
   }
 
   /// Завершает тренировку и возвращает сессию с результатами.
@@ -243,6 +247,7 @@ class WorkoutController {
     completedSets.value = 0;
     results.value = [];
     restRemainingSeconds.value = null;
+    holdRunning.value = false;
     holdElapsedSeconds.value = 0;
     holdTargetSeconds.value = null;
   }
@@ -254,7 +259,7 @@ class WorkoutController {
   void _startRest(int restSeconds) {
     if (restSeconds <= 0) {
       phase.value = WorkoutPhase.exercise;
-      _startHoldTimerIfPlank();
+      _prepareHoldTimer();
       return;
     }
     phase.value = WorkoutPhase.rest;
@@ -267,16 +272,20 @@ class WorkoutController {
         _restTimer = null;
         restRemainingSeconds.value = null;
         phase.value = WorkoutPhase.exercise;
-        _startHoldTimerIfPlank();
+        _prepareHoldTimer();
       } else {
         restRemainingSeconds.value = remaining;
       }
     });
   }
 
-  void _startHoldTimerIfPlank() {
+  /// Подготавливает счётчик удержания планки: сбрасывает значение и задаёт
+  /// цель текущего упражнения. Таймер не запускается — старт только по
+  /// [startHoldTimer].
+  void _prepareHoldTimer() {
     _holdTimer?.cancel();
     _holdTimer = null;
+    holdRunning.value = false;
     holdElapsedSeconds.value = 0;
     holdTargetSeconds.value = null;
     final exercise = currentExercise;
@@ -290,6 +299,20 @@ class WorkoutController {
       return;
     }
     holdTargetSeconds.value = duration;
+  }
+
+  /// Запускает отсчёт удержания планки (кнопка «Начать»). Считает вверх
+  /// от нуля и продолжает после цели, чтобы фактическое время удержания
+  /// попало в результат.
+  void startHoldTimer() {
+    if (phase.value != WorkoutPhase.exercise ||
+        holdTargetSeconds.value == null ||
+        holdRunning.value) {
+      return;
+    }
+    holdElapsedSeconds.value = 0;
+    holdRunning.value = true;
+    _holdTimer?.cancel();
     _holdTimer = _timerFactory(const Duration(seconds: 1), (timer) {
       holdElapsedSeconds.value++;
     });

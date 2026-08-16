@@ -256,7 +256,7 @@ void main() {
     expect(detail.results.single.durationSeconds, 1800);
   });
 
-  testWidgets('полный флоу plank: hold-таймер стартует и фиксируется', (
+  testWidgets('полный флоу plank: счётчик ждёт «Начать», затем фиксируется', (
     tester,
   ) async {
     final dayId = await createDay(
@@ -270,6 +270,19 @@ void main() {
 
     expect(find.textContaining('Удержание'), findsOneWidget);
     expect(find.textContaining('Цель: 45 с'), findsOneWidget);
+    expect(find.text('Начать'), findsOneWidget);
+
+    // До старта счётчик стоит на нуле.
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('Удержание 0 с'), findsOneWidget);
+
+    await tester.tap(find.text('Начать'));
+    await tester.pump();
+    expect(find.text('Начать'), findsNothing);
+
+    // Счётчик пошёл от нуля вверх.
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('Удержание 3 с'), findsOneWidget);
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Время (сек)'),
