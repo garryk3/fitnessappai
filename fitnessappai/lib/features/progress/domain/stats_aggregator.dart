@@ -100,6 +100,10 @@ class StatsAggregator {
     }
   }
 
+  /// Множество id упражнений, выполнявшихся хотя бы раз (за всё время).
+  Future<Set<int>> performedExerciseIds() =>
+      workoutRepository.getPerformedExerciseIds();
+
   /// Количество тренировок за период.
   Future<int> workoutCount(StatPeriod period) async {
     final sessions = await _sessions(period);

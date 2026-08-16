@@ -263,6 +263,28 @@ void main() {
     expect(find.byType(LineChart), findsOneWidget);
   });
 
+  testWidgets('дропдаун метрик содержит только выполненные упражнения', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final performed = await insertExercise('Приседания');
+    await insertExercise('Жим лёжа');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: performed, reps: 8, weightKg: 40),
+    ]);
+
+    await pumpProgress(tester);
+
+    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Приседания'), findsWidgets);
+    expect(find.text('Жим лёжа'), findsNothing);
+  });
+
   testWidgets('карточки обновляются после новой сессии без переоткрытия', (
     tester,
   ) async {
