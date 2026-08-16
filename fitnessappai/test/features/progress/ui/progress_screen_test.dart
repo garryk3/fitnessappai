@@ -196,6 +196,32 @@ void main() {
     expect(find.text(groups.first.labelRu), findsOneWidget);
   });
 
+  testWidgets('время планки с дробной частью: 90 с → «1.5 мин»', (
+    tester,
+  ) async {
+    final plank = await insertExercise('Планка', type: ExerciseType.plank);
+
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(
+        exerciseId: plank,
+        type: ExerciseType.plank,
+        reps: null,
+        weightKg: null,
+        durationSeconds: 90,
+      ),
+    ]);
+
+    await pumpProgress(tester);
+
+    expect(
+      find.descendant(
+        of: statCard('Время планки'),
+        matching: find.text('1.5 мин'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('смена периода обновляет карточки', (tester) async {
     final exerciseId = await insertExercise('Приседания');
     await workoutRepo.saveSession(session(DateTime(2026, 8, 12)), [

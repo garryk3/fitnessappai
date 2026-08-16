@@ -121,7 +121,7 @@ class _StatCards extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final distanceKm = controller.totalDistanceMeters.value / 1000;
-    final plankMinutes = controller.plankTime.value.inMinutes;
+    final plankMinutes = _fmt(controller.plankTime.value.inSeconds / 60);
     return Row(
       children: [
         Expanded(
