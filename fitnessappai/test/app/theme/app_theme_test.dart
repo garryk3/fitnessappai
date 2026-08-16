@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
@@ -75,6 +76,30 @@ void main() {
 
       final BuildContext context = tester.element(find.byType(NavigationBar));
       expect(Theme.of(context).brightness, Brightness.light);
+    });
+
+    testWidgets('смена темы не сбрасывает маршрут на главный экран', (
+      WidgetTester tester,
+    ) async {
+      final db = AppDatabase(executor: NativeDatabase.memory());
+      addTearDown(db.close);
+      final controller = ThemeController(ThemeSettingsRepository(db));
+
+      await tester.pumpWidget(FitnessAppAi(themeController: controller));
+      await tester.pumpAndSettle();
+
+      GoRouter.of(tester.element(find.byType(NavigationBar))).go('/settings');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Настройки'), findsOneWidget);
+      expect(find.text('Синхронизация'), findsOneWidget);
+
+      controller.setMode(ThemeMode.light);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Настройки'), findsOneWidget);
+      expect(find.text('Синхронизация'), findsOneWidget);
+      expect(find.text('Нет программ'), findsNothing);
     });
   });
 }
