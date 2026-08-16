@@ -53,6 +53,8 @@ void main() {
   Future<void> pumpScreen(
     WidgetTester tester, {
     SyncService? syncService,
+    Future<String?> Function()? pickFile,
+    Future<void> Function(String path)? shareFile,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1.0;
@@ -60,10 +62,12 @@ void main() {
 
     final controller = SyncController(
       syncServiceFactory: () => syncService ?? service,
-      pickFile: () async => pickedPath,
-      shareFile: (path) async {
-        sharedPath = path;
-      },
+      pickFile: pickFile ?? () async => pickedPath,
+      shareFile:
+          shareFile ??
+          (path) async {
+            sharedPath = path;
+          },
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -163,5 +167,53 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('экспорт перехватывает Error (не только Exception)', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      shareFile: (_) async => throw UnimplementedError('sharing'),
+    );
+
+    await tester.tap(find.text('Экспортировать БД'));
+    await tester.pumpAndSettle();
+
+    expect(service.exportCalls, 1);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(
+      find.textContaining('операция недоступна на этой платформе'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('импорт перехватывает Error из пикера', (tester) async {
+    await pumpScreen(
+      tester,
+      pickFile: () async => throw UnimplementedError('picker'),
+    );
+
+    await tester.tap(find.text('Импортировать БД'));
+    await tester.pumpAndSettle();
+
+    expect(service.importCalls, 0);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(
+      find.textContaining('операция недоступна на этой платформе'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('импорт перехватывает Error из сервиса импорта', (tester) async {
+    service.importError = UnimplementedError('db');
+    pickedPath = 'bad.sqlite';
+    await pumpScreen(tester);
+
+    await tester.tap(find.text('Импортировать БД'));
+    await tester.pumpAndSettle();
+
+    expect(service.importCalls, 1);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
   });
 }
