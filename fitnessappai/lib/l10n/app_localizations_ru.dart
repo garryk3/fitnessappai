@@ -498,6 +498,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Значение не может быть отрицательным';
 
   @override
+  String get exerciseParamsHoldHint => 'Пусто — время удержания со счётчика';
+
+  @override
   String get workoutPrepare => 'Подготовка к тренировке';
 
   @override

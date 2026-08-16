@@ -253,6 +253,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
             key: ValueKey('input-$index-$currentSet'),
             exercise: exercise,
             onConfirm: _controller.confirmSet,
+            holdElapsed: () => workout.holdElapsedSeconds.value,
           ),
         ],
       ),
@@ -341,10 +342,15 @@ class _ExerciseInputForm extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onConfirm,
+    this.holdElapsed,
   });
 
   final WorkoutExercise exercise;
   final void Function(WorkoutSetInput input) onConfirm;
+
+  /// Фактическое время удержания планки. Для планки пустое поле времени
+  /// заменяется текущим значением счётчика.
+  final int Function()? holdElapsed;
 
   @override
   State<_ExerciseInputForm> createState() => _ExerciseInputFormState();
@@ -379,11 +385,17 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
         reps: int.parse(_reps.text.trim()),
       ),
       ExerciseType.plank => WorkoutSetInput(
-        durationSeconds: int.parse(_duration.text.trim()),
+        durationSeconds: _parsePlankDuration(),
       ),
       ExerciseType.running => _buildRunningInput(),
     };
     widget.onConfirm(input);
+  }
+
+  /// Время планки: ручной ввод, либо текущее значение счётчика удержания.
+  int _parsePlankDuration() {
+    final manual = int.tryParse(_duration.text.trim());
+    return manual ?? (widget.holdElapsed?.call() ?? 0);
   }
 
   WorkoutSetInput _buildRunningInput() {
@@ -482,12 +494,15 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
                   labelText: l10n.exerciseParamsDurationSeconds,
+                  helperText: l10n.exerciseParamsHoldHint,
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   final seconds = int.tryParse(value?.trim() ?? '');
                   if (seconds == null) {
-                    return l10n.exerciseParamsRequired;
+                    // Пустое поле — в результат пойдёт время удержания
+                    // со счётчика (задача 13.5).
+                    return null;
                   }
                   if (seconds < 1) {
                     return l10n.exerciseParamsPositive;

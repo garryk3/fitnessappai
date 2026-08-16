@@ -230,6 +230,7 @@
   "exerciseParamsRequired": "Заполните поле",
   "exerciseParamsPositive": "Значение должно быть больше нуля",
   "exerciseParamsNotNegative": "Значение не может быть отрицательным",
+  "exerciseParamsHoldHint": "Пусто — время удержания со счётчика",
   "workoutPrepare": "Подготовка к тренировке",
   "workoutRun": "Тренировка",
   "workoutPrepareStart": "Начать тренировку",

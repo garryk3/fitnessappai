@@ -994,6 +994,12 @@ abstract class AppLocalizations {
   /// **'Значение не может быть отрицательным'**
   String get exerciseParamsNotNegative;
 
+  /// No description provided for @exerciseParamsHoldHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пусто — время удержания со счётчика'**
+  String get exerciseParamsHoldHint;
+
   /// No description provided for @workoutPrepare.
   ///
   /// In ru, this message translates to:
