@@ -228,6 +228,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final saved = await _persist();
     final programId = saved?.id;
     if (programId != null && mounted) {
+      FocusManager.instance.primaryFocus?.unfocus();
       await context.push('/programs/$programId/day/$dayIndex');
       if (mounted) {
         await _refreshFilledDays();

@@ -476,6 +476,56 @@ void main() {
     },
   );
 
+  testWidgets(
+    'после возврата из наполнения дня ни одно поле конструктора не в фокусе',
+    (tester) async {
+      final created = await repository.create(program('Сплит', daysCount: 1), [
+        ProgramDay(programId: 0, dayIndex: 0),
+      ]);
+      final router = GoRouter(
+        initialLocation: '/programs/edit',
+        routes: [
+          GoRoute(
+            path: '/programs/edit',
+            builder: (context, state) => ProgramBuilderScreen(
+              repository: repository,
+              programId: created.id,
+            ),
+          ),
+          GoRoute(
+            path: '/programs/:id/day/:dayIndex',
+            builder: (context, state) =>
+                Scaffold(appBar: AppBar(title: const Text('Наполнение дня'))),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(TextFormField).first);
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, isNotNull);
+
+      await tester.tap(find.text('Заполнить день 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Наполнение дня'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      final focusedEditable = FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<EditableText>();
+      expect(focusedEditable, isNull);
+    },
+  );
+
   testWidgets('ошибка валидации названия очищается при вводе', (tester) async {
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
     final created = await repository.create(program('Название', daysCount: 1), [
