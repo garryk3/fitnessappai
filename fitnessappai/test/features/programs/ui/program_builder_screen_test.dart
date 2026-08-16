@@ -413,4 +413,26 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Сохранить'), findsOneWidget);
     },
   );
+
+  testWidgets('ошибка валидации названия очищается при вводе', (tester) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final created = await repository.create(program('Название', daysCount: 1), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final createdDays = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(createdDays.single.id!, exercise.id!);
+
+    await pumpBuilder(tester, programId: created.id);
+
+    // Невалидное сохранение: ошибка названия видна.
+    await enterName(tester, '');
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Введите название'), findsOneWidget);
+
+    // Ввод названия убирает ошибку без повторного нажатия кнопки.
+    await enterName(tester, 'Сплит');
+    await tester.pumpAndSettle();
+    expect(find.text('Введите название'), findsNothing);
+  });
 }

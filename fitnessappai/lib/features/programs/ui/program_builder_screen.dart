@@ -389,6 +389,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: ReorderableListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 buildDefaultDragHandles: false,
