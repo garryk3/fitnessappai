@@ -125,14 +125,14 @@ void main() {
   test(
     'nextPending: возвращает ближайший pending день, начиная с сегодня',
     () async {
-      final today = DateTime.now();
-      final weekday = today.weekday;
-      final past = await createDay(weekday >= 2 ? weekday - 1 : 7);
-      final upcoming = await createDay(weekday >= 7 ? 1 : weekday + 1);
+      final today = DateTime(2026, 8, 12);
+      final past = await createDay(2);
+      final upcoming = await createDay(4);
 
       final controller = WeekPlanController(
         programRepository: programRepo,
         workoutRepository: workoutRepo,
+        clock: () => today,
       );
       await controller.refresh();
 
