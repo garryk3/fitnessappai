@@ -534,7 +534,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
 /// Диалог выбора упражнения из каталога для добавления в день.
 ///
-/// Позволяет отфильтровать список по мышечной группе.
+/// Позволяет отфильтровать список по мышечной группе и категории.
 class _ExercisePickerDialog extends StatefulWidget {
   const _ExercisePickerDialog({
     required this.exercises,
@@ -554,19 +554,28 @@ class _ExercisePickerDialog extends StatefulWidget {
 
 class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
   MuscleGroup? _selectedGroup;
+  ExerciseType? _selectedType;
+
+  bool _matches(
+    Exercise exercise, {
+    required MuscleGroup? group,
+    required ExerciseType? type,
+  }) {
+    final matchesGroup =
+        group == null ||
+        (widget.musclesByExercise[exercise.id] ?? const []).any(
+          (g) => g.id == group.id,
+        );
+    final matchesType = type == null || exercise.type == type;
+    return matchesGroup && matchesType;
+  }
 
   List<Exercise> get _filtered {
     final group = _selectedGroup;
-    if (group == null) {
-      return widget.exercises;
-    }
+    final type = _selectedType;
     return [
       for (final exercise in widget.exercises)
-        if (widget.musclesByExercise[exercise.id]?.any(
-              (g) => g.id == group.id,
-            ) ??
-            false)
-          exercise,
+        if (_matches(exercise, group: group, type: type)) exercise,
     ];
   }
 
@@ -600,6 +609,28 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
                   ),
               ],
               onChanged: (value) => setState(() => _selectedGroup = value),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<ExerciseType?>(
+              initialValue: _selectedType,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: l10n.programBuilderTypeFilter,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: [
+                DropdownMenuItem<ExerciseType?>(
+                  value: null,
+                  child: Text(l10n.commonAll),
+                ),
+                for (final type in ExerciseType.values)
+                  DropdownMenuItem<ExerciseType?>(
+                    value: type,
+                    child: Text(_typeLabel(l10n, type)),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _selectedType = value),
             ),
             const SizedBox(height: 8),
             Expanded(

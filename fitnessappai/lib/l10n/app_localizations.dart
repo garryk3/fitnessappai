@@ -880,6 +880,12 @@ abstract class AppLocalizations {
   /// **'Мышцы'**
   String get programBuilderMuscleFilter;
 
+  /// No description provided for @programBuilderTypeFilter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категория'**
+  String get programBuilderTypeFilter;
+
   /// No description provided for @programBuilderEmptyDay.
   ///
   /// In ru, this message translates to:

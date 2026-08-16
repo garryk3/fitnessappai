@@ -437,6 +437,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderMuscleFilter => 'Мышцы';
 
   @override
+  String get programBuilderTypeFilter => 'Категория';
+
+  @override
   String get programBuilderEmptyDay => 'В этом дне пока нет упражнений';
 
   @override
