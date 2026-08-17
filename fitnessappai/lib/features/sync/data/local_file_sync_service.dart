@@ -37,6 +37,9 @@ class LocalFileSyncService implements SyncService {
   static const String _exportFileName = 'fitnessappai_export.sqlite';
   static const String _importFileName = 'fitnessappai_import.sqlite';
 
+  /// Первые 16 байт SQLite-файла: «SQLite format 3» + нулевой байт.
+  static const String _sqliteMagic = 'SQLite format 3';
+
   @override
   Future<String> export() async {
     final path = await databaseFilePath();
@@ -52,6 +55,7 @@ class LocalFileSyncService implements SyncService {
 
   @override
   Future<void> import(String sourcePath) async {
+    _checkMagicBytes(sourcePath);
     final tempDir = await temporaryDirectoryPath();
     final tempPath = p.join(tempDir, _importFileName);
     await File(sourcePath).copy(tempPath);
@@ -66,6 +70,25 @@ class LocalFileSyncService implements SyncService {
     await File(tempPath).copy(path);
     await File(tempPath).delete();
     await onImported();
+  }
+
+  /// Проверяет magic-bytes SQLite в начале файла до копирования, чтобы
+  /// файл-не-БД отклонялся с понятным сообщением ещё до работы с sqlite3.
+  void _checkMagicBytes(String path) {
+    final file = File(path).openSync();
+    try {
+      final header = file.readSync(_sqliteMagic.length + 1);
+      if (header.length < _sqliteMagic.length + 1 ||
+          String.fromCharCodes(header, 0, _sqliteMagic.length) !=
+              _sqliteMagic ||
+          header[_sqliteMagic.length] != 0) {
+        throw const SyncValidationException(
+          'Файл не является базой данных FitnessAppAI',
+        );
+      }
+    } finally {
+      file.closeSync();
+    }
   }
 
   /// Проверяет, что файл является неповреждённой БД с поддерживаемой
@@ -90,9 +113,9 @@ class LocalFileSyncService implements SyncService {
           '$appDatabaseSchemaVersion)',
         );
       }
-    } on sqlite.SqliteException catch (error) {
-      throw SyncValidationException(
-        'Файл не является базой данных FitnessAppAI: ${error.message}',
+    } on sqlite.SqliteException {
+      throw const SyncValidationException(
+        'Файл не является базой данных FitnessAppAI',
       );
     } finally {
       probe.close();
