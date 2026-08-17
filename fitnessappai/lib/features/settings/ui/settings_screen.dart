@@ -102,7 +102,13 @@ class _SyncSectionState extends State<_SyncSection> {
             FilledButton.icon(
               onPressed: busy ? null : _export,
               icon: const Icon(Icons.upload_outlined),
-              label: Text(l10n.syncExport),
+              label: Text(l10n.syncShare),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: busy ? null : _exportToFile,
+              icon: const Icon(Icons.save_alt_outlined),
+              label: Text(l10n.syncSaveFile),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
@@ -154,6 +160,10 @@ class _SyncSectionState extends State<_SyncSection> {
 
   Future<void> _export() async {
     await widget.controller.exportDatabase();
+  }
+
+  Future<void> _exportToFile() async {
+    await widget.controller.exportDatabaseToFile();
   }
 
   Future<void> _import() async {

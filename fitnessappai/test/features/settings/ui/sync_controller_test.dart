@@ -90,4 +90,51 @@ void main() {
     expect(controller.hasError.value, isFalse);
     expect(controller.statusText.value, isNull);
   });
+
+  test('экспорт сохраняет файл в файловую систему', () async {
+    String? savedTo;
+    controller = SyncController(
+      syncServiceFactory: () => _FakeSyncService(),
+      saveFile: (path) async {
+        savedTo = path;
+        return true;
+      },
+    );
+
+    final result = await controller.exportDatabaseToFile();
+
+    expect(result, isTrue);
+    expect(savedTo, 'backup.sqlite');
+    expect(controller.hasError.value, isFalse);
+    expect(controller.statusText.value, 'Резервная копия сохранена');
+  });
+
+  test('отмена сохранения файла не считается ошибкой', () async {
+    controller = SyncController(
+      syncServiceFactory: () => _FakeSyncService(),
+      saveFile: (_) async => false,
+    );
+
+    final result = await controller.exportDatabaseToFile();
+
+    expect(result, isFalse);
+    expect(controller.hasError.value, isFalse);
+    expect(controller.statusText.value, 'Сохранение отменено');
+  });
+
+  test('экспорт в файлы перехватывает ошибку сохранения', () async {
+    controller = SyncController(
+      syncServiceFactory: () => _FakeSyncService(),
+      saveFile: (_) async => throw UnimplementedError('saving'),
+    );
+
+    final result = await controller.exportDatabaseToFile();
+
+    expect(result, isFalse);
+    expect(controller.hasError.value, isTrue);
+    expect(
+      controller.statusText.value,
+      contains('операция недоступна на этой платформе'),
+    );
+  });
 }
