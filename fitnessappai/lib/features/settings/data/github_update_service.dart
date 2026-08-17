@@ -9,13 +9,10 @@ import 'package:fitnessappai/features/settings/domain/update_service.dart';
 /// По умолчанию репозиторий `garryk3/fitnessappai`; APK публикуется workflow
 /// `release.yml` как артефакт последнего релиза.
 class GithubUpdateService implements UpdateService {
-  GithubUpdateService({
-    String? baseUrl,
-    String? apkUrl,
-    HttpClient? httpClient,
-  }) : _baseUrl = baseUrl ?? defaultBaseUrl,
-       _apkUrl = apkUrl ?? defaultApkUrl,
-       _httpClient = httpClient ?? HttpClient();
+  GithubUpdateService({String? baseUrl, String? apkUrl, HttpClient? httpClient})
+    : _baseUrl = baseUrl ?? defaultBaseUrl,
+      _apkUrl = apkUrl ?? defaultApkUrl,
+      _httpClient = httpClient ?? HttpClient();
 
   static const String defaultBaseUrl =
       'https://api.github.com/repos/garryk3/fitnessappai';
