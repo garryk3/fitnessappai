@@ -8,6 +8,10 @@
 
 Полное описание — в [README приложения](fitnessappai/README.md).
 
+## Лицензия
+
+Распространяется по лицензии [CC BY-NC-SA 4.0](LICENSE) — только некоммерческое использование.
+
 ## Установка
 
 Скачайте последнюю версию APK: [FitnessAppAI latest](https://github.com/garryk3/fitnessappai/releases/latest/download/app-release.apk).
