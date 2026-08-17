@@ -32,7 +32,7 @@ void main() {
       MediaStore(
         directoryProvider: () async => tempDir,
         assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
-        filePicker: () async => null,
+        filePicker: (fileType) async => null,
       ),
     );
   });
