@@ -224,4 +224,22 @@ void main() {
     final day = (await programRepo.getDays(program.id!)).single;
     expect(find.text('prepare-${day.id}'), findsOneWidget);
   });
+
+  testWidgets('рядом с активной программой есть кнопка «К программам»', (
+    WidgetTester tester,
+  ) async {
+    final program = await createProgram(name: 'Силовая', dayOfWeek: 1);
+    await programRepo.setActive(program.id!);
+
+    await pumpHome(tester);
+
+    expect(find.text('Силовая'), findsOneWidget);
+    // Кнопка «К программам» рядом с заголовком «Активная программа».
+    expect(find.text('К программам'), findsWidgets);
+
+    await tester.tap(find.text('К программам').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('programs-route'), findsOneWidget);
+  });
 }

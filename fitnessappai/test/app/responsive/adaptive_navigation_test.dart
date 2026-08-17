@@ -65,8 +65,27 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.text('Главная'), findsWidgets);
     expect(navLabelOpacity(tester, 'Главная'), 0.0);
-    expect(navLabelOpacity(tester, 'Программы'), 0.0);
+    // На экранах < 400dp вкладка «Программы» скрыта из нижней навигации.
+    expect(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Программы'),
+      ),
+      findsNothing,
+    );
     expect(find.byIcon(Icons.fitness_center_outlined), findsOneWidget);
+  });
+
+  testWidgets('на экране 400–600dp вкладка «Программы» видна', (tester) async {
+    await pumpAtSize(tester, const Size(500, 800));
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Программы'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('на широком экране подписи навигации присутствуют', (

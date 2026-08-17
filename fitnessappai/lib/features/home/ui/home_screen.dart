@@ -138,7 +138,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.homeActiveProgram, style: theme.textTheme.titleMedium),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.homeActiveProgram,
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => context.push('/programs'),
+              icon: const Icon(Icons.list_alt, size: 18),
+              label: Text(l10n.homeGoToPrograms),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         _ActiveProgramCard(
           programName: program.name,
