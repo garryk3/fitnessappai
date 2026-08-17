@@ -55,6 +55,7 @@ dependencies:
   share_plus: ^12.0.0
   flutter_timezone: ^5.1.0
   sqlite3: ^3.5.1
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +89,7 @@ flutter:
   assets:
     - assets/data/
     - assets/exercises/
+    - assets/sounds/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

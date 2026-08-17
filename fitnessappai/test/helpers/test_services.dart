@@ -1,6 +1,8 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
+import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -31,6 +33,10 @@ void registerTestServices() {
   locator.registerLazySingleton<ThemeController>(
     () => ThemeController(locator.get<ThemeSettingsRepository>()),
   );
+  locator.registerLazySingleton<SoundSettingsRepository>(
+    () => SoundSettingsRepository(db),
+  );
+  locator.registerInstance<SoundService>(StubSoundService());
   locator.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(db, MediaStore()),
   );

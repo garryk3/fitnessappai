@@ -62,6 +62,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsSyncSection => 'Синхронизация';
 
   @override
+  String get settingsSoundSection => 'Звук';
+
+  @override
+  String get soundEnabled => 'Звук таймеров';
+
+  @override
+  String get soundPickFile => 'Выбрать звук';
+
+  @override
+  String get soundReset => 'Вернуть стандартный сигнал';
+
+  @override
+  String get soundDefaultLabel => 'Стандартный сигнал';
+
+  @override
   String get settingsThemeSection => 'Тема';
 
   @override

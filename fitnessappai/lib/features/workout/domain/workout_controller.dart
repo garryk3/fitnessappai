@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
@@ -34,9 +35,14 @@ typedef TimerFactory =
 /// Управляет переходами между упражнениями и подходами, отсчитывает отдых
 /// и время удержания для планки, накапливает результаты подходов.
 class WorkoutController {
-  WorkoutController({DateTime Function()? clock, TimerFactory? timerFactory})
-    : _clock = clock ?? DateTime.now,
-      _timerFactory = timerFactory ?? _defaultTimerFactory;
+  WorkoutController({
+    DateTime Function()? clock,
+    TimerFactory? timerFactory,
+    SoundService? soundService,
+  }) : _clock = clock ?? DateTime.now,
+       _timerFactory = timerFactory ?? _defaultTimerFactory,
+       // ignore: prefer_initializing_formals -- имя параметра публичное, поле приватное.
+       _soundService = soundService;
 
   static Timer _defaultTimerFactory(
     Duration duration,
@@ -47,6 +53,7 @@ class WorkoutController {
 
   final DateTime Function() _clock;
   final TimerFactory _timerFactory;
+  final SoundService? _soundService;
 
   static final ProgramDayExerciseValidator _validator =
       ProgramDayExerciseValidator();
@@ -273,6 +280,7 @@ class WorkoutController {
         restRemainingSeconds.value = null;
         phase.value = WorkoutPhase.exercise;
         _prepareHoldTimer();
+        _soundService?.playCompletion();
       } else {
         restRemainingSeconds.value = remaining;
       }

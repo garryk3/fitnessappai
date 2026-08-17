@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
@@ -419,6 +420,30 @@ void main() {
     timers[0].fire();
     expect(controller.restRemainingSeconds.value, isNull);
     expect(controller.phase.value, WorkoutPhase.exercise);
+    controller.dispose();
+  });
+
+  test('при завершении отдыха играет звуковой сигнал', () {
+    final sound = StubSoundService();
+    final timers = <_FakeTimer>[];
+    final controller = WorkoutController(
+      clock: () => startTime,
+      soundService: sound,
+      timerFactory: (duration, callback) {
+        late final _FakeTimer timer;
+        timer = _FakeTimer(() => callback(timer));
+        timers.add(timer);
+        return timer;
+      },
+    );
+    controller.start([strengthExercise(sets: 2, rest: 60)]);
+    controller.setResult(const WorkoutSetInput(reps: 8));
+    controller.confirmSet();
+
+    for (var i = 0; i < 60; i++) {
+      timers[0].fire();
+    }
+    expect(sound.completionCalls, 1);
     controller.dispose();
   });
 
