@@ -417,6 +417,73 @@ void main() {
     });
   });
 
+  test(
+    'finishEarly из фазы exercise завершает тренировку с частичными результатами',
+    () {
+      fakeAsync((async) {
+        final controller = WorkoutController(
+          clock: () => startTime.add(async.elapsed),
+        );
+        controller.start([strengthExercise(sets: 3, rest: 0)]);
+
+        controller.setResult(const WorkoutSetInput(reps: 8));
+        controller.confirmSet();
+        expect(controller.phase.value, WorkoutPhase.exercise);
+        expect(controller.results.value, hasLength(1));
+
+        controller.finishEarly();
+        expect(controller.phase.value, WorkoutPhase.finished);
+
+        final outcome = controller.completeWorkout();
+        expect(outcome.results, hasLength(1));
+        expect(outcome.results.first.reps, 8);
+        expect(outcome.session.startedAt, startTime);
+        controller.dispose();
+      });
+    },
+  );
+
+  test(
+    'finishEarly из фазы rest завершает тренировку с частичными результатами',
+    () {
+      fakeAsync((async) {
+        final controller = WorkoutController(
+          clock: () => startTime.add(async.elapsed),
+        );
+        controller.start([strengthExercise(sets: 2, rest: 60)]);
+
+        controller.setResult(const WorkoutSetInput(reps: 8));
+        controller.confirmSet();
+        expect(controller.phase.value, WorkoutPhase.rest);
+        expect(controller.results.value, hasLength(1));
+
+        controller.finishEarly();
+        expect(controller.phase.value, WorkoutPhase.finished);
+
+        final outcome = controller.completeWorkout();
+        expect(outcome.results, hasLength(1));
+        expect(outcome.results.first.reps, 8);
+        controller.dispose();
+      });
+    },
+  );
+
+  test('finishEarly без результатов сохраняет пустую сессию', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      controller.start([strengthExercise(sets: 2, rest: 60)]);
+
+      controller.finishEarly();
+      expect(controller.phase.value, WorkoutPhase.finished);
+
+      final outcome = controller.completeWorkout();
+      expect(outcome.results, isEmpty);
+      controller.dispose();
+    });
+  });
+
   test('невалидный подход отклоняется', () {
     final controller = WorkoutController(clock: () => startTime);
     controller.start([strengthExercise(sets: 1)]);

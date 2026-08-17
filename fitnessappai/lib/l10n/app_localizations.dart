@@ -1312,6 +1312,12 @@ abstract class AppLocalizations {
   /// **'Выйти'**
   String get workoutRunExit;
 
+  /// No description provided for @workoutRunFinishEarly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Завершить и сохранить'**
+  String get workoutRunFinishEarly;
+
   /// Длительность завершённой тренировки
   ///
   /// In ru, this message translates to:

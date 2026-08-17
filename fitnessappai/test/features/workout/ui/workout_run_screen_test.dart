@@ -392,6 +392,45 @@ void main() {
     expect(find.text('Подход выполнен'), findsOneWidget);
   });
 
+  testWidgets(
+    'диалог выхода: «Завершить и сохранить» сохраняет частичную тренировку',
+    (tester) async {
+      final dayId = await createDay(sets: 3, restSeconds: 60);
+      await pumpRun(tester, dayId, initialLocation: '/');
+
+      final router = GoRouter.of(tester.element(find.text('home')));
+      router.push('/workout/run?programDayId=$dayId&variant=main');
+      await tester.pumpAndSettle();
+
+      // Подтвердить первый подход, перейти к отдыху.
+      await tester.enterText(find.byType(TextFormField).first, '10');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pump();
+      expect(find.text('Отдых'), findsOneWidget);
+
+      // Back → диалог.
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Выйти из тренировки?'), findsOneWidget);
+
+      await tester.tap(find.text('Завершить и сохранить'));
+      await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
+
+      // После сохранения и pop возвращаемся на домашний экран.
+      expect(find.text('home'), findsOneWidget);
+
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      expect(sessions, hasLength(1));
+      final detail = await workoutRepo.getSession(sessions.first.id!);
+      expect(detail!.results, hasLength(1));
+      expect(detail.results.first.reps, 10);
+    },
+  );
+
   testWidgets('wake lock включается при старте и выключается при выходе', (
     tester,
   ) async {
