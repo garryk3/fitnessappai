@@ -487,16 +487,28 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              _intensityChip(
-                l10n.exerciseFormMusclePrimary,
-                MuscleIntensity.primary,
-                group[i].id!,
-              ),
-              const SizedBox(width: 4),
-              _intensityChip(
-                l10n.exerciseFormMuscleSecondary,
-                MuscleIntensity.secondary,
-                group[i].id!,
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _intensityChip(
+                        l10n.exerciseFormMusclePrimary,
+                        MuscleIntensity.primary,
+                        group[i].id!,
+                      ),
+                      const SizedBox(width: 4),
+                      _intensityChip(
+                        l10n.exerciseFormMuscleSecondary,
+                        MuscleIntensity.secondary,
+                        group[i].id!,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -568,16 +580,22 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ],
           Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: _pickThumbnail,
-                icon: const Icon(Icons.image_outlined),
-                label: Text(l10n.exerciseFormThumbnailPick),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickThumbnail,
+                  icon: const Icon(Icons.image_outlined),
+                  label: Text(
+                    l10n.exerciseFormThumbnailPick,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
               if (_thumbnailPath != null) ...[
                 const SizedBox(width: 8),
-                TextButton(
+                IconButton(
+                  tooltip: l10n.exerciseFormThumbnailRemove,
+                  icon: const Icon(Icons.delete_outline),
                   onPressed: () => setState(() => _thumbnailPath = null),
-                  child: Text(l10n.exerciseFormThumbnailRemove),
                 ),
               ],
             ],
@@ -611,16 +629,22 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ],
           Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: _pickAnimation,
-                icon: const Icon(Icons.video_file_outlined),
-                label: Text(l10n.exerciseFormAnimationPick),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickAnimation,
+                  icon: const Icon(Icons.video_file_outlined),
+                  label: Text(
+                    l10n.exerciseFormAnimationPick,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
               if (_animationPath != null) ...[
                 const SizedBox(width: 8),
-                TextButton(
+                IconButton(
+                  tooltip: l10n.exerciseFormAnimationRemove,
+                  icon: const Icon(Icons.delete_outline),
                   onPressed: () => setState(() => _animationPath = null),
-                  child: Text(l10n.exerciseFormAnimationRemove),
                 ),
               ],
             ],

@@ -352,14 +352,14 @@ void main() {
       await tester.tap(find.text('Выбрать анимацию'));
       for (var i = 0; i < 50; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        if (find.text('Убрать анимацию').evaluate().isNotEmpty) {
+        if (find.byTooltip('Убрать анимацию').evaluate().isNotEmpty) {
           return;
         }
       }
     });
     await tester.pumpAndSettle();
 
-    expect(find.text('Убрать анимацию'), findsOneWidget);
+    expect(find.byTooltip('Убрать анимацию'), findsOneWidget);
 
     await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
@@ -382,14 +382,14 @@ void main() {
       await tester.tap(find.text('Выбрать изображение'));
       for (var i = 0; i < 50; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        if (find.text('Убрать изображение').evaluate().isNotEmpty) {
+        if (find.byTooltip('Убрать изображение').evaluate().isNotEmpty) {
           return;
         }
       }
     });
     await tester.pumpAndSettle();
 
-    expect(find.text('Убрать изображение'), findsOneWidget);
+    expect(find.byTooltip('Убрать изображение'), findsOneWidget);
 
     await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
@@ -415,8 +415,8 @@ void main() {
     await pumpForm(tester, exerciseId: saved.id);
     await scrollFormTo(tester, find.text('Выбрать изображение'));
 
-    expect(find.text('Убрать изображение'), findsOneWidget);
-    expect(find.text('Убрать анимацию'), findsOneWidget);
+    expect(find.byTooltip('Убрать изображение'), findsOneWidget);
+    expect(find.byTooltip('Убрать анимацию'), findsOneWidget);
 
     await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
@@ -521,6 +521,49 @@ void main() {
       find.text('Не удалось загрузить файл. Попробуйте ещё раз.'),
       findsOneWidget,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('иконка удаления убирает превью миниатюры', (tester) async {
+    final saved = await repository.create(
+      exercise('С медиа', thumbnailPath: '${tempDir.path}/media/thumb.png'),
+      const [],
+    );
+
+    await pumpForm(tester, exerciseId: saved.id);
+    await scrollFormTo(tester, find.byTooltip('Убрать изображение'));
+    expect(find.byTooltip('Убрать изображение'), findsOneWidget);
+    expect(find.byType(Image), findsWidgets);
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Убрать изображение'), findsNothing);
+  });
+
+  testWidgets('на узком экране строка выбора медиа не переполняется', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final saved = await repository.create(
+      exercise(
+        'С медиа',
+        thumbnailPath: '${tempDir.path}/media/thumb.png',
+        animationPath: '${tempDir.path}/media/anim.webp',
+      ),
+      const [],
+    );
+
+    await pumpForm(tester, exerciseId: saved.id);
+    await scrollFormTo(tester, find.byTooltip('Убрать изображение'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await scrollFormTo(tester, find.byTooltip('Убрать анимацию'));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 }
