@@ -33,6 +33,23 @@
   "settingsThemeSection": "Тема",
   "settingsThemeDark": "Тёмная",
   "settingsThemeLight": "Светлая",
+  "settingsAboutSection": "О приложении",
+  "settingsAboutHint": "Проверка обновлений выполняется через GitHub.",
+  "settingsVersion": "Версия",
+  "settingsCheckUpdate": "Проверить обновление",
+  "settingsUpdateAvailable": "Доступна новая версия",
+  "settingsUpdateContent": "Версия {version} доступна для скачивания.",
+  "@settingsUpdateContent": {
+    "description": "Сообщение диалога обновления",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "1.1.0"
+      }
+    }
+  },
+  "settingsUpdateLater": "Позже",
+  "settingsUpdateDownload": "Обновить",
   "commonClose": "Закрыть",
   "commonRetry": "Повторить",
   "exerciseTypeStrength": "Силовые",

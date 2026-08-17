@@ -86,6 +86,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsThemeLight => 'Светлая';
 
   @override
+  String get settingsAboutSection => 'О приложении';
+
+  @override
+  String get settingsAboutHint =>
+      'Проверка обновлений выполняется через GitHub.';
+
+  @override
+  String get settingsVersion => 'Версия';
+
+  @override
+  String get settingsCheckUpdate => 'Проверить обновление';
+
+  @override
+  String get settingsUpdateAvailable => 'Доступна новая версия';
+
+  @override
+  String settingsUpdateContent(String version) {
+    return 'Версия $version доступна для скачивания.';
+  }
+
+  @override
+  String get settingsUpdateLater => 'Позже';
+
+  @override
+  String get settingsUpdateDownload => 'Обновить';
+
+  @override
   String get commonClose => 'Закрыть';
 
   @override

@@ -8,11 +8,22 @@ import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
+import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/settings/ui/settings_screen.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+
+class _FakeUpdateService implements UpdateService {
+  _FakeUpdateService({this.release});
+
+  ReleaseInfo? release;
+
+  @override
+  Future<ReleaseInfo?> fetchLatestRelease() async => release;
+}
 
 class _FakeSyncService implements SyncService {
   String exportPath = 'backup.sqlite';
@@ -59,6 +70,7 @@ void main() {
     Future<void> Function(String path)? shareFile,
     Future<bool> Function(String path)? saveFile,
     SoundSettingsController? soundController,
+    UpdateCheckController? updateController,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1.0;
@@ -83,6 +95,12 @@ void main() {
           soundController:
               soundController ??
               SoundSettingsController(repository: SoundSettingsRepository(db)),
+          updateController:
+              updateController ??
+              UpdateCheckController(
+                service: _FakeUpdateService(),
+                loadVersion: () async => '1.0.0',
+              ),
         ),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -306,5 +324,58 @@ void main() {
 
     expect(service.importCalls, 1);
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
+  });
+
+  testWidgets('показывает секцию «О приложении» с версией', (tester) async {
+    await pumpScreen(tester);
+
+    expect(find.text('О приложении'), findsOneWidget);
+    expect(find.text('Версия 1.0.0'), findsOneWidget);
+    expect(find.text('Проверить обновление'), findsOneWidget);
+  });
+
+  testWidgets('проверка обновления показывает диалог и открывает APK', (
+    tester,
+  ) async {
+    String? openedUrl;
+    final updateController = UpdateCheckController(
+      service: _FakeUpdateService(
+        release: const ReleaseInfo(
+          tagName: 'v1.1.0',
+          apkUrl: 'https://example.com/app-release.apk',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+      openRelease: (url) async => openedUrl = url,
+    );
+    await pumpScreen(tester, updateController: updateController);
+
+    await tester.tap(find.text('Проверить обновление'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Доступна новая версия'), findsOneWidget);
+    expect(find.text('Версия 1.1.0 доступна для скачивания.'), findsOneWidget);
+    expect(find.text('Обновить'), findsOneWidget);
+
+    await tester.tap(find.text('Обновить'));
+    await tester.pumpAndSettle();
+
+    expect(openedUrl, 'https://example.com/app-release.apk');
+  });
+
+  testWidgets('актуальная версия — сообщение без диалога', (tester) async {
+    final updateController = UpdateCheckController(
+      service: _FakeUpdateService(
+        release: const ReleaseInfo(tagName: 'v1.0.0'),
+      ),
+      loadVersion: () async => '1.0.0',
+    );
+    await pumpScreen(tester, updateController: updateController);
+
+    await tester.tap(find.text('Проверить обновление'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Установлена актуальная версия'), findsOneWidget);
+    expect(find.text('Доступна новая версия'), findsNothing);
   });
 }

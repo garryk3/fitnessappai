@@ -17,6 +17,7 @@ import 'package:fitnessappai/features/profile/domain/contraindication_service.da
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
+import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Регистрирует в глобальном [locator] сервисы на in-memory БД.
@@ -67,8 +68,15 @@ void registerTestServices() {
   locator.registerLazySingleton<BodyMeasurementValidator>(
     () => const BodyMeasurementValidator(),
   );
+  locator.registerInstance<UpdateService>(_NoReleasesUpdateService());
   addTearDown(() async {
     locator.reset();
     await db.close();
   });
+}
+
+/// Тестовая заглушка: релизы ещё не опубликованы.
+class _NoReleasesUpdateService implements UpdateService {
+  @override
+  Future<ReleaseInfo?> fetchLatestRelease() async => null;
 }
