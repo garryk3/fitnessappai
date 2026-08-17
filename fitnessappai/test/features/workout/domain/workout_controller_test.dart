@@ -108,7 +108,9 @@ void main() {
 
   test('strength: 3×8 с отдыхом 60 с', () {
     fakeAsync((async) {
-      final controller = WorkoutController(clock: () => startTime);
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
       controller.start([strengthExercise(sets: 3, rest: 60)]);
 
       expect(controller.phase.value, WorkoutPhase.exercise);
@@ -167,6 +169,28 @@ void main() {
         () => controller.confirmSet(),
         throwsA(isA<WorkoutStateException>()),
       );
+      controller.dispose();
+    });
+  });
+
+  test('rest: пересчёт по wall-clock завершает отдых после «сна»', () {
+    fakeAsync((async) {
+      var now = startTime;
+      final controller = WorkoutController(clock: () => now);
+      controller.start([strengthExercise(sets: 2, rest: 60)]);
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+
+      expect(controller.phase.value, WorkoutPhase.rest);
+      expect(controller.restRemainingSeconds.value, 60);
+
+      // Имитация сна: прошло 5 минут, но таймер отдыха не тикал.
+      now = startTime.add(const Duration(minutes: 5));
+      async.elapse(const Duration(seconds: 1));
+
+      expect(controller.phase.value, WorkoutPhase.exercise);
+      expect(controller.restRemainingSeconds.value, isNull);
+      expect(controller.currentSet.value, 2);
       controller.dispose();
     });
   });
@@ -415,9 +439,10 @@ void main() {
   });
 
   test('инжектируемый timerFactory управляет отдыхом', () {
+    var now = startTime;
     final timers = <_FakeTimer>[];
     final controller = WorkoutController(
-      clock: () => startTime,
+      clock: () => now,
       timerFactory: (duration, callback) {
         late final _FakeTimer timer;
         timer = _FakeTimer(() => callback(timer));
@@ -432,11 +457,12 @@ void main() {
     expect(timers, hasLength(1));
     expect(controller.restRemainingSeconds.value, 60);
 
-    for (var i = 0; i < 59; i++) {
-      timers[0].fire();
-    }
+    // Остаток пересчитывается от времени окончания, а не декрементируется.
+    now = startTime.add(const Duration(seconds: 59));
+    timers[0].fire();
     expect(controller.restRemainingSeconds.value, 1);
 
+    now = startTime.add(const Duration(seconds: 60));
     timers[0].fire();
     expect(controller.restRemainingSeconds.value, isNull);
     expect(controller.phase.value, WorkoutPhase.exercise);
@@ -444,10 +470,11 @@ void main() {
   });
 
   test('при завершении отдыха играет звуковой сигнал', () {
+    var now = startTime;
     final sound = StubSoundService();
     final timers = <_FakeTimer>[];
     final controller = WorkoutController(
-      clock: () => startTime,
+      clock: () => now,
       soundService: sound,
       timerFactory: (duration, callback) {
         late final _FakeTimer timer;
@@ -460,9 +487,8 @@ void main() {
     controller.setResult(const WorkoutSetInput(reps: 8));
     controller.confirmSet();
 
-    for (var i = 0; i < 60; i++) {
-      timers[0].fire();
-    }
+    now = startTime.add(const Duration(seconds: 60));
+    timers[0].fire();
     expect(sound.completionCalls, 1);
     controller.dispose();
   });
@@ -499,7 +525,9 @@ void main() {
 
   test('по сторонам: левая → отдых между сторонами → правая', () {
     fakeAsync((async) {
-      final controller = WorkoutController(clock: () => startTime);
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
       controller.start([perSideExercise(sets: 1, rest: 60)]);
 
       controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
