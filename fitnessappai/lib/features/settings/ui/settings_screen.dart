@@ -6,6 +6,8 @@ import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
+import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -16,11 +18,13 @@ class SettingsScreen extends StatefulWidget {
     this.syncController,
     this.themeController,
     this.soundController,
+    this.updateController,
   });
 
   final SyncController? syncController;
   final ThemeController? themeController;
   final SoundSettingsController? soundController;
+  final UpdateCheckController? updateController;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -30,6 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final SyncController _syncController;
   late final ThemeController _themeController;
   late final SoundSettingsController _soundController;
+  late final UpdateCheckController _updateController;
 
   @override
   void initState() {
@@ -42,6 +47,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           repository: locator.get<SoundSettingsRepository>(),
         );
     _soundController.load();
+    _updateController =
+        widget.updateController ??
+        UpdateCheckController(service: locator.get<UpdateService>());
+    _updateController.loadVersion();
   }
 
   @override
@@ -84,6 +93,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
           ),
+          const SizedBox(height: 24),
+          Text(l10n.settingsAboutSection, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          _AboutSection(controller: _updateController),
         ],
       ),
     );
@@ -285,6 +298,101 @@ class _SyncSectionState extends State<_SyncSection> {
     );
     if (restart == true) {
       restartApp();
+    }
+  }
+}
+
+/// Секция «О приложении»: версия и проверка обновлений.
+class _AboutSection extends StatefulWidget {
+  const _AboutSection({required this.controller});
+
+  final UpdateCheckController controller;
+
+  @override
+  State<_AboutSection> createState() => _AboutSectionState();
+}
+
+class _AboutSectionState extends State<_AboutSection> {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return SignalBuilder(
+      builder: (_) {
+        final controller = widget.controller;
+        final version = controller.versionText.value;
+        final status = controller.statusText.value;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.settingsAboutHint,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (version case final versionText?) ...[
+              const SizedBox(height: 8),
+              Text(
+                '${l10n.settingsVersion} $versionText',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: controller.isChecking.value ? null : _check,
+              icon: controller.isChecking.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.update),
+              label: Text(l10n.settingsCheckUpdate),
+            ),
+            if (status case final statusText?) ...[
+              const SizedBox(height: 8),
+              Text(
+                statusText,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: controller.hasError.value
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _check() async {
+    final l10n = AppLocalizations.of(context);
+    await widget.controller.checkForUpdates();
+    if (!mounted || !widget.controller.hasUpdate.value) {
+      return;
+    }
+    final version = widget.controller.latestVersion.value;
+    final open = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.settingsUpdateAvailable),
+        content: Text(l10n.settingsUpdateContent(version ?? '')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.settingsUpdateLater),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.settingsUpdateDownload),
+          ),
+        ],
+      ),
+    );
+    if (open == true) {
+      await widget.controller.openUpdate();
     }
   }
 }

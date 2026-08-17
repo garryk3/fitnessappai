@@ -244,6 +244,54 @@ abstract class AppLocalizations {
   /// **'Светлая'**
   String get settingsThemeLight;
 
+  /// No description provided for @settingsAboutSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'О приложении'**
+  String get settingsAboutSection;
+
+  /// No description provided for @settingsAboutHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверка обновлений выполняется через GitHub.'**
+  String get settingsAboutHint;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия'**
+  String get settingsVersion;
+
+  /// No description provided for @settingsCheckUpdate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверить обновление'**
+  String get settingsCheckUpdate;
+
+  /// No description provided for @settingsUpdateAvailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступна новая версия'**
+  String get settingsUpdateAvailable;
+
+  /// Сообщение диалога обновления
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия {version} доступна для скачивания.'**
+  String settingsUpdateContent(String version);
+
+  /// No description provided for @settingsUpdateLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Позже'**
+  String get settingsUpdateLater;
+
+  /// No description provided for @settingsUpdateDownload.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить'**
+  String get settingsUpdateDownload;
+
   /// No description provided for @commonClose.
   ///
   /// In ru, this message translates to:

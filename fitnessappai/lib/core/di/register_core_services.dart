@@ -24,6 +24,8 @@ import 'package:fitnessappai/features/profile/domain/user_profile_repository.dar
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
+import 'package:fitnessappai/features/settings/data/github_update_service.dart';
+import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/data/local_file_sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -100,6 +102,7 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
       onImported: () => _rebuildAfterImport(sl),
     ),
   );
+  sl.registerLazySingleton<UpdateService>(() => GithubUpdateService());
 }
 
 /// Перестраивает контейнер после импорта БД: пересоздаёт базу из нового
