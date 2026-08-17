@@ -77,6 +77,26 @@ void main() {
         exercise: exercise(13, 'Отжимания', ExerciseType.bodyweight),
       );
 
+  WorkoutExercise perSideExercise({int sets = 1, int? rest = 60}) =>
+      WorkoutExercise(
+        position: ProgramDayExercise(
+          dayId: 1,
+          orderIndex: 0,
+          sets: sets,
+          reps: 8,
+          weightKg: 20,
+          restSeconds: rest,
+        ),
+        exercise: Exercise(
+          id: 20,
+          name: 'Гантели',
+          type: ExerciseType.strength,
+          perSide: true,
+          createdAt: startTime,
+          updatedAt: startTime,
+        ),
+      );
+
   test('start: невалидно без упражнений', () {
     final controller = WorkoutController(clock: () => startTime);
     expect(
@@ -475,6 +495,111 @@ void main() {
     }
     expect(controller.holdElapsedSeconds.value, 50);
     controller.dispose();
+  });
+
+  test('по сторонам: левая → отдых между сторонами → правая', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start([perSideExercise(sets: 1, rest: 60)]);
+
+      controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
+      controller.confirmSet();
+
+      expect(controller.phase.value, WorkoutPhase.rest);
+      expect(controller.sideRest.value, 60);
+      expect(controller.restRemainingSeconds.value, isNull);
+      expect(controller.currentSide.value, 'right');
+      expect(controller.completedSets.value, 0);
+      expect(controller.results.value.single.side, 'left');
+
+      async.elapse(const Duration(seconds: 60));
+      expect(controller.phase.value, WorkoutPhase.exercise);
+      expect(controller.sideRest.value, isNull);
+      expect(controller.currentSide.value, 'right');
+
+      controller.setResult(const WorkoutSetInput(reps: 6, weightKg: 22));
+      controller.confirmSet();
+
+      expect(controller.phase.value, WorkoutPhase.finished);
+      expect(controller.completedSets.value, 1);
+      expect(controller.results.value, hasLength(2));
+      expect(controller.results.value[0].side, 'left');
+      expect(controller.results.value[1].side, 'right');
+      expect(controller.results.value[1].weightKg, 22);
+      expect(controller.currentSide.value, isNull);
+      controller.dispose();
+    });
+  });
+
+  test('по сторонам: skipRest переводит к правой стороне без завершения', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start([perSideExercise(sets: 1, rest: 60)]);
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+
+      expect(controller.phase.value, WorkoutPhase.rest);
+      controller.skipRest();
+
+      expect(controller.phase.value, WorkoutPhase.exercise);
+      expect(controller.sideRest.value, isNull);
+      expect(controller.currentSide.value, 'right');
+
+      controller.setResult(const WorkoutSetInput(reps: 6));
+      controller.confirmSet();
+      expect(controller.phase.value, WorkoutPhase.finished);
+      expect(controller.results.value.map((r) => r.side), ['left', 'right']);
+      controller.dispose();
+    });
+  });
+
+  test('обычное упражнение не записывает сторону', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start([strengthExercise(sets: 1, rest: 60)]);
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+
+      expect(controller.phase.value, WorkoutPhase.finished);
+      expect(controller.results.value.single.side, isNull);
+      expect(controller.currentSide.value, isNull);
+      controller.dispose();
+    });
+  });
+
+  test('по сторонам: 2 подхода — два цикла левая/правая', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start([perSideExercise(sets: 2, rest: 60)]);
+
+      for (var set = 1; set <= 2; set++) {
+        controller.setResult(const WorkoutSetInput(reps: 8));
+        controller.confirmSet();
+        expect(controller.currentSide.value, 'right');
+        expect(controller.sideRest.value, 60);
+        controller.skipRest();
+
+        controller.setResult(const WorkoutSetInput(reps: 6));
+        controller.confirmSet();
+        if (set < 2) {
+          expect(controller.phase.value, WorkoutPhase.rest);
+          expect(controller.restRemainingSeconds.value, 60);
+          expect(controller.currentSet.value, set + 1);
+          controller.skipRest();
+        } else {
+          expect(controller.phase.value, WorkoutPhase.finished);
+        }
+      }
+      expect(controller.results.value, hasLength(4));
+      expect(controller.results.value.map((r) => r.side), [
+        'left',
+        'right',
+        'left',
+        'right',
+      ]);
+      expect(controller.results.value.map((r) => r.setIndex), [1, 1, 2, 2]);
+      controller.dispose();
+    });
   });
 }
 

@@ -88,6 +88,7 @@ void main() {
     int? restSeconds = 60,
     bool withAlternative = false,
     bool fixedWeight = false,
+    bool perSide = false,
   }) async {
     final created = await programRepo.create(
       Program(
@@ -100,9 +101,12 @@ void main() {
     );
     final day = (await programRepo.getDays(created.id!)).first;
     final exId = await insertExercise('Приседания');
-    if (fixedWeight) {
+    if (fixedWeight || perSide) {
       await (db.update(db.exercises)..where((t) => t.id.equals(exId))).write(
-        const ExercisesCompanion(fixedWeight: Value(true)),
+        ExercisesCompanion(
+          fixedWeight: Value(fixedWeight),
+          perSide: Value(perSide),
+        ),
       );
     }
     await programRepo.addExerciseToDay(day.id!, exId);
@@ -256,6 +260,45 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Упражнение 1 из 1 · Подход 2 из 3'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'по сторонам: подписи сторон и отдых между сторонами, результат сохраняет сторону',
+    (tester) async {
+      final dayId = await createDay(sets: 1, restSeconds: 60, perSide: true);
+      await pumpRun(tester, dayId);
+
+      expect(find.text('Повторения — левая'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField).first, '8');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pump();
+
+      expect(find.text('Отдых'), findsOneWidget);
+      expect(find.text('Отдых между сторонами'), findsOneWidget);
+      expect(find.text('60'), findsOneWidget);
+
+      await tester.tap(find.text('Пропустить отдых'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Повторения — правая'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField).first, '6');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+      await tester.tap(find.text('Завершить тренировку'));
+      await tester.pumpAndSettle();
+
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      final detail = await workoutRepo.getSession(sessions.first.id!);
+      expect(detail!.results.map((r) => r.side), ['left', 'right']);
+      expect(detail.results.map((r) => r.reps), [8, 6]);
     },
   );
 

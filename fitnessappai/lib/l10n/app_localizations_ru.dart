@@ -639,6 +639,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRunSkipRest => 'Пропустить отдых';
 
   @override
+  String get workoutRunSideRest => 'Отдых между сторонами';
+
+  @override
+  String get workoutSideLeft => 'левая';
+
+  @override
+  String get workoutSideRight => 'правая';
+
+  @override
   String get workoutRunFinish => 'Завершить тренировку';
 
   @override

@@ -275,27 +275,33 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
 
   String _formatSet(AppLocalizations l10n, WorkoutSetResult result) {
     final index = result.setIndex;
+    final sideSuffix = switch (result.side) {
+      'left' => 'л',
+      'right' => 'п',
+      _ => '',
+    };
+    final label = '$index$sideSuffix.';
     switch (result.exerciseType) {
       case ExerciseType.strength:
-        final base = '$index. ${result.reps ?? 0} ${l10n.workoutUnitReps}';
+        final base = '$label ${result.reps ?? 0} ${l10n.workoutUnitReps}';
         final weight = result.weightKg;
         if (weight != null && weight > 0) {
           return '$base × ${_fmt(weight)} ${l10n.workoutUnitKg}';
         }
         return base;
       case ExerciseType.bodyweight:
-        return '$index. ${result.reps ?? 0} ${l10n.workoutUnitReps}';
+        return '$label ${result.reps ?? 0} ${l10n.workoutUnitReps}';
       case ExerciseType.plank:
-        return '$index. ${result.durationSeconds ?? 0} '
+        return '$label ${result.durationSeconds ?? 0} '
             '${l10n.workoutUnitSeconds}';
       case ExerciseType.running:
         final distance = result.distanceMeters;
         final duration = result.durationSeconds;
         if (distance != null && duration != null) {
-          return '$index. ${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
+          return '$label ${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
               '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}';
         }
-        return '$index.';
+        return label;
     }
   }
 }

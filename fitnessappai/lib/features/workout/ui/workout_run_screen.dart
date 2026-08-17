@@ -206,6 +206,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
     final holdElapsed = workout.holdElapsedSeconds.value;
     final holdTarget = workout.holdTargetSeconds.value;
     final holdRunning = workout.holdRunning.value;
+    final effectiveSide = exercise.exercise.perSide
+        ? (workout.currentSide.value ?? 'left')
+        : null;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -265,8 +268,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
           ],
           const SizedBox(height: 16),
           _ExerciseInputForm(
-            key: ValueKey('input-$index-$currentSet'),
+            key: ValueKey('input-$index-$currentSet-$effectiveSide'),
             exercise: exercise,
+            side: effectiveSide,
             onConfirm: _controller.confirmSet,
             holdElapsed: () => workout.holdElapsedSeconds.value,
           ),
@@ -278,12 +282,24 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
   Widget _buildRest(BuildContext context, WorkoutController workout) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final remaining = workout.restRemainingSeconds.value ?? 0;
+    final sideRest = workout.sideRest.value;
+    final remaining = sideRest ?? workout.restRemainingSeconds.value ?? 0;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(l10n.workoutRunRest, style: theme.textTheme.headlineMedium),
+          if (sideRest != null) ...[
+            const SizedBox(height: 8),
+            Chip(
+              label: Text(l10n.workoutRunSideRest),
+              labelStyle: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+              backgroundColor: theme.colorScheme.secondaryContainer,
+              side: BorderSide.none,
+            ),
+          ],
           const SizedBox(height: 16),
           Text(
             '$remaining',
@@ -403,7 +419,7 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 1),
                     child: Text(
-                      '${result.setIndex}. '
+                      '${_sideLabel(result.setIndex, result.side)} '
                       '${_formatResult(l10n, result)}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -416,6 +432,15 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
         );
       },
     );
+  }
+
+  String _sideLabel(int setIndex, String? side) {
+    final suffix = switch (side) {
+      'left' => 'л',
+      'right' => 'п',
+      _ => '',
+    };
+    return '$setIndex$suffix.';
   }
 
   String _formatResult(AppLocalizations l10n, WorkoutSetResult result) {
@@ -508,11 +533,15 @@ class _ExerciseInputForm extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onConfirm,
+    this.side,
     this.holdElapsed,
   });
 
   final WorkoutExercise exercise;
   final void Function(WorkoutSetInput input) onConfirm;
+
+  /// Сторона для упражнения «по сторонам» ('left'/'right').
+  final String? side;
 
   /// Фактическое время удержания планки. Для планки пустое поле времени
   /// заменяется текущим значением счётчика.
@@ -595,6 +624,11 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final side = widget.side;
+    final repsLabel = side == null
+        ? l10n.exerciseParamsReps
+        : '${l10n.exerciseParamsReps} — '
+              '${side == 'right' ? l10n.workoutSideRight : l10n.workoutSideLeft}';
     return Form(
       key: _formKey,
       child: Column(
@@ -607,7 +641,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsReps,
+                  labelText: repsLabel,
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
@@ -647,7 +681,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsReps,
+                  labelText: repsLabel,
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) {

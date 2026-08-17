@@ -13,6 +13,7 @@ class WorkoutSetResult {
     this.weightKg,
     this.durationSeconds,
     this.distanceMeters,
+    this.side,
     required this.completedAt,
   });
 
@@ -28,6 +29,9 @@ class WorkoutSetResult {
   final double? weightKg;
   final int? durationSeconds;
   final double? distanceMeters;
+
+  /// Сторона для упражнений «по сторонам» ('left'/'right').
+  final String? side;
   final DateTime completedAt;
 
   WorkoutSetResult copyWith({
@@ -41,6 +45,7 @@ class WorkoutSetResult {
     double? weightKg,
     int? durationSeconds,
     double? distanceMeters,
+    String? side,
     DateTime? completedAt,
     bool clearId = false,
     bool clearExerciseId = false,
@@ -56,6 +61,7 @@ class WorkoutSetResult {
       weightKg: weightKg ?? this.weightKg,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       distanceMeters: distanceMeters ?? this.distanceMeters,
+      side: side ?? this.side,
       completedAt: completedAt ?? this.completedAt,
     );
   }
@@ -74,6 +80,7 @@ class WorkoutSetResult {
             other.weightKg == weightKg &&
             other.durationSeconds == durationSeconds &&
             other.distanceMeters == distanceMeters &&
+            other.side == side &&
             other.completedAt == completedAt;
   }
 
@@ -90,6 +97,7 @@ class WorkoutSetResult {
       weightKg,
       durationSeconds,
       distanceMeters,
+      side,
       completedAt,
     );
   }

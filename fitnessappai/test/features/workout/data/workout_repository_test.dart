@@ -54,6 +54,7 @@ void main() {
     int? durationSeconds,
     double? distanceMeters,
     int? exerciseId,
+    String? side,
     DateTime? completedAt,
   }) => WorkoutSetResult(
     sessionId: 0,
@@ -65,6 +66,7 @@ void main() {
     weightKg: weightKg,
     durationSeconds: durationSeconds,
     distanceMeters: distanceMeters,
+    side: side,
     completedAt: completedAt ?? DateTime(2026, 8, 10, 18, 5),
   );
 
@@ -271,5 +273,20 @@ void main() {
     final results = await repo.lastResultsForExercise(999);
 
     expect(results, isEmpty);
+  });
+
+  test('saveSession и getSession сохраняют сторону результата', () async {
+    final squats = await insertExercise('Приседания');
+    final saved = await repo.saveSession(session(), [
+      setResult(exerciseId: squats, setIndex: 1, side: 'left', reps: 8),
+      setResult(exerciseId: squats, setIndex: 1, side: 'right', reps: 6),
+      setResult(exerciseId: squats, setIndex: 2, side: 'left', reps: 10),
+    ]);
+
+    final loaded = await repo.getSession(saved.session.id!);
+
+    expect(loaded, isNotNull);
+    expect(loaded!.results.map((r) => r.side), ['left', 'right', 'left']);
+    expect(loaded.results.map((r) => r.reps), [8, 6, 10]);
   });
 }
