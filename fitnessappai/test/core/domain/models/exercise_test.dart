@@ -24,13 +24,20 @@ void main() {
 
   test('copyWith изменяет только указанные поля', () {
     final e = build();
-    final changed = e.copyWith(name: 'Махи гирей', isCustom: false);
+    final changed = e.copyWith(
+      name: 'Махи гирей',
+      isCustom: false,
+      fixedWeight: true,
+      perSide: true,
+    );
 
     expect(changed.id, 1);
     expect(changed.name, 'Махи гирей');
     expect(changed.description, e.description);
     expect(changed.type, e.type);
     expect(changed.isCustom, isFalse);
+    expect(changed.fixedWeight, isTrue);
+    expect(changed.perSide, isTrue);
     expect(e.name, 'Приседания с гирей');
   });
 
@@ -43,6 +50,8 @@ void main() {
     expect(build(), build());
     expect(build(id: 1), isNot(build(id: 2)));
     expect(build().copyWith(commonMistakes: const []), isNot(build()));
+    expect(build().copyWith(fixedWeight: true), isNot(build()));
+    expect(build().copyWith(perSide: true), isNot(build()));
     expect(build().hashCode, build().hashCode);
   });
 

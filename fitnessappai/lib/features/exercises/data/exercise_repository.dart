@@ -286,6 +286,8 @@ class ExerciseRepository {
     animationPath: Value(e.animationPath),
     isCustom: Value(e.isCustom),
     hideOptional: Value(e.hideOptional),
+    fixedWeight: Value(e.fixedWeight),
+    perSide: Value(e.perSide),
     createdAt: Value(e.createdAt),
     updatedAt: Value(e.updatedAt),
   );
@@ -301,6 +303,8 @@ class ExerciseRepository {
     animationPath: row.animationPath,
     isCustom: row.isCustom,
     hideOptional: row.hideOptional,
+    fixedWeight: row.fixedWeight,
+    perSide: row.perSide,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   );

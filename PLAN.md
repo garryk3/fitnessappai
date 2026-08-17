@@ -1136,7 +1136,7 @@ fitnessappai/
 - **Тесты:** unit репозитория/агрегатора, widget-тесты run/prepare/detail.
 
 ### Задача 14.5: Чекбоксы «фиксированный вес» и «по сторонам» в форме упражнения
-- **Статус:** [ ]
+- **Статус:** [x]
 - **Модуль:** фичи/exercises + БД (схема v7)
 - **Ветка:** `task/14.5-exercise-flags`
 - **Описание:** Схема v7: `exercises.fixedWeight` (bool, default false), `exercises.perSide` (bool, default false), `workout_set_results.side` (text nullable, 'left'/'right'); `appDatabaseSchemaVersion = 7`, миграция `from < 7`, регенерация `app_database.g.dart` (`build_runner`) и `drift_schemas/drift_schema_v7.json`. Модель `Exercise` + copyWith + `==`/`hashCode`. В `ExerciseFormScreen` два `CheckboxListTile` («Фиксированный вес», «По сторонам (левая/правая)») по образцу `_hideOptionalField`; сохранение в `_save`, загрузка в `_populate`. Новые l10n-ключи.
@@ -1288,7 +1288,7 @@ fitnessappai/
 | 14.2 | Лицензия (некоммерческая) | [x] | task/14.2-license | 2026-08-17 |
 | 14.3 | Версия в настройках + проверка обновления | [x] | task/14.3-app-update | 2026-08-17 |
 | 14.4 | История упражнения (из тренировки, 3 дня, последняя) | [x] | task/14.4-workout-exercise-history | 2026-08-17 |
-| 14.5 | Чекбоксы «фикс. вес» и «по сторонам» (схема v7) | [ ] | | |
+| 14.5 | Чекбоксы «фикс. вес» и «по сторонам» (схема v7) | [x] | task/14.5-exercise-flags | 2026-08-17 |
 | 14.6 | Автозаполнение фиксированного веса | [ ] | | |
 | 14.7 | Выполнение по сторонам с доп. таймером | [ ] | | |
 | 14.8 | Таймер отдыха по времени старта (сон) | [ ] | | |

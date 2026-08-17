@@ -736,6 +736,30 @@ abstract class AppLocalizations {
   /// **'Описание, техника и параметры не будут показываться при выполнении'**
   String get exerciseFormHideOptionalHelp;
 
+  /// No description provided for @exerciseFormFixedWeight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фиксированный вес'**
+  String get exerciseFormFixedWeight;
+
+  /// No description provided for @exerciseFormFixedWeightHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес будет подставляться из параметров тренировки, но его можно изменить'**
+  String get exerciseFormFixedWeightHelp;
+
+  /// No description provided for @exerciseFormPerSide.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выполнение по сторонам (левая/правая)'**
+  String get exerciseFormPerSide;
+
+  /// No description provided for @exerciseFormPerSideHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каждый подход выполняется на обе стороны с отдыхом между ними'**
+  String get exerciseFormPerSideHelp;
+
   /// No description provided for @exerciseParams.
   ///
   /// In ru, this message translates to:

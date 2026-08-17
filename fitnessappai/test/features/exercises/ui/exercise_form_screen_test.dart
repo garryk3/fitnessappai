@@ -78,6 +78,8 @@ void main() {
     List<String> commonMistakes = const [],
     bool isCustom = true,
     bool hideOptional = false,
+    bool fixedWeight = false,
+    bool perSide = false,
     String? thumbnailPath,
     String? animationPath,
   }) {
@@ -88,6 +90,8 @@ void main() {
       commonMistakes: commonMistakes,
       isCustom: isCustom,
       hideOptional: hideOptional,
+      fixedWeight: fixedWeight,
+      perSide: perSide,
       thumbnailPath: thumbnailPath,
       animationPath: animationPath,
       createdAt: DateTime(2024, 1, 1),
@@ -114,6 +118,14 @@ void main() {
     of: find.ancestor(of: find.text(rowText), matching: find.byType(Row)).first,
     matching: find.widgetWithText(FilterChip, chipLabel),
   );
+
+  /// Находит [CheckboxListTile] по подстроке в его заголовке.
+  Finder checkboxInRow(String label) => find
+      .ancestor(
+        of: find.textContaining(label),
+        matching: find.byType(CheckboxListTile),
+      )
+      .first;
 
   /// Скроллит список формы вниз, пока [target] не появится в дереве.
   ///
@@ -310,7 +322,7 @@ void main() {
       tester,
       find.textContaining('Скрывать необязательные поля'),
     );
-    await tester.tap(find.byType(CheckboxListTile));
+    await tester.tap(checkboxInRow('Скрывать необязательные поля'));
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
@@ -334,9 +346,55 @@ void main() {
     );
 
     final checkbox = tester.widget<CheckboxListTile>(
-      find.byType(CheckboxListTile),
+      checkboxInRow('Скрывать необязательные поля'),
     );
     expect(checkbox.value, isTrue);
+  });
+
+  testWidgets('чекбоксы фиксированного веса и сторон сохраняются', (
+    tester,
+  ) async {
+    await pumpForm(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название *'),
+      'С гантелями',
+    );
+    await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
+    await tester.tap(checkboxInRow('Фиксированный вес'));
+    await tester.pumpAndSettle();
+    await scrollFormTo(tester, find.textContaining('Выполнение по сторонам'));
+    await tester.tap(checkboxInRow('Выполнение по сторонам'));
+    await tester.pumpAndSettle();
+
+    await selectChestMuscle(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final created = (await repository.getAll()).single;
+    expect(created.fixedWeight, isTrue);
+    expect(created.perSide, isTrue);
+  });
+
+  testWidgets('редактирование восстанавливает чекбоксы веса и сторон', (
+    tester,
+  ) async {
+    final saved = await repository.create(
+      exercise('С гантелями', fixedWeight: true, perSide: true),
+      const [],
+    );
+
+    await pumpForm(tester, exerciseId: saved.id);
+    await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
+
+    final fixedWeight = tester.widget<CheckboxListTile>(
+      checkboxInRow('Фиксированный вес'),
+    );
+    final perSide = tester.widget<CheckboxListTile>(
+      checkboxInRow('Выполнение по сторонам'),
+    );
+    expect(fixedWeight.value, isTrue);
+    expect(perSide.value, isTrue);
   });
 
   testWidgets('выбор анимации сохраняет путь', (tester) async {

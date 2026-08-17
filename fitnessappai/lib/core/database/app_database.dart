@@ -38,7 +38,9 @@ part 'app_database.g.dart';
 /// v4: колонка `exercises.hideOptional` — скрытие необязательных полей.
 /// v5: колонка `programs.isActive` — активная программа для домашнего экрана.
 /// v6: колонка `program_days.warmupMinutes` — разминка перед тренировкой.
-const int appDatabaseSchemaVersion = 6;
+/// v7: колонки `exercises.fixedWeight` и `exercises.perSide`, колонка
+/// `workout_set_results.side` — выполнение «по сторонам».
+const int appDatabaseSchemaVersion = 7;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -94,6 +96,11 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.addColumn(programDays, programDays.warmupMinutes);
+      }
+      if (from < 7) {
+        await m.addColumn(exercises, exercises.fixedWeight);
+        await m.addColumn(exercises, exercises.perSide);
+        await m.addColumn(workoutSetResults, workoutSetResults.side);
       }
     },
     beforeOpen: (details) async {
