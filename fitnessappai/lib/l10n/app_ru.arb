@@ -98,6 +98,7 @@
   "exerciseDetailTechnique": "Техника выполнения",
   "exerciseDetailMistakes": "Частые ошибки",
   "exerciseDetailMuscles": "Задействованные мышцы",
+  "exerciseDetailHistoryRecent": "История за последние 3 дня",
   "exerciseDetailDeleteConfirm": "Удалить упражнение «{name}»?",
   "@exerciseDetailDeleteConfirm": {
     "description": "Подтверждение удаления упражнения",
@@ -295,6 +296,7 @@
   "workoutUnitMinutes": "мин",
   "workoutUnitKg": "кг",
   "workoutUnitKm": "км",
+  "workoutRunLastWorkout": "Последняя тренировка",
   "workoutRunExerciseOf": "Упражнение {current} из {total}",
   "@workoutRunExerciseOf": {
     "description": "Счётчик упражнений во время тренировки",

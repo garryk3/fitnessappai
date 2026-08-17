@@ -580,6 +580,12 @@ abstract class AppLocalizations {
   /// **'Задействованные мышцы'**
   String get exerciseDetailMuscles;
 
+  /// No description provided for @exerciseDetailHistoryRecent.
+  ///
+  /// In ru, this message translates to:
+  /// **'История за последние 3 дня'**
+  String get exerciseDetailHistoryRecent;
+
   /// Подтверждение удаления упражнения
   ///
   /// In ru, this message translates to:
@@ -1179,6 +1185,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'км'**
   String get workoutUnitKm;
+
+  /// No description provided for @workoutRunLastWorkout.
+  ///
+  /// In ru, this message translates to:
+  /// **'Последняя тренировка'**
+  String get workoutRunLastWorkout;
 
   /// Счётчик упражнений во время тренировки
   ///

@@ -258,6 +258,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseDetailMuscles => 'Задействованные мышцы';
 
   @override
+  String get exerciseDetailHistoryRecent => 'История за последние 3 дня';
+
+  @override
   String exerciseDetailDeleteConfirm(String name) {
     return 'Удалить упражнение «$name»?';
   }
@@ -598,6 +601,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workoutUnitKm => 'км';
+
+  @override
+  String get workoutRunLastWorkout => 'Последняя тренировка';
 
   @override
   String workoutRunExerciseOf(int current, int total) {

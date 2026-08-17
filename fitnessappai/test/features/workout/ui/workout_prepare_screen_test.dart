@@ -125,6 +125,11 @@ void main() {
             soundService: StubSoundService(),
           ),
         ),
+        GoRoute(
+          path: '/exercises/:id',
+          builder: (context, state) =>
+              Scaffold(body: Text('detail ${state.pathParameters['id']}')),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -388,5 +393,17 @@ void main() {
 
     final program = (await programRepo.getPrograms()).single;
     expect(await programRepo.isWarningDismissed(program.program.id!), isFalse);
+  });
+
+  testWidgets('тап по карточке упражнения открывает описание', (tester) async {
+    final dayId = await createDay();
+    final exerciseId = (await exerciseRepo.getAll()).single.id!;
+
+    await pumpPrepare(tester, dayId);
+
+    await tester.tap(find.text('Приседания'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('detail $exerciseId'), findsOneWidget);
   });
 }

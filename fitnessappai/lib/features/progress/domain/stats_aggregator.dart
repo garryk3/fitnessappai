@@ -319,6 +319,21 @@ class StatsAggregator {
     return points;
   }
 
+  /// История упражнения за последние [days] дней выполнения.
+  ///
+  /// Возвращает не более [days] последних точек [exerciseProgression]
+  /// (агрегированных по датам тренировок), отсортированных по дате.
+  Future<List<ProgressionPoint>> exerciseHistoryLastDays(
+    int exerciseId, {
+    int days = 3,
+  }) async {
+    final points = await exerciseProgression(exerciseId);
+    if (points.length <= days) {
+      return points;
+    }
+    return points.sublist(points.length - days);
+  }
+
   Future<List<WorkoutSession>> _sessions(StatPeriod period) {
     final (start, end) = periodBounds(period);
     return workoutRepository.getSessionsBetween(start, end);

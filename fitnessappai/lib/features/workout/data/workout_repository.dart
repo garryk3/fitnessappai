@@ -129,6 +129,36 @@ class WorkoutRepository {
     return {for (final row in rows) row.exerciseId!};
   }
 
+  /// Результаты упражнения [exerciseId] из последней сессии, где оно
+  /// выполнялось. Пустой список, если упражнение ещё не выполнялось.
+  Future<List<WorkoutSetResult>> lastResultsForExercise(int exerciseId) async {
+    final latestRow =
+        await (_db.select(_db.workoutSetResults)
+              ..where((t) => t.exerciseId.equals(exerciseId))
+              ..orderBy([
+                (t) => OrderingTerm.desc(t.completedAt),
+                (t) => OrderingTerm.desc(t.id),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
+    if (latestRow == null) {
+      return const [];
+    }
+    final rows =
+        await (_db.select(_db.workoutSetResults)
+              ..where(
+                (t) =>
+                    t.sessionId.equals(latestRow.sessionId) &
+                    t.exerciseId.equals(exerciseId),
+              )
+              ..orderBy([
+                (t) => OrderingTerm.asc(t.setIndex),
+                (t) => OrderingTerm.asc(t.id),
+              ]))
+            .get();
+    return rows.map(_toResult).toList();
+  }
+
   /// Отмечает день пропущенным на неделе [weekStart]. Идемпотентно.
   Future<void> markSkipped(int programDayId, DateTime weekStart) async {
     final existing =

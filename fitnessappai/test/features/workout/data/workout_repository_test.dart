@@ -53,9 +53,11 @@ void main() {
     double? weightKg = 20,
     int? durationSeconds,
     double? distanceMeters,
+    int? exerciseId,
+    DateTime? completedAt,
   }) => WorkoutSetResult(
     sessionId: 0,
-    exerciseId: null,
+    exerciseId: exerciseId,
     exerciseName: name,
     exerciseType: type,
     setIndex: setIndex,
@@ -63,7 +65,7 @@ void main() {
     weightKg: weightKg,
     durationSeconds: durationSeconds,
     distanceMeters: distanceMeters,
-    completedAt: DateTime(2026, 8, 10, 18, 5),
+    completedAt: completedAt ?? DateTime(2026, 8, 10, 18, 5),
   );
 
   Future<int> createProgramDay() async {
@@ -79,6 +81,19 @@ void main() {
     );
     final days = await programRepository.getDays(program.id!);
     return days[0].id!;
+  }
+
+  Future<int> insertExercise(String name) {
+    return db
+        .into(db.exercises)
+        .insert(
+          ExercisesCompanion.insert(
+            name: name,
+            type: ExerciseType.strength,
+            createdAt: DateTime(2026, 1, 1),
+            updatedAt: DateTime(2026, 1, 1),
+          ),
+        );
   }
 
   test('saveSession сохраняет сессию и результаты одной транзакцией', () async {
@@ -224,5 +239,37 @@ void main() {
 
     expect(skips, hasLength(1));
     expect(skips.single.weekStart, DateTime(2026, 8, 10));
+  });
+
+  test(
+    'lastResultsForExercise возвращает результаты из последней сессии',
+    () async {
+      final squats = await insertExercise('Приседания');
+      final bench = await insertExercise('Жим');
+      await repo.saveSession(session(performedDate: DateTime(2026, 8, 10)), [
+        setResult(exerciseId: squats, setIndex: 1, reps: 8),
+        setResult(exerciseId: squats, setIndex: 2, reps: 6),
+        setResult(exerciseId: bench),
+      ]);
+      await repo.saveSession(session(performedDate: DateTime(2026, 8, 13)), [
+        setResult(exerciseId: squats, setIndex: 1, reps: 10),
+        setResult(exerciseId: squats, setIndex: 2, reps: 8),
+      ]);
+
+      final results = await repo.lastResultsForExercise(squats);
+
+      expect(results, hasLength(2));
+      expect(results.map((r) => r.reps), [10, 8]);
+      expect(results.map((r) => r.setIndex), [1, 2]);
+    },
+  );
+
+  test('lastResultsForExercise для невыполненного упражнения пуст', () async {
+    final squats = await insertExercise('Приседания');
+    await repo.saveSession(session(), [setResult(exerciseId: squats)]);
+
+    final results = await repo.lastResultsForExercise(999);
+
+    expect(results, isEmpty);
   });
 }

@@ -12,6 +12,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -85,11 +86,14 @@ class WorkoutRunScreen extends StatefulWidget {
 class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
   late final WorkoutRunController _controller;
   late final MediaCache _mediaCache;
+  late final WorkoutRepository _workoutRepository;
 
   @override
   void initState() {
     super.initState();
     _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
+    _workoutRepository =
+        widget.workoutRepository ?? locator.get<WorkoutRepository>();
     _controller = WorkoutRunController(
       programDayId: widget.programDayId,
       variant: widget.variant,
@@ -222,10 +226,26 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
           const SizedBox(height: 12),
           _ExerciseMedia(exercise: exercise.exercise, mediaCache: _mediaCache),
           const SizedBox(height: 12),
-          Text(
-            exercise.name,
-            style: theme.textTheme.headlineSmall,
-            textAlign: TextAlign.center,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  exercise.name,
+                  style: theme.textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              if (exercise.id != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: l10n.exerciseDetail,
+                  icon: const Icon(Icons.info_outline, size: 20),
+                  onPressed: () => context.push('/exercises/${exercise.id}'),
+                ),
+              ],
+            ],
           ),
           if (exercise.type == ExerciseType.plank && holdTarget != null) ...[
             const SizedBox(height: 12),
@@ -234,6 +254,13 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
               target: holdTarget,
               running: holdRunning,
               onStart: workout.startHoldTimer,
+            ),
+          ],
+          if (exercise.id != null) ...[
+            const SizedBox(height: 12),
+            _LastWorkoutCard(
+              exercise: exercise,
+              repository: _workoutRepository,
             ),
           ],
           const SizedBox(height: 16),
@@ -323,6 +350,92 @@ class _ExerciseMedia extends StatelessWidget {
     );
   }
 }
+
+/// Результаты текущего упражнения из последней тренировки.
+///
+/// Пустая карточка не отображается, если упражнение ещё не выполнялось.
+class _LastWorkoutCard extends StatefulWidget {
+  const _LastWorkoutCard({required this.exercise, required this.repository});
+
+  final WorkoutExercise exercise;
+  final WorkoutRepository repository;
+
+  @override
+  State<_LastWorkoutCard> createState() => _LastWorkoutCardState();
+}
+
+class _LastWorkoutCardState extends State<_LastWorkoutCard> {
+  late final Future<List<WorkoutSetResult>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = widget.repository.lastResultsForExercise(widget.exercise.id!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return FutureBuilder<List<WorkoutSetResult>>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const SizedBox.shrink();
+        }
+        final results = snapshot.data;
+        if (results == null || results.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Card(
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.workoutRunLastWorkout,
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 4),
+                for (final result in results)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 1),
+                    child: Text(
+                      '${result.setIndex}. '
+                      '${_formatResult(l10n, result)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatResult(AppLocalizations l10n, WorkoutSetResult result) {
+    return switch (result.exerciseType) {
+      ExerciseType.strength when result.weightKg != null =>
+        '${result.reps ?? 0} × ${_fmt(result.weightKg!)} ${l10n.workoutUnitKg}',
+      ExerciseType.strength ||
+      ExerciseType.bodyweight => '${result.reps ?? 0} ${l10n.workoutUnitReps}',
+      ExerciseType.plank =>
+        '${result.durationSeconds ?? 0} ${l10n.workoutUnitSeconds}',
+      ExerciseType.running =>
+        '${_fmt((result.distanceMeters ?? 0) / 1000)} ${l10n.workoutUnitKm} × '
+            '${(result.durationSeconds ?? 0) ~/ 60} ${l10n.workoutUnitMinutes}',
+    };
+  }
+}
+
+String _fmt(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toStringAsFixed(1);
 
 /// Выделенный блок таймера удержания планки: крупный счётчик, цель в скобках,
 /// кнопка запуска до старта.
