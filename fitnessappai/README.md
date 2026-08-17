@@ -50,7 +50,9 @@ flutter build apk --debug       # сборка Android APK
 - SQLite через `drift` (типобезопасный ORM)
 - `go_router` (навигация), `fl_chart` (графики), `flutter_local_notifications`
   (напоминания), `wakelock_plus` (удержание экрана)
-- CI: GitHub Actions (analyze, format, tests, сборка APK)
+- CI: GitHub Actions (analyze, format, tests, сборка APK); сборка релизов по тегу `v*` (`.github/workflows/release.yml`) с публикацией APK в GitHub Releases.
+
+Скачать последнюю версию: [FitnessAppAI latest](https://github.com/garryk3/fitnessappai/releases/latest/download/app-release.apk).
 
 Полный план разработки с отслеживанием статусов — в [PLAN.md](../PLAN.md).
 
