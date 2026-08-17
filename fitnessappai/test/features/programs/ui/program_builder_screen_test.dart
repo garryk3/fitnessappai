@@ -85,6 +85,9 @@ void main() {
   }
 
   testWidgets('создание программы: выбор дней и день недели', (tester) async {
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
     final router = GoRouter(
       initialLocation: '/home/programs/new',
@@ -122,7 +125,8 @@ void main() {
     expect(find.text('День 1'), findsOneWidget);
     expect(find.text('Без привязки'), findsOneWidget);
 
-    await tester.tap(find.text('3'));
+    await tester.ensureVisible(find.text('3'));
+    await tester.tap(find.text('3').last);
     await tester.pumpAndSettle();
 
     expect(find.text('День 1'), findsOneWidget);
@@ -137,6 +141,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byIcon(Icons.tune).at(0));
     await tester.tap(find.byIcon(Icons.tune).at(0));
     await tester.pumpAndSettle();
     expect(find.text('Настройка дня'), findsOneWidget);
@@ -241,6 +246,9 @@ void main() {
   testWidgets('редактирование: загружает и сохраняет изменения', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
     final created = await repository.create(program('Сплит', daysCount: 2), [
       ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),
@@ -295,7 +303,7 @@ void main() {
     expect((await repository.getActiveProgram())!.id, created.id);
   });
 
-  testWidgets('настройка дня сохраняет разминку и показывает её в тайле', (
+  testWidgets('разминка на экране программы сохраняется для всех дней', (
     tester,
   ) async {
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
@@ -307,15 +315,11 @@ void main() {
 
     await pumpBuilder(tester, programId: created.id);
 
-    await tester.tap(find.byIcon(Icons.tune));
-    await tester.pumpAndSettle();
-
-    final dialog = find.byType(AlertDialog);
+    // Поле разминки теперь на основном экране, а не в модалке.
     await tester.enterText(
-      find.descendant(of: dialog, matching: find.byType(TextFormField)),
+      find.widgetWithText(TextFormField, 'Разминка, мин'),
       '5',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
     await tester.pumpAndSettle();
 
     expect(find.textContaining('разминка 5 мин'), findsOneWidget);
@@ -357,9 +361,15 @@ void main() {
       await tester.pumpAndSettle();
 
       await enterName(tester, 'Сплит');
-      await tester.tap(find.text('2'));
+      final segment2 = find.descendant(
+        of: find.byType(SegmentedButton<int>),
+        matching: find.text('2'),
+      );
+      await tester.ensureVisible(segment2);
+      await tester.tap(segment2);
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.byIcon(Icons.tune).at(0));
       await tester.tap(find.byIcon(Icons.tune).at(0));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButtonFormField<int?>));
@@ -369,6 +379,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.byIcon(Icons.playlist_add).at(0));
       await tester.tap(find.byIcon(Icons.playlist_add).at(0));
       await tester.pumpAndSettle();
       expect(find.text('Наполнение дня'), findsOneWidget);
@@ -380,6 +391,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.byIcon(Icons.tune).at(1));
       await tester.tap(find.byIcon(Icons.tune).at(1));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButtonFormField<int?>));

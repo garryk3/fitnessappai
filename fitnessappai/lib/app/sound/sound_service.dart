@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
@@ -6,6 +8,9 @@ import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 abstract class SoundService {
   /// Играет сигнал, если звук включён. Беззвучно, если выключен.
   Future<void> playCompletion();
+
+  /// Останавливает воспроизведение.
+  Future<void> stop();
 
   /// Освобождает ресурсы аудио-плеера.
   Future<void> dispose();
@@ -17,9 +22,11 @@ class AudioplayersSoundService implements SoundService {
   AudioplayersSoundService(this._repository);
 
   static const String defaultAssetPath = 'assets/sounds/beep.wav';
+  static const Duration maxDuration = Duration(seconds: 5);
 
   final SoundSettingsRepository _repository;
   final AudioPlayer _player = AudioPlayer();
+  Timer? _autoStopTimer;
 
   @override
   Future<void> playCompletion() async {
@@ -30,22 +37,40 @@ class AudioplayersSoundService implements SoundService {
     final filePath = await repository.soundFilePath();
     if (filePath != null && filePath.isNotEmpty) {
       await _player.play(DeviceFileSource(filePath));
-      return;
+    } else {
+      await _player.play(AssetSource(defaultAssetPath));
     }
-    await _player.play(AssetSource(defaultAssetPath));
+    _autoStopTimer?.cancel();
+    _autoStopTimer = Timer(maxDuration, stop);
   }
 
   @override
-  Future<void> dispose() => _player.dispose();
+  Future<void> stop() async {
+    _autoStopTimer?.cancel();
+    _autoStopTimer = null;
+    await _player.stop();
+  }
+
+  @override
+  Future<void> dispose() async {
+    _autoStopTimer?.cancel();
+    await _player.dispose();
+  }
 }
 
 /// Заглушка для тестов: фиксирует вызовы, но не играет звук.
 class StubSoundService implements SoundService {
   int completionCalls = 0;
+  int stopCalls = 0;
 
   @override
   Future<void> playCompletion() async {
     completionCalls++;
+  }
+
+  @override
+  Future<void> stop() async {
+    stopCalls++;
   }
 
   @override

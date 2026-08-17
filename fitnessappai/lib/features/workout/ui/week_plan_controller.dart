@@ -23,8 +23,8 @@ class WeekPlanItem {
   final int dayIndex;
   final String programName;
 
-  /// День недели по расписанию: 1 = Пн … 7 = Вс.
-  final int dayOfWeek;
+  /// День недели по расписанию: 1 = Пн … 7 = Вс, null — не привязан.
+  final int? dayOfWeek;
 
   /// Дата, на которую закреплён день в текущей неделе.
   final DateTime scheduledDate;
@@ -115,8 +115,10 @@ class WeekPlanController {
     isLoading.value = true;
     try {
       final week = weekStart.value;
+      final now = _dateOnly(_now());
       final summaries = await programRepository.getPrograms();
       final scheduled = <WeekPlanItem>[];
+      final unlinked = <WeekPlanItem>[];
       for (final summary in summaries) {
         final detail = await programRepository.getProgram(summary.program.id!);
         if (detail == null) {
@@ -124,23 +126,38 @@ class WeekPlanController {
         }
         for (final day in detail.days) {
           final dayOfWeek = day.day.dayOfWeek;
-          if (dayOfWeek == null || day.day.id == null) {
+          if (day.day.id == null) {
             continue;
           }
-          scheduled.add(
-            WeekPlanItem(
-              programDayId: day.day.id!,
-              dayIndex: day.day.dayIndex,
-              programName: detail.program.name,
-              dayOfWeek: dayOfWeek,
-              scheduledDate: week.add(Duration(days: dayOfWeek - 1)),
-              status: WeekPlanStatus.pending,
-            ),
-          );
+          if (dayOfWeek == null) {
+            // Непривязанные дни показываем как запланированные на сегодня.
+            unlinked.add(
+              WeekPlanItem(
+                programDayId: day.day.id!,
+                dayIndex: day.day.dayIndex,
+                programName: detail.program.name,
+                dayOfWeek: null,
+                scheduledDate: now,
+                status: WeekPlanStatus.pending,
+              ),
+            );
+          } else {
+            scheduled.add(
+              WeekPlanItem(
+                programDayId: day.day.id!,
+                dayIndex: day.day.dayIndex,
+                programName: detail.program.name,
+                dayOfWeek: dayOfWeek,
+                scheduledDate: week.add(Duration(days: dayOfWeek - 1)),
+                status: WeekPlanStatus.pending,
+              ),
+            );
+          }
         }
       }
 
-      final dayIds = scheduled.map((e) => e.programDayId).toSet();
+      final allItems = [...scheduled, ...unlinked];
+      final dayIds = allItems.map((e) => e.programDayId).toSet();
       final sessionsByDay = <int, List<WorkoutSession>>{};
       for (final id in dayIds) {
         sessionsByDay[id] = await workoutRepository.getSessions(id, week);
@@ -150,7 +167,7 @@ class WeekPlanController {
       )).map((mark) => mark.programDayId).toSet();
 
       final result = <WeekPlanItem>[];
-      for (final item in scheduled) {
+      for (final item in allItems) {
         result.add(
           WeekPlanItem(
             programDayId: item.programDayId,

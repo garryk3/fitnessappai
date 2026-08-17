@@ -159,6 +159,7 @@ class WorkoutController {
   /// или завершению тренировки.
   void confirmSet() {
     _requireInExercise();
+    _soundService?.stop();
     final exercise = currentExercise!;
     final input = _draft ?? const WorkoutSetInput();
     final errors = _validate(exercise, input);
@@ -225,6 +226,7 @@ class WorkoutController {
     if (phase.value != WorkoutPhase.rest) {
       return;
     }
+    _soundService?.stop();
     _restTimer?.cancel();
     _restTimer = null;
     _restEndsAt = null;
@@ -260,6 +262,7 @@ class WorkoutController {
     if (phase.value != WorkoutPhase.finished) {
       throw WorkoutStateException(const ['Тренировка не завершена']);
     }
+    _soundService?.stop();
     _cancelTimers();
     final context =
         _context ?? const WorkoutSessionContext(programName: '', dayIndex: 0);
@@ -286,12 +289,14 @@ class WorkoutController {
         phase.value != WorkoutPhase.rest) {
       throw WorkoutStateException(const ['Тренировка не в процессе']);
     }
+    _soundService?.stop();
     _cancelTimers();
     phase.value = WorkoutPhase.finished;
   }
 
   /// Отменяет тренировку, ничего не сохраняя. Сбрасывает состояние.
   void cancelWorkout() {
+    _soundService?.stop();
     _cancelTimers();
     _exercises.clear();
     _context = null;

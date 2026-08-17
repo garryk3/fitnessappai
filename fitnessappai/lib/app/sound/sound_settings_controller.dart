@@ -65,7 +65,10 @@ class SoundSettingsController {
   }
 
   static Future<String?> _defaultPick() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['wav', 'mp3', 'ogg', 'm4a', 'aac', 'flac'],
+    );
     if (result == null || result.files.isEmpty) {
       return null;
     }
