@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -16,17 +18,20 @@ class WorkoutWarmupScreen extends StatefulWidget {
     required this.programDayId,
     required this.warmupSeconds,
     this.variant = WorkoutVariant.main,
+    this.soundService,
   });
 
   final int programDayId;
   final int warmupSeconds;
   final WorkoutVariant variant;
+  final SoundService? soundService;
 
   @override
   State<WorkoutWarmupScreen> createState() => _WorkoutWarmupScreenState();
 }
 
 class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
+  late final SoundService _soundService;
   late int _remaining;
   Timer? _timer;
   bool _done = false;
@@ -35,6 +40,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
   @override
   void initState() {
     super.initState();
+    _soundService = widget.soundService ?? locator.get<SoundService>();
     _remaining = widget.warmupSeconds;
     if (_remaining > 0) {
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -42,6 +48,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
           _timer?.cancel();
           if (mounted) {
             setState(() => _done = true);
+            _soundService.playCompletion();
             _goToRun();
           }
           return;

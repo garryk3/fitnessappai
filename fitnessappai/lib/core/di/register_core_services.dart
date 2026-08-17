@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
+import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -36,6 +38,12 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   );
   sl.registerLazySingleton<ThemeController>(
     () => ThemeController(sl.get<ThemeSettingsRepository>()),
+  );
+  sl.registerLazySingleton<SoundSettingsRepository>(
+    () => SoundSettingsRepository(sl.get<AppDatabase>()),
+  );
+  sl.registerLazySingleton<SoundService>(
+    () => AudioplayersSoundService(sl.get<SoundSettingsRepository>()),
   );
   sl.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(

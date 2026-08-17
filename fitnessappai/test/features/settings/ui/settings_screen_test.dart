@@ -2,6 +2,8 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
+import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
@@ -56,6 +58,7 @@ void main() {
     Future<String?> Function()? pickFile,
     Future<void> Function(String path)? shareFile,
     Future<bool> Function(String path)? saveFile,
+    SoundSettingsController? soundController,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1.0;
@@ -77,6 +80,9 @@ void main() {
         home: SettingsScreen(
           syncController: controller,
           themeController: themeController,
+          soundController:
+              soundController ??
+              SoundSettingsController(repository: SoundSettingsRepository(db)),
         ),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -91,6 +97,9 @@ void main() {
 
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('Синхронизация'), findsOneWidget);
+    expect(find.text('Звук'), findsOneWidget);
+    expect(find.text('Звук таймеров'), findsOneWidget);
+    expect(find.text('Стандартный сигнал'), findsOneWidget);
     expect(find.text('Тема'), findsOneWidget);
     expect(find.text('Тёмная'), findsOneWidget);
     expect(find.text('Светлая'), findsOneWidget);
@@ -113,6 +122,53 @@ void main() {
 
     expect(themeController.value, ThemeMode.light);
     expect(await ThemeSettingsRepository(db).getThemeMode(), ThemeMode.light);
+  });
+
+  testWidgets('переключатель звука сохраняет настройку', (tester) async {
+    await pumpScreen(tester);
+    final repository = SoundSettingsRepository(db);
+    expect(await repository.isEnabled(), isTrue);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(await repository.isEnabled(), isFalse);
+  });
+
+  testWidgets('выбор звукового файла сохраняет путь', (tester) async {
+    String? picked;
+    final soundController = SoundSettingsController(
+      repository: SoundSettingsRepository(db),
+      pickFile: () async {
+        picked = '/sounds/custom.mp3';
+        return picked;
+      },
+    );
+    await pumpScreen(tester, soundController: soundController);
+
+    await tester.tap(find.text('Выбрать звук'));
+    await tester.pumpAndSettle();
+
+    expect(picked, '/sounds/custom.mp3');
+    expect(
+      await SoundSettingsRepository(db).soundFilePath(),
+      '/sounds/custom.mp3',
+    );
+    expect(find.text('Звук сохранён'), findsOneWidget);
+  });
+
+  testWidgets('сброс возвращает стандартный сигнал', (tester) async {
+    final repository = SoundSettingsRepository(db);
+    await repository.setSoundFile('/sounds/custom.mp3');
+    await pumpScreen(tester);
+
+    expect(find.text('/sounds/custom.mp3'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Вернуть стандартный сигнал'));
+    await tester.pumpAndSettle();
+
+    expect(await repository.soundFilePath(), isNull);
+    expect(find.text('Стандартный сигнал'), findsWidgets);
   });
 
   testWidgets('экспорт делится файлом и показывает статус', (tester) async {

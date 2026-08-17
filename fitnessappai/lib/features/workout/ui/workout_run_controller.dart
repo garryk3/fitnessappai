@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -20,7 +21,12 @@ class WorkoutRunController {
     required this.variant,
     DateTime Function()? clock,
     TimerFactory? timerFactory,
-  }) : workout = WorkoutController(clock: clock, timerFactory: timerFactory) {
+    SoundService? soundService,
+  }) : workout = WorkoutController(
+         clock: clock,
+         timerFactory: timerFactory,
+         soundService: soundService,
+       ) {
     _load();
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
@@ -147,6 +148,7 @@ void main() {
             workoutRepository: workoutRepo,
             mediaCache: MediaCache(),
             wakelockService: wakelock,
+            soundService: StubSoundService(),
           ),
         ),
         GoRoute(

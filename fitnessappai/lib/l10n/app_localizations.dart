@@ -196,6 +196,36 @@ abstract class AppLocalizations {
   /// **'Синхронизация'**
   String get settingsSyncSection;
 
+  /// No description provided for @settingsSoundSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук'**
+  String get settingsSoundSection;
+
+  /// No description provided for @soundEnabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук таймеров'**
+  String get soundEnabled;
+
+  /// No description provided for @soundPickFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать звук'**
+  String get soundPickFile;
+
+  /// No description provided for @soundReset.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуть стандартный сигнал'**
+  String get soundReset;
+
+  /// No description provided for @soundDefaultLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стандартный сигнал'**
+  String get soundDefaultLabel;
+
   /// No description provided for @settingsThemeSection.
   ///
   /// In ru, this message translates to:

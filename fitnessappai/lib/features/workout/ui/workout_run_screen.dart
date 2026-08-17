@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
@@ -63,6 +64,7 @@ class WorkoutRunScreen extends StatefulWidget {
     this.wakelockService = const WakelockPlusService(),
     this.clock,
     this.timerFactory,
+    this.soundService,
   });
 
   final int programDayId;
@@ -74,6 +76,7 @@ class WorkoutRunScreen extends StatefulWidget {
   final WakelockService wakelockService;
   final DateTime Function()? clock;
   final TimerFactory? timerFactory;
+  final SoundService? soundService;
 
   @override
   State<WorkoutRunScreen> createState() => _WorkoutRunScreenState();
@@ -96,6 +99,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
           widget.exerciseRepository ?? locator.get<ExerciseRepository>(),
       workoutRepository:
           widget.workoutRepository ?? locator.get<WorkoutRepository>(),
+      soundService: widget.soundService ?? locator.get<SoundService>(),
       clock: widget.clock,
       timerFactory: widget.timerFactory,
     );
