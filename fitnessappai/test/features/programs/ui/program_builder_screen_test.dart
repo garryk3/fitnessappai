@@ -276,6 +276,25 @@ void main() {
     expect(days[1].dayOfWeek, 5);
   });
 
+  testWidgets('редактирование активной программы не сбрасывает активность', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final created = await repository.create(program('Сплит', daysCount: 1), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final createdDays = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(createdDays.single.id!, exercise.id!);
+    await repository.setActive(created.id!);
+    expect((await repository.getActiveProgram())!.id, created.id);
+
+    await pumpBuilder(tester, programId: created.id);
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect((await repository.getActiveProgram())!.id, created.id);
+  });
+
   testWidgets(
     'наполнение дней не создаёт дубликат программы и сохраняет дни недели',
     (tester) async {
