@@ -85,6 +85,7 @@ class WorkoutController {
   WorkoutSessionContext? _context;
   WorkoutSetInput? _draft;
   DateTime? _startedAt;
+  DateTime? _restEndsAt;
   Timer? _restTimer;
   Timer? _holdTimer;
 
@@ -226,6 +227,7 @@ class WorkoutController {
     }
     _restTimer?.cancel();
     _restTimer = null;
+    _restEndsAt = null;
     restRemainingSeconds.value = null;
     sideRest.value = null;
     phase.value = WorkoutPhase.exercise;
@@ -240,6 +242,7 @@ class WorkoutController {
     }
     _restTimer?.cancel();
     _restTimer = null;
+    _restEndsAt = null;
     restRemainingSeconds.value = null;
     sideRest.value = null;
     currentSide.value = null;
@@ -307,13 +310,18 @@ class WorkoutController {
     }
     phase.value = WorkoutPhase.rest;
     final remainingSignal = side ? sideRest : restRemainingSeconds;
+    // Отсчёт ведётся от времени окончания по wall-clock: при уходе в сон и
+    // возврате первый тик корректно завершает отдых, а не продолжает счёт
+    // с прежнего значения (задача 14.8).
+    _restEndsAt = _clock().add(Duration(seconds: restSeconds));
     remainingSignal.value = restSeconds;
     _restTimer?.cancel();
     _restTimer = _timerFactory(const Duration(seconds: 1), (timer) {
-      final remaining = (remainingSignal.value ?? 0) - 1;
+      final remaining = _restEndsAt!.difference(_clock()).inSeconds;
       if (remaining <= 0) {
         timer.cancel();
         _restTimer = null;
+        _restEndsAt = null;
         remainingSignal.value = null;
         phase.value = WorkoutPhase.exercise;
         _prepareHoldTimer();
@@ -447,6 +455,7 @@ class WorkoutController {
   void _cancelTimers() {
     _restTimer?.cancel();
     _restTimer = null;
+    _restEndsAt = null;
     _holdTimer?.cancel();
     _holdTimer = null;
   }
