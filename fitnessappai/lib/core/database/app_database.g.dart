@@ -3399,8 +3399,25 @@ class $ProgramDaysTable extends ProgramDays
     requiredDuringInsert: false,
     $customConstraints: 'CHECK (day_of_week BETWEEN 1 AND 7)',
   );
+  static const VerificationMeta _warmupMinutesMeta = const VerificationMeta(
+    'warmupMinutes',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, programId, dayIndex, dayOfWeek];
+  late final GeneratedColumn<int> warmupMinutes = GeneratedColumn<int>(
+    'warmup_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    programId,
+    dayIndex,
+    dayOfWeek,
+    warmupMinutes,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3438,6 +3455,15 @@ class $ProgramDaysTable extends ProgramDays
         dayOfWeek.isAcceptableOrUnknown(data['day_of_week']!, _dayOfWeekMeta),
       );
     }
+    if (data.containsKey('warmup_minutes')) {
+      context.handle(
+        _warmupMinutesMeta,
+        warmupMinutes.isAcceptableOrUnknown(
+          data['warmup_minutes']!,
+          _warmupMinutesMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3463,6 +3489,10 @@ class $ProgramDaysTable extends ProgramDays
         DriftSqlType.int,
         data['${effectivePrefix}day_of_week'],
       ),
+      warmupMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}warmup_minutes'],
+      ),
     );
   }
 
@@ -3477,11 +3507,13 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
   final int programId;
   final int dayIndex;
   final int? dayOfWeek;
+  final int? warmupMinutes;
   const ProgramDayRow({
     required this.id,
     required this.programId,
     required this.dayIndex,
     this.dayOfWeek,
+    this.warmupMinutes,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3491,6 +3523,9 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
     map['day_index'] = Variable<int>(dayIndex);
     if (!nullToAbsent || dayOfWeek != null) {
       map['day_of_week'] = Variable<int>(dayOfWeek);
+    }
+    if (!nullToAbsent || warmupMinutes != null) {
+      map['warmup_minutes'] = Variable<int>(warmupMinutes);
     }
     return map;
   }
@@ -3503,6 +3538,9 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
       dayOfWeek: dayOfWeek == null && nullToAbsent
           ? const Value.absent()
           : Value(dayOfWeek),
+      warmupMinutes: warmupMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(warmupMinutes),
     );
   }
 
@@ -3516,6 +3554,7 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
       programId: serializer.fromJson<int>(json['programId']),
       dayIndex: serializer.fromJson<int>(json['dayIndex']),
       dayOfWeek: serializer.fromJson<int?>(json['dayOfWeek']),
+      warmupMinutes: serializer.fromJson<int?>(json['warmupMinutes']),
     );
   }
   @override
@@ -3526,6 +3565,7 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
       'programId': serializer.toJson<int>(programId),
       'dayIndex': serializer.toJson<int>(dayIndex),
       'dayOfWeek': serializer.toJson<int?>(dayOfWeek),
+      'warmupMinutes': serializer.toJson<int?>(warmupMinutes),
     };
   }
 
@@ -3534,11 +3574,15 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
     int? programId,
     int? dayIndex,
     Value<int?> dayOfWeek = const Value.absent(),
+    Value<int?> warmupMinutes = const Value.absent(),
   }) => ProgramDayRow(
     id: id ?? this.id,
     programId: programId ?? this.programId,
     dayIndex: dayIndex ?? this.dayIndex,
     dayOfWeek: dayOfWeek.present ? dayOfWeek.value : this.dayOfWeek,
+    warmupMinutes: warmupMinutes.present
+        ? warmupMinutes.value
+        : this.warmupMinutes,
   );
   ProgramDayRow copyWithCompanion(ProgramDaysCompanion data) {
     return ProgramDayRow(
@@ -3546,6 +3590,9 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
       programId: data.programId.present ? data.programId.value : this.programId,
       dayIndex: data.dayIndex.present ? data.dayIndex.value : this.dayIndex,
       dayOfWeek: data.dayOfWeek.present ? data.dayOfWeek.value : this.dayOfWeek,
+      warmupMinutes: data.warmupMinutes.present
+          ? data.warmupMinutes.value
+          : this.warmupMinutes,
     );
   }
 
@@ -3555,13 +3602,15 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
           ..write('id: $id, ')
           ..write('programId: $programId, ')
           ..write('dayIndex: $dayIndex, ')
-          ..write('dayOfWeek: $dayOfWeek')
+          ..write('dayOfWeek: $dayOfWeek, ')
+          ..write('warmupMinutes: $warmupMinutes')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, programId, dayIndex, dayOfWeek);
+  int get hashCode =>
+      Object.hash(id, programId, dayIndex, dayOfWeek, warmupMinutes);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3569,7 +3618,8 @@ class ProgramDayRow extends DataClass implements Insertable<ProgramDayRow> {
           other.id == this.id &&
           other.programId == this.programId &&
           other.dayIndex == this.dayIndex &&
-          other.dayOfWeek == this.dayOfWeek);
+          other.dayOfWeek == this.dayOfWeek &&
+          other.warmupMinutes == this.warmupMinutes);
 }
 
 class ProgramDaysCompanion extends UpdateCompanion<ProgramDayRow> {
@@ -3577,17 +3627,20 @@ class ProgramDaysCompanion extends UpdateCompanion<ProgramDayRow> {
   final Value<int> programId;
   final Value<int> dayIndex;
   final Value<int?> dayOfWeek;
+  final Value<int?> warmupMinutes;
   const ProgramDaysCompanion({
     this.id = const Value.absent(),
     this.programId = const Value.absent(),
     this.dayIndex = const Value.absent(),
     this.dayOfWeek = const Value.absent(),
+    this.warmupMinutes = const Value.absent(),
   });
   ProgramDaysCompanion.insert({
     this.id = const Value.absent(),
     required int programId,
     required int dayIndex,
     this.dayOfWeek = const Value.absent(),
+    this.warmupMinutes = const Value.absent(),
   }) : programId = Value(programId),
        dayIndex = Value(dayIndex);
   static Insertable<ProgramDayRow> custom({
@@ -3595,12 +3648,14 @@ class ProgramDaysCompanion extends UpdateCompanion<ProgramDayRow> {
     Expression<int>? programId,
     Expression<int>? dayIndex,
     Expression<int>? dayOfWeek,
+    Expression<int>? warmupMinutes,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (programId != null) 'program_id': programId,
       if (dayIndex != null) 'day_index': dayIndex,
       if (dayOfWeek != null) 'day_of_week': dayOfWeek,
+      if (warmupMinutes != null) 'warmup_minutes': warmupMinutes,
     });
   }
 
@@ -3609,12 +3664,14 @@ class ProgramDaysCompanion extends UpdateCompanion<ProgramDayRow> {
     Value<int>? programId,
     Value<int>? dayIndex,
     Value<int?>? dayOfWeek,
+    Value<int?>? warmupMinutes,
   }) {
     return ProgramDaysCompanion(
       id: id ?? this.id,
       programId: programId ?? this.programId,
       dayIndex: dayIndex ?? this.dayIndex,
       dayOfWeek: dayOfWeek ?? this.dayOfWeek,
+      warmupMinutes: warmupMinutes ?? this.warmupMinutes,
     );
   }
 
@@ -3633,6 +3690,9 @@ class ProgramDaysCompanion extends UpdateCompanion<ProgramDayRow> {
     if (dayOfWeek.present) {
       map['day_of_week'] = Variable<int>(dayOfWeek.value);
     }
+    if (warmupMinutes.present) {
+      map['warmup_minutes'] = Variable<int>(warmupMinutes.value);
+    }
     return map;
   }
 
@@ -3642,7 +3702,8 @@ class ProgramDaysCompanion extends UpdateCompanion<ProgramDayRow> {
           ..write('id: $id, ')
           ..write('programId: $programId, ')
           ..write('dayIndex: $dayIndex, ')
-          ..write('dayOfWeek: $dayOfWeek')
+          ..write('dayOfWeek: $dayOfWeek, ')
+          ..write('warmupMinutes: $warmupMinutes')
           ..write(')'))
         .toString();
   }
@@ -11189,6 +11250,7 @@ typedef $$ProgramDaysTableCreateCompanionBuilder =
       required int programId,
       required int dayIndex,
       Value<int?> dayOfWeek,
+      Value<int?> warmupMinutes,
     });
 typedef $$ProgramDaysTableUpdateCompanionBuilder =
     ProgramDaysCompanion Function({
@@ -11196,6 +11258,7 @@ typedef $$ProgramDaysTableUpdateCompanionBuilder =
       Value<int> programId,
       Value<int> dayIndex,
       Value<int?> dayOfWeek,
+      Value<int?> warmupMinutes,
     });
 
 final class $$ProgramDaysTableReferences
@@ -11323,6 +11386,11 @@ class $$ProgramDaysTableFilterComposer
 
   ColumnFilters<int> get dayOfWeek => $composableBuilder(
     column: $table.dayOfWeek,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get warmupMinutes => $composableBuilder(
+    column: $table.warmupMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11474,6 +11542,11 @@ class $$ProgramDaysTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get warmupMinutes => $composableBuilder(
+    column: $table.warmupMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ProgramsTableOrderingComposer get programId {
     final $$ProgramsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -11515,6 +11588,11 @@ class $$ProgramDaysTableAnnotationComposer
 
   GeneratedColumn<int> get dayOfWeek =>
       $composableBuilder(column: $table.dayOfWeek, builder: (column) => column);
+
+  GeneratedColumn<int> get warmupMinutes => $composableBuilder(
+    column: $table.warmupMinutes,
+    builder: (column) => column,
+  );
 
   $$ProgramsTableAnnotationComposer get programId {
     final $$ProgramsTableAnnotationComposer composer = $composerBuilder(
@@ -11679,11 +11757,13 @@ class $$ProgramDaysTableTableManager
                 Value<int> programId = const Value.absent(),
                 Value<int> dayIndex = const Value.absent(),
                 Value<int?> dayOfWeek = const Value.absent(),
+                Value<int?> warmupMinutes = const Value.absent(),
               }) => ProgramDaysCompanion(
                 id: id,
                 programId: programId,
                 dayIndex: dayIndex,
                 dayOfWeek: dayOfWeek,
+                warmupMinutes: warmupMinutes,
               ),
           createCompanionCallback:
               ({
@@ -11691,11 +11771,13 @@ class $$ProgramDaysTableTableManager
                 required int programId,
                 required int dayIndex,
                 Value<int?> dayOfWeek = const Value.absent(),
+                Value<int?> warmupMinutes = const Value.absent(),
               }) => ProgramDaysCompanion.insert(
                 id: id,
                 programId: programId,
                 dayIndex: dayIndex,
                 dayOfWeek: dayOfWeek,
+                warmupMinutes: warmupMinutes,
               ),
           withReferenceMapper: (p0) => p0
               .map(

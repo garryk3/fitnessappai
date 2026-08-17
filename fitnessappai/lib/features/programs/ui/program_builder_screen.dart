@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
@@ -30,20 +31,32 @@ class ProgramBuilderScreen extends StatefulWidget {
 
 /// Результат диалога настроек дня.
 class DaySettings {
-  const DaySettings({required this.dayOfWeek, required this.reminder});
+  const DaySettings({
+    required this.dayOfWeek,
+    required this.reminder,
+    required this.warmupMinutes,
+  });
 
   final int? dayOfWeek;
   final WorkoutReminder? reminder;
+  final int? warmupMinutes;
 }
 
 /// Черновик дня с уникальным стабильным ключом для реордера.
 class _DayDraft {
-  _DayDraft(this.key, {this.dayOfWeek, this.reminder, this.filled = false});
+  _DayDraft(
+    this.key, {
+    this.dayOfWeek,
+    this.reminder,
+    this.warmupMinutes,
+    this.filled = false,
+  });
 
   /// Идентификатор дня в БД (или отрицательный временный ключ для новых дней).
   final int key;
   int? dayOfWeek;
   WorkoutReminder? reminder;
+  int? warmupMinutes;
 
   /// Имеет ли день хотя бы одно основное упражнение.
   bool filled;
@@ -98,6 +111,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               _DayDraft(
                 day.day.id ?? _nextDayKey--,
                 dayOfWeek: day.day.dayOfWeek,
+                warmupMinutes: day.day.warmupMinutes,
                 filled: day.mainExercises.any((e) => !e.isAlternative),
               ),
           ]);
@@ -142,13 +156,17 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   Future<void> _openDaySettings(_DayDraft day) async {
     final selected = await showDialog<DaySettings>(
       context: context,
-      builder: (context) =>
-          _DaySettingsDialog(dayOfWeek: day.dayOfWeek, reminder: day.reminder),
+      builder: (context) => _DaySettingsDialog(
+        dayOfWeek: day.dayOfWeek,
+        reminder: day.reminder,
+        warmupMinutes: day.warmupMinutes,
+      ),
     );
     if (selected != null && mounted) {
       setState(() {
         day.dayOfWeek = selected.dayOfWeek;
         day.reminder = selected.reminder;
+        day.warmupMinutes = selected.warmupMinutes;
       });
     }
   }
@@ -294,7 +312,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     );
     final days = [
       for (var i = 0; i < _days.length; i++)
-        ProgramDay(programId: 0, dayIndex: i, dayOfWeek: _days[i].dayOfWeek),
+        ProgramDay(
+          programId: 0,
+          dayIndex: i,
+          dayOfWeek: _days[i].dayOfWeek,
+          warmupMinutes: _days[i].warmupMinutes,
+        ),
     ];
     final saved = _programId == null
         ? await _repository.create(program, days)
@@ -321,6 +344,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           savedDays[i].id!,
           dayOfWeek: _days[i].dayOfWeek,
           reminder: _days[i].reminder,
+          warmupMinutes: _days[i].warmupMinutes,
           filled: _days[i].filled,
         );
       }
@@ -343,7 +367,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     );
     final days = [
       for (var i = 0; i < _days.length; i++)
-        ProgramDay(programId: 0, dayIndex: i, dayOfWeek: _days[i].dayOfWeek),
+        ProgramDay(
+          programId: 0,
+          dayIndex: i,
+          dayOfWeek: _days[i].dayOfWeek,
+          warmupMinutes: _days[i].warmupMinutes,
+        ),
     ];
     final exercisesByDayIndex = await _loadExercisesByDayIndex();
     final result = ProgramValidator().validate(
@@ -525,7 +554,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
             child: const Icon(Icons.drag_indicator),
           ),
           title: Text(l10n.programBuilderDay(index + 1)),
-          subtitle: Text(_weekdayLabel(l10n, day.dayOfWeek)),
+          subtitle: Text(
+            _weekdayLabel(l10n, day.dayOfWeek) +
+                (day.warmupMinutes != null
+                    ? ' • ${l10n.programBuilderWarmupShort(day.warmupMinutes!)}'
+                    : ''),
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -548,10 +582,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 }
 
 class _DaySettingsDialog extends StatefulWidget {
-  const _DaySettingsDialog({this.dayOfWeek, this.reminder});
+  const _DaySettingsDialog({this.dayOfWeek, this.reminder, this.warmupMinutes});
 
   final int? dayOfWeek;
   final WorkoutReminder? reminder;
+  final int? warmupMinutes;
 
   @override
   State<_DaySettingsDialog> createState() => _DaySettingsDialogState();
@@ -561,16 +596,26 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
   late int? _selected;
   late bool _remindEnabled;
   late TimeOfDay _time;
+  late final TextEditingController _warmupController;
 
   @override
   void initState() {
     super.initState();
     _selected = widget.dayOfWeek;
+    _warmupController = TextEditingController(
+      text: widget.warmupMinutes?.toString() ?? '',
+    );
     final reminder = widget.reminder;
     _remindEnabled = reminder != null;
     _time = reminder != null
         ? TimeOfDay(hour: reminder.hour, minute: reminder.minute)
         : const TimeOfDay(hour: 9, minute: 0);
+  }
+
+  @override
+  void dispose() {
+    _warmupController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickTime() async {
@@ -614,6 +659,16 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
             }),
           ),
           const SizedBox(height: 8),
+          TextFormField(
+            controller: _warmupController,
+            decoration: InputDecoration(
+              labelText: l10n.programBuilderWarmupMinutes,
+              border: const OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.reminderToggle),
@@ -644,6 +699,9 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
           onPressed: () => Navigator.of(context).pop(
             DaySettings(
               dayOfWeek: _selected,
+              warmupMinutes: _warmupController.text.trim().isEmpty
+                  ? null
+                  : int.tryParse(_warmupController.text.trim()),
               reminder: _remindEnabled && hasWeekday
                   ? WorkoutReminder(
                       programDayId: 0,

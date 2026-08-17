@@ -21,6 +21,7 @@ import 'package:fitnessappai/features/settings/ui/settings_screen.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
+import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 
 /// Конфигурация маршрутов приложения.
@@ -128,6 +129,25 @@ class AppRouter {
           builder: (context, state) => WorkoutPrepareScreen(
             programDayId: int.parse(state.pathParameters['programDayId']!),
           ),
+        ),
+        GoRoute(
+          path: '/workout/warmup',
+          builder: (context, state) {
+            final dayId =
+                int.tryParse(state.uri.queryParameters['programDayId'] ?? '') ??
+                -1;
+            final seconds =
+                int.tryParse(state.uri.queryParameters['seconds'] ?? '') ?? 0;
+            final variant =
+                state.uri.queryParameters['variant'] == 'alternative'
+                ? WorkoutVariant.alternative
+                : WorkoutVariant.main;
+            return WorkoutWarmupScreen(
+              programDayId: dayId,
+              warmupSeconds: seconds,
+              variant: variant,
+            );
+          },
         ),
         GoRoute(
           path: '/workout/run',

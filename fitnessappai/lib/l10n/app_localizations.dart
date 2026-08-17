@@ -820,6 +820,18 @@ abstract class AppLocalizations {
   /// **'Настройка дня'**
   String get programBuilderDaySettings;
 
+  /// No description provided for @programBuilderWarmupMinutes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разминка, мин'**
+  String get programBuilderWarmupMinutes;
+
+  /// Короткая подпись разминки в тайле дня
+  ///
+  /// In ru, this message translates to:
+  /// **'разминка {minutes} мин'**
+  String programBuilderWarmupShort(int minutes);
+
   /// No description provided for @reminderToggle.
   ///
   /// In ru, this message translates to:
@@ -1017,6 +1029,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начать тренировку'**
   String get workoutPrepareStart;
+
+  /// No description provided for @workoutWarmup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разминка'**
+  String get workoutWarmup;
+
+  /// No description provided for @workoutWarmupDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разминка завершена'**
+  String get workoutWarmupDone;
+
+  /// No description provided for @workoutWarmupSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get workoutWarmupSkip;
+
+  /// Оставшееся время разминки
+  ///
+  /// In ru, this message translates to:
+  /// **'осталось {seconds} с'**
+  String workoutWarmupSecondsLeft(int seconds);
+
+  /// No description provided for @workoutWarmupStartWorkout.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать тренировку'**
+  String get workoutWarmupStartWorkout;
 
   /// No description provided for @workoutPrepareNotFound.
   ///

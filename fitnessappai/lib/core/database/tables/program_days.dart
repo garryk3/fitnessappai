@@ -14,4 +14,5 @@ class ProgramDays extends Table {
   IntColumn get dayOfWeek => integer().nullable().customConstraint(
     'CHECK (day_of_week BETWEEN 1 AND 7)',
   )();
+  IntColumn get warmupMinutes => integer().nullable()();
 }
