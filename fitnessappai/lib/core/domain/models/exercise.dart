@@ -13,6 +13,8 @@ class Exercise {
     this.animationPath,
     this.isCustom = false,
     this.hideOptional = false,
+    this.fixedWeight = false,
+    this.perSide = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -27,6 +29,8 @@ class Exercise {
   final String? animationPath;
   final bool isCustom;
   final bool hideOptional;
+  final bool fixedWeight;
+  final bool perSide;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -41,6 +45,8 @@ class Exercise {
     String? animationPath,
     bool? isCustom,
     bool? hideOptional,
+    bool? fixedWeight,
+    bool? perSide,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool clearId = false,
@@ -56,6 +62,8 @@ class Exercise {
       animationPath: animationPath ?? this.animationPath,
       isCustom: isCustom ?? this.isCustom,
       hideOptional: hideOptional ?? this.hideOptional,
+      fixedWeight: fixedWeight ?? this.fixedWeight,
+      perSide: perSide ?? this.perSide,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -75,6 +83,8 @@ class Exercise {
             other.animationPath == animationPath &&
             other.isCustom == isCustom &&
             other.hideOptional == hideOptional &&
+            other.fixedWeight == fixedWeight &&
+            other.perSide == perSide &&
             other.createdAt == createdAt &&
             other.updatedAt == updatedAt;
   }
@@ -92,6 +102,8 @@ class Exercise {
       animationPath,
       isCustom,
       hideOptional,
+      fixedWeight,
+      perSide,
       createdAt,
       updatedAt,
     );

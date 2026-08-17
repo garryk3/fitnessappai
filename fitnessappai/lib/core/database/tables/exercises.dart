@@ -19,6 +19,8 @@ class Exercises extends Table {
   TextColumn get animationPath => text().nullable()();
   BoolColumn get isCustom => boolean().withDefault(const Constant(false))();
   BoolColumn get hideOptional => boolean().withDefault(const Constant(false))();
+  BoolColumn get fixedWeight => boolean().withDefault(const Constant(false))();
+  BoolColumn get perSide => boolean().withDefault(const Constant(false))();
   IntColumn get createdAt => integer().map(const DateTimeConverter())();
   IntColumn get updatedAt => integer().map(const DateTimeConverter())();
 }

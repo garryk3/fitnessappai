@@ -25,5 +25,6 @@ class WorkoutSetResults extends Table {
   RealColumn get weightKg => real().nullable()();
   IntColumn get durationSeconds => integer().nullable()();
   RealColumn get distanceMeters => real().nullable()();
+  TextColumn get side => text().nullable()();
   IntColumn get completedAt => integer().map(const DateTimeConverter())();
 }

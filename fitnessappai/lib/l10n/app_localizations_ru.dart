@@ -344,6 +344,20 @@ class AppLocalizationsRu extends AppLocalizations {
       'Описание, техника и параметры не будут показываться при выполнении';
 
   @override
+  String get exerciseFormFixedWeight => 'Фиксированный вес';
+
+  @override
+  String get exerciseFormFixedWeightHelp =>
+      'Вес будет подставляться из параметров тренировки, но его можно изменить';
+
+  @override
+  String get exerciseFormPerSide => 'Выполнение по сторонам (левая/правая)';
+
+  @override
+  String get exerciseFormPerSideHelp =>
+      'Каждый подход выполняется на обе стороны с отдыхом между ними';
+
+  @override
   String get exerciseParams => 'Параметры упражнения';
 
   @override

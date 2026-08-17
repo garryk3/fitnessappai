@@ -996,6 +996,36 @@ class $ExercisesTable extends Exercises
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _fixedWeightMeta = const VerificationMeta(
+    'fixedWeight',
+  );
+  @override
+  late final GeneratedColumn<bool> fixedWeight = GeneratedColumn<bool>(
+    'fixed_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("fixed_weight" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _perSideMeta = const VerificationMeta(
+    'perSide',
+  );
+  @override
+  late final GeneratedColumn<bool> perSide = GeneratedColumn<bool>(
+    'per_side',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("per_side" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   late final GeneratedColumnWithTypeConverter<DateTime, int> createdAt =
       GeneratedColumn<int>(
@@ -1026,6 +1056,8 @@ class $ExercisesTable extends Exercises
     animationPath,
     isCustom,
     hideOptional,
+    fixedWeight,
+    perSide,
     createdAt,
     updatedAt,
   ];
@@ -1103,6 +1135,21 @@ class $ExercisesTable extends Exercises
         ),
       );
     }
+    if (data.containsKey('fixed_weight')) {
+      context.handle(
+        _fixedWeightMeta,
+        fixedWeight.isAcceptableOrUnknown(
+          data['fixed_weight']!,
+          _fixedWeightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('per_side')) {
+      context.handle(
+        _perSideMeta,
+        perSide.isAcceptableOrUnknown(data['per_side']!, _perSideMeta),
+      );
+    }
     return context;
   }
 
@@ -1156,6 +1203,14 @@ class $ExercisesTable extends Exercises
         DriftSqlType.bool,
         data['${effectivePrefix}hide_optional'],
       )!,
+      fixedWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}fixed_weight'],
+      )!,
+      perSide: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}per_side'],
+      )!,
       createdAt: $ExercisesTable.$convertercreatedAt.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.int,
@@ -1197,6 +1252,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
   final String? animationPath;
   final bool isCustom;
   final bool hideOptional;
+  final bool fixedWeight;
+  final bool perSide;
   final DateTime createdAt;
   final DateTime updatedAt;
   const ExerciseRow({
@@ -1210,6 +1267,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     this.animationPath,
     required this.isCustom,
     required this.hideOptional,
+    required this.fixedWeight,
+    required this.perSide,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1238,6 +1297,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     }
     map['is_custom'] = Variable<bool>(isCustom);
     map['hide_optional'] = Variable<bool>(hideOptional);
+    map['fixed_weight'] = Variable<bool>(fixedWeight);
+    map['per_side'] = Variable<bool>(perSide);
     {
       map['created_at'] = Variable<int>(
         $ExercisesTable.$convertercreatedAt.toSql(createdAt),
@@ -1267,6 +1328,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           : Value(animationPath),
       isCustom: Value(isCustom),
       hideOptional: Value(hideOptional),
+      fixedWeight: Value(fixedWeight),
+      perSide: Value(perSide),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1288,6 +1351,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       animationPath: serializer.fromJson<String?>(json['animationPath']),
       isCustom: serializer.fromJson<bool>(json['isCustom']),
       hideOptional: serializer.fromJson<bool>(json['hideOptional']),
+      fixedWeight: serializer.fromJson<bool>(json['fixedWeight']),
+      perSide: serializer.fromJson<bool>(json['perSide']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1306,6 +1371,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       'animationPath': serializer.toJson<String?>(animationPath),
       'isCustom': serializer.toJson<bool>(isCustom),
       'hideOptional': serializer.toJson<bool>(hideOptional),
+      'fixedWeight': serializer.toJson<bool>(fixedWeight),
+      'perSide': serializer.toJson<bool>(perSide),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1322,6 +1389,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     Value<String?> animationPath = const Value.absent(),
     bool? isCustom,
     bool? hideOptional,
+    bool? fixedWeight,
+    bool? perSide,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => ExerciseRow(
@@ -1339,6 +1408,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
         : this.animationPath,
     isCustom: isCustom ?? this.isCustom,
     hideOptional: hideOptional ?? this.hideOptional,
+    fixedWeight: fixedWeight ?? this.fixedWeight,
+    perSide: perSide ?? this.perSide,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1366,6 +1437,10 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       hideOptional: data.hideOptional.present
           ? data.hideOptional.value
           : this.hideOptional,
+      fixedWeight: data.fixedWeight.present
+          ? data.fixedWeight.value
+          : this.fixedWeight,
+      perSide: data.perSide.present ? data.perSide.value : this.perSide,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1384,6 +1459,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           ..write('animationPath: $animationPath, ')
           ..write('isCustom: $isCustom, ')
           ..write('hideOptional: $hideOptional, ')
+          ..write('fixedWeight: $fixedWeight, ')
+          ..write('perSide: $perSide, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1402,6 +1479,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     animationPath,
     isCustom,
     hideOptional,
+    fixedWeight,
+    perSide,
     createdAt,
     updatedAt,
   );
@@ -1419,6 +1498,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           other.animationPath == this.animationPath &&
           other.isCustom == this.isCustom &&
           other.hideOptional == this.hideOptional &&
+          other.fixedWeight == this.fixedWeight &&
+          other.perSide == this.perSide &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1434,6 +1515,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
   final Value<String?> animationPath;
   final Value<bool> isCustom;
   final Value<bool> hideOptional;
+  final Value<bool> fixedWeight;
+  final Value<bool> perSide;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const ExercisesCompanion({
@@ -1447,6 +1530,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     this.animationPath = const Value.absent(),
     this.isCustom = const Value.absent(),
     this.hideOptional = const Value.absent(),
+    this.fixedWeight = const Value.absent(),
+    this.perSide = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -1461,6 +1546,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     this.animationPath = const Value.absent(),
     this.isCustom = const Value.absent(),
     this.hideOptional = const Value.absent(),
+    this.fixedWeight = const Value.absent(),
+    this.perSide = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : name = Value(name),
@@ -1478,6 +1565,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     Expression<String>? animationPath,
     Expression<bool>? isCustom,
     Expression<bool>? hideOptional,
+    Expression<bool>? fixedWeight,
+    Expression<bool>? perSide,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
   }) {
@@ -1492,6 +1581,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
       if (animationPath != null) 'animation_path': animationPath,
       if (isCustom != null) 'is_custom': isCustom,
       if (hideOptional != null) 'hide_optional': hideOptional,
+      if (fixedWeight != null) 'fixed_weight': fixedWeight,
+      if (perSide != null) 'per_side': perSide,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -1508,6 +1599,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     Value<String?>? animationPath,
     Value<bool>? isCustom,
     Value<bool>? hideOptional,
+    Value<bool>? fixedWeight,
+    Value<bool>? perSide,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -1522,6 +1615,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
       animationPath: animationPath ?? this.animationPath,
       isCustom: isCustom ?? this.isCustom,
       hideOptional: hideOptional ?? this.hideOptional,
+      fixedWeight: fixedWeight ?? this.fixedWeight,
+      perSide: perSide ?? this.perSide,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -1564,6 +1659,12 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     if (hideOptional.present) {
       map['hide_optional'] = Variable<bool>(hideOptional.value);
     }
+    if (fixedWeight.present) {
+      map['fixed_weight'] = Variable<bool>(fixedWeight.value);
+    }
+    if (perSide.present) {
+      map['per_side'] = Variable<bool>(perSide.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<int>(
         $ExercisesTable.$convertercreatedAt.toSql(createdAt.value),
@@ -1590,6 +1691,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
           ..write('animationPath: $animationPath, ')
           ..write('isCustom: $isCustom, ')
           ..write('hideOptional: $hideOptional, ')
+          ..write('fixedWeight: $fixedWeight, ')
+          ..write('perSide: $perSide, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -5485,6 +5588,15 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sideMeta = const VerificationMeta('side');
+  @override
+  late final GeneratedColumn<String> side = GeneratedColumn<String>(
+    'side',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   late final GeneratedColumnWithTypeConverter<DateTime, int> completedAt =
       GeneratedColumn<int>(
@@ -5506,6 +5618,7 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
     weightKg,
     durationSeconds,
     distanceMeters,
+    side,
     completedAt,
   ];
   @override
@@ -5586,6 +5699,12 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
         ),
       );
     }
+    if (data.containsKey('side')) {
+      context.handle(
+        _sideMeta,
+        side.isAcceptableOrUnknown(data['side']!, _sideMeta),
+      );
+    }
     return context;
   }
 
@@ -5637,6 +5756,10 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
         DriftSqlType.double,
         data['${effectivePrefix}distance_meters'],
       ),
+      side: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}side'],
+      ),
       completedAt: $WorkoutSetResultsTable.$convertercompletedAt.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.int,
@@ -5669,6 +5792,7 @@ class WorkoutSetResultRow extends DataClass
   final double? weightKg;
   final int? durationSeconds;
   final double? distanceMeters;
+  final String? side;
   final DateTime completedAt;
   const WorkoutSetResultRow({
     required this.id,
@@ -5681,6 +5805,7 @@ class WorkoutSetResultRow extends DataClass
     this.weightKg,
     this.durationSeconds,
     this.distanceMeters,
+    this.side,
     required this.completedAt,
   });
   @override
@@ -5710,6 +5835,9 @@ class WorkoutSetResultRow extends DataClass
     if (!nullToAbsent || distanceMeters != null) {
       map['distance_meters'] = Variable<double>(distanceMeters);
     }
+    if (!nullToAbsent || side != null) {
+      map['side'] = Variable<String>(side);
+    }
     {
       map['completed_at'] = Variable<int>(
         $WorkoutSetResultsTable.$convertercompletedAt.toSql(completedAt),
@@ -5738,6 +5866,7 @@ class WorkoutSetResultRow extends DataClass
       distanceMeters: distanceMeters == null && nullToAbsent
           ? const Value.absent()
           : Value(distanceMeters),
+      side: side == null && nullToAbsent ? const Value.absent() : Value(side),
       completedAt: Value(completedAt),
     );
   }
@@ -5758,6 +5887,7 @@ class WorkoutSetResultRow extends DataClass
       weightKg: serializer.fromJson<double?>(json['weightKg']),
       durationSeconds: serializer.fromJson<int?>(json['durationSeconds']),
       distanceMeters: serializer.fromJson<double?>(json['distanceMeters']),
+      side: serializer.fromJson<String?>(json['side']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
     );
   }
@@ -5775,6 +5905,7 @@ class WorkoutSetResultRow extends DataClass
       'weightKg': serializer.toJson<double?>(weightKg),
       'durationSeconds': serializer.toJson<int?>(durationSeconds),
       'distanceMeters': serializer.toJson<double?>(distanceMeters),
+      'side': serializer.toJson<String?>(side),
       'completedAt': serializer.toJson<DateTime>(completedAt),
     };
   }
@@ -5790,6 +5921,7 @@ class WorkoutSetResultRow extends DataClass
     Value<double?> weightKg = const Value.absent(),
     Value<int?> durationSeconds = const Value.absent(),
     Value<double?> distanceMeters = const Value.absent(),
+    Value<String?> side = const Value.absent(),
     DateTime? completedAt,
   }) => WorkoutSetResultRow(
     id: id ?? this.id,
@@ -5806,6 +5938,7 @@ class WorkoutSetResultRow extends DataClass
     distanceMeters: distanceMeters.present
         ? distanceMeters.value
         : this.distanceMeters,
+    side: side.present ? side.value : this.side,
     completedAt: completedAt ?? this.completedAt,
   );
   WorkoutSetResultRow copyWithCompanion(WorkoutSetResultsCompanion data) {
@@ -5830,6 +5963,7 @@ class WorkoutSetResultRow extends DataClass
       distanceMeters: data.distanceMeters.present
           ? data.distanceMeters.value
           : this.distanceMeters,
+      side: data.side.present ? data.side.value : this.side,
       completedAt: data.completedAt.present
           ? data.completedAt.value
           : this.completedAt,
@@ -5849,6 +5983,7 @@ class WorkoutSetResultRow extends DataClass
           ..write('weightKg: $weightKg, ')
           ..write('durationSeconds: $durationSeconds, ')
           ..write('distanceMeters: $distanceMeters, ')
+          ..write('side: $side, ')
           ..write('completedAt: $completedAt')
           ..write(')'))
         .toString();
@@ -5866,6 +6001,7 @@ class WorkoutSetResultRow extends DataClass
     weightKg,
     durationSeconds,
     distanceMeters,
+    side,
     completedAt,
   );
   @override
@@ -5882,6 +6018,7 @@ class WorkoutSetResultRow extends DataClass
           other.weightKg == this.weightKg &&
           other.durationSeconds == this.durationSeconds &&
           other.distanceMeters == this.distanceMeters &&
+          other.side == this.side &&
           other.completedAt == this.completedAt);
 }
 
@@ -5896,6 +6033,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
   final Value<double?> weightKg;
   final Value<int?> durationSeconds;
   final Value<double?> distanceMeters;
+  final Value<String?> side;
   final Value<DateTime> completedAt;
   const WorkoutSetResultsCompanion({
     this.id = const Value.absent(),
@@ -5908,6 +6046,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     this.weightKg = const Value.absent(),
     this.durationSeconds = const Value.absent(),
     this.distanceMeters = const Value.absent(),
+    this.side = const Value.absent(),
     this.completedAt = const Value.absent(),
   });
   WorkoutSetResultsCompanion.insert({
@@ -5921,6 +6060,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     this.weightKg = const Value.absent(),
     this.durationSeconds = const Value.absent(),
     this.distanceMeters = const Value.absent(),
+    this.side = const Value.absent(),
     required DateTime completedAt,
   }) : sessionId = Value(sessionId),
        exerciseName = Value(exerciseName),
@@ -5938,6 +6078,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     Expression<double>? weightKg,
     Expression<int>? durationSeconds,
     Expression<double>? distanceMeters,
+    Expression<String>? side,
     Expression<int>? completedAt,
   }) {
     return RawValuesInsertable({
@@ -5951,6 +6092,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
       if (weightKg != null) 'weight_kg': weightKg,
       if (durationSeconds != null) 'duration_seconds': durationSeconds,
       if (distanceMeters != null) 'distance_meters': distanceMeters,
+      if (side != null) 'side': side,
       if (completedAt != null) 'completed_at': completedAt,
     });
   }
@@ -5966,6 +6108,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     Value<double?>? weightKg,
     Value<int?>? durationSeconds,
     Value<double?>? distanceMeters,
+    Value<String?>? side,
     Value<DateTime>? completedAt,
   }) {
     return WorkoutSetResultsCompanion(
@@ -5979,6 +6122,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
       weightKg: weightKg ?? this.weightKg,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       distanceMeters: distanceMeters ?? this.distanceMeters,
+      side: side ?? this.side,
       completedAt: completedAt ?? this.completedAt,
     );
   }
@@ -6020,6 +6164,9 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     if (distanceMeters.present) {
       map['distance_meters'] = Variable<double>(distanceMeters.value);
     }
+    if (side.present) {
+      map['side'] = Variable<String>(side.value);
+    }
     if (completedAt.present) {
       map['completed_at'] = Variable<int>(
         $WorkoutSetResultsTable.$convertercompletedAt.toSql(completedAt.value),
@@ -6041,6 +6188,7 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
           ..write('weightKg: $weightKg, ')
           ..write('durationSeconds: $durationSeconds, ')
           ..write('distanceMeters: $distanceMeters, ')
+          ..write('side: $side, ')
           ..write('completedAt: $completedAt')
           ..write(')'))
         .toString();
@@ -8442,6 +8590,8 @@ typedef $$ExercisesTableCreateCompanionBuilder =
       Value<String?> animationPath,
       Value<bool> isCustom,
       Value<bool> hideOptional,
+      Value<bool> fixedWeight,
+      Value<bool> perSide,
       required DateTime createdAt,
       required DateTime updatedAt,
     });
@@ -8457,6 +8607,8 @@ typedef $$ExercisesTableUpdateCompanionBuilder =
       Value<String?> animationPath,
       Value<bool> isCustom,
       Value<bool> hideOptional,
+      Value<bool> fixedWeight,
+      Value<bool> perSide,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -8614,6 +8766,16 @@ class $$ExercisesTableFilterComposer
 
   ColumnFilters<bool> get hideOptional => $composableBuilder(
     column: $table.hideOptional,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get fixedWeight => $composableBuilder(
+    column: $table.fixedWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get perSide => $composableBuilder(
+    column: $table.perSide,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8791,6 +8953,16 @@ class $$ExercisesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get fixedWeight => $composableBuilder(
+    column: $table.fixedWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get perSide => $composableBuilder(
+    column: $table.perSide,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -8853,6 +9025,14 @@ class $$ExercisesTableAnnotationComposer
     column: $table.hideOptional,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get fixedWeight => $composableBuilder(
+    column: $table.fixedWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get perSide =>
+      $composableBuilder(column: $table.perSide, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<DateTime, int> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -9008,6 +9188,8 @@ class $$ExercisesTableTableManager
                 Value<String?> animationPath = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
                 Value<bool> hideOptional = const Value.absent(),
+                Value<bool> fixedWeight = const Value.absent(),
+                Value<bool> perSide = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ExercisesCompanion(
@@ -9021,6 +9203,8 @@ class $$ExercisesTableTableManager
                 animationPath: animationPath,
                 isCustom: isCustom,
                 hideOptional: hideOptional,
+                fixedWeight: fixedWeight,
+                perSide: perSide,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -9036,6 +9220,8 @@ class $$ExercisesTableTableManager
                 Value<String?> animationPath = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
                 Value<bool> hideOptional = const Value.absent(),
+                Value<bool> fixedWeight = const Value.absent(),
+                Value<bool> perSide = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
               }) => ExercisesCompanion.insert(
@@ -9049,6 +9235,8 @@ class $$ExercisesTableTableManager
                 animationPath: animationPath,
                 isCustom: isCustom,
                 hideOptional: hideOptional,
+                fixedWeight: fixedWeight,
+                perSide: perSide,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -13456,6 +13644,7 @@ typedef $$WorkoutSetResultsTableCreateCompanionBuilder =
       Value<double?> weightKg,
       Value<int?> durationSeconds,
       Value<double?> distanceMeters,
+      Value<String?> side,
       required DateTime completedAt,
     });
 typedef $$WorkoutSetResultsTableUpdateCompanionBuilder =
@@ -13470,6 +13659,7 @@ typedef $$WorkoutSetResultsTableUpdateCompanionBuilder =
       Value<double?> weightKg,
       Value<int?> durationSeconds,
       Value<double?> distanceMeters,
+      Value<String?> side,
       Value<DateTime> completedAt,
     });
 
@@ -13569,6 +13759,11 @@ class $$WorkoutSetResultsTableFilterComposer
 
   ColumnFilters<double> get distanceMeters => $composableBuilder(
     column: $table.distanceMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get side => $composableBuilder(
+    column: $table.side,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13674,6 +13869,11 @@ class $$WorkoutSetResultsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get side => $composableBuilder(
+    column: $table.side,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get completedAt => $composableBuilder(
     column: $table.completedAt,
     builder: (column) => ColumnOrderings(column),
@@ -13767,6 +13967,9 @@ class $$WorkoutSetResultsTableAnnotationComposer
     column: $table.distanceMeters,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get side =>
+      $composableBuilder(column: $table.side, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<DateTime, int> get completedAt =>
       $composableBuilder(
@@ -13864,6 +14067,7 @@ class $$WorkoutSetResultsTableTableManager
                 Value<double?> weightKg = const Value.absent(),
                 Value<int?> durationSeconds = const Value.absent(),
                 Value<double?> distanceMeters = const Value.absent(),
+                Value<String?> side = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
               }) => WorkoutSetResultsCompanion(
                 id: id,
@@ -13876,6 +14080,7 @@ class $$WorkoutSetResultsTableTableManager
                 weightKg: weightKg,
                 durationSeconds: durationSeconds,
                 distanceMeters: distanceMeters,
+                side: side,
                 completedAt: completedAt,
               ),
           createCompanionCallback:
@@ -13890,6 +14095,7 @@ class $$WorkoutSetResultsTableTableManager
                 Value<double?> weightKg = const Value.absent(),
                 Value<int?> durationSeconds = const Value.absent(),
                 Value<double?> distanceMeters = const Value.absent(),
+                Value<String?> side = const Value.absent(),
                 required DateTime completedAt,
               }) => WorkoutSetResultsCompanion.insert(
                 id: id,
@@ -13902,6 +14108,7 @@ class $$WorkoutSetResultsTableTableManager
                 weightKg: weightKg,
                 durationSeconds: durationSeconds,
                 distanceMeters: distanceMeters,
+                side: side,
                 completedAt: completedAt,
               ),
           withReferenceMapper: (p0) => p0

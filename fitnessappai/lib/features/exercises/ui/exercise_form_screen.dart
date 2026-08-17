@@ -53,6 +53,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   bool _saving = false;
   bool _isCustom = true;
   bool _hideOptional = false;
+  bool _fixedWeight = false;
+  bool _perSide = false;
   DateTime? _createdAt;
 
   List<MuscleGroup> _allMuscles = const [];
@@ -117,6 +119,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     _animationPath = exercise.animationPath;
     _isCustom = exercise.isCustom;
     _hideOptional = exercise.hideOptional;
+    _fixedWeight = exercise.fixedWeight;
+    _perSide = exercise.perSide;
     _createdAt = exercise.createdAt;
     for (final mistake in exercise.commonMistakes) {
       _mistakeControllers.add(TextEditingController(text: mistake));
@@ -212,6 +216,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         animationPath: _animationPath,
         isCustom: _isCustom,
         hideOptional: _hideOptional,
+        fixedWeight: _fixedWeight,
+        perSide: _perSide,
         createdAt: _createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -284,6 +290,10 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   _animationEditor(l10n),
                   const SizedBox(height: 16),
                   _hideOptionalField(l10n),
+                  const SizedBox(height: 8),
+                  _fixedWeightField(l10n),
+                  const SizedBox(height: 8),
+                  _perSideField(l10n),
                 ],
               ),
             ),
@@ -666,6 +676,28 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
       onChanged: (value) => setState(() => _hideOptional = value ?? false),
       title: Text(l10n.exerciseFormHideOptional),
       subtitle: Text(l10n.exerciseFormHideOptionalHelp),
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+    );
+  }
+
+  Widget _fixedWeightField(AppLocalizations l10n) {
+    return CheckboxListTile(
+      value: _fixedWeight,
+      onChanged: (value) => setState(() => _fixedWeight = value ?? false),
+      title: Text(l10n.exerciseFormFixedWeight),
+      subtitle: Text(l10n.exerciseFormFixedWeightHelp),
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+    );
+  }
+
+  Widget _perSideField(AppLocalizations l10n) {
+    return CheckboxListTile(
+      value: _perSide,
+      onChanged: (value) => setState(() => _perSide = value ?? false),
+      title: Text(l10n.exerciseFormPerSide),
+      subtitle: Text(l10n.exerciseFormPerSideHelp),
       contentPadding: EdgeInsets.zero,
       controlAffinity: ListTileControlAffinity.leading,
     );
