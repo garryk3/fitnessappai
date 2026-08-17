@@ -231,6 +231,7 @@ class WorkoutRepository {
         weightKg: Value(r.weightKg),
         durationSeconds: Value(r.durationSeconds),
         distanceMeters: Value(r.distanceMeters),
+        side: Value(r.side),
         completedAt: r.completedAt,
       );
 
@@ -258,6 +259,7 @@ class WorkoutRepository {
     weightKg: row.weightKg,
     durationSeconds: row.durationSeconds,
     distanceMeters: row.distanceMeters,
+    side: row.side,
     completedAt: row.completedAt,
   );
 

@@ -56,6 +56,7 @@ void main() {
     double? weightKg = 20,
     int? durationSeconds,
     double? distanceMeters,
+    String? side,
   }) => WorkoutSetResult(
     sessionId: 0,
     exerciseId: null,
@@ -66,6 +67,7 @@ void main() {
     weightKg: weightKg,
     durationSeconds: durationSeconds,
     distanceMeters: distanceMeters,
+    side: side,
     completedAt: DateTime(2026, 8, 10, 18, 5),
   );
 
@@ -178,6 +180,22 @@ void main() {
     expect(find.text('1. 3 км × 15 мин'), findsOneWidget);
     expect(find.text('3. 15 повт'), findsOneWidget);
     expect(find.textContaining('40 мин'), findsOneWidget);
+  });
+
+  testWidgets('результаты «по сторонам» помечаются л/п', (tester) async {
+    await workoutRepo
+        .saveSession(session(performedDate: DateTime(2026, 8, 10)), [
+          setResult(setIndex: 1, side: 'left', reps: 8, weightKg: 20),
+          setResult(setIndex: 1, side: 'right', reps: 6, weightKg: 20),
+          setResult(setIndex: 2, side: 'left', reps: 10, weightKg: 20),
+        ]);
+    await pumpHistory(tester);
+    await tester.tap(find.text('База'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1л. 8 повт × 20 кг'), findsOneWidget);
+    expect(find.text('1п. 6 повт × 20 кг'), findsOneWidget);
+    expect(find.text('2л. 10 повт × 20 кг'), findsOneWidget);
   });
 
   testWidgets('пустая история показывает сообщение', (tester) async {

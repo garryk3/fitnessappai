@@ -65,6 +65,13 @@ class WorkoutController {
   final Signal<List<WorkoutSetResult>> results = Signal(<WorkoutSetResult>[]);
   final Signal<int?> restRemainingSeconds = Signal(null);
 
+  /// Текущая сторона для упражнения «по сторонам»: null — упражнение обычное
+  /// или обе стороны выполнены; 'right' — правая сторона ещё не выполнена.
+  final Signal<String?> currentSide = Signal(null);
+
+  /// Остаток отдыха между сторонами (null — отдых не идёт).
+  final Signal<int?> sideRest = Signal(null);
+
   /// Время удержания планки, прошедшее с начала отсчёта (0 — не запущен).
   final Signal<int> holdElapsedSeconds = Signal(0);
 
@@ -128,6 +135,8 @@ class WorkoutController {
     completedSets.value = 0;
     results.value = [];
     restRemainingSeconds.value = null;
+    currentSide.value = null;
+    sideRest.value = null;
     _prepareHoldTimer();
   }
 
@@ -163,8 +172,21 @@ class WorkoutController {
     holdTargetSeconds.value = null;
     _draft = null;
 
-    results.value = [...results.value, _buildResult(exercise, input, _clock())];
+    final side = _currentSideFor(exercise);
+    results.value = [
+      ...results.value,
+      _buildResult(exercise, input.copyWith(side: side), _clock()),
+    ];
+
+    if (side == 'left') {
+      // Левая сторона выполнена: отдых между сторонами, затем правая.
+      currentSide.value = 'right';
+      _startRest(exercise.restSeconds, side: true);
+      return;
+    }
+
     completedSets.value++;
+    currentSide.value = null;
 
     if (currentSet.value < exercise.sets) {
       currentSet.value++;
@@ -177,6 +199,15 @@ class WorkoutController {
     } else {
       phase.value = WorkoutPhase.finished;
     }
+  }
+
+  /// Сторона текущего подхода: для упражнений «по сторонам» — первая
+  /// (левая) или уже назначенная [currentSide]; для остальных — null.
+  String? _currentSideFor(WorkoutExercise exercise) {
+    if (!exercise.exercise.perSide) {
+      return null;
+    }
+    return currentSide.value ?? 'left';
   }
 
   /// Начинает отдых текущего упражнения (если он задан).
@@ -196,6 +227,7 @@ class WorkoutController {
     _restTimer?.cancel();
     _restTimer = null;
     restRemainingSeconds.value = null;
+    sideRest.value = null;
     phase.value = WorkoutPhase.exercise;
     _prepareHoldTimer();
   }
@@ -209,6 +241,8 @@ class WorkoutController {
     _restTimer?.cancel();
     _restTimer = null;
     restRemainingSeconds.value = null;
+    sideRest.value = null;
+    currentSide.value = null;
     currentExerciseIndex.value++;
     currentSet.value = 1;
     phase.value = WorkoutPhase.exercise;
@@ -254,6 +288,8 @@ class WorkoutController {
     completedSets.value = 0;
     results.value = [];
     restRemainingSeconds.value = null;
+    currentSide.value = null;
+    sideRest.value = null;
     holdRunning.value = false;
     holdElapsedSeconds.value = 0;
     holdTargetSeconds.value = null;
@@ -263,26 +299,27 @@ class WorkoutController {
     _cancelTimers();
   }
 
-  void _startRest(int restSeconds) {
+  void _startRest(int restSeconds, {bool side = false}) {
     if (restSeconds <= 0) {
       phase.value = WorkoutPhase.exercise;
       _prepareHoldTimer();
       return;
     }
     phase.value = WorkoutPhase.rest;
-    restRemainingSeconds.value = restSeconds;
+    final remainingSignal = side ? sideRest : restRemainingSeconds;
+    remainingSignal.value = restSeconds;
     _restTimer?.cancel();
     _restTimer = _timerFactory(const Duration(seconds: 1), (timer) {
-      final remaining = (restRemainingSeconds.value ?? 0) - 1;
+      final remaining = (remainingSignal.value ?? 0) - 1;
       if (remaining <= 0) {
         timer.cancel();
         _restTimer = null;
-        restRemainingSeconds.value = null;
+        remainingSignal.value = null;
         phase.value = WorkoutPhase.exercise;
         _prepareHoldTimer();
         _soundService?.playCompletion();
       } else {
-        restRemainingSeconds.value = remaining;
+        remainingSignal.value = remaining;
       }
     });
   }
@@ -341,6 +378,7 @@ class WorkoutController {
           setIndex: currentSet.value,
           reps: input.reps,
           weightKg: input.weightKg,
+          side: input.side,
           completedAt: now,
         );
       case ExerciseType.bodyweight:
@@ -351,6 +389,7 @@ class WorkoutController {
           exerciseType: exercise.type,
           setIndex: currentSet.value,
           reps: input.reps,
+          side: input.side,
           completedAt: now,
         );
       case ExerciseType.plank:
@@ -361,6 +400,7 @@ class WorkoutController {
           exerciseType: exercise.type,
           setIndex: currentSet.value,
           durationSeconds: input.durationSeconds,
+          side: input.side,
           completedAt: now,
         );
       case ExerciseType.running:
@@ -372,6 +412,7 @@ class WorkoutController {
           setIndex: currentSet.value,
           durationSeconds: input.durationSeconds,
           distanceMeters: input.distanceMeters,
+          side: input.side,
           completedAt: now,
         );
     }
