@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -11,19 +13,25 @@ typedef SyncServiceFactory = SyncService Function();
 typedef SyncFilePicker = Future<String?> Function();
 typedef SyncFileShare = Future<void> Function(String filePath);
 
+/// Возвращает `true`, если файл сохранён пользователем, `false` — при отмене.
+typedef SyncFileSave = Future<bool> Function(String filePath);
+
 /// Управляет экраном «Синхронизация»: экспорт, импорт и статус операции.
 class SyncController {
   SyncController({
     SyncServiceFactory? syncServiceFactory,
     SyncFilePicker? pickFile,
     SyncFileShare? shareFile,
+    SyncFileSave? saveFile,
   }) : _service = syncServiceFactory ?? _defaultService,
        _pickFile = pickFile ?? _defaultPick,
-       _shareFile = shareFile ?? _defaultShare;
+       _shareFile = shareFile ?? _defaultShare,
+       _saveFile = saveFile ?? _defaultSave;
 
   final SyncServiceFactory _service;
   final SyncFilePicker _pickFile;
   final SyncFileShare _shareFile;
+  final SyncFileSave _saveFile;
 
   /// Сервис берётся заново при каждом действии, т.к. после импорта БД
   /// контейнер DI пересоздаётся.
@@ -45,6 +53,29 @@ class SyncController {
       statusText.value = 'Резервная копия создана и отправлена';
       hasError.value = false;
       return true;
+    } catch (error) {
+      statusText.value = _operationError('Ошибка экспорта', error);
+      hasError.value = true;
+      return false;
+    } finally {
+      isBusy.value = false;
+    }
+  }
+
+  /// Экспортирует копию БД и сохраняет её в файловую систему.
+  Future<bool> exportDatabaseToFile() async {
+    if (isBusy.value) {
+      return false;
+    }
+    isBusy.value = true;
+    try {
+      final path = await _syncService.export();
+      final saved = await _saveFile(path);
+      statusText.value = saved
+          ? 'Резервная копия сохранена'
+          : 'Сохранение отменено';
+      hasError.value = false;
+      return saved;
     } catch (error) {
       statusText.value = _operationError('Ошибка экспорта', error);
       hasError.value = true;
@@ -113,5 +144,17 @@ class SyncController {
 
   static Future<void> _defaultShare(String filePath) async {
     await SharePlus.instance.share(ShareParams(files: [XFile(filePath)]));
+  }
+
+  static Future<bool> _defaultSave(String filePath) async {
+    final destination = await FilePicker.platform.saveFile(
+      dialogTitle: 'Сохранение резервной копии',
+      fileName: 'fitnessappai_backup.sqlite',
+    );
+    if (destination == null) {
+      return false;
+    }
+    await File(filePath).copy(destination);
+    return true;
   }
 }

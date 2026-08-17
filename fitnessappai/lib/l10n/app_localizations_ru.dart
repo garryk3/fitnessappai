@@ -794,7 +794,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncCloudComing => 'Облачная синхронизация появится позже.';
 
   @override
-  String get syncExport => 'Экспортировать БД';
+  String get syncShare => 'Поделиться';
+
+  @override
+  String get syncSaveFile => 'Сохранить в файлы';
 
   @override
   String get syncImport => 'Импортировать БД';

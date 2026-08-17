@@ -1504,11 +1504,17 @@ abstract class AppLocalizations {
   /// **'Облачная синхронизация появится позже.'**
   String get syncCloudComing;
 
-  /// No description provided for @syncExport.
+  /// No description provided for @syncShare.
   ///
   /// In ru, this message translates to:
-  /// **'Экспортировать БД'**
-  String get syncExport;
+  /// **'Поделиться'**
+  String get syncShare;
+
+  /// No description provided for @syncSaveFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить в файлы'**
+  String get syncSaveFile;
 
   /// No description provided for @syncImport.
   ///

@@ -55,6 +55,7 @@ void main() {
     SyncService? syncService,
     Future<String?> Function()? pickFile,
     Future<void> Function(String path)? shareFile,
+    Future<bool> Function(String path)? saveFile,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1.0;
@@ -68,6 +69,7 @@ void main() {
           (path) async {
             sharedPath = path;
           },
+      saveFile: saveFile ?? (_) async => true,
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -93,7 +95,9 @@ void main() {
     expect(find.text('Тёмная'), findsOneWidget);
     expect(find.text('Светлая'), findsOneWidget);
     expect(find.byType(SegmentedButton<ThemeMode>), findsOneWidget);
-    expect(find.text('Экспортировать БД'), findsOneWidget);
+    expect(find.text('Экспортировать БД'), findsNothing);
+    expect(find.text('Поделиться'), findsOneWidget);
+    expect(find.text('Сохранить в файлы'), findsOneWidget);
     expect(find.text('Импортировать БД'), findsOneWidget);
     expect(find.text('Облачная синхронизация появится позже.'), findsOneWidget);
     expect(find.byType(SnackBar), findsNothing);
@@ -114,12 +118,43 @@ void main() {
   testWidgets('экспорт делится файлом и показывает статус', (tester) async {
     await pumpScreen(tester);
 
-    await tester.tap(find.text('Экспортировать БД'));
+    await tester.tap(find.text('Поделиться'));
     await tester.pumpAndSettle();
 
     expect(service.exportCalls, 1);
     expect(sharedPath, 'backup.sqlite');
     expect(find.text('Резервная копия создана и отправлена'), findsOneWidget);
+  });
+
+  testWidgets('экспорт сохраняет файл в файловую систему', (tester) async {
+    String? savedTo;
+    await pumpScreen(
+      tester,
+      saveFile: (path) async {
+        savedTo = path;
+        return true;
+      },
+    );
+
+    await tester.tap(find.text('Сохранить в файлы'));
+    await tester.pumpAndSettle();
+
+    expect(service.exportCalls, 1);
+    expect(savedTo, 'backup.sqlite');
+    expect(find.text('Резервная копия сохранена'), findsOneWidget);
+  });
+
+  testWidgets('отмена сохранения файла показывает статус без ошибки', (
+    tester,
+  ) async {
+    await pumpScreen(tester, saveFile: (_) async => false);
+
+    await tester.tap(find.text('Сохранить в файлы'));
+    await tester.pumpAndSettle();
+
+    expect(service.exportCalls, 1);
+    expect(find.text('Сохранение отменено'), findsOneWidget);
+    expect(find.byIcon(Icons.error_outline), findsNothing);
   });
 
   testWidgets('импорт с отменой выбора не трогает БД', (tester) async {
@@ -177,7 +212,7 @@ void main() {
       shareFile: (_) async => throw UnimplementedError('sharing'),
     );
 
-    await tester.tap(find.text('Экспортировать БД'));
+    await tester.tap(find.text('Поделиться'));
     await tester.pumpAndSettle();
 
     expect(service.exportCalls, 1);

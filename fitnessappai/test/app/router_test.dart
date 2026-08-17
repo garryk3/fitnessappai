@@ -103,7 +103,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Настройки'), findsOneWidget);
-      expect(find.text('Экспортировать БД'), findsOneWidget);
+      expect(find.text('Поделиться'), findsOneWidget);
+      expect(find.text('Сохранить в файлы'), findsOneWidget);
     });
 
     testWidgets('неизвестный маршрут показывает 404', (
