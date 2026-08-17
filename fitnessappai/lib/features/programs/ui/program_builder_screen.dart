@@ -31,32 +31,20 @@ class ProgramBuilderScreen extends StatefulWidget {
 
 /// Результат диалога настроек дня.
 class DaySettings {
-  const DaySettings({
-    required this.dayOfWeek,
-    required this.reminder,
-    required this.warmupMinutes,
-  });
+  const DaySettings({required this.dayOfWeek, required this.reminder});
 
   final int? dayOfWeek;
   final WorkoutReminder? reminder;
-  final int? warmupMinutes;
 }
 
 /// Черновик дня с уникальным стабильным ключом для реордера.
 class _DayDraft {
-  _DayDraft(
-    this.key, {
-    this.dayOfWeek,
-    this.reminder,
-    this.warmupMinutes,
-    this.filled = false,
-  });
+  _DayDraft(this.key, {this.dayOfWeek, this.reminder, this.filled = false});
 
   /// Идентификатор дня в БД (или отрицательный временный ключ для новых дней).
   final int key;
   int? dayOfWeek;
   WorkoutReminder? reminder;
-  int? warmupMinutes;
 
   /// Имеет ли день хотя бы одно основное упражнение.
   bool filled;
@@ -70,6 +58,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _warmupController = TextEditingController();
   final List<_DayDraft> _days = [];
   int _nextDayKey = -1;
   bool _loading = true;
@@ -77,6 +66,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   DateTime? _createdAt;
   int? _programId;
   bool _isActive = false;
+
+  int? get _warmupMinutes {
+    final text = _warmupController.text.trim();
+    return text.isEmpty ? null : int.tryParse(text);
+  }
 
   @override
   void initState() {
@@ -92,6 +86,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _warmupController.dispose();
     super.dispose();
   }
 
@@ -111,7 +106,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               _DayDraft(
                 day.day.id ?? _nextDayKey--,
                 dayOfWeek: day.day.dayOfWeek,
-                warmupMinutes: day.day.warmupMinutes,
                 filled: day.mainExercises.any((e) => !e.isAlternative),
               ),
           ]);
@@ -156,17 +150,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   Future<void> _openDaySettings(_DayDraft day) async {
     final selected = await showDialog<DaySettings>(
       context: context,
-      builder: (context) => _DaySettingsDialog(
-        dayOfWeek: day.dayOfWeek,
-        reminder: day.reminder,
-        warmupMinutes: day.warmupMinutes,
-      ),
+      builder: (context) =>
+          _DaySettingsDialog(dayOfWeek: day.dayOfWeek, reminder: day.reminder),
     );
     if (selected != null && mounted) {
       setState(() {
         day.dayOfWeek = selected.dayOfWeek;
         day.reminder = selected.reminder;
-        day.warmupMinutes = selected.warmupMinutes;
       });
     }
   }
@@ -316,7 +306,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           programId: 0,
           dayIndex: i,
           dayOfWeek: _days[i].dayOfWeek,
-          warmupMinutes: _days[i].warmupMinutes,
+          warmupMinutes: _warmupMinutes,
         ),
     ];
     final saved = _programId == null
@@ -344,7 +334,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           savedDays[i].id!,
           dayOfWeek: _days[i].dayOfWeek,
           reminder: _days[i].reminder,
-          warmupMinutes: _days[i].warmupMinutes,
           filled: _days[i].filled,
         );
       }
@@ -371,7 +360,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           programId: 0,
           dayIndex: i,
           dayOfWeek: _days[i].dayOfWeek,
-          warmupMinutes: _days[i].warmupMinutes,
+          warmupMinutes: _warmupMinutes,
         ),
     ];
     final exercisesByDayIndex = await _loadExercisesByDayIndex();
@@ -458,6 +447,17 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                     _nameField(l10n),
                     const SizedBox(height: 16),
                     _descriptionField(l10n),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _warmupController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        labelText: l10n.programBuilderWarmupMinutes,
+                        border: const OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
                     const SizedBox(height: 16),
                     _daysCountField(l10n),
                     const SizedBox(height: 16),
@@ -556,8 +556,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           title: Text(l10n.programBuilderDay(index + 1)),
           subtitle: Text(
             _weekdayLabel(l10n, day.dayOfWeek) +
-                (day.warmupMinutes != null
-                    ? ' • ${l10n.programBuilderWarmupShort(day.warmupMinutes!)}'
+                (_warmupMinutes != null
+                    ? ' • ${l10n.programBuilderWarmupShort(_warmupMinutes!)}'
                     : ''),
           ),
           trailing: Row(
@@ -582,11 +582,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 }
 
 class _DaySettingsDialog extends StatefulWidget {
-  const _DaySettingsDialog({this.dayOfWeek, this.reminder, this.warmupMinutes});
+  const _DaySettingsDialog({this.dayOfWeek, this.reminder});
 
   final int? dayOfWeek;
   final WorkoutReminder? reminder;
-  final int? warmupMinutes;
 
   @override
   State<_DaySettingsDialog> createState() => _DaySettingsDialogState();
@@ -596,15 +595,11 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
   late int? _selected;
   late bool _remindEnabled;
   late TimeOfDay _time;
-  late final TextEditingController _warmupController;
 
   @override
   void initState() {
     super.initState();
     _selected = widget.dayOfWeek;
-    _warmupController = TextEditingController(
-      text: widget.warmupMinutes?.toString() ?? '',
-    );
     final reminder = widget.reminder;
     _remindEnabled = reminder != null;
     _time = reminder != null
@@ -614,7 +609,6 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
 
   @override
   void dispose() {
-    _warmupController.dispose();
     super.dispose();
   }
 
@@ -659,16 +653,6 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
             }),
           ),
           const SizedBox(height: 8),
-          TextFormField(
-            controller: _warmupController,
-            decoration: InputDecoration(
-              labelText: l10n.programBuilderWarmupMinutes,
-              border: const OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          ),
-          const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.reminderToggle),
@@ -699,9 +683,6 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
           onPressed: () => Navigator.of(context).pop(
             DaySettings(
               dayOfWeek: _selected,
-              warmupMinutes: _warmupController.text.trim().isEmpty
-                  ? null
-                  : int.tryParse(_warmupController.text.trim()),
               reminder: _remindEnabled && hasWeekday
                   ? WorkoutReminder(
                       programDayId: 0,

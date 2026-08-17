@@ -37,6 +37,7 @@ class ExerciseListController {
   final Signal<bool> isLoading = Signal(false);
   final Signal<String> query = Signal('');
   final Signal<ExerciseType?> typeFilter = Signal(null);
+  final Signal<bool> onlyCustom = Signal(false);
 
   Timer? _debounce;
 
@@ -48,6 +49,11 @@ class ExerciseListController {
 
   void setTypeFilter(ExerciseType? type) {
     typeFilter.value = type;
+    _load();
+  }
+
+  void setOnlyCustom(bool value) {
+    onlyCustom.value = value;
     _load();
   }
 
@@ -64,6 +70,9 @@ class ExerciseListController {
       final filtered = type == null
           ? exercises
           : exercises.where((e) => e.type == type).toList();
+      final customFiltered = onlyCustom.value
+          ? filtered.where((e) => e.isCustom).toList()
+          : filtered;
 
       final musclesByExercise = await _repository.muscleGroupsByExercise();
       final tagsByExercise = await _repository.contraindicationsByExercise();
@@ -73,7 +82,7 @@ class ExerciseListController {
       };
 
       items.value = [
-        for (final exercise in filtered)
+        for (final exercise in customFiltered)
           ExerciseListItem(
             exercise: exercise,
             muscles: musclesByExercise[exercise.id] ?? const [],

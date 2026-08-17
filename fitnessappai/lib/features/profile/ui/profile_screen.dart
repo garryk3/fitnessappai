@@ -282,18 +282,54 @@ class _MetricLineChart extends StatelessWidget {
 
   final List<MetricPoint> points;
 
+  static String _dateLabel(
+    DateTime date,
+    DateTime today,
+    AppLocalizations l10n,
+  ) {
+    if (date == today) {
+      return l10n.commonToday;
+    }
+    return DateFormat('d.M', 'ru').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final labels = [
-      for (final point in points) DateFormat('d.M', 'ru').format(point.date),
+      for (final point in points) _dateLabel(point.date, today, l10n),
     ];
     return LineChart(
       LineChartData(
         minY: 0,
         lineTouchData: LineTouchData(enabled: false),
-        borderData: FlBorderData(show: false),
-        gridData: FlGridData(show: false),
+        borderData: FlBorderData(
+          show: true,
+          border: Border(
+            left: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+              width: 0.5,
+            ),
+            bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+              width: 0.5,
+            ),
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: 1,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.3),
+            strokeWidth: 0.5,
+          ),
+        ),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
@@ -321,7 +357,12 @@ class _MetricLineChart extends StatelessWidget {
                 }
                 return Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text(labels[index], style: theme.textTheme.labelSmall),
+                  child: Text(
+                    labels[index],
+                    style: theme.textTheme.labelSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 );
               },
             ),

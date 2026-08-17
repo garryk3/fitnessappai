@@ -66,6 +66,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             ),
           ),
           _buildTypeFilters(context),
+          SignalBuilder(
+            builder: (context) => SwitchListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              title: Text(l10n.exerciseListOnlyCustom),
+              value: _controller.onlyCustom.value,
+              onChanged: _controller.setOnlyCustom,
+            ),
+          ),
           Expanded(
             child: SignalBuilder(builder: (context) => _buildBody(context)),
           ),

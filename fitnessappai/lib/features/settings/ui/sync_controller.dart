@@ -147,14 +147,22 @@ class SyncController {
   }
 
   static Future<bool> _defaultSave(String filePath) async {
-    final destination = await FilePicker.platform.saveFile(
-      dialogTitle: 'Сохранение резервной копии',
-      fileName: 'fitnessappai_backup.sqlite',
-    );
-    if (destination == null) {
-      return false;
+    try {
+      final destination = await FilePicker.platform.saveFile(
+        dialogTitle: 'Сохранение резервной копии',
+        fileName: 'fitnessappai_backup.sqlite',
+      );
+      if (destination == null) {
+        return false;
+      }
+      // На Android saveFile возвращает content:// URI, с которым File.copy()
+      // не работает. В этом случае (или при любой ошибке) используем share.
+      await File(filePath).copy(destination);
+      return true;
+    } catch (_) {
+      // content:// URI на Android — fallback на share.
+      await SharePlus.instance.share(ShareParams(files: [XFile(filePath)]));
+      return true;
     }
-    await File(filePath).copy(destination);
-    return true;
   }
 }

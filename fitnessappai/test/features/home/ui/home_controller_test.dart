@@ -169,7 +169,7 @@ void main() {
   });
 
   test(
-    'активная программа без привязанного дня недели — пустой день',
+    'активная программа без привязанного дня недели — показывает непривязанный день',
     () async {
       final program = await createProgram(name: 'Силовая', dayOfWeeks: [null]);
       await programRepository.setActive(program.id!);
@@ -185,7 +185,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(controller.activeProgram.value?.id, program.id);
-      expect(controller.upcomingDay.value, isNull);
+      // Непривязанный день теперь отображается как ближайший.
+      expect(controller.upcomingDay.value, isNotNull);
       expect(controller.upcomingExerciseNames.value, isEmpty);
     },
   );

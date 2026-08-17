@@ -71,6 +71,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
       return;
     }
     _navigated = true;
+    _soundService.stop();
     context.push(
       '/workout/run?programDayId=${widget.programDayId}'
       '&variant=${widget.variant.name}',

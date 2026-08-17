@@ -14,6 +14,6 @@
 
 ## Установка
 
-Скачайте последнюю версию APK: [FitnessAppAI latest](https://github.com/garryk3/fitnessappai/releases/latest/download/app-release.apk).
+Скачайте последнюю версию APK: [FitnessAppAI latest](https://github.com/garryk3/fitnessappai/releases).
 
 Требуется Android 12+; разрешите установку из неизвестных источников для загрузчика.

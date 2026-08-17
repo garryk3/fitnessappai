@@ -154,6 +154,12 @@ abstract class AppLocalizations {
   /// **'Отмена'**
   String get commonCancel;
 
+  /// No description provided for @commonToday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня'**
+  String get commonToday;
+
   /// No description provided for @commonOk.
   ///
   /// In ru, this message translates to:
@@ -351,6 +357,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Новое упражнение'**
   String get exerciseListCreate;
+
+  /// No description provided for @exerciseListOnlyCustom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Только свои упражнения'**
+  String get exerciseListOnlyCustom;
 
   /// No description provided for @schedulePerformed.
   ///

@@ -57,10 +57,33 @@ class ProfileController {
   }
 
   Future<void> _refreshChart() async {
-    chartPoints.value = await measurementRepository.history(
+    final raw = await measurementRepository.history(
       selectedMetric.value,
       DateTime(2000),
       DateTime(2100),
     );
+    // Дедупликация: при нескольких замерах за день берём последний.
+    final byDate = <DateTime, MetricPoint>{};
+    for (final point in raw) {
+      final day = DateTime(point.date.year, point.date.month, point.date.day);
+      byDate[day] = point;
+    }
+    final deduped = byDate.values.toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    // Ограничиваем количество точек: при >30 — агрегируем по неделям.
+    if (deduped.length > 30) {
+      final byWeek = <DateTime, MetricPoint>{};
+      for (final point in deduped) {
+        final weekStart = point.date.subtract(
+          Duration(days: point.date.weekday - 1),
+        );
+        final key = DateTime(weekStart.year, weekStart.month, weekStart.day);
+        byWeek[key] = point;
+      }
+      chartPoints.value = byWeek.values.toList()
+        ..sort((a, b) => a.date.compareTo(b.date));
+    } else {
+      chartPoints.value = deduped;
+    }
   }
 }

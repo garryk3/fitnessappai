@@ -100,18 +100,24 @@ class HomeController {
 
   /// Ближайший день программы по дню недели, начиная с [todayWeekday]
   /// (1 = Пн … 7 = Вс) и с переносом на начало недели.
+  /// Если привязанных дней нет — возвращает первый непривязанный день.
   ProgramDay? _findUpcomingDay(List<ProgramDayDetail> days, int todayWeekday) {
     final bound = days.where((d) => d.day.dayOfWeek != null).toList()
       ..sort((a, b) => a.day.dayOfWeek!.compareTo(b.day.dayOfWeek!));
-    if (bound.isEmpty) {
-      return null;
-    }
-    for (final detail in bound) {
-      if (detail.day.dayOfWeek! >= todayWeekday) {
-        return detail.day;
+    if (bound.isNotEmpty) {
+      for (final detail in bound) {
+        if (detail.day.dayOfWeek! >= todayWeekday) {
+          return detail.day;
+        }
       }
+      return bound.first.day;
     }
-    return bound.first.day;
+    // Нет привязанных дней — ищем непривязанный.
+    final unlinked = days.where((d) => d.day.dayOfWeek == null).toList();
+    if (unlinked.isNotEmpty) {
+      return unlinked.first.day;
+    }
+    return null;
   }
 
   Future<List<String>> _exerciseNamesOf(
