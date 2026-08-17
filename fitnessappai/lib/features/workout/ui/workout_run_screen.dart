@@ -125,28 +125,40 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    final exit = await showDialog<bool>(
+    final action = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.workoutRunExitTitle),
         content: Text(l10n.workoutRunExitBody),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(context).pop('cancel'),
             child: Text(l10n.commonCancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(context).pop('save'),
+            child: Text(l10n.workoutRunFinishEarly),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop('exit'),
             child: Text(l10n.workoutRunExit),
           ),
         ],
       ),
     );
-    if (exit != true || !mounted) {
+    if (!mounted) {
       return;
     }
-    _controller.workout.cancelWorkout();
-    Navigator.of(context).pop();
+    if (action == 'save') {
+      _controller.workout.finishEarly();
+      await _controller.completeAndSave();
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } else if (action == 'exit') {
+      _controller.workout.cancelWorkout();
+      Navigator.of(context).pop();
+    }
   }
 
   @override

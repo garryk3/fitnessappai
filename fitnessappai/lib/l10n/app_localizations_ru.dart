@@ -676,6 +676,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRunExit => 'Выйти';
 
   @override
+  String get workoutRunFinishEarly => 'Завершить и сохранить';
+
+  @override
   String workoutRunTime(int minutes) {
     return 'Время: $minutes мин';
   }

@@ -278,6 +278,18 @@ class WorkoutController {
     return (session: session, results: List.of(results.value));
   }
 
+  /// Досрочно завершает тренировку (из фазы exercise/rest), позволяя сохранить
+  /// частичные результаты. Переходит в [WorkoutPhase.finished], после чего
+  /// [completeWorkout] работает штатно (задача 14.9).
+  void finishEarly() {
+    if (phase.value != WorkoutPhase.exercise &&
+        phase.value != WorkoutPhase.rest) {
+      throw WorkoutStateException(const ['Тренировка не в процессе']);
+    }
+    _cancelTimers();
+    phase.value = WorkoutPhase.finished;
+  }
+
   /// Отменяет тренировку, ничего не сохраняя. Сбрасывает состояние.
   void cancelWorkout() {
     _cancelTimers();

@@ -358,6 +358,7 @@
   "workoutRunExitTitle": "Выйти из тренировки?",
   "workoutRunExitBody": "Тренировка не будет сохранена. Выйти?",
   "workoutRunExit": "Выйти",
+  "workoutRunFinishEarly": "Завершить и сохранить",
   "workoutRunTime": "Время: {minutes} мин",
   "@workoutRunTime": {
     "description": "Длительность завершённой тренировки",
