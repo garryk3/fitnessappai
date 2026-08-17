@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
+import 'package:fitnessappai/features/exercises/ui/muscle_map.dart';
 
 /// Схематичный регион мышечной группы в нормализованных координатах 0..100.
 typedef MuscleRegion = ({
@@ -17,6 +18,8 @@ typedef MuscleRegion = ({
 /// [highlights] — карта `regionKey → интенсивность 0..1`. Интенсивность
 /// управляет прозрачностью подсветки: 0 — группа не задействована.
 /// Изменение подсветки анимируется плавно.
+///
+/// Использует SVG-схему для реалистичной отрисовки тела (вид спереди/сзади).
 class MuscleDiagram extends StatelessWidget {
   const MuscleDiagram({
     super.key,
@@ -34,40 +37,17 @@ class MuscleDiagram extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return TweenAnimationBuilder<Map<String, double>>(
-      tween: _HighlightsTween(begin: const {}, end: highlights),
-      duration: animationDuration,
-      curve: Curves.easeInOut,
-      builder: (context, animated, child) => CustomPaint(
-        size: size,
-        painter: MuscleDiagramPainter(
-          view: view,
-          highlights: animated,
-          baseColor: colorScheme.surfaceContainerHighest,
-          highlightColor: colorScheme.primary,
-          outlineColor: colorScheme.outlineVariant,
-        ),
-      ),
+    // Преобразуем map интенсивностей в Set ключей с intensity > 0.
+    final highlighted = <String>{
+      for (final entry in highlights.entries)
+        if (entry.value > 0) entry.key,
+    };
+
+    return SizedBox(
+      width: size.width,
+      height: size.height,
+      child: MuscleMap(view: view, highlighted: highlighted),
     );
-  }
-}
-
-/// Tween, интерполирующий карту интенсивностей подсветки по ключам.
-class _HighlightsTween extends Tween<Map<String, double>> {
-  _HighlightsTween({required super.begin, required super.end});
-
-  @override
-  Map<String, double> lerp(double t) {
-    final from = begin ?? const <String, double>{};
-    final to = end ?? const <String, double>{};
-    final result = <String, double>{};
-    for (final key in {...from.keys, ...to.keys}) {
-      final start = from[key] ?? 0.0;
-      final finish = to[key] ?? 0.0;
-      result[key] = start + (finish - start) * t;
-    }
-    return result;
   }
 }
 
