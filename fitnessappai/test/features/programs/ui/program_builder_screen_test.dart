@@ -295,6 +295,38 @@ void main() {
     expect((await repository.getActiveProgram())!.id, created.id);
   });
 
+  testWidgets('настройка дня сохраняет разминку и показывает её в тайле', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final created = await repository.create(program('Сплит', daysCount: 1), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final createdDays = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(createdDays.single.id!, exercise.id!);
+
+    await pumpBuilder(tester, programId: created.id);
+
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+
+    final dialog = find.byType(AlertDialog);
+    await tester.enterText(
+      find.descendant(of: dialog, matching: find.byType(TextFormField)),
+      '5',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('разминка 5 мин'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.pumpAndSettle();
+
+    final savedDay = (await repository.getDays(created.id!)).single;
+    expect(savedDay.warmupMinutes, 5);
+  });
+
   testWidgets(
     'наполнение дней не создаёт дубликат программы и сохраняет дни недели',
     (tester) async {

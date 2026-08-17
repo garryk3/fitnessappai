@@ -405,6 +405,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderDaySettings => 'Настройка дня';
 
   @override
+  String get programBuilderWarmupMinutes => 'Разминка, мин';
+
+  @override
+  String programBuilderWarmupShort(int minutes) {
+    return 'разминка $minutes мин';
+  }
+
+  @override
   String get reminderToggle => 'Напоминать';
 
   @override
@@ -508,6 +516,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workoutPrepareStart => 'Начать тренировку';
+
+  @override
+  String get workoutWarmup => 'Разминка';
+
+  @override
+  String get workoutWarmupDone => 'Разминка завершена';
+
+  @override
+  String get workoutWarmupSkip => 'Пропустить';
+
+  @override
+  String workoutWarmupSecondsLeft(int seconds) {
+    return 'осталось $seconds с';
+  }
+
+  @override
+  String get workoutWarmupStartWorkout => 'Начать тренировку';
 
   @override
   String get workoutPrepareNotFound => 'День не найден';

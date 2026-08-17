@@ -18,6 +18,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
+import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -107,6 +108,19 @@ void main() {
           path: '/workout/run',
           builder: (context, state) => Scaffold(
             body: Text('run-${state.uri.queryParameters['variant']}'),
+          ),
+        ),
+        GoRoute(
+          path: '/workout/warmup',
+          builder: (context, state) => WorkoutWarmupScreen(
+            programDayId:
+                int.tryParse(state.uri.queryParameters['programDayId'] ?? '') ??
+                -1,
+            warmupSeconds:
+                int.tryParse(state.uri.queryParameters['seconds'] ?? '') ?? 0,
+            variant: state.uri.queryParameters['variant'] == 'alternative'
+                ? WorkoutVariant.alternative
+                : WorkoutVariant.main,
           ),
         ),
       ],
@@ -223,6 +237,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('run-main'), findsOneWidget);
+  });
+
+  testWidgets('день с разминкой открывает экран разминки перед тренировкой', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    final day = (await programRepo.getDays(dayId)).single;
+    await programRepo.updateDay(day.copyWith(warmupMinutes: 5));
+    await pumpPrepare(tester, dayId);
+
+    expect(find.textContaining('разминка 5 мин'), findsOneWidget);
+
+    await tester.tap(find.text('Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Разминка'), findsOneWidget);
+    expect(find.text('Пропустить'), findsOneWidget);
+    expect(find.text('run-main'), findsNothing);
   });
 
   testWidgets('неизвестный день показывает сообщение', (tester) async {

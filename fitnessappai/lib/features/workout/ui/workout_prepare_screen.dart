@@ -71,6 +71,14 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
         return;
       }
     }
+    final warmup = _controller.warmupMinutes.value;
+    if (warmup != null && warmup > 0) {
+      context.push(
+        '/workout/warmup?programDayId=${widget.programDayId}'
+        '&variant=${_controller.variant.value.name}&seconds=${warmup * 60}',
+      );
+      return;
+    }
     context.push(
       '/workout/run?programDayId=${widget.programDayId}'
       '&variant=${_controller.variant.value.name}',
@@ -114,6 +122,27 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
+              if (controller.warmupMinutes.value case final minutes?
+                  when minutes > 0) ...[
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.timer,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n.programBuilderWarmupShort(minutes),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

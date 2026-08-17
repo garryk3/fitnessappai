@@ -37,11 +37,13 @@ void main() {
     int programId = 0,
     int dayIndex = 0,
     int? dayOfWeek,
+    int? warmupMinutes,
   }) => ProgramDay(
     id: id,
     programId: programId,
     dayIndex: dayIndex,
     dayOfWeek: dayOfWeek,
+    warmupMinutes: warmupMinutes,
   );
 
   ProgramDayExercise item({
@@ -200,6 +202,28 @@ void main() {
         expect(exercises.single.exerciseId, exId);
       },
     );
+
+    test('update с днями сохраняет warmupMinutes', () async {
+      final created = await repo.create(program(daysCount: 1), [day()]);
+      await repo.update(
+        created.copyWith(daysCount: 1),
+        days: [day(dayIndex: 0, warmupMinutes: 5)],
+      );
+      final days = await repo.getDays(created.id!);
+      expect(days.single.warmupMinutes, 5);
+    });
+
+    test('updateDay сохраняет warmupMinutes', () async {
+      final created = await repo.create(program(daysCount: 1), [
+        day(dayIndex: 0),
+      ]);
+      final original = (await repo.getDays(created.id!)).single;
+      final updated = await repo.updateDay(
+        original.copyWith(warmupMinutes: 10),
+      );
+      expect(updated.warmupMinutes, 10);
+      expect((await repo.getDays(created.id!)).single.warmupMinutes, 10);
+    });
 
     test('update с днями вставляет новые и удаляет отсутствующие', () async {
       final created = await repo.create(program(daysCount: 2), [

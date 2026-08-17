@@ -181,6 +181,17 @@
   "programBuilderDayNoWeekday": "Без привязки",
   "programBuilderDayWeekday": "День недели",
   "programBuilderDaySettings": "Настройка дня",
+  "programBuilderWarmupMinutes": "Разминка, мин",
+  "programBuilderWarmupShort": "разминка {minutes} мин",
+  "@programBuilderWarmupShort": {
+    "description": "Короткая подпись разминки в тайле дня",
+    "placeholders": {
+      "minutes": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
   "reminderToggle": "Напоминать",
   "reminderTime": "Время напоминания",
   "programBuilderSave": "Сохранить",
@@ -234,6 +245,19 @@
   "workoutPrepare": "Подготовка к тренировке",
   "workoutRun": "Тренировка",
   "workoutPrepareStart": "Начать тренировку",
+  "workoutWarmup": "Разминка",
+  "workoutWarmupDone": "Разминка завершена",
+  "workoutWarmupSkip": "Пропустить",
+  "workoutWarmupSecondsLeft": "осталось {seconds} с",
+  "@workoutWarmupSecondsLeft": {
+    "description": "Оставшееся время разминки",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutWarmupStartWorkout": "Начать тренировку",
   "workoutPrepareNotFound": "День не найден",
   "workoutPrepareRest": "Отдых {seconds} с",
   "@workoutPrepareRest": {

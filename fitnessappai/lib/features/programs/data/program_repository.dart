@@ -181,6 +181,7 @@ class ProgramRepository {
               programId: id,
               dayIndex: day.dayIndex,
               dayOfWeek: Value(day.dayOfWeek),
+              warmupMinutes: Value(day.warmupMinutes),
             ),
         ]);
       });
@@ -229,6 +230,7 @@ class ProgramRepository {
     int programId, {
     required int dayIndex,
     int? dayOfWeek,
+    int? warmupMinutes,
   }) async {
     final day = await _db.transaction(() async {
       final rows =
@@ -249,6 +251,7 @@ class ProgramRepository {
               programId: programId,
               dayIndex: dayIndex,
               dayOfWeek: Value(dayOfWeek),
+              warmupMinutes: Value(warmupMinutes),
             ),
           );
       await _syncDaysCount(programId);
@@ -266,6 +269,7 @@ class ProgramRepository {
       ProgramDaysCompanion(
         dayIndex: Value(day.dayIndex),
         dayOfWeek: Value(day.dayOfWeek),
+        warmupMinutes: Value(day.warmupMinutes),
       ),
     );
     _notify();
@@ -445,9 +449,14 @@ class ProgramRepository {
     for (final day in days) {
       final existingId = idByDayIndex[day.dayIndex];
       if (existingId != null) {
-        await (_db.update(_db.programDays)
-              ..where((t) => t.id.equals(existingId)))
-            .write(ProgramDaysCompanion(dayOfWeek: Value(day.dayOfWeek)));
+        await (_db.update(
+          _db.programDays,
+        )..where((t) => t.id.equals(existingId))).write(
+          ProgramDaysCompanion(
+            dayOfWeek: Value(day.dayOfWeek),
+            warmupMinutes: Value(day.warmupMinutes),
+          ),
+        );
       } else {
         await _db
             .into(_db.programDays)
@@ -456,6 +465,7 @@ class ProgramRepository {
                 programId: programId,
                 dayIndex: day.dayIndex,
                 dayOfWeek: Value(day.dayOfWeek),
+                warmupMinutes: Value(day.warmupMinutes),
               ),
             );
       }
@@ -612,6 +622,7 @@ class ProgramRepository {
     programId: row.programId,
     dayIndex: row.dayIndex,
     dayOfWeek: row.dayOfWeek,
+    warmupMinutes: row.warmupMinutes,
   );
 
   ProgramDayExercise _toDayExercise(ProgramDayExerciseRow row) =>

@@ -5,6 +5,13 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 
 void main() {
+  const programDaysV5 =
+      'CREATE TABLE program_days ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'program_id INTEGER NOT NULL REFERENCES programs (id) ON DELETE CASCADE, '
+      'day_index INTEGER NOT NULL CHECK (day_index BETWEEN 0 AND 6), '
+      'day_of_week INTEGER NULL CHECK (day_of_week BETWEEN 1 AND 7));';
+
   test(
     'миграция 1→3 добавляет parentKey, сидирует дельты и dismissals',
     () async {
@@ -46,6 +53,7 @@ void main() {
         'created_at INTEGER NOT NULL, '
         'updated_at INTEGER NOT NULL);',
       );
+      sqlite.execute(programDaysV5);
       sqlite.execute('PRAGMA user_version = 1');
 
       final database = AppDatabase(executor: NativeDatabase.opened(sqlite));
@@ -98,6 +106,7 @@ void main() {
       'created_at INTEGER NOT NULL, '
       'updated_at INTEGER NOT NULL);',
     );
+    sqlite.execute(programDaysV5);
     sqlite.execute("INSERT INTO programs VALUES (1, 'База', '', 0, 0, 0);");
     sqlite.execute(
       'CREATE TABLE exercises ('
@@ -180,6 +189,7 @@ void main() {
       'created_at INTEGER NOT NULL, '
       'updated_at INTEGER NOT NULL);',
     );
+    sqlite.execute(programDaysV5);
     sqlite.execute('PRAGMA user_version = 3');
     final database = AppDatabase(executor: NativeDatabase.opened(sqlite));
     addTearDown(database.close);
@@ -235,6 +245,7 @@ void main() {
       'created_at INTEGER NOT NULL, '
       'updated_at INTEGER NOT NULL);',
     );
+    sqlite.execute(programDaysV5);
     sqlite.execute("INSERT INTO programs VALUES (1, 'База', '', 0, 0, 0);");
     sqlite.execute('PRAGMA user_version = 4');
     final database = AppDatabase(executor: NativeDatabase.opened(sqlite));
@@ -243,6 +254,67 @@ void main() {
     final program = await database.select(database.programs).getSingle();
 
     expect(program.isActive, isFalse);
+
+    final version =
+        sqlite.select('PRAGMA user_version;').single.columnAt(0) as int;
+    expect(version, appDatabaseSchemaVersion);
+  });
+
+  test('миграция 5→6 добавляет program_days.warmup_minutes', () async {
+    final sqlite = sqlite3.openInMemory();
+    sqlite.execute(
+      'CREATE TABLE muscle_groups ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'key TEXT NOT NULL UNIQUE, '
+      'label_ru TEXT NOT NULL, '
+      'view TEXT NOT NULL, '
+      'region_key TEXT NOT NULL, '
+      'parent_key TEXT NULL);',
+    );
+    sqlite.execute(
+      'CREATE TABLE contraindication_tags ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'key TEXT NOT NULL UNIQUE, '
+      'label_ru TEXT NOT NULL);',
+    );
+    sqlite.execute(
+      'CREATE TABLE exercises ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'name TEXT NOT NULL, '
+      'description TEXT NOT NULL DEFAULT \'\', '
+      'instructions TEXT NOT NULL DEFAULT \'\', '
+      'common_mistakes TEXT NOT NULL DEFAULT \'[]\', '
+      'type TEXT NOT NULL, '
+      'thumbnail_path TEXT NULL, '
+      'animation_path TEXT NULL, '
+      'is_custom INTEGER NOT NULL DEFAULT 0, '
+      'hide_optional INTEGER NOT NULL DEFAULT 0, '
+      'created_at INTEGER NOT NULL, '
+      'updated_at INTEGER NOT NULL);',
+    );
+    sqlite.execute(
+      'CREATE TABLE programs ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'name TEXT NOT NULL, '
+      'description TEXT NOT NULL DEFAULT \'\', '
+      'days_count INTEGER NOT NULL DEFAULT 0, '
+      'created_at INTEGER NOT NULL, '
+      'updated_at INTEGER NOT NULL, '
+      'is_active INTEGER NOT NULL DEFAULT 0);',
+    );
+    sqlite.execute(programDaysV5);
+    sqlite.execute("INSERT INTO programs VALUES (1, 'База', '', 0, 0, 0, 1);");
+    sqlite.execute(
+      'INSERT INTO program_days (program_id, day_index) VALUES (1, 0);',
+    );
+    sqlite.execute('PRAGMA user_version = 5');
+    final database = AppDatabase(executor: NativeDatabase.opened(sqlite));
+    addTearDown(database.close);
+
+    final rows = await database.select(database.programDays).get();
+
+    expect(rows, hasLength(1));
+    expect(rows.single.warmupMinutes, isNull);
 
     final version =
         sqlite.select('PRAGMA user_version;').single.columnAt(0) as int;
