@@ -148,7 +148,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
   void _pickAnimation() async {
     try {
-      final path = await _mediaStore.importFromPicker();
+      final path = await _mediaStore.importFromPicker(
+        fileType: MediaFileType.image,
+      );
       if (path != null && mounted) {
         setState(() => _animationPath = path);
       }

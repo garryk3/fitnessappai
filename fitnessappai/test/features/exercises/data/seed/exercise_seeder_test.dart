@@ -26,7 +26,7 @@ void main() {
         final bytes = utf8.encode('webp:$assetPath');
         return Uint8List.fromList(bytes);
       },
-      filePicker: () async => null,
+      filePicker: (fileType) async => null,
     );
     seeder = ExerciseSeeder(
       db: db,

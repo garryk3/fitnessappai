@@ -13,10 +13,18 @@ typedef MediaDirectoryProvider = Future<Directory> Function();
 typedef AssetLoader = Future<Uint8List> Function(String assetPath);
 
 /// Тип медиафайла, выбираемого системным пикером.
-enum MediaFileType { any, image }
+enum MediaFileType {
+  /// Изображения, которые декодирует `Image` (в т.ч. анимированные gif/webp).
+  image(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp']);
+
+  const MediaFileType(this.allowedExtensions);
+
+  /// Расширения, доступные в системном пикере для этого типа.
+  final List<String> allowedExtensions;
+}
 
 /// Пикер файлов; возвращает выбранный файл или `null` при отмене.
-typedef MediaFilePicker = Future<XFile?> Function();
+typedef MediaFilePicker = Future<XFile?> Function(MediaFileType fileType);
 
 /// Бросается при неудачном импорте медиафайла (ошибка пикера, чтения или
 /// копирования файла).
@@ -71,19 +79,26 @@ class MediaStore {
   /// Возвращает путь к созданному файлу или `null`, если выбор отменён.
   /// При ошибке пикера, чтения или копирования бросает [MediaImportException].
   Future<String?> importFromPicker({
-    MediaFileType fileType = MediaFileType.any,
+    MediaFileType fileType = MediaFileType.image,
   }) async {
     final XFile? picked;
     try {
       final injected = _filePicker;
       picked = injected != null
-          ? await injected()
+          ? await injected(fileType)
           : await _platformPicker(fileType);
     } catch (e) {
       throw MediaImportException('Не удалось открыть выбор файла', cause: e);
     }
     if (picked == null) {
       return null;
+    }
+    final extension = p.extension(picked.name).toLowerCase();
+    if (!fileType.allowedExtensions.contains(extension.substring(1))) {
+      throw MediaImportException(
+        'Неподдерживаемый формат файла. Допустимые: '
+        '${fileType.allowedExtensions.join(', ')}',
+      );
     }
     try {
       return await _writeFile(picked.name, await picked.readAsBytes());
@@ -157,12 +172,9 @@ Future<Uint8List> _defaultAssetLoader(String assetPath) async {
 /// Байты читаются через `withData`, поэтому результат работает и с
 /// content-URI (Android) без обращения к `File`.
 Future<XFile?> _platformPicker(MediaFileType fileType) async {
-  final type = switch (fileType) {
-    MediaFileType.any => FileType.any,
-    MediaFileType.image => FileType.image,
-  };
   final result = await FilePicker.platform.pickFiles(
-    type: type,
+    type: FileType.custom,
+    allowedExtensions: fileType.allowedExtensions,
     withData: true,
   );
   if (result == null || result.files.isEmpty) {

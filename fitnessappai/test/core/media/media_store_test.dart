@@ -19,7 +19,7 @@ void main() {
     return MediaStore(
       directoryProvider: () async => tempDir,
       assetLoader: (path) async => assets[path] ?? Uint8List(0),
-      filePicker: picker ?? () async => null,
+      filePicker: picker ?? (fileType) async => null,
     );
   }
 
@@ -75,11 +75,45 @@ void main() {
     await source.writeAsBytes(bytes);
     final path = await store(
       assets: <String, Uint8List>{},
-      picker: () async => XFile(source.path),
+      picker: (fileType) async => XFile(source.path),
     ).importFromPicker();
     expect(path, isNotNull);
     expect(await File(path!).readAsBytes(), bytes);
     expect(await source.exists(), isTrue);
+  });
+
+  test('importFromPicker передаёт тип пикеру', () async {
+    final source = File(p.join(tempDir.path, 'picked.png'));
+    await source.writeAsBytes([1, 2, 3]);
+    final seen = <MediaFileType>[];
+    await store(
+      assets: <String, Uint8List>{},
+      picker: (fileType) async {
+        seen.add(fileType);
+        return XFile(source.path);
+      },
+    ).importFromPicker(fileType: MediaFileType.image);
+    expect(seen, [MediaFileType.image]);
+  });
+
+  test('importFromPicker отклоняет файл с недопустимым расширением', () async {
+    final source = File(p.join(tempDir.path, 'picked.heic'));
+    await source.writeAsBytes([1, 2, 3]);
+    final s = store(
+      assets: <String, Uint8List>{},
+      picker: (fileType) async => XFile(source.path),
+    );
+    await expectLater(
+      s.importFromPicker(),
+      throwsA(
+        isA<MediaImportException>().having(
+          (e) => e.message,
+          'message',
+          contains('jpg'),
+        ),
+      ),
+    );
+    expect(await mediaDir.exists(), isFalse);
   });
 
   test('importFromPicker возвращает null при отмене', () async {
@@ -93,7 +127,7 @@ void main() {
     () async {
       final s = store(
         assets: <String, Uint8List>{},
-        picker: () async =>
+        picker: (fileType) async =>
             throw PlatformException(code: 'pick_failed', message: 'boom'),
       );
       await expectLater(
@@ -108,7 +142,7 @@ void main() {
     () async {
       final s = store(
         assets: <String, Uint8List>{},
-        picker: () async => XFile(p.join(tempDir.path, 'missing.gif')),
+        picker: (fileType) async => XFile(p.join(tempDir.path, 'missing.gif')),
       );
       await expectLater(
         s.importFromPicker(),

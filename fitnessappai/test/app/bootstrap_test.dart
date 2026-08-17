@@ -33,7 +33,7 @@ void main() {
     directoryProvider: () async => tempDir,
     assetLoader: (assetPath) async =>
         Uint8List.fromList(utf8.encode('webp:$assetPath')),
-    filePicker: () async => null,
+    filePicker: (fileType) async => null,
   );
 
   Future<String> seedJson() =>

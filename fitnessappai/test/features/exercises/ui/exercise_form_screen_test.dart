@@ -35,7 +35,7 @@ void main() {
       MediaStore(
         directoryProvider: () async => tempDir,
         assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
-        filePicker: () async => lastPicked,
+        filePicker: (fileType) async => lastPicked,
       ),
     );
     addTearDown(() async {
@@ -62,7 +62,7 @@ void main() {
           mediaStore: MediaStore(
             directoryProvider: () async => tempDir,
             assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
-            filePicker: picker ?? () async => lastPicked,
+            filePicker: picker ?? (fileType) async => lastPicked,
           ),
           mediaCache: MediaCache(),
         ),
@@ -525,7 +525,7 @@ void main() {
   ) async {
     await pumpForm(
       tester,
-      picker: () async => throw PlatformException(code: 'pick_failed'),
+      picker: (fileType) async => throw PlatformException(code: 'pick_failed'),
     );
 
     await scrollFormTo(tester, find.text('Выбрать анимацию'));
@@ -580,5 +580,44 @@ void main() {
     await scrollFormTo(tester, find.byTooltip('Убрать анимацию'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('выбор миниатюры и анимации вызывает пикер с image-типом', (
+    tester,
+  ) async {
+    final fileTypes = <MediaFileType>[];
+    await pumpForm(
+      tester,
+      picker: (fileType) async {
+        fileTypes.add(fileType);
+        return XFile(pickedFilePath);
+      },
+    );
+
+    await scrollFormTo(tester, find.text('Выбрать изображение'));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Выбрать изображение'));
+      for (var i = 0; i < 50; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        if (find.byTooltip('Убрать изображение').evaluate().isNotEmpty) {
+          return;
+        }
+      }
+    });
+    await tester.pumpAndSettle();
+
+    await scrollFormTo(tester, find.text('Выбрать анимацию'));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Выбрать анимацию'));
+      for (var i = 0; i < 50; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        if (find.byTooltip('Убрать анимацию').evaluate().isNotEmpty) {
+          return;
+        }
+      }
+    });
+    await tester.pumpAndSettle();
+
+    expect(fileTypes, [MediaFileType.image, MediaFileType.image]);
   });
 }
