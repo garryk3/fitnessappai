@@ -505,6 +505,21 @@ void main() {
     expect(muscles.single.intensity, MuscleIntensity.primary);
   });
 
+  testWidgets('превью миниатюры занимает фиксированный блок', (tester) async {
+    final saved = await repository.create(
+      exercise('С медиа', thumbnailPath: '${tempDir.path}/media/thumb.png'),
+      const [],
+    );
+
+    await pumpForm(tester, exerciseId: saved.id);
+    await scrollFormTo(tester, find.byTooltip('Убрать изображение'));
+
+    final image = tester.widget<Image>(find.byType(Image));
+    expect(image.width, double.infinity);
+    expect(image.height, 120);
+    expect(image.fit, BoxFit.cover);
+  });
+
   testWidgets('ошибка выбора анимации показывает SnackBar без краха', (
     tester,
   ) async {
