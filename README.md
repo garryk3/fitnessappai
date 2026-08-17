@@ -7,3 +7,9 @@
 Стек: Flutter / Dart, `drift` (SQLite), `signals`, `go_router`, `fl_chart`.
 
 Полное описание — в [README приложения](fitnessappai/README.md).
+
+## Установка
+
+Скачайте последнюю версию APK: [FitnessAppAI latest](https://github.com/garryk3/fitnessappai/releases/latest/download/app-release.apk).
+
+Требуется Android 12+; разрешите установку из неизвестных источников для загрузчика.
