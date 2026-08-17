@@ -145,6 +145,18 @@ void main() {
       expect((await repo.getById(created.id!))!.name, 'Новое имя');
     });
 
+    test('update с isActive: true сохраняет активность программы', () async {
+      final created = await repo.create(program(daysCount: 1), [day()]);
+      await repo.setActive(created.id!);
+      expect((await repo.getActiveProgram())!.id, created.id);
+
+      final updated = await repo.update(
+        created.copyWith(name: 'Новое имя', isActive: true),
+      );
+      expect(updated.isActive, isTrue);
+      expect((await repo.getActiveProgram())!.id, created.id);
+    });
+
     test('update с днями заменяет дни', () async {
       final created = await repo.create(program(daysCount: 2), [
         day(dayIndex: 0),

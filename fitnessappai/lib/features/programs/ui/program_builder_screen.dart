@@ -63,6 +63,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   bool _saving = false;
   DateTime? _createdAt;
   int? _programId;
+  bool _isActive = false;
 
   @override
   void initState() {
@@ -89,6 +90,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         _nameController.text = detail.program.name;
         _descriptionController.text = detail.program.description;
         _createdAt = detail.program.createdAt;
+        _isActive = detail.program.isActive;
         _days
           ..clear()
           ..addAll([
@@ -288,6 +290,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       daysCount: _days.length,
       createdAt: _createdAt ?? now,
       updatedAt: now,
+      isActive: _isActive,
     );
     final days = [
       for (var i = 0; i < _days.length; i++)
@@ -336,6 +339,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       daysCount: _days.length,
       createdAt: _createdAt ?? now,
       updatedAt: now,
+      isActive: _isActive,
     );
     final days = [
       for (var i = 0; i < _days.length; i++)
