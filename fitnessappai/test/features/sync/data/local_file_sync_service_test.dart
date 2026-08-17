@@ -108,13 +108,40 @@ void main() {
 
     await expectLater(
       service.import(badPath),
-      throwsA(isA<SyncValidationException>()),
+      throwsA(
+        isA<SyncValidationException>().having(
+          (e) => e.message,
+          'message',
+          'Файл не является базой данных FitnessAppAI',
+        ),
+      ),
     );
 
     expect(importCalls, 0);
     final rows = await database.select(database.muscleGroups).get();
     expect(rows.length, greaterThan(0));
   });
+
+  test(
+    'import отклоняет файл с корректным расширением, но не SQLite',
+    () async {
+      final badPath = p.join(tempDir.path, 'data.sqlite');
+      await File(badPath).writeAsString('{"json":"не база"}');
+
+      await expectLater(
+        service.import(badPath),
+        throwsA(
+          isA<SyncValidationException>().having(
+            (e) => e.message,
+            'message',
+            'Файл не является базой данных FitnessAppAI',
+          ),
+        ),
+      );
+
+      expect(importCalls, 0);
+    },
+  );
 
   test('import отклоняет несовместимую версию схемы', () async {
     final sourcePath = await createValidSourceDb(version: 99);
