@@ -13,6 +13,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -154,6 +155,11 @@ void main() {
         GoRoute(
           path: '/progress',
           builder: (context, state) => const Scaffold(body: Text('progress')),
+        ),
+        GoRoute(
+          path: '/exercises/:id',
+          builder: (context, state) =>
+              Scaffold(body: Text('detail ${state.pathParameters['id']}')),
         ),
       ],
     );
@@ -354,5 +360,64 @@ void main() {
 
     expect(find.text('День не найден'), findsOneWidget);
     expect(find.text('Подход выполнен'), findsNothing);
+  });
+
+  testWidgets('иконка информации открывает описание упражнения', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    await pumpRun(tester, dayId);
+
+    await tester.tap(find.byIcon(Icons.info_outline));
+    await tester.pumpAndSettle();
+
+    final exercises = await programRepo.getExercises(dayId);
+    expect(find.text('detail ${exercises.first.id}'), findsOneWidget);
+  });
+
+  testWidgets('показывает карточку последней тренировки', (tester) async {
+    final dayId = await createDay();
+    final exerciseId = (await programRepo.getExercises(dayId)).first.id!;
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        id: null,
+        programId: null,
+        programName: 'База',
+        programDayId: null,
+        dayIndex: 0,
+        variant: WorkoutVariant.main,
+        performedDate: DateTime(2026, 8, 14),
+        startedAt: DateTime(2026, 8, 14, 18, 0),
+        endedAt: DateTime(2026, 8, 14, 18, 30),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: exerciseId,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 8,
+          weightKg: 20,
+          durationSeconds: null,
+          distanceMeters: null,
+          completedAt: DateTime(2026, 8, 14, 18, 5),
+        ),
+      ],
+    );
+
+    await pumpRun(tester, dayId);
+
+    expect(find.text('Последняя тренировка'), findsOneWidget);
+    expect(find.textContaining('20'), findsOneWidget);
+  });
+
+  testWidgets('карточка последней тренировки скрыта без истории', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    await pumpRun(tester, dayId);
+
+    expect(find.text('Последняя тренировка'), findsNothing);
   });
 }

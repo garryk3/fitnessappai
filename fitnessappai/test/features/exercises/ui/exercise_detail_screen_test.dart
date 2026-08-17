@@ -20,6 +20,10 @@ import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
+import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -51,6 +55,7 @@ void main() {
     required int exerciseId,
     ExerciseRepository? repo,
   }) async {
+    final workoutRepository = WorkoutRepository(db);
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
@@ -63,6 +68,10 @@ void main() {
           repository: repo ?? repository,
           mediaCache: MediaCache(),
           profileRepository: profileRepository,
+          statsAggregator: StatsAggregator(
+            workoutRepository: workoutRepository,
+            exerciseRepository: repository,
+          ),
         ),
       ),
     );
@@ -326,6 +335,10 @@ void main() {
                 repository: repository,
                 mediaCache: MediaCache(),
                 profileRepository: profileRepository,
+                statsAggregator: StatsAggregator(
+                  workoutRepository: WorkoutRepository(db),
+                  exerciseRepository: repository,
+                ),
               ),
             ),
             GoRoute(
@@ -380,5 +393,63 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Новая техника'), findsOneWidget);
+  });
+
+  testWidgets('показывает историю за последние 3 дня', (tester) async {
+    final created = await repository.create(exercise('Приседания'), const []);
+    final workoutRepository = WorkoutRepository(db);
+    await workoutRepository.saveSession(
+      WorkoutSession(
+        id: null,
+        programId: null,
+        programName: 'База',
+        programDayId: null,
+        dayIndex: 0,
+        variant: WorkoutVariant.main,
+        performedDate: DateTime(2026, 8, 14),
+        startedAt: DateTime(2026, 8, 14, 18, 0),
+        endedAt: DateTime(2026, 8, 14, 18, 30),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: created.id,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 8,
+          weightKg: 20,
+          durationSeconds: null,
+          distanceMeters: null,
+          completedAt: DateTime(2026, 8, 14, 18, 5),
+        ),
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: created.id,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.strength,
+          setIndex: 2,
+          reps: 6,
+          weightKg: 22,
+          durationSeconds: null,
+          distanceMeters: null,
+          completedAt: DateTime(2026, 8, 14, 18, 8),
+        ),
+      ],
+    );
+
+    await pumpDetail(tester, exerciseId: created.id!);
+
+    expect(find.text('История за последние 3 дня'), findsOneWidget);
+    expect(find.text('14 августа 2026'), findsOneWidget);
+    expect(find.textContaining('20'), findsWidgets);
+  });
+
+  testWidgets('история скрыта, если упражнение не выполнялось', (tester) async {
+    final created = await repository.create(exercise('Приседания'), const []);
+
+    await pumpDetail(tester, exerciseId: created.id!);
+
+    expect(find.text('История за последние 3 дня'), findsNothing);
   });
 }

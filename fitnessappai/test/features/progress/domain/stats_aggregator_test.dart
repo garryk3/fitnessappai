@@ -370,6 +370,42 @@ void main() {
     );
 
     test(
+      'exerciseHistoryLastDays возвращает не более 3 последних дней',
+      () async {
+        final id = await insertExercise('Приседания');
+        for (final day in [10, 12, 14, 16, 18]) {
+          await workoutRepo.saveSession(session(DateTime(2026, 8, day)), [
+            setResult(exerciseId: id, weightKg: day.toDouble()),
+          ]);
+        }
+
+        final points = await aggregator.exerciseHistoryLastDays(id);
+
+        expect(points, hasLength(3));
+        expect(points.map((p) => p.date), [
+          DateTime(2026, 8, 14),
+          DateTime(2026, 8, 16),
+          DateTime(2026, 8, 18),
+        ]);
+      },
+    );
+
+    test(
+      'exerciseHistoryLastDays возвращает все точки, если их меньше 3',
+      () async {
+        final id = await insertExercise('Приседания');
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+          setResult(exerciseId: id, weightKg: 40),
+        ]);
+
+        final points = await aggregator.exerciseHistoryLastDays(id);
+
+        expect(points, hasLength(1));
+        expect(points.single.date, DateTime(2026, 8, 10));
+      },
+    );
+
+    test(
       'workoutCountPerSlice раскладывает тренировки по дням недели',
       () async {
         await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), []);

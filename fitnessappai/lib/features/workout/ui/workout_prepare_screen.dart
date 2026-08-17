@@ -210,46 +210,62 @@ class _ExerciseCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final exercise = item.exercise;
+    final exerciseId = exercise.id;
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            _TypeIcon(type: exercise.type),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exercise.name,
-                    style: theme.textTheme.titleSmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (!exercise.hideOptional) ...[
-                    const SizedBox(height: 4),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: exerciseId == null
+            ? null
+            : () => context.push('/exercises/$exerciseId'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              _TypeIcon(type: exercise.type),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      _paramsSummary(l10n, exercise.type, item.params),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      exercise.name,
+                      style: theme.textTheme.titleSmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    if (!exercise.hideOptional) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        _paramsSummary(l10n, exercise.type, item.params),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ),
-            if (!exercise.hideOptional && item.params.restSeconds != null) ...[
-              const SizedBox(width: 8),
-              Text(
-                l10n.workoutPrepareRest(item.params.restSeconds!),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
+              if (!exercise.hideOptional &&
+                  item.params.restSeconds != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  l10n.workoutPrepareRest(item.params.restSeconds!),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              if (exerciseId != null) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
