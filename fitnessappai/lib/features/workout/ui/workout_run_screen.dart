@@ -530,6 +530,15 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
   late final _distance = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    final positionWeight = widget.exercise.position.weightKg;
+    if (widget.exercise.exercise.fixedWeight && positionWeight != null) {
+      _weight.text = _fmt(positionWeight);
+    }
+  }
+
+  @override
   void dispose() {
     _reps.dispose();
     _weight.dispose();

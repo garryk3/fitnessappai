@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -86,6 +87,7 @@ void main() {
     int sets = 3,
     int? restSeconds = 60,
     bool withAlternative = false,
+    bool fixedWeight = false,
   }) async {
     final created = await programRepo.create(
       Program(
@@ -98,6 +100,11 @@ void main() {
     );
     final day = (await programRepo.getDays(created.id!)).first;
     final exId = await insertExercise('Приседания');
+    if (fixedWeight) {
+      await (db.update(db.exercises)..where((t) => t.id.equals(exId))).write(
+        const ExercisesCompanion(fixedWeight: Value(true)),
+      );
+    }
     await programRepo.addExerciseToDay(day.id!, exId);
     await programRepo.updateExercise(
       (await programRepo.getExercises(day.id!)).first.copyWith(
@@ -419,5 +426,27 @@ void main() {
     await pumpRun(tester, dayId);
 
     expect(find.text('Последняя тренировка'), findsNothing);
+  });
+
+  testWidgets('фиксированный вес автозаполняется из параметров', (
+    tester,
+  ) async {
+    final dayId = await createDay(fixedWeight: true);
+    await pumpRun(tester, dayId);
+
+    final weightField = tester.widget<TextFormField>(
+      find.widgetWithText(TextFormField, 'Вес (кг)'),
+    );
+    expect(weightField.controller!.text, '20');
+  });
+
+  testWidgets('без флага фиксированного веса поле веса пустое', (tester) async {
+    final dayId = await createDay();
+    await pumpRun(tester, dayId);
+
+    final weightField = tester.widget<TextFormField>(
+      find.widgetWithText(TextFormField, 'Вес (кг)'),
+    );
+    expect(weightField.controller!.text, isEmpty);
   });
 }
