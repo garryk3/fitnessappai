@@ -41,6 +41,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonCancel => 'Отмена';
 
   @override
+  String get commonToday => 'Сегодня';
+
+  @override
   String get commonOk => 'ОК';
 
   @override
@@ -141,6 +144,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exerciseListCreate => 'Новое упражнение';
+
+  @override
+  String get exerciseListOnlyCustom => 'Только свои упражнения';
 
   @override
   String get schedulePerformed => 'Выполнено';
