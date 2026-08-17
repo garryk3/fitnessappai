@@ -12,61 +12,111 @@ void main() {
     home: Scaffold(body: Center(child: child)),
   );
 
+  String svgString(WidgetTester tester) {
+    final picture = tester.widget<SvgPicture>(find.byType(SvgPicture));
+    return (picture.bytesLoader as SvgStringLoader).provideSvg(null);
+  }
+
+  int activeCount(WidgetTester tester) =>
+      'url(#activeGradient)'.allMatches(svgString(tester)).length;
+
   testWidgets('рендерит вид спереди без ошибок', (tester) async {
     await tester.pumpWidget(wrap(const MuscleDiagram(view: MuscleView.front)));
 
     expect(tester.takeException(), isNull);
-    expect(
-      find.descendant(
-        of: find.byType(MuscleDiagram),
-        matching: find.byType(SvgPicture),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(SvgPicture), findsOneWidget);
   });
 
   testWidgets('рендерит вид сзади без ошибок', (tester) async {
     await tester.pumpWidget(wrap(const MuscleDiagram(view: MuscleView.back)));
 
     expect(tester.takeException(), isNull);
-    expect(
-      find.descendant(
-        of: find.byType(MuscleDiagram),
-        matching: find.byType(SvgPicture),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(SvgPicture), findsOneWidget);
   });
 
-  testWidgets('рендерит с подсветкой без ошибок', (tester) async {
-    await tester.pumpWidget(
-      wrap(
-        const MuscleDiagram(
-          view: MuscleView.front,
-          highlights: {'chest': 1.0, 'biceps': 0.5},
+  testWidgets('без подсветки нет активных путей', (tester) async {
+    await tester.pumpWidget(wrap(const MuscleDiagram(view: MuscleView.front)));
+
+    expect(activeCount(tester), 0);
+  });
+
+  testWidgets('все группы переднего вида подсвечиваются', (tester) async {
+    const frontKeys = <String>{
+      'neck',
+      'chest',
+      'abs',
+      'obliques',
+      'biceps',
+      'forearms',
+      'quads',
+      'shoulders',
+      'shoulders_front',
+      'shoulders_middle',
+    };
+
+    for (final key in frontKeys) {
+      await tester.pumpWidget(
+        wrap(MuscleDiagram(view: MuscleView.front, highlights: {key: 1.0})),
+      );
+      expect(
+        activeCount(tester),
+        greaterThan(0),
+        reason: 'группа "$key" должна подсвечиваться на переднем виде',
+      );
+    }
+  });
+
+  testWidgets('все группы заднего вида подсвечиваются', (tester) async {
+    const backKeys = <String>{
+      'neck',
+      'triceps',
+      'forearms',
+      'traps',
+      'lats',
+      'lower_back',
+      'glutes',
+      'hamstrings',
+      'calves',
+      'shoulders',
+      'shoulders_rear',
+    };
+
+    for (final key in backKeys) {
+      await tester.pumpWidget(
+        wrap(MuscleDiagram(view: MuscleView.back, highlights: {key: 1.0})),
+      );
+      expect(
+        activeCount(tester),
+        greaterThan(0),
+        reason: 'группа "$key" должна подсвечиваться на заднем виде',
+      );
+    }
+  });
+
+  testWidgets(
+    'родительская группа «плечи» подсвечивает дельты на обоих видах',
+    (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          const MuscleDiagram(
+            view: MuscleView.front,
+            highlights: {'shoulders': 1.0},
+          ),
         ),
-      ),
-    );
+      );
+      // Передний вид: передняя + средняя дельта (2 пути каждая).
+      expect(activeCount(tester), 4);
 
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('подсветка отображается при наличии активных групп', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      wrap(
-        const MuscleDiagram(view: MuscleView.front, highlights: {'chest': 1.0}),
-      ),
-    );
-
-    expect(tester.takeException(), isNull);
-    expect(
-      find.descendant(
-        of: find.byType(MuscleDiagram),
-        matching: find.byType(SvgPicture),
-      ),
-      findsOneWidget,
-    );
-  });
+      await tester.pumpWidget(
+        wrap(
+          const MuscleDiagram(
+            view: MuscleView.back,
+            highlights: {'shoulders': 1.0},
+          ),
+        ),
+      );
+      // Задний вид: задняя дельта (2 пути).
+      expect(activeCount(tester), 2);
+    },
+  );
 }
