@@ -345,6 +345,26 @@ void main() {
     expect(find.text('EDIT_SCREEN'), findsOneWidget);
   });
 
+  testWidgets('превью медиа занимает фиксированный блок', (tester) async {
+    final created = await repository.create(
+      Exercise(
+        name: 'С медиа',
+        type: ExerciseType.strength,
+        thumbnailPath: '${tempDir.path}/media/thumb.png',
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      const [],
+    );
+
+    await pumpDetail(tester, exerciseId: created.id!);
+
+    final image = tester.widget<Image>(find.byType(Image));
+    expect(image.width, double.infinity);
+    expect(image.height, 220);
+    expect(image.fit, BoxFit.cover);
+  });
+
   testWidgets('обновляется после изменения данных в БД без переоткрытия', (
     tester,
   ) async {

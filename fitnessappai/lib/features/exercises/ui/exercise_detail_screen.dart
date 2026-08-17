@@ -258,8 +258,9 @@ class _ExercisePreview extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Image(
         image: mediaCache.imageFor(path),
+        width: double.infinity,
         height: height,
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
         errorBuilder: (_, _, _) => _placeholder(context, height),
       ),
     );

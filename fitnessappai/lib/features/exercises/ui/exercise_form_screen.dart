@@ -567,10 +567,12 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
               borderRadius: BorderRadius.circular(12),
               child: Image(
                 image: _mediaCache.imageFor(_thumbnailPath!),
+                width: double.infinity,
                 height: 120,
-                fit: BoxFit.contain,
+                fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => Container(
                   height: 120,
+                  width: double.infinity,
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: const Center(child: Icon(Icons.broken_image_outlined)),
                 ),
@@ -616,10 +618,12 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
               borderRadius: BorderRadius.circular(12),
               child: Image(
                 image: _mediaCache.imageFor(_animationPath!),
+                width: double.infinity,
                 height: 160,
-                fit: BoxFit.contain,
+                fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => Container(
                   height: 160,
+                  width: double.infinity,
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: const Center(child: Icon(Icons.broken_image_outlined)),
                 ),
