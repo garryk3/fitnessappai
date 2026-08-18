@@ -384,6 +384,30 @@ class ProgramRepository {
     _notify();
   }
 
+  /// Заменяет упражнения одного дня без полной валидации программы.
+  ///
+  /// Используется при сохранении черновика дня, когда другие дни ещё не
+  /// заполнены.
+  Future<void> replaceDayExercises(
+    int dayId,
+    List<ProgramDayExercise> exercises,
+  ) async {
+    await (_db.delete(
+      _db.programDayExercises,
+    )..where((t) => t.dayId.equals(dayId))).go();
+    await _db.batch((batch) {
+      for (var i = 0; i < exercises.length; i++) {
+        batch.insert(
+          _db.programDayExercises,
+          _toDayExerciseCompanion(
+            exercises[i],
+          ).copyWith(dayId: Value(dayId), orderIndex: Value(i)),
+        );
+      }
+    });
+    _notify();
+  }
+
   /// Возвращает `true`, если предупреждения для программы скрыты.
   Future<bool> isWarningDismissed(int programId) async {
     final row = await (_db.select(

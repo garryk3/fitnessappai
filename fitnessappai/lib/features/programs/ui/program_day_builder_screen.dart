@@ -12,7 +12,6 @@ import 'package:fitnessappai/core/domain/validators/program_day_exercise_validat
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
-import 'package:fitnessappai/features/programs/ui/program_validation_dialog.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Второй шаг конструктора программы: наполнение тренировочного дня.
@@ -291,30 +290,12 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
     setState(() => _saving = true);
     try {
-      final exercisesByDayIndex = <int, List<ProgramDayExercise>>{};
-      for (final day in detail.days) {
-        final index = day.day.dayIndex;
-        exercisesByDayIndex[index] = index == widget.dayIndex
-            ? items
-            : [...day.mainExercises, ...day.alternativeExercises];
-      }
-      await _repository.update(
-        detail.program.copyWith(updatedAt: DateTime.now()),
-        exercisesByDayIndex: exercisesByDayIndex,
+      final dayDetail = detail.days.firstWhere(
+        (d) => d.day.dayIndex == widget.dayIndex,
       );
+      await _repository.replaceDayExercises(dayDetail.day.id!, items);
       if (mounted) {
         Navigator.of(context).pop(true);
-      }
-    } on ProgramValidationException catch (e) {
-      if (mounted) {
-        setState(() => _saving = false);
-        final exit = await showProgramValidationDialog(
-          context,
-          errors: e.errors,
-        );
-        if (exit == true && mounted) {
-          Navigator.of(context).pop();
-        }
       }
     } finally {
       if (mounted) {
