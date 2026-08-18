@@ -59,6 +59,7 @@ dependencies:
   package_info_plus: ^9.0.1
   url_launcher: ^6.3.2
   flutter_svg: ^2.0.17
+  video_player: ^2.14.0
 
 dev_dependencies:
   flutter_test:
@@ -93,6 +94,7 @@ flutter:
     - assets/data/
     - assets/exercises/
     - assets/sounds/
+    - assets/videos/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
