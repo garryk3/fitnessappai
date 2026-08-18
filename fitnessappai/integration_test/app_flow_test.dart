@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/register_core_services.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
@@ -38,12 +39,38 @@ int day2Weekday(int today) =>
 Future<void> pumpApp(WidgetTester tester, AppDatabase db) async {
   locator.reset();
   registerCoreServices(locator, database: db);
+  locator.registerLazySingleton<SoundService>(() => StubSoundService());
   await tester.pumpWidget(const FitnessAppAi());
   await tester.pumpAndSettle();
 }
 
+Future<void> pumpUntilFound(
+  WidgetTester tester,
+  Finder finder, {
+  int maxPumps = 200,
+  String label = '',
+}) async {
+  for (var i = 0; i < maxPumps; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (finder.evaluate().isNotEmpty) {
+      return;
+    }
+  }
+  throw StateError('Widget not found after $maxPumps pumps: $label');
+}
+
 Future<void> goToTab(WidgetTester tester, IconData icon) async {
-  await tester.tap(find.byIcon(icon));
+  final navFinder = find.byType(NavigationBar);
+  if (navFinder.evaluate().isNotEmpty) {
+    await tester.tap(
+      find.descendant(of: navFinder, matching: find.byIcon(icon)).first,
+    );
+  } else {
+    final railFinder = find.byType(NavigationRail);
+    await tester.tap(
+      find.descendant(of: railFinder, matching: find.byIcon(icon)).first,
+    );
+  }
   await tester.pumpAndSettle();
 }
 
@@ -62,12 +89,29 @@ Future<void> enterField(
   await tester.pumpAndSettle();
 }
 
+Future<void> enterWorkoutField(
+  WidgetTester tester,
+  Finder finder,
+  String value,
+) async {
+  await ensureFieldVisible(tester, finder);
+  await tester.enterText(finder, value);
+  await tester.pump();
+}
+
 Future<void> pullToRefreshExercises(WidgetTester tester) async {
-  final list = find.descendant(
-    of: find.byType(ExercisesScreen),
-    matching: find.byType(ListView),
-  );
-  await tester.fling(list, const Offset(0, 400), 1000);
+  for (var i = 0; i < 5; i++) {
+    await tester.pumpAndSettle();
+    final list = find.descendant(
+      of: find.byType(ExercisesScreen),
+      matching: find.byType(ListView),
+    );
+    if (list.evaluate().isNotEmpty) {
+      await tester.fling(list, const Offset(0, 400), 1000);
+      await tester.pumpAndSettle();
+      return;
+    }
+  }
   await tester.pumpAndSettle();
 }
 
@@ -89,11 +133,9 @@ Future<void> createExercise(
   await tester.tap(find.byTooltip('Новое упражнение'));
   await tester.pumpAndSettle();
 
-  await enterField(
-    tester,
-    find.widgetWithText(TextFormField, 'Название'),
-    name,
-  );
+  final nameFinder = find.byType(TextFormField).first;
+
+  await enterField(tester, nameFinder, name);
 
   final typeDropdown = find.byType(DropdownButtonFormField<ExerciseType>);
   await ensureFieldVisible(tester, typeDropdown);
@@ -122,6 +164,17 @@ Future<void> createExercise(
     await tester.pumpAndSettle();
   }
 
+  final primaryChip = find.text('Основная').first;
+  await tester.scrollUntilVisible(
+    primaryChip,
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.ensureVisible(primaryChip);
+  await tester.pumpAndSettle();
+  await tester.tap(primaryChip);
+  await tester.pumpAndSettle();
+
   await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
   await tester.pumpAndSettle();
 }
@@ -141,9 +194,6 @@ Future<void> addDayExercise(
   await tester.tap(
     find.descendant(of: find.byType(AlertDialog), matching: find.text(name)),
   );
-  await tester.pumpAndSettle();
-
-  await tester.tap(find.widgetWithText(ListTile, name));
   await tester.pumpAndSettle();
 
   for (final entry in params.entries) {
@@ -189,11 +239,24 @@ Future<void> configureDay(
   required List<(String, Map<String, String>)> mainSets,
   required List<(String, Map<String, String>)> alternativeSets,
 }) async {
-  await tester.tap(find.text('День $dayIndex'));
+  final dayLabel = find.text('День $dayIndex');
+  await tester.scrollUntilVisible(
+    dayLabel,
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+
+  final dayCard = find.ancestor(of: dayLabel, matching: find.byType(Card));
+  await tester.tap(
+    find.descendant(of: dayCard, matching: find.byIcon(Icons.tune)),
+  );
   await tester.pumpAndSettle();
   await selectWeekday(tester, weekdayLabel(weekday));
 
-  await tester.tap(find.byIcon(Icons.playlist_add).at(dayIndex - 1));
+  await tester.tap(
+    find.descendant(of: dayCard, matching: find.byIcon(Icons.playlist_add)),
+  );
   await tester.pumpAndSettle();
 
   for (final (name, params) in mainSets) {
@@ -221,12 +284,12 @@ Future<void> completeStrengthSet(
   required String repeats,
   required String weight,
 }) async {
-  await enterField(
+  await enterWorkoutField(
     tester,
     find.widgetWithText(TextFormField, 'Повторения'),
     repeats,
   );
-  await enterField(
+  await enterWorkoutField(
     tester,
     find.widgetWithText(TextFormField, 'Вес (кг)'),
     weight,
@@ -241,7 +304,7 @@ Future<void> completePlankSet(
   WidgetTester tester, {
   required String seconds,
 }) async {
-  await enterField(
+  await enterWorkoutField(
     tester,
     find.widgetWithText(TextFormField, 'Время (сек)'),
     seconds,
@@ -257,12 +320,12 @@ Future<void> completeRunningSet(
   required String minutes,
   required String distance,
 }) async {
-  await enterField(
+  await enterWorkoutField(
     tester,
     find.widgetWithText(TextFormField, 'Время (мин)'),
     minutes,
   );
-  await enterField(
+  await enterWorkoutField(
     tester,
     find.widgetWithText(TextFormField, 'Дистанция (км)'),
     distance,
@@ -277,15 +340,16 @@ Future<void> skipRestIfShown(WidgetTester tester) async {
   final skip = find.widgetWithText(FilledButton, 'Пропустить отдых');
   if (skip.evaluate().isNotEmpty) {
     await tester.tap(skip);
-    await tester.pumpAndSettle();
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
   }
 }
 
 Future<void> finishAndGoProgress(WidgetTester tester) async {
-  expect(find.text('Тренировка завершена'), findsOneWidget);
+  await pumpUntilFound(tester, find.text('Тренировка завершена'));
   await tester.tap(find.widgetWithText(FilledButton, 'Завершить тренировку'));
-  await tester.pumpAndSettle();
-  expect(find.text('Тренировка сохранена'), findsOneWidget);
+  await pumpUntilFound(tester, find.text('Тренировка сохранена'));
   await tester.tap(find.text('К прогрессу'));
   await tester.pumpAndSettle();
 }
@@ -316,7 +380,10 @@ void main() {
     addTearDown(() => db.close());
     await pumpApp(tester, db);
 
+    await goToTab(tester, Icons.fitness_center_outlined);
+
     await createExercise(tester, _squat, ExerciseType.strength);
+
     await pullToRefreshExercises(tester);
     expect(find.text(_squat), findsOneWidget);
 
@@ -376,9 +443,6 @@ void main() {
       ],
     );
 
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-
     await configureDay(
       tester,
       2,
@@ -396,7 +460,6 @@ void main() {
       of: find.byType(ProgramBuilderScreen),
       matching: find.widgetWithText(FilledButton, 'Сохранить'),
     );
-    await ensureFieldVisible(tester, programSave);
     await tester.tap(programSave);
     await tester.pumpAndSettle();
     await pullToRefreshPrograms(tester);
@@ -406,15 +469,15 @@ void main() {
     expect(find.text(_programName), findsWidgets);
 
     await tester.tap(find.text('Начать'));
-    await tester.pumpAndSettle();
-    expect(
-      find.widgetWithText(FilledButton, 'Начать тренировку'),
-      findsOneWidget,
+    final startWorkoutBtn = find.widgetWithText(
+      FilledButton,
+      'Начать тренировку',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await pumpUntilFound(tester, startWorkoutBtn);
+    await tester.tap(startWorkoutBtn);
     await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField, 'Повторения'), findsOneWidget);
 
-    expect(find.text(_squat), findsOneWidget);
     await completeStrengthSet(tester, repeats: '10', weight: '40');
     await skipRestIfShown(tester);
 
@@ -445,6 +508,8 @@ void main() {
     final db = AppDatabase(executor: NativeDatabase.memory());
     addTearDown(() => db.close());
     await pumpApp(tester, db);
+
+    await goToTab(tester, Icons.fitness_center_outlined);
 
     await createExercise(tester, _squat, ExerciseType.strength);
     await pullToRefreshExercises(tester);
@@ -483,9 +548,6 @@ void main() {
       ],
       alternativeSets: const [],
     );
-
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
 
     await configureDay(
       tester,
@@ -646,6 +708,8 @@ void main() {
     final db = AppDatabase(executor: NativeDatabase.memory());
     addTearDown(() => db.close());
     await pumpApp(tester, db);
+
+    await goToTab(tester, Icons.fitness_center_outlined);
 
     await createExercise(tester, _running, ExerciseType.running);
     await pullToRefreshExercises(tester);

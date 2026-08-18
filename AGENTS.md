@@ -18,7 +18,7 @@ flutter build apk --debug
 ```
 
 - Single test: `flutter test test/<path>_test.dart`.
-- Integration tests (`integration_test/`) are NOT run in CI and need an Android emulator — none exists in this WSL2 env (Android SDK on Windows disk, no AVD). Don't attempt to run them locally.
+- Integration tests (`integration_test/`) are NOT run in CI. They run on Linux desktop: `flutter test integration_test -d linux` (takes ~2 minutes, requires the `StubSoundService` stub registered in `pumpApp`). In this WSL2 env there is no Android emulator (Android SDK on Windows disk, no AVD).
 - Stack: Flutter/Dart, `drift` ORM, `signals`/`signals_flutter`, `go_router`, `fl_chart`, `flutter_localizations` (template `lib/l10n/app_ru.arb`).
 
 ## Generated code (commit it, CI never regenerates)
@@ -29,6 +29,7 @@ flutter build apk --debug
 ## Workflow & conventions
 
 - Repo language is Russian: PLAN.md, commit messages, UI strings. Write commit messages as `task/NN.NN: <краткое описание на русском> (#PR)`.
+- **Before every commit, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`, ~2 min, not in CI). The user may opt out; never run them silently or skip the question.
 - Each task = branch `task/<NN>-<slug>` from `main` → PR → green CI → squash merge, in dependency order.
 - Keep the `@DriftDatabase` annotation on the database class, NOT on a top-level `const` — drift_dev 2.34 fails to detect the DB otherwise.
 - If `build_runner` reports stale/skipped outputs after a schema change, `rm -rf .dart_tool/build` and rebuild.

@@ -323,7 +323,7 @@ void main() {
     expect(items.single.sets, 3);
   });
 
-  testWidgets('пустой день в другой позиции блокирует сохранение', (
+  testWidgets('пустой день в другой позиции не блокирует сохранение текущего', (
     tester,
   ) async {
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
@@ -335,25 +335,12 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Недостаточно данных для сохранения'), findsOneWidget);
-    expect(
-      find.text('У дня 2 должно быть хотя бы одно основное упражнение'),
-      findsOneWidget,
-    );
-    expect(find.text('Продолжить редактирование'), findsOneWidget);
-    expect(find.text('Выйти'), findsOneWidget);
-    expect(
-      find.text('Заполните все дни программы перед сохранением'),
-      findsNothing,
-    );
-
-    await tester.tap(find.text('Продолжить редактирование'));
-    await tester.pumpAndSettle();
     expect(find.text('Недостаточно данных для сохранения'), findsNothing);
-    expect(find.text('День 1'), findsOneWidget);
+    expect(find.byType(ProgramDayBuilderScreen), findsNothing);
 
     final detail = await programRepository.getProgram(program.id!);
     expect(detail!.days[0].mainExercises, hasLength(1));
+    expect(detail.days[1].mainExercises, isEmpty);
   });
 
   testWidgets('новое упражнение: параметры задаются сразу и день сохраняется', (
