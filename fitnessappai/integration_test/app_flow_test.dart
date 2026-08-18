@@ -15,6 +15,8 @@ import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dar
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/settings/domain/update_service.dart';
+import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/main.dart' hide main;
 
 const _programName = 'Тест Сплит';
@@ -36,12 +38,35 @@ String weekdayLabel(int weekday) => switch (weekday) {
 int day2Weekday(int today) =>
     today == DateTime.sunday ? DateTime.saturday : today + 1;
 
-Future<void> pumpApp(WidgetTester tester, AppDatabase db) async {
+Future<void> pumpApp(
+  WidgetTester tester,
+  AppDatabase db, {
+  bool stubPlatformServices = false,
+}) async {
   locator.reset();
   registerCoreServices(locator, database: db);
   locator.registerLazySingleton<SoundService>(() => StubSoundService());
+  if (stubPlatformServices) {
+    locator.registerLazySingleton<UpdateService>(() => _StubUpdateService());
+    locator.registerLazySingleton<SyncService>(() => _StubSyncService());
+  }
   await tester.pumpWidget(const FitnessAppAi());
   await tester.pumpAndSettle();
+}
+
+class _StubUpdateService implements UpdateService {
+  @override
+  Future<ReleaseInfo?> fetchLatestRelease() async => null;
+}
+
+class _StubSyncService implements SyncService {
+  @override
+  Future<String> export() async => 'stub-export.sqlite';
+
+  @override
+  Future<void> import(String sourcePath) async {
+    throw UnimplementedError('import заглушен в e2e');
+  }
 }
 
 Future<void> pumpUntilFound(
@@ -61,18 +86,37 @@ Future<void> pumpUntilFound(
 
 Future<void> goToTab(WidgetTester tester, IconData icon) async {
   final navFinder = find.byType(NavigationBar);
+  Finder? tabIcon;
   if (navFinder.evaluate().isNotEmpty) {
-    await tester.tap(
-      find.descendant(of: navFinder, matching: find.byIcon(icon)).first,
-    );
+    tabIcon =
+        _navIconIn(navFinder, icon) ?? _navIconIn(navFinder, _filledIcon(icon));
   } else {
     final railFinder = find.byType(NavigationRail);
-    await tester.tap(
-      find.descendant(of: railFinder, matching: find.byIcon(icon)).first,
-    );
+    tabIcon =
+        _navIconIn(railFinder, icon) ??
+        _navIconIn(railFinder, _filledIcon(icon));
   }
+  await tester.tap(tabIcon!.first);
   await tester.pumpAndSettle();
 }
+
+Finder? _navIconIn(Finder container, IconData icon) {
+  final found = find.descendant(
+    of: container,
+    matching: find.byWidgetPredicate((w) => w is Icon && w.icon == icon),
+  );
+  return found.evaluate().isEmpty ? null : found;
+}
+
+IconData _filledIcon(IconData outlined) => switch (outlined) {
+  Icons.home_outlined => Icons.home,
+  Icons.fitness_center_outlined => Icons.fitness_center,
+  Icons.calendar_month_outlined => Icons.calendar_month,
+  Icons.event_note_outlined => Icons.event_note,
+  Icons.bar_chart_outlined => Icons.bar_chart,
+  Icons.person_outline => Icons.person,
+  _ => outlined,
+};
 
 Future<void> ensureFieldVisible(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
@@ -129,6 +173,8 @@ Future<void> createExercise(
   String name,
   ExerciseType type, {
   String? contraindication,
+  bool fixedWeight = false,
+  bool perSide = false,
 }) async {
   await tester.tap(find.byTooltip('Новое упражнение'));
   await tester.pumpAndSettle();
@@ -175,7 +221,27 @@ Future<void> createExercise(
   await tester.tap(primaryChip);
   await tester.pumpAndSettle();
 
+  if (fixedWeight) {
+    await _toggleFormCheckbox(tester, 'Фиксированный вес');
+  }
+  if (perSide) {
+    await _toggleFormCheckbox(tester, 'Выполнение по сторонам (левая/правая)');
+  }
+
   await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _toggleFormCheckbox(WidgetTester tester, String label) async {
+  final checkbox = find.widgetWithText(CheckboxListTile, label);
+  await tester.scrollUntilVisible(
+    checkbox,
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.ensureVisible(checkbox);
+  await tester.pumpAndSettle();
+  await tester.tap(checkbox);
   await tester.pumpAndSettle();
 }
 
@@ -333,6 +399,52 @@ Future<void> completeRunningSet(
   final done = find.widgetWithText(FilledButton, 'Подход выполнен');
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
+  await tester.pump();
+}
+
+Future<void> completePerSideSet(
+  WidgetTester tester, {
+  required String repeats,
+  String? weight,
+}) async {
+  await enterWorkoutField(
+    tester,
+    find.widgetWithText(TextFormField, 'Повторения — левая'),
+    repeats,
+  );
+  if (weight != null) {
+    await enterWorkoutField(
+      tester,
+      find.widgetWithText(TextFormField, 'Вес (кг)'),
+      weight,
+    );
+  }
+  final leftDone = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await ensureFieldVisible(tester, leftDone);
+  await tester.tap(leftDone);
+  await tester.pump();
+
+  final sideRest = find.text('Отдых между сторонами');
+  if (sideRest.evaluate().isNotEmpty) {
+    await tester.tap(find.widgetWithText(FilledButton, 'Пропустить отдых'));
+    await tester.pump();
+  }
+
+  await enterWorkoutField(
+    tester,
+    find.widgetWithText(TextFormField, 'Повторения — правая'),
+    repeats,
+  );
+  if (weight != null) {
+    await enterWorkoutField(
+      tester,
+      find.widgetWithText(TextFormField, 'Вес (кг)'),
+      weight,
+    );
+  }
+  final rightDone = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await ensureFieldVisible(tester, rightDone);
+  await tester.tap(rightDone);
   await tester.pump();
 }
 
@@ -774,5 +886,278 @@ void main() {
     await goToTab(tester, Icons.event_note_outlined);
     await reloadWeekPlan(tester);
     expect(find.text('Перенесено'), findsOneWidget);
+  });
+
+  testWidgets('флоу: тренировка по сторонам с фиксированным весом', (
+    tester,
+  ) async {
+    final db = AppDatabase(executor: NativeDatabase.memory());
+    addTearDown(() => db.close());
+    await pumpApp(tester, db);
+
+    await goToTab(tester, Icons.fitness_center_outlined);
+    await createExercise(
+      tester,
+      _squat,
+      ExerciseType.strength,
+      fixedWeight: true,
+      perSide: true,
+    );
+    await pullToRefreshExercises(tester);
+    expect(find.text(_squat), findsOneWidget);
+
+    final today = DateTime.now().weekday;
+
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byTooltip('Новая программа'));
+    await tester.pumpAndSettle();
+    await enterField(
+      tester,
+      find.widgetWithText(TextFormField, 'Название'),
+      _programName,
+    );
+
+    await configureDay(
+      tester,
+      1,
+      today,
+      mainSets: [
+        (
+          _squat,
+          {
+            'Подходы': '1',
+            'Повторения': '8',
+            'Вес (кг)': '40',
+            'Отдых (сек)': '10',
+          },
+        ),
+      ],
+      alternativeSets: const [],
+    );
+
+    final programSave = find.descendant(
+      of: find.byType(ProgramBuilderScreen),
+      matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    );
+    await ensureFieldVisible(tester, programSave);
+    await tester.tap(programSave);
+    await tester.pumpAndSettle();
+    await pullToRefreshPrograms(tester);
+
+    await goToTab(tester, Icons.event_note_outlined);
+    await tester.tap(find.text('Начать'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    final weightField = find.widgetWithText(TextFormField, 'Вес (кг)');
+    expect(find.text('Повторения — левая'), findsOneWidget);
+    expect(tester.widget<TextFormField>(weightField).controller!.text, '40');
+    await tester.pump();
+
+    await completePerSideSet(tester, repeats: '8', weight: '42.5');
+    await skipRestIfShown(tester);
+
+    await finishAndGoProgress(tester);
+    await expectWorkoutCount(tester, '1');
+
+    final sessions = await locator.get<WorkoutRepository>().getAllSessions();
+    expect(sessions, hasLength(1));
+    final detail = await locator.get<WorkoutRepository>().getSession(
+      sessions.single.id!,
+    );
+    expect(detail, isNotNull);
+    expect(detail!.results, hasLength(2));
+    expect(detail.results[0].side, 'left');
+    expect(detail.results[1].side, 'right');
+    expect(detail.results[0].setIndex, 1);
+    expect(detail.results[1].setIndex, 1);
+    expect(detail.results[0].weightKg, 42.5);
+    expect(detail.results[1].weightKg, 42.5);
+    expect(detail.results[0].reps, 8);
+    expect(detail.results[1].reps, 8);
+  });
+
+  testWidgets('прогресс и история после тренировки', (tester) async {
+    final db = AppDatabase(executor: NativeDatabase.memory());
+    addTearDown(() => db.close());
+    await pumpApp(tester, db);
+
+    await goToTab(tester, Icons.fitness_center_outlined);
+    await createExercise(tester, _squat, ExerciseType.strength);
+    await pullToRefreshExercises(tester);
+    await createExercise(tester, _running, ExerciseType.running);
+    await pullToRefreshExercises(tester);
+
+    final today = DateTime.now().weekday;
+
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byTooltip('Новая программа'));
+    await tester.pumpAndSettle();
+    await enterField(
+      tester,
+      find.widgetWithText(TextFormField, 'Название'),
+      _programName,
+    );
+
+    await configureDay(
+      tester,
+      1,
+      today,
+      mainSets: [
+        (
+          _squat,
+          {
+            'Подходы': '1',
+            'Повторения': '10',
+            'Вес (кг)': '40',
+            'Отдых (сек)': '10',
+          },
+        ),
+      ],
+      alternativeSets: const [],
+    );
+
+    final programSave = find.descendant(
+      of: find.byType(ProgramBuilderScreen),
+      matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    );
+    await ensureFieldVisible(tester, programSave);
+    await tester.tap(programSave);
+    await tester.pumpAndSettle();
+    await pullToRefreshPrograms(tester);
+
+    await goToTab(tester, Icons.event_note_outlined);
+    await tester.tap(find.text('Начать'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    await completeStrengthSet(tester, repeats: '10', weight: '40');
+    await skipRestIfShown(tester);
+    await finishAndGoProgress(tester);
+
+    final workoutsCard = find.ancestor(
+      of: find.text('Тренировок'),
+      matching: find.byType(Card),
+    );
+    expect(workoutsCard, findsOneWidget);
+
+    await goToTab(tester, Icons.bar_chart_outlined);
+    await tester.pumpAndSettle();
+    expect(find.text('Тренировок'), findsOneWidget);
+    expect(find.text('Дистанция'), findsOneWidget);
+    expect(find.text('Время планки'), findsOneWidget);
+
+    await goToTab(tester, Icons.home_outlined);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('К истории'));
+    await tester.pumpAndSettle();
+    expect(find.text(_programName), findsOneWidget);
+    await tester.tap(find.text(_programName));
+    await tester.pumpAndSettle();
+    expect(find.text(_squat), findsOneWidget);
+  });
+
+  testWidgets('главный экран: активная программа и быстрый старт', (
+    tester,
+  ) async {
+    final db = AppDatabase(executor: NativeDatabase.memory());
+    addTearDown(() => db.close());
+    await pumpApp(tester, db);
+
+    await goToTab(tester, Icons.fitness_center_outlined);
+    await createExercise(tester, _squat, ExerciseType.strength);
+    await pullToRefreshExercises(tester);
+
+    final today = DateTime.now().weekday;
+
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byTooltip('Новая программа'));
+    await tester.pumpAndSettle();
+    await enterField(
+      tester,
+      find.widgetWithText(TextFormField, 'Название'),
+      _programName,
+    );
+
+    await configureDay(
+      tester,
+      1,
+      today,
+      mainSets: [
+        (
+          _squat,
+          {
+            'Подходы': '1',
+            'Повторения': '10',
+            'Вес (кг)': '40',
+            'Отдых (сек)': '10',
+          },
+        ),
+      ],
+      alternativeSets: const [],
+    );
+
+    final programSave = find.descendant(
+      of: find.byType(ProgramBuilderScreen),
+      matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    );
+    await ensureFieldVisible(tester, programSave);
+    await tester.tap(programSave);
+    await tester.pumpAndSettle();
+    await pullToRefreshPrograms(tester);
+
+    await goToTab(tester, Icons.home_outlined);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Сделайте программу активной, чтобы видеть её здесь.'),
+      findsOneWidget,
+    );
+
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Сделать активной'));
+    await tester.pumpAndSettle();
+    expect(find.text('Активная'), findsOneWidget);
+
+    await goToTab(tester, Icons.home_outlined);
+    await tester.pumpAndSettle();
+    expect(find.text('Активная программа'), findsOneWidget);
+    expect(find.text(_programName), findsWidgets);
+    expect(find.text('Быстрый старт'), findsOneWidget);
+
+    await tester.tap(find.text('Быстрый старт'));
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(FilledButton, 'Начать тренировку'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('настройки: тема, звук и проверка обновления', (tester) async {
+    final db = AppDatabase(executor: NativeDatabase.memory());
+    addTearDown(() => db.close());
+    await pumpApp(tester, db, stubPlatformServices: true);
+
+    await goToTab(tester, Icons.person_outline);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Настройки'), findsOneWidget);
+
+    await tester.tap(find.text('Светлая'));
+    await tester.pumpAndSettle();
+    expect(find.text('Настройки'), findsOneWidget);
+
+    final soundSwitch = find.widgetWithText(SwitchListTile, 'Звук таймеров');
+    final initialSound = tester.widget<SwitchListTile>(soundSwitch).value;
+    await tester.tap(soundSwitch);
+    await tester.pumpAndSettle();
+    expect(tester.widget<SwitchListTile>(soundSwitch).value, !initialSound);
+
+    await tester.tap(find.text('Проверить обновление'));
+    await pumpUntilFound(tester, find.text('Релизы ещё не опубликованы'));
   });
 }
