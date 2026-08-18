@@ -18,17 +18,32 @@ class ProfileController {
   final Signal<List<BodyMeasurement>> measurements = Signal(const []);
   final Signal<BodyMetric> selectedMetric = Signal(BodyMetric.weight);
   final Signal<List<MetricPoint>> chartPoints = Signal(const []);
+  final Signal<int?> selectedYear = Signal(DateTime.now().year);
+  final Signal<List<int>> availableYears = Signal(const []);
 
   /// Перезагружает замеры и график после внешних изменений.
   Future<void> reload() => _load();
 
+  /// Выбирает год фильтра (null — все годы) и перезагружает данные.
+  Future<void> selectYear(int? year) async {
+    if (year == selectedYear.value) {
+      return;
+    }
+    selectedYear.value = year;
+    await _load();
+  }
+
   Future<void> _load() async {
     isLoading.value = true;
     try {
-      measurements.value = await measurementRepository.getAll();
-      latest.value = measurements.value.isEmpty
-          ? null
-          : measurements.value.last;
+      final all = await measurementRepository.getAll();
+      final years = all.map((m) => m.date.year).toSet().toList()..sort();
+      availableYears.value = years;
+      final year = selectedYear.value;
+      measurements.value = year == null
+          ? all
+          : all.where((m) => m.date.year == year).toList();
+      latest.value = all.isEmpty ? null : all.last;
       await _refreshChart();
     } finally {
       isLoading.value = false;
@@ -57,10 +72,15 @@ class ProfileController {
   }
 
   Future<void> _refreshChart() async {
+    final year = selectedYear.value;
+    final start = year == null ? DateTime(2000) : DateTime(year, 1, 1);
+    final end = year == null
+        ? DateTime(2100)
+        : DateTime(year, 12, 31, 23, 59, 59, 999);
     final raw = await measurementRepository.history(
       selectedMetric.value,
-      DateTime(2000),
-      DateTime(2100),
+      start,
+      end,
     );
     // Дедупликация: при нескольких замерах за день берём последний.
     final byDate = <DateTime, MetricPoint>{};

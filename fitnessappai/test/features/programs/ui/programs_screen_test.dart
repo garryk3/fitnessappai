@@ -69,6 +69,16 @@ void main() {
     expect(find.text('Список программ пуст'), findsOneWidget);
   });
 
+  testWidgets('пустое состояние вертикально отцентрировано', (tester) async {
+    await pumpPrograms(tester);
+
+    final textCenter = tester.getCenter(find.text('Список программ пуст'));
+    final appBarHeight = tester.getSize(find.byType(AppBar)).height;
+    final screenHeight = tester.getSize(find.byType(Scaffold)).height;
+    final expectedY = appBarHeight + (screenHeight - appBarHeight) / 2;
+    expect(textCenter.dy, closeTo(expectedY, 1.0));
+  });
+
   testWidgets('отображает карточки программ с днями и счётчиками', (
     tester,
   ) async {

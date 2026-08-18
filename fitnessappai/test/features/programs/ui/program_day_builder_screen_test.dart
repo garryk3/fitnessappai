@@ -460,4 +460,46 @@ void main() {
     expect(find.text('Бег трусцой'), findsNothing);
     expect(find.text('Приседания'), findsNothing);
   });
+
+  testWidgets('чекбокс «Только свои упражнения» фильтрует список', (
+    tester,
+  ) async {
+    final program = await createProgram('Сплит', 1);
+    await createExercise('Жим штанги', ExerciseType.strength);
+    await exerciseRepository.create(
+      Exercise(
+        name: 'Мой жим',
+        type: ExerciseType.strength,
+        isCustom: true,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      const [],
+    );
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.text('Мой жим'), findsOneWidget);
+
+    await tester.tap(find.text('Только свои упражнения'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Мой жим'), findsOneWidget);
+    expect(find.text('Жим штанги'), findsNothing);
+  });
+
+  testWidgets('список выбора упражнения содержит разделители', (tester) async {
+    final program = await createProgram('Сплит', 1);
+    await createExercise('Жим штанги', ExerciseType.strength);
+    await createExercise('Приседания', ExerciseType.strength);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Divider), findsWidgets);
+  });
 }

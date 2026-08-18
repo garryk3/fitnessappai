@@ -500,7 +500,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Flexible(
+              Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,

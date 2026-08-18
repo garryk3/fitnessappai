@@ -536,6 +536,7 @@ class _ExercisePickerDialog extends StatefulWidget {
 class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
   MuscleGroup? _selectedGroup;
   ExerciseType? _selectedType;
+  bool _onlyCustom = false;
 
   bool _matches(
     Exercise exercise, {
@@ -548,7 +549,8 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
           (g) => g.id == group.id,
         );
     final matchesType = type == null || exercise.type == type;
-    return matchesGroup && matchesType;
+    final matchesCustom = !_onlyCustom || exercise.isCustom;
+    return matchesGroup && matchesType && matchesCustom;
   }
 
   List<Exercise> get _filtered {
@@ -591,7 +593,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
               ],
               onChanged: (value) => setState(() => _selectedGroup = value),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             DropdownButtonFormField<ExerciseType?>(
               initialValue: _selectedType,
               isExpanded: true,
@@ -613,15 +615,26 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
               ],
               onChanged: (value) => setState(() => _selectedType = value),
             ),
+            SwitchListTile(
+              value: _onlyCustom,
+              onChanged: (value) => setState(() => _onlyCustom = value),
+              title: Text(l10n.exerciseListOnlyCustom),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+            ),
             const SizedBox(height: 8),
             Expanded(
               child: _filtered.isEmpty
                   ? Center(child: Text(l10n.exerciseListEmpty))
-                  : ListView.builder(
+                  : ListView.separated(
                       itemCount: _filtered.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final exercise = _filtered[index];
                         return ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.fitness_center),
                           title: Text(exercise.name),
                           subtitle: Text(_typeLabel(l10n, exercise.type)),
                           onTap: () => Navigator.of(context).pop(exercise),

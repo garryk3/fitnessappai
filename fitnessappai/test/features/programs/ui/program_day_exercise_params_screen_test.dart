@@ -174,6 +174,22 @@ void main() {
     expect(items.sets, isNull);
   });
 
+  testWidgets('ошибка валидации снимается при вводе корректного значения', (
+    tester,
+  ) async {
+    final positionId = await addPosition('Жим штанги', ExerciseType.strength);
+
+    await pumpParams(tester, positionId);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Заполните поле'), findsNWidgets(2));
+
+    await enterField(tester, 'Подходы', '3');
+    await tester.pumpAndSettle();
+    expect(find.text('Заполните поле'), findsOneWidget);
+  });
+
   testWidgets('сохранение strength сохраняет метрики', (tester) async {
     final positionId = await addPosition('Жим штанги', ExerciseType.strength);
 
