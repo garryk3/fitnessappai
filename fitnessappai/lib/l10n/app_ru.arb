@@ -472,6 +472,8 @@
   "profileCurrentValues": "Текущие значения",
   "profileMetricChart": "Динамика",
   "profileMeasurementsHistory": "История замеров",
+  "profileYearFilter": "Год",
+  "profileYearAll": "Все годы",
   "profileEmpty": "Пока нет замеров тела",
   "profileChartEmpty": "Добавьте замеры, чтобы увидеть динамику",
   "profileAddMeasurement": "Добавить замер",

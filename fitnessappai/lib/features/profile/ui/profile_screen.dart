@@ -79,6 +79,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _SummaryCard(latest: latest),
           const SizedBox(height: 12),
         ],
+        if (_controller.availableYears.value.isNotEmpty) ...[
+          _YearFilter(controller: _controller),
+          const SizedBox(height: 12),
+        ],
         _MetricChartCard(controller: _controller),
         const SizedBox(height: 16),
         Text(
@@ -136,6 +140,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirmed == true && mounted) {
       await _controller.deleteMeasurement(measurement.id!);
     }
+  }
+}
+
+/// Фильтр замеров по году (null — все годы).
+class _YearFilter extends StatelessWidget {
+  const _YearFilter({required this.controller});
+
+  final ProfileController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final currentYear = DateTime.now().year;
+    final years = <int>{
+      ...controller.availableYears.value,
+      currentYear,
+    }.toList()..sort();
+    return Row(
+      children: [
+        Icon(
+          Icons.calendar_today_outlined,
+          size: 18,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 8),
+        Text(l10n.profileYearFilter, style: theme.textTheme.bodyMedium),
+        const Spacer(),
+        DropdownButton<int>(
+          value: controller.selectedYear.value ?? 0,
+          items: [
+            DropdownMenuItem<int>(value: 0, child: Text(l10n.profileYearAll)),
+            for (final year in years)
+              DropdownMenuItem<int>(value: year, child: Text('$year')),
+          ],
+          onChanged: (value) =>
+              controller.selectYear(value == null || value == 0 ? null : value),
+        ),
+      ],
+    );
   }
 }
 

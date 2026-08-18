@@ -187,6 +187,47 @@ void main() {
     expect(await repo.getAll(), hasLength(1));
     expect(find.text('80 кг'), findsWidgets);
   });
+
+  testWidgets('фильтр по году: по умолчанию выбран текущий год', (
+    tester,
+  ) async {
+    final currentYear = DateTime.now().year;
+    await repo.add(
+      measurement(date: DateTime(currentYear - 1, 6, 1), weightKg: 80),
+    );
+    await repo.add(
+      measurement(date: DateTime(currentYear, 8, 1), weightKg: 82),
+    );
+
+    await pumpProfile(tester);
+
+    final dropdown = tester.widget<DropdownButton<int>>(
+      find.byType(DropdownButton<int>),
+    );
+    expect(dropdown.value, currentYear);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+  });
+
+  testWidgets('фильтр «Все годы» показывает замеры обоих годов', (
+    tester,
+  ) async {
+    final currentYear = DateTime.now().year;
+    await repo.add(
+      measurement(date: DateTime(currentYear - 1, 6, 1), weightKg: 80),
+    );
+    await repo.add(
+      measurement(date: DateTime(currentYear, 8, 1), weightKg: 82),
+    );
+
+    await pumpProfile(tester);
+
+    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Все годы').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.delete_outline), findsNWidgets(2));
+  });
 }
 
 List<double> _chartYs(WidgetTester tester) {

@@ -959,6 +959,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileMeasurementsHistory => 'История замеров';
 
   @override
+  String get profileYearFilter => 'Год';
+
+  @override
+  String get profileYearAll => 'Все годы';
+
+  @override
   String get profileEmpty => 'Пока нет замеров тела';
 
   @override

@@ -1804,6 +1804,18 @@ abstract class AppLocalizations {
   /// **'История замеров'**
   String get profileMeasurementsHistory;
 
+  /// No description provided for @profileYearFilter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год'**
+  String get profileYearFilter;
+
+  /// No description provided for @profileYearAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все годы'**
+  String get profileYearAll;
+
   /// No description provided for @profileEmpty.
   ///
   /// In ru, this message translates to:

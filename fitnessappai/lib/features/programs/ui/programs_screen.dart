@@ -60,12 +60,18 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     if (items.isEmpty) {
       return RefreshIndicator(
         onRefresh: _controller.refresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            const SizedBox(height: 160),
-            Center(child: Text(AppLocalizations.of(context).programListEmpty)),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: constraints.maxHeight,
+                child: Center(
+                  child: Text(AppLocalizations.of(context).programListEmpty),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }

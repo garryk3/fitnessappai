@@ -196,6 +196,27 @@ void main() {
     expect(find.text(groups.first.labelRu), findsOneWidget);
   });
 
+  testWidgets('подписи осей графиков используют фиксированный интервал', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Приседания');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+
+    await pumpProgress(tester);
+
+    final bar = tester.widget<BarChart>(find.byType(BarChart));
+    expect(bar.data.titlesData.bottomTitles.sideTitles.interval, 1);
+
+    final line = tester.widget<LineChart>(find.byType(LineChart));
+    expect(line.data.titlesData.bottomTitles.sideTitles.interval, 1);
+  });
+
   testWidgets('время планки с дробной частью: 90 с → «1.5 мин»', (
     tester,
   ) async {

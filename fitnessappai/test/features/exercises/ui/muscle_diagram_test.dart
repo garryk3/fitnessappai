@@ -93,6 +93,27 @@ void main() {
     }
   });
 
+  testWidgets('в переднем виде нет лишнего элемента между ног', (tester) async {
+    await tester.pumpWidget(wrap(const MuscleDiagram(view: MuscleView.front)));
+
+    final svg = svgString(tester);
+    expect(
+      svg.contains('M264 554L270 553'),
+      isFalse,
+      reason: 'центральный осколок между бёдрами должен быть удалён',
+    );
+    expect(
+      'M196 518'.allMatches(svg).length,
+      1,
+      reason: 'левый квадрицепс должен быть один',
+    );
+    expect(
+      'M344 518'.allMatches(svg).length,
+      1,
+      reason: 'правый квадрицепс должен быть один',
+    );
+  });
+
   testWidgets(
     'родительская группа «плечи» подсвечивает дельты на обоих видах',
     (tester) async {

@@ -260,6 +260,21 @@ void main() {
     expect(tags.map((t) => t.id), [kneesTag]);
   });
 
+  testWidgets('чипы мышц выровнены по правому краю на широком экране', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await pumpForm(tester);
+    await scrollFormTo(tester, chipInRow('Грудь', 'Основная'));
+
+    final secondaryChip = tester.getRect(chipInRow('Грудь', 'Вспомогательная'));
+    final screenWidth = tester.getSize(find.byType(ExerciseFormScreen)).width;
+    expect(secondaryChip.right, closeTo(screenWidth - 16, 2.0));
+  });
+
   testWidgets('сохранение без мышц блокируется и показывает ошибку', (
     tester,
   ) async {
