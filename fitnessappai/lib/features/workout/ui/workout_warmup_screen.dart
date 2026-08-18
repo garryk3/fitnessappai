@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 
 /// Экран разминки перед тренировкой: обратный отсчёт и «Пропустить».
 ///
@@ -34,6 +33,7 @@ class WorkoutWarmupScreen extends StatefulWidget {
 
 class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
   late final SoundService _soundService;
+  late final WakelockService _wakelock;
   late int _remaining;
   Timer? _timer;
   bool _done = false;
@@ -43,12 +43,9 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
   void initState() {
     super.initState();
     _soundService = widget.soundService ?? locator.get<SoundService>();
+    _wakelock = locator.get<WakelockService>();
     _remaining = widget.warmupSeconds;
-    try {
-      WakelockPlus.enable();
-    } catch (e) {
-      log('Не удалось включить wakelock', error: e);
-    }
+    _wakelock.enable();
     if (_remaining > 0) {
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (_remaining <= 1) {
@@ -70,11 +67,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    try {
-      WakelockPlus.disable();
-    } catch (e) {
-      log('Не удалось выключить wakelock', error: e);
-    }
+    _wakelock.disable();
     super.dispose();
   }
 

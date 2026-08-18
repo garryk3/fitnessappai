@@ -62,7 +62,7 @@ class WorkoutRunScreen extends StatefulWidget {
     this.exerciseRepository,
     this.workoutRepository,
     this.mediaCache,
-    this.wakelockService = const WakelockPlusService(),
+    this.wakelockService,
     this.clock,
     this.timerFactory,
     this.soundService,
@@ -74,7 +74,7 @@ class WorkoutRunScreen extends StatefulWidget {
   final ExerciseRepository? exerciseRepository;
   final WorkoutRepository? workoutRepository;
   final MediaCache? mediaCache;
-  final WakelockService wakelockService;
+  final WakelockService? wakelockService;
   final DateTime Function()? clock;
   final TimerFactory? timerFactory;
   final SoundService? soundService;
@@ -87,6 +87,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
   late final WorkoutRunController _controller;
   late final MediaCache _mediaCache;
   late final WorkoutRepository _workoutRepository;
+  late final WakelockService _wakelock;
 
   @override
   void initState() {
@@ -107,13 +108,14 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
       clock: widget.clock,
       timerFactory: widget.timerFactory,
     );
-    widget.wakelockService.enable();
+    _wakelock = widget.wakelockService ?? locator.get<WakelockService>();
+    _wakelock.enable();
   }
 
   @override
   void dispose() {
     _controller.workout.dispose();
-    widget.wakelockService.disable();
+    _wakelock.disable();
     super.dispose();
   }
 

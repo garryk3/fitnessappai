@@ -29,6 +29,7 @@ import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/data/local_file_sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 
 /// Регистрация сервисов core-слоя в контейнере.
 void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
@@ -47,6 +48,7 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   sl.registerLazySingleton<SoundService>(
     () => AudioplayersSoundService(sl.get<SoundSettingsRepository>()),
   );
+  sl.registerLazySingleton<WakelockService>(() => const WakelockPlusService());
   sl.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(
       sl.get<AppDatabase>(),

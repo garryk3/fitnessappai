@@ -14,13 +14,23 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
+import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+
+class _FakeWakelock implements WakelockService {
+  @override
+  Future<void> enable() async {}
+
+  @override
+  Future<void> disable() async {}
+}
 
 void main() {
   late AppDatabase db;
@@ -30,6 +40,8 @@ void main() {
   late UserProfileRepository profileRepo;
 
   setUp(() async {
+    locator.reset();
+    locator.registerLazySingleton<WakelockService>(() => _FakeWakelock());
     db = AppDatabase(executor: NativeDatabase.memory());
     tempDir = await Directory.systemTemp.createTemp('workout_prepare_test');
     programRepo = ProgramRepository(db);

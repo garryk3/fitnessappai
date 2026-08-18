@@ -5,8 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+
+class _FakeWakelock implements WakelockService {
+  @override
+  Future<void> enable() async {}
+
+  @override
+  Future<void> disable() async {}
+}
 
 void main() {
   Future<void> pumpWarmup(
@@ -14,6 +24,8 @@ void main() {
     required int seconds,
     SoundService? soundService,
   }) async {
+    locator.reset();
+    locator.registerLazySingleton<WakelockService>(() => _FakeWakelock());
     final router = GoRouter(
       initialLocation: '/workout/warmup?seconds=$seconds',
       routes: [
