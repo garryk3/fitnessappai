@@ -1218,7 +1218,7 @@ void main() {
     addTearDown(() => db.close());
     await pumpApp(tester, db, stubPlatformServices: true);
 
-    await goToTab(tester, Icons.person_outline);
+    await goToTab(tester, Icons.home_outlined);
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
     expect(find.text('Настройки'), findsOneWidget);
