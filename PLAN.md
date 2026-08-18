@@ -1322,12 +1322,12 @@ fitnessappai/
 - **Тесты:** widget-тест — наличие `SizedBox(width: 8)` между кнопками.
 
 ### Задача 15.18: Блокировать сон при работе таймера
-- **Статус:** [ ] в работе
+- **Статус:** [x] выполнена (2026-08-19)
 - **Модуль:** фичи/workout
 - **Ветка:** `task/15.18-wakelock-timer`
 - **Описание:** Убедиться, что при активном таймере (отдых/удержание) экран тренировки не гаснет. Wakelock (`WakelockService`) уже активен на всём экране `workout_run_screen` (вкл. в `initState`, выкл. в `dispose`) и в `workout_warmup_screen`. Зафиксировать тестом, что `enable()` вызывается при старте тренировки, а `disable()` — при dispose.
 - **Критерии:** при активной тренировке сон заблокирован; покрыто widget-тестом.
-- **Тесты:** widget-тест `workout_run_screen_test.dart` — `_FakeWakelock.enable()` на старте, `disable()` при dispose.
+- **Тесты:** widget-тесты `workout_run_screen_test.dart` и `workout_warmup_screen_test.dart` — `_FakeWakelock.enable()` на старте, `disable()` при dispose (для run-экрана тест уже был, для разминки добавлен).
 
 ### Задача 15.19: Настройки — ошибка импорта БД (invalid icon is_stat_launcher)
 - **Статус:** [ ] в работе
@@ -1497,7 +1497,7 @@ fitnessappai/
 | 15.15 | Прогресс — дедуп perSide результатов | [x] | task/15.15-per-side-dedup | 2026-08-17 |
 | 15.16 | Настройки — SAF сохранение на Android | [x] | task/15.16-saf-save | 2026-08-17 |
 | 15.17 | Попап выхода — отступы между кнопками | [x] | task/15.17-exit-popup-spacing | 2026-08-17 |
-| 15.18 | Блокировать сон при работе таймера | [ ] | task/15.18-wakelock-timer | |
+| 15.18 | Блокировать сон при работе таймера | [x] | task/15.18-wakelock-timer | 2026-08-19 |
 | 15.19 | Настройки — ошибка импорта БД (is_stat_launcher) | [ ] | task/15.19-import-icon-fix | |
 | 15.20 | Перенести иконку настроек на главный экран | [ ] | task/15.20-settings-icon-home | |
 | 15.21 | Мышцы — группировка рук/спины/ног + подгруппы груди | [ ] | task/15.21-muscle-groups | |
