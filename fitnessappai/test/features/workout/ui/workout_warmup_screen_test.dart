@@ -11,21 +11,31 @@ import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 class _FakeWakelock implements WakelockService {
-  @override
-  Future<void> enable() async {}
+  int enableCalls = 0;
+  int disableCalls = 0;
 
   @override
-  Future<void> disable() async {}
+  Future<void> enable() async {
+    enableCalls++;
+  }
+
+  @override
+  Future<void> disable() async {
+    disableCalls++;
+  }
 }
 
 void main() {
+  late _FakeWakelock wakelock;
+
   Future<void> pumpWarmup(
     WidgetTester tester, {
     required int seconds,
     SoundService? soundService,
   }) async {
     locator.reset();
-    locator.registerLazySingleton<WakelockService>(() => _FakeWakelock());
+    wakelock = _FakeWakelock();
+    locator.registerLazySingleton<WakelockService>(() => wakelock);
     final router = GoRouter(
       initialLocation: '/workout/warmup?seconds=$seconds',
       routes: [
@@ -107,4 +117,17 @@ void main() {
 
     expect(sound.completionCalls, 0);
   });
+
+  testWidgets(
+    'wake lock включается при старте разминки и выключается при выходе',
+    (tester) async {
+      await pumpWarmup(tester, seconds: 30);
+
+      expect(wakelock.enableCalls, 1);
+      expect(wakelock.disableCalls, 0);
+
+      await tester.pumpWidget(const SizedBox());
+      expect(wakelock.disableCalls, 1);
+    },
+  );
 }
