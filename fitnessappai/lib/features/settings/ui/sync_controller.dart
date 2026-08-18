@@ -146,8 +146,11 @@ class SyncController {
     await SharePlus.instance.share(ShareParams(files: [XFile(filePath)]));
   }
 
+  static const _channel = MethodChannel('com.example.fitnessappai/file_saver');
+
   static Future<bool> _defaultSave(String filePath) async {
-    try {
+    if (!Platform.isAndroid) {
+      // На desktop — обычный saveFile через file_picker.
       final destination = await FilePicker.platform.saveFile(
         dialogTitle: 'Сохранение резервной копии',
         fileName: 'fitnessappai_backup.sqlite',
@@ -155,12 +158,23 @@ class SyncController {
       if (destination == null) {
         return false;
       }
-      // На Android saveFile возвращает content:// URI, с которым File.copy()
-      // не работает. В этом случае (или при любой ошибке) используем share.
       await File(filePath).copy(destination);
       return true;
-    } catch (_) {
-      // content:// URI на Android — fallback на share.
+    }
+    // На Android используем SAF (Intent.ACTION_CREATE_DOCUMENT) через
+    // MethodChannel, т.к. FilePicker.saveFile возвращает content:// URI,
+    // с которым File.copy() не работает.
+    try {
+      final result = await _channel.invokeMethod<bool>(
+        'saveFile',
+        <String, dynamic>{
+          'sourcePath': filePath,
+          'fileName': 'fitnessappai_backup.sqlite',
+        },
+      );
+      return result == true;
+    } on MissingPluginException {
+      // Плагин не зарегистрирован (тесты) — fallback на share.
       await SharePlus.instance.share(ShareParams(files: [XFile(filePath)]));
       return true;
     }

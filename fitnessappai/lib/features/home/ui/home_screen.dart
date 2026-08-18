@@ -131,6 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.star_outline,
         title: l10n.homeActiveProgram,
         hint: l10n.homeNoActiveProgramHint,
+        actionLabel: l10n.homeGoToPrograms,
+        onAction: () => context.push('/programs'),
       );
     }
 

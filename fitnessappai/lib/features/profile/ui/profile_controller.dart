@@ -70,6 +70,14 @@ class ProfileController {
     }
     final deduped = byDate.values.toList()
       ..sort((a, b) => a.date.compareTo(b.date));
+    // Для одного замера добавляем «сегодня» как опорную точку (горизонтальная
+    // линия).
+    if (deduped.length == 1) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final lastValue = deduped.first.value;
+      deduped.add(MetricPoint(date: today, value: lastValue));
+    }
     // Ограничиваем количество точек: при >30 — агрегируем по неделям.
     if (deduped.length > 30) {
       final byWeek = <DateTime, MetricPoint>{};

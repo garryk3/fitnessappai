@@ -250,7 +250,7 @@ class _MetricChartCard extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 8),
-                if (points.length < 2)
+                if (points.isEmpty)
                   SizedBox(
                     height: 120,
                     child: Center(
@@ -350,6 +350,7 @@ class _MetricLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 24,
+              interval: 1,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
                 if (index < 0 || index >= labels.length) {

@@ -348,6 +348,46 @@ class StatsAggregator {
         results.addAll(detail.results);
       }
     }
-    return results;
+    return _dedupPerSide(results);
   }
+
+  /// Убирает дубли для упражнений «по сторонам»: для каждой пары
+  /// (exerciseId, setIndex) оставляет только результат с лучшим показателем.
+  /// Результаты без `side` (обычные упражнения) не затрагиваются.
+  List<WorkoutSetResult> _dedupPerSide(List<WorkoutSetResult> input) {
+    final byKey = <String, List<WorkoutSetResult>>{};
+    final plain = <WorkoutSetResult>[];
+    for (final r in input) {
+      if (r.side == null) {
+        plain.add(r);
+        continue;
+      }
+      byKey.putIfAbsent('${r.exerciseId}_${r.setIndex}', () => []).add(r);
+    }
+    if (byKey.isEmpty) {
+      return input;
+    }
+    final out = List<WorkoutSetResult>.from(plain);
+    for (final group in byKey.values) {
+      if (group.length <= 1) {
+        out.addAll(group);
+        continue;
+      }
+      out.add(
+        group.reduce((best, current) {
+          final bestVal = _metricValue(best);
+          final curVal = _metricValue(current);
+          return curVal > bestVal ? current : best;
+        }),
+      );
+    }
+    return out;
+  }
+
+  double _metricValue(WorkoutSetResult r) => switch (r.exerciseType) {
+    ExerciseType.strength => r.weightKg ?? 0,
+    ExerciseType.bodyweight => (r.reps ?? 0).toDouble(),
+    ExerciseType.plank => (r.durationSeconds ?? 0).toDouble(),
+    ExerciseType.running => r.distanceMeters ?? 0,
+  };
 }

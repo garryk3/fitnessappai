@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
@@ -42,6 +44,11 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
     super.initState();
     _soundService = widget.soundService ?? locator.get<SoundService>();
     _remaining = widget.warmupSeconds;
+    try {
+      WakelockPlus.enable();
+    } catch (e) {
+      log('Не удалось включить wakelock', error: e);
+    }
     if (_remaining > 0) {
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (_remaining <= 1) {
@@ -63,6 +70,11 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    try {
+      WakelockPlus.disable();
+    } catch (e) {
+      log('Не удалось выключить wakelock', error: e);
+    }
     super.dispose();
   }
 
@@ -85,44 +97,49 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.workoutWarmup)),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _done ? Icons.check_circle : Icons.timer,
-              size: 64,
-              color: _done
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.secondary,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              _done ? l10n.workoutWarmupDone : _format(_remaining),
-              style: theme.textTheme.displayMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _done ? Icons.check_circle : Icons.timer,
+                size: 64,
+                color: _done
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.secondary,
               ),
-            ),
-            const SizedBox(height: 8),
-            if (!_done)
+              const SizedBox(height: 24),
               Text(
-                l10n.workoutWarmupSecondsLeft(_remaining),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                _done ? l10n.workoutWarmupDone : _format(_remaining),
+                style: theme.textTheme.displayMedium?.copyWith(
+                  color: theme.colorScheme.onSurface,
                 ),
+                textAlign: TextAlign.center,
               ),
-            const SizedBox(height: 32),
-            if (!_done)
-              OutlinedButton(
-                onPressed: _goToRun,
-                child: Text(l10n.workoutWarmupSkip),
-              )
-            else
-              FilledButton.icon(
-                onPressed: _goToRun,
-                icon: const Icon(Icons.play_arrow),
-                label: Text(l10n.workoutWarmupStartWorkout),
-              ),
-          ],
+              const SizedBox(height: 8),
+              if (!_done)
+                Text(
+                  l10n.workoutWarmupSecondsLeft(_remaining),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              const SizedBox(height: 32),
+              if (!_done)
+                OutlinedButton(
+                  onPressed: _goToRun,
+                  child: Text(l10n.workoutWarmupSkip),
+                )
+              else
+                FilledButton.icon(
+                  onPressed: _goToRun,
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(l10n.workoutWarmupStartWorkout),
+                ),
+            ],
+          ),
         ),
       ),
     );

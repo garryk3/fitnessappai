@@ -135,10 +135,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
             onPressed: () => Navigator.of(context).pop('cancel'),
             child: Text(l10n.commonCancel),
           ),
+          const SizedBox(width: 8),
           FilledButton(
             onPressed: () => Navigator.of(context).pop('save'),
             child: Text(l10n.workoutRunFinishEarly),
           ),
+          const SizedBox(width: 8),
           FilledButton(
             onPressed: () => Navigator.of(context).pop('exit'),
             child: Text(l10n.workoutRunExit),
