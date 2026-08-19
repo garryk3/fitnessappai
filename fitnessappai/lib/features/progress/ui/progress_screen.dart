@@ -61,40 +61,54 @@ class _ProgressScreenState extends State<ProgressScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     final l10n = AppLocalizations.of(context);
+    final period = SegmentedButton<StatPeriod>(
+      segments: [
+        ButtonSegment(
+          value: StatPeriod.week,
+          label: Text(l10n.progressPeriodWeek),
+        ),
+        ButtonSegment(
+          value: StatPeriod.month,
+          label: Text(l10n.progressPeriodMonth),
+        ),
+        ButtonSegment(
+          value: StatPeriod.year,
+          label: Text(l10n.progressPeriodYear),
+        ),
+      ],
+      selected: {controller.period.value},
+      onSelectionChanged: (selection) => _controller.setPeriod(selection.first),
+    );
+    if (controller.workoutCount.value == 0) {
+      return LayoutBuilder(
+        builder: (context, constraints) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: period,
+            ),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    l10n.progressEmpty,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        SegmentedButton<StatPeriod>(
-          segments: [
-            ButtonSegment(
-              value: StatPeriod.week,
-              label: Text(l10n.progressPeriodWeek),
-            ),
-            ButtonSegment(
-              value: StatPeriod.month,
-              label: Text(l10n.progressPeriodMonth),
-            ),
-            ButtonSegment(
-              value: StatPeriod.year,
-              label: Text(l10n.progressPeriodYear),
-            ),
-          ],
-          selected: {controller.period.value},
-          onSelectionChanged: (selection) =>
-              _controller.setPeriod(selection.first),
-        ),
+        period,
         const SizedBox(height: 16),
-        if (controller.workoutCount.value == 0)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            child: Center(
-              child: Text(
-                l10n.progressEmpty,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-          )
-        else ...[
+        ...[
           _StatCards(controller: controller),
           const SizedBox(height: 16),
           _WorkoutsChart(controller: controller),

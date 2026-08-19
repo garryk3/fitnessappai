@@ -280,6 +280,12 @@ void main() {
     expect(find.text('Нет тренировок за период'), findsOneWidget);
     expect(find.byType(BarChart), findsNothing);
     expect(find.byType(LineChart), findsNothing);
+
+    // Текст пустого состояния вертикально центрирован в оставшейся области
+    // под segmented-контролом (нижняя половина экрана).
+    final textCenter = tester.getCenter(find.text('Нет тренировок за период'));
+    final screenHeight = tester.getSize(find.byType(Scaffold)).height;
+    expect(textCenter.dy, greaterThan(screenHeight / 2));
   });
 
   testWidgets('выбор упражнения меняет график прогресса', (tester) async {
