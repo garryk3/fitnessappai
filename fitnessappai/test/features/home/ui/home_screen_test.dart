@@ -71,6 +71,11 @@ void main() {
             body: Text('prepare-${state.pathParameters['programDayId']}'),
           ),
         ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) =>
+              const Scaffold(body: Text('settings-route')),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -241,5 +246,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('programs-route'), findsOneWidget);
+  });
+
+  testWidgets('иконка настроек в AppBar ведёт на экран настроек', (
+    tester,
+  ) async {
+    await pumpHome(tester);
+
+    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('settings-route'), findsOneWidget);
   });
 }

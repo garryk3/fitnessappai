@@ -83,18 +83,6 @@ void main() {
     expect(find.byType(LineChart), findsNothing);
     expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.text('Противопоказания'), findsOneWidget);
-    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
-  });
-
-  testWidgets('иконка настроек в AppBar ведёт на экран настроек', (
-    tester,
-  ) async {
-    await pumpProfile(tester);
-
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
-
-    expect(find.text('SETTINGS_SCREEN'), findsOneWidget);
   });
 
   testWidgets('форма добавляет замер', (tester) async {
