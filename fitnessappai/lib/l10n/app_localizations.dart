@@ -1591,7 +1591,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNoActiveProgramHint.
   ///
   /// In ru, this message translates to:
-  /// **'Сделайте программу активной, чтобы видеть её здесь.'**
+  /// **'Выберите активную программу, чтобы начать тренировку.'**
   String get homeNoActiveProgramHint;
 
   /// No description provided for @homeNoWorkoutsHint.
