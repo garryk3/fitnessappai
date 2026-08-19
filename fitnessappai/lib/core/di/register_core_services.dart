@@ -48,7 +48,7 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   sl.registerLazySingleton<SoundService>(
     () => AudioplayersSoundService(sl.get<SoundSettingsRepository>()),
   );
-  sl.registerLazySingleton<WakelockService>(() => const WakelockPlusService());
+  sl.registerLazySingleton<WakelockService>(() => WakelockPlusService());
   sl.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(
       sl.get<AppDatabase>(),

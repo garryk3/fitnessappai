@@ -580,6 +580,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRun => 'Тренировка';
 
   @override
+  String get workoutWakelockWarning =>
+      'Экран может выключаться во время тренировки — блокировка сна недоступна на этой платформе.';
+
+  @override
   String get workoutPrepareStart => 'Начать тренировку';
 
   @override

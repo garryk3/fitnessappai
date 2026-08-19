@@ -28,6 +28,9 @@ class _FakeWakelock implements WakelockService {
   int disableCalls = 0;
 
   @override
+  bool get isEnabled => enableCalls > 0 && enableCalls > disableCalls;
+
+  @override
   Future<void> enable() async {
     enableCalls++;
   }

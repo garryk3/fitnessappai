@@ -59,6 +59,9 @@ Future<void> pumpApp(
 
 class _StubWakelockService implements WakelockService {
   @override
+  bool get isEnabled => true;
+
+  @override
   Future<void> enable() async {}
 
   @override
