@@ -828,7 +828,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeNoActiveProgramHint =>
-      'Сделайте программу активной, чтобы видеть её здесь.';
+      'Выберите активную программу, чтобы начать тренировку.';
 
   @override
   String get homeNoWorkoutsHint =>

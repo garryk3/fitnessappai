@@ -420,7 +420,7 @@
   "homeNoProgramsTitle": "Нет программ",
   "homeNoProgramsHint": "Создайте программу тренировок, чтобы видеть её здесь.",
   "homeGoToPrograms": "К программам",
-  "homeNoActiveProgramHint": "Сделайте программу активной, чтобы видеть её здесь.",
+  "homeNoActiveProgramHint": "Выберите активную программу, чтобы начать тренировку.",
   "homeNoWorkoutsHint": "Выполните первую тренировку — она появится здесь.",
   "homeViewAll": "Вся история",
   "homeGoToHistory": "К истории",
