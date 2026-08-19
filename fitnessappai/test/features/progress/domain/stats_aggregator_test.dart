@@ -505,5 +505,106 @@ void main() {
       expect(loads, hasLength(1));
       expect(loads.single.percent, closeTo(100, 0.01));
     });
+
+    test('подгруппы агрегируются в родительскую группу', () async {
+      final groups = await exerciseRepo.getAllMuscleGroups();
+      final groupsByKey = {for (final g in groups) g.key: g};
+      final biceps = groupsByKey['biceps']!;
+      final triceps = groupsByKey['triceps']!;
+      final quads = groupsByKey['quads']!;
+
+      final armsExercise = await exerciseRepo.create(
+        Exercise(
+          name: 'Сгибания',
+          type: ExerciseType.strength,
+          createdAt: clock(),
+          updatedAt: clock(),
+        ),
+        [
+          ExerciseMuscle(
+            exerciseId: 0,
+            muscleGroupId: biceps.id!,
+            intensity: MuscleIntensity.primary,
+          ),
+          ExerciseMuscle(
+            exerciseId: 0,
+            muscleGroupId: triceps.id!,
+            intensity: MuscleIntensity.secondary,
+          ),
+        ],
+      );
+      final legsExercise = await exerciseRepo.create(
+        Exercise(
+          name: 'Присед',
+          type: ExerciseType.strength,
+          createdAt: clock(),
+          updatedAt: clock(),
+        ),
+        [
+          ExerciseMuscle(
+            exerciseId: 0,
+            muscleGroupId: quads.id!,
+            intensity: MuscleIntensity.primary,
+          ),
+        ],
+      );
+
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+        setResult(exerciseId: armsExercise.id),
+        setResult(exerciseId: legsExercise.id),
+      ]);
+
+      final loads = await aggregator.muscleLoadPercent(StatPeriod.week);
+      expect(loads.length, greaterThanOrEqualTo(2));
+
+      final armsLoad = loads.firstWhere((l) => l.muscleGroup.key == 'arms');
+      final legsLoad = loads.firstWhere((l) => l.muscleGroup.key == 'legs');
+
+      final totalWeight = 1.5 + 1.0;
+      expect(armsLoad.percent, closeTo(1.5 / totalWeight * 100, 0.01));
+      expect(legsLoad.percent, closeTo(1.0 / totalWeight * 100, 0.01));
+
+      expect(armsLoad.children, hasLength(2));
+      expect(armsLoad.children.first.muscleGroup.key, 'biceps');
+      expect(armsLoad.children.first.percent, closeTo(1.0 / 1.5 * 100, 0.01));
+      expect(armsLoad.children.last.muscleGroup.key, 'triceps');
+      expect(armsLoad.children.last.percent, closeTo(0.5 / 1.5 * 100, 0.01));
+
+      expect(legsLoad.children, hasLength(1));
+      expect(legsLoad.children.single.muscleGroup.key, 'quads');
+      expect(legsLoad.children.single.percent, closeTo(100, 0.01));
+    });
+
+    test('standalone-группы не имеют детей', () async {
+      final groups = await exerciseRepo.getAllMuscleGroups();
+      final groupsByKey = {for (final g in groups) g.key: g};
+      final absGroup = groupsByKey['abs']!;
+
+      final exercise = await exerciseRepo.create(
+        Exercise(
+          name: 'Планка',
+          type: ExerciseType.strength,
+          createdAt: clock(),
+          updatedAt: clock(),
+        ),
+        [
+          ExerciseMuscle(
+            exerciseId: 0,
+            muscleGroupId: absGroup.id!,
+            intensity: MuscleIntensity.primary,
+          ),
+        ],
+      );
+
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+        setResult(exerciseId: exercise.id),
+      ]);
+
+      final loads = await aggregator.muscleLoadPercent(StatPeriod.week);
+      expect(loads, hasLength(1));
+      expect(loads.single.muscleGroup.key, 'abs');
+      expect(loads.single.percent, closeTo(100, 0.01));
+      expect(loads.single.children, isEmpty);
+    });
   });
 }

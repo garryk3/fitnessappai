@@ -29,7 +29,7 @@ class ProgressController {
   final Signal<double> totalDistanceMeters = Signal(0);
   final Signal<Duration> plankTime = Signal(Duration.zero);
   final Signal<List<int>> countsPerSlice = Signal(const []);
-  final Signal<List<MuscleLoad>> muscleLoads = Signal(const []);
+  final Signal<List<MuscleGroupLoad>> muscleLoads = Signal(const []);
   final Signal<List<Exercise>> exercises = Signal(const []);
   final Signal<int?> selectedExerciseId = Signal(null);
   final Signal<List<double>> metricPerSlice = Signal(const []);

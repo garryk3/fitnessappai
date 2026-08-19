@@ -594,29 +594,69 @@ class _MuscleLoadPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            for (final load in loads.take(5))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        load.muscleGroup.labelRu,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ),
-                    Text(
-                      '${load.percent.toStringAsFixed(0)}%',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            for (final load in loads) _MuscleGroupTile(load: load),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MuscleGroupTile extends StatelessWidget {
+  const _MuscleGroupTile({required this.load});
+
+  final MuscleGroupLoad load;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasChildren = load.children.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  load.muscleGroup.labelRu,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: hasChildren ? FontWeight.w600 : null,
+                  ),
+                ),
+              ),
+              Text(
+                '${load.percent.toStringAsFixed(0)}%',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: hasChildren ? FontWeight.w600 : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+        for (final child in load.children)
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 2, bottom: 2),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    child.muscleGroup.labelRu,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+                Text(
+                  '${child.percent.toStringAsFixed(0)}%',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

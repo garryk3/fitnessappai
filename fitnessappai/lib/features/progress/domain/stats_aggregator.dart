@@ -21,6 +21,30 @@ class MuscleLoad {
       'MuscleLoad(${muscleGroup.key}: ${percent.toStringAsFixed(1)}%)';
 }
 
+/// Иерархическая нагрузка на группу мышц.
+///
+/// Содержит суммарный процент группы и список подгрупп с их долей
+/// внутри группы. Для standalone-групп (без детей) `children` пуст.
+class MuscleGroupLoad {
+  const MuscleGroupLoad({
+    required this.muscleGroup,
+    required this.percent,
+    this.children = const [],
+  });
+
+  final MuscleGroup muscleGroup;
+  final double percent;
+  final List<MuscleGroupLoad> children;
+
+  @override
+  String toString() {
+    final childStr = children.isEmpty
+        ? ''
+        : ' (${children.map((c) => '${c.muscleGroup.labelRu} ${c.percent.toStringAsFixed(0)}%').join(', ')})';
+    return 'MuscleGroupLoad(${muscleGroup.key}: ${percent.toStringAsFixed(1)}%$childStr)';
+  }
+}
+
 /// Точка прогрессии упражнения: дата тренировки и значение метрики.
 class ProgressionPoint {
   const ProgressionPoint({required this.date, required this.metric});
@@ -177,7 +201,11 @@ class StatsAggregator {
   /// Каждый выполненный подход даёт primary-мышцам вес 1.0 и secondary 0.5.
   /// Подходы удалённых упражнений (без привязок мышц) не учитываются.
   /// Сумма процентов ≈ 100 при непустой нагрузке.
-  Future<List<MuscleLoad>> muscleLoadPercent(StatPeriod period) async {
+  ///
+  /// Подгруппы агрегируются в родительские группы. Процент подгруппы
+  /// показывает долю внутри группы. Standalone-группы (без детей)
+  /// отображаются как есть.
+  Future<List<MuscleGroupLoad>> muscleLoadPercent(StatPeriod period) async {
     final results = await _results(period);
     final weights = <int, double>{};
     final musclesCache = <int, List<ExerciseMuscle>>{};
@@ -209,18 +237,69 @@ class StatsAggregator {
       return const [];
     }
     final total = weights.values.fold<double>(0, (sum, w) => sum + w);
-    final groups = {
-      for (final group in await exerciseRepository.getAllMuscleGroups())
-        group.id: group,
-    };
-    final loads = <MuscleLoad>[];
+    final allGroups = await exerciseRepository.getAllMuscleGroups();
+    final groupsById = {for (final g in allGroups) g.id: g};
+    final groupsByKey = {for (final g in allGroups) g.key: g};
+
+    final childWeights = <String, double>{};
     for (final entry in weights.entries) {
-      final group = groups[entry.key];
+      final group = groupsById[entry.key];
       if (group == null) {
         continue;
       }
+      childWeights[group.key] = (childWeights[group.key] ?? 0) + entry.value;
+    }
+
+    final parentWeights = <String, double>{};
+    final parentChildren = <String, Map<String, double>>{};
+    for (final entry in childWeights.entries) {
+      final group = groupsByKey[entry.key];
+      if (group == null) {
+        continue;
+      }
+      final parentKey = group.parentKey;
+      if (parentKey != null) {
+        parentWeights[parentKey] =
+            (parentWeights[parentKey] ?? 0) + entry.value;
+        parentChildren.putIfAbsent(parentKey, () => {}).addAll({
+          entry.key: entry.value,
+        });
+      } else {
+        parentWeights[entry.key] =
+            (parentWeights[entry.key] ?? 0) + entry.value;
+      }
+    }
+
+    final loads = <MuscleGroupLoad>[];
+    for (final entry in parentWeights.entries) {
+      final parentGroup = groupsByKey[entry.key];
+      if (parentGroup == null) {
+        continue;
+      }
+      final children = parentChildren[entry.key];
+      final childLoads = <MuscleGroupLoad>[];
+      if (children != null && children.isNotEmpty && entry.value > 0) {
+        final sorted = children.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        for (final child in sorted) {
+          final childGroup = groupsByKey[child.key];
+          if (childGroup == null) {
+            continue;
+          }
+          childLoads.add(
+            MuscleGroupLoad(
+              muscleGroup: childGroup,
+              percent: child.value / entry.value * 100,
+            ),
+          );
+        }
+      }
       loads.add(
-        MuscleLoad(muscleGroup: group, percent: entry.value / total * 100),
+        MuscleGroupLoad(
+          muscleGroup: parentGroup,
+          percent: entry.value / total * 100,
+          children: childLoads,
+        ),
       );
     }
     loads.sort((a, b) => b.percent.compareTo(a.percent));
