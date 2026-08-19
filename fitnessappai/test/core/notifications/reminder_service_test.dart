@@ -100,6 +100,9 @@ void main() {
               AndroidFlutterLocalNotificationsPlugin
             >(),
       ).thenReturn(android);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
     });
 
     test('точный режим при наличии разрешения на точные будильники', () async {
@@ -209,6 +212,7 @@ void main() {
     when(
       () => android.canScheduleExactNotifications(),
     ).thenAnswer((_) async => true);
+    when(() => android.areNotificationsEnabled()).thenAnswer((_) async => true);
 
     await service.rescheduleAll();
 
