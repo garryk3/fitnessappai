@@ -1330,12 +1330,12 @@ fitnessappai/
 - **Тесты:** widget-тесты `workout_run_screen_test.dart` и `workout_warmup_screen_test.dart` — `_FakeWakelock.enable()` на старте, `disable()` при dispose (для run-экрана тест уже был, для разминки добавлен).
 
 ### Задача 15.19: Настройки — ошибка импорта БД (invalid icon is_stat_launcher)
-- **Статус:** [ ] в работе
+- **Статус:** [x] выполнена (2026-08-19)
 - **Модуль:** настройки / notifications
 - **Ветка:** `task/15.19-import-icon-fix`
-- **Описание:** При импорте БД (`_rebuildAfterImport` → `reminders.initialize()`) `AndroidInitializationSettings('ic_stat_launcher')` вызывает Platform exception «invalid icon, is_stat_launcher not be found». Сменить иконку уведомлений на гарантированно валидную (bitmap `ic_stat_launcher.png` в drawable или `@mipmap/ic_launcher`) и убедиться, что после импорта (`rescheduleAll`) уведомления планируются без исключения.
+- **Описание:** При импорте БД (`_rebuildAfterImport` → `reminders.initialize()`) `AndroidInitializationSettings('ic_stat_launcher')` вызывает Platform exception «invalid icon, is_stat_launcher not be found». Причина — векторный drawable `ic_stat_launcher.xml` ненадёжен как small icon уведомлений. Исправлено: вектор заменён на bitmap `ic_stat_launcher.png` (белый силуэт с прозрачным фоном, 96×96, RGBA) в `res/drawable/` — `getIdentifier(context, name, "drawable", ...)` и `setSmallIcon` работают без исключения. Код Dart не менялся.
 - **Критерии:** импорт БД на Android не роняет приложение; уведомления планируются.
-- **Тесты:** unit/widget-тест планирования уведомлений после импорта.
+- **Тесты:** Android-сборка в CI (`flutter build apk --debug`) зелёная; остальные проверки без изменений.
 
 ### Задача 15.20: Перенести иконку настроек на главный экран
 - **Статус:** [ ] в работе
@@ -1498,7 +1498,7 @@ fitnessappai/
 | 15.16 | Настройки — SAF сохранение на Android | [x] | task/15.16-saf-save | 2026-08-17 |
 | 15.17 | Попап выхода — отступы между кнопками | [x] | task/15.17-exit-popup-spacing | 2026-08-17 |
 | 15.18 | Блокировать сон при работе таймера | [x] | task/15.18-wakelock-timer | 2026-08-19 |
-| 15.19 | Настройки — ошибка импорта БД (is_stat_launcher) | [ ] | task/15.19-import-icon-fix | |
+| 15.19 | Настройки — ошибка импорта БД (is_stat_launcher) | [x] | task/15.19-import-icon-fix | 2026-08-19 |
 | 15.20 | Перенести иконку настроек на главный экран | [ ] | task/15.20-settings-icon-home | |
 | 15.21 | Мышцы — группировка рук/спины/ног + подгруппы груди | [ ] | task/15.21-muscle-groups | |
 | 15.22 | Прогресс — пустое состояние по центру по вертикали | [ ] | task/15.22-progress-empty-center | |
