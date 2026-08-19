@@ -578,6 +578,29 @@ void main() {
     expect(muscles.single.intensity, MuscleIntensity.primary);
   });
 
+  testWidgets(
+    'подгруппы груди и общие группы рук/спины/ног выводятся с отступами',
+    (tester) async {
+      await pumpForm(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Название *'),
+        'Жим штанги',
+      );
+
+      await scrollFormTo(tester, find.text('Центр груди'));
+      expect(find.text('Грудь'), findsOneWidget);
+      expect(find.text('Верх груди'), findsOneWidget);
+      expect(find.text('Низ груди'), findsOneWidget);
+      expect(find.text('Центр груди'), findsOneWidget);
+
+      await scrollFormTo(tester, find.text('Ноги'));
+      expect(find.text('Руки'), findsWidgets);
+      expect(find.text('Спина'), findsWidgets);
+      expect(find.text('Ноги'), findsWidgets);
+    },
+  );
+
   testWidgets('превью миниатюры занимает фиксированный блок', (tester) async {
     final saved = await repository.create(
       exercise('С медиа', thumbnailPath: '${tempDir.path}/media/thumb.png'),
