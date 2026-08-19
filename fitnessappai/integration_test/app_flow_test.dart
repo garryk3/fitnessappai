@@ -1190,7 +1190,7 @@ void main() {
     await goToTab(tester, Icons.home_outlined);
     await tester.pumpAndSettle();
     expect(
-      find.text('Сделайте программу активной, чтобы видеть её здесь.'),
+      find.text('Выберите активную программу, чтобы начать тренировку.'),
       findsOneWidget,
     );
 
