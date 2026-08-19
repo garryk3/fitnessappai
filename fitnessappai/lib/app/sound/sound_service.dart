@@ -16,12 +16,12 @@ abstract class SoundService {
   Future<void> dispose();
 }
 
-/// Реализация [SoundService] на `audioplayers`: встроенный beep-ассет
-/// или выбранный пользователем файл из настроек.
+/// Реализация [SoundService] на `audioplayers`: встроенный ассет
+/// (звук окончания таймера) или выбранный пользователем файл из настроек.
 class AudioplayersSoundService implements SoundService {
   AudioplayersSoundService(this._repository);
 
-  static const String defaultAssetPath = 'assets/sounds/beep.wav';
+  static const String defaultAssetPath = 'assets/sounds/timer.mp3';
   static const Duration maxDuration = Duration(seconds: 5);
 
   final SoundSettingsRepository _repository;
