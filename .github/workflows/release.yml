@@ -26,8 +26,19 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          MAJOR=$(echo "$TAG" | cut -d. -f1)
+          MINOR=$(echo "$TAG" | cut -d. -f2)
+          PATCH=$(echo "$TAG" | cut -d. -f3)
+          BUILD="${MAJOR}${MINOR}$(printf '%04d' "${PATCH:-0}")"
+          echo "build_name=$TAG" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD" >> "$GITHUB_OUTPUT"
+
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-name=${{ steps.version.outputs.build_name }} --build-number=${{ steps.version.outputs.build_number }}
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
