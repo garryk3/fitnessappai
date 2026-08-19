@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:audioplayers/audioplayers.dart';
 
@@ -21,7 +22,7 @@ abstract class SoundService {
 class AudioplayersSoundService implements SoundService {
   AudioplayersSoundService(this._repository);
 
-  static const String defaultAssetPath = 'assets/sounds/timer.mp3';
+  static const String defaultAssetPath = 'sounds/timer.mp3';
   static const Duration maxDuration = Duration(seconds: 5);
 
   final SoundSettingsRepository _repository;
@@ -34,14 +35,18 @@ class AudioplayersSoundService implements SoundService {
     if (!await repository.isEnabled()) {
       return;
     }
-    final filePath = await repository.soundFilePath();
-    if (filePath != null && filePath.isNotEmpty) {
-      await _player.play(DeviceFileSource(filePath));
-    } else {
-      await _player.play(AssetSource(defaultAssetPath));
+    try {
+      final filePath = await repository.soundFilePath();
+      if (filePath != null && filePath.isNotEmpty) {
+        await _player.play(DeviceFileSource(filePath));
+      } else {
+        await _player.play(AssetSource(defaultAssetPath));
+      }
+      _autoStopTimer?.cancel();
+      _autoStopTimer = Timer(maxDuration, stop);
+    } catch (e) {
+      log('Не удалось воспроизвести звук таймера', error: e);
     }
-    _autoStopTimer?.cancel();
-    _autoStopTimer = Timer(maxDuration, stop);
   }
 
   @override
