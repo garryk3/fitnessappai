@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -51,8 +53,20 @@ class ReminderService {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    await android?.requestNotificationsPermission();
-    await android?.requestExactAlarmsPermission();
+    if (android != null) {
+      await android.requestNotificationsPermission();
+      await android.requestExactAlarmsPermission();
+      final channel = AndroidNotificationChannel(
+        _channelId,
+        _channelName,
+        description: _channelDescription,
+        importance: Importance.high,
+        playSound: true,
+        sound: const RawResourceAndroidNotificationSound('notification'),
+        enableVibration: true,
+      );
+      await android.createNotificationChannel(channel);
+    }
     _initialized = true;
   }
 
@@ -63,6 +77,20 @@ class ReminderService {
     required String programName,
     required int dayNumber,
   }) async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null) {
+      final enabled = await android.areNotificationsEnabled() ?? false;
+      if (!enabled) {
+        log(
+          'Уведомления отключены пользователем, пропуск планирования',
+          name: 'ReminderService',
+        );
+        return;
+      }
+    }
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextInstance(
       now,
@@ -70,10 +98,6 @@ class ReminderService {
       hour: reminder.hour,
       minute: reminder.minute,
     );
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
     final canExact = await android?.canScheduleExactNotifications() ?? false;
     await _plugin.zonedSchedule(
       id: reminder.programDayId,

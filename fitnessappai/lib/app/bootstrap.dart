@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/register_core_services.dart';
@@ -27,7 +29,7 @@ Future<void> bootstrap({
   await sl.get<ThemeController>().load();
   try {
     await sl.get<ReminderService>().initialize();
-  } catch (_) {
-    // Напоминания не должны блокировать запуск приложения.
+  } catch (e) {
+    log('Ошибка инициализации напоминаний', error: e, name: 'bootstrap');
   }
 }
