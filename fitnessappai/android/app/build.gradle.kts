@@ -23,6 +23,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        manifestPlaceholders["default_notification_icon"] = "@drawable/ic_stat_launcher"
     }
 
     buildTypes {
