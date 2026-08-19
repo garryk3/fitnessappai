@@ -1387,12 +1387,13 @@ fitnessappai/
 - **Тесты:** unit/widget/e2e без регрессий; 619/619 unit тестов.
 
 ### Задача 15.33: Звук в фоне — AudioContext и foreground service
-- **Статус:** [ ] в работе
+- **Статус:** [x] выполнена (2026-08-19)
 - **Модуль:** app/sound + android
 - **Ветка:** `task/15.33-sound-background`
 - **Описание:** `AudioPlayer` без `AudioContext` для фонового воспроизведения. В `AndroidManifest.xml` нет `WAKE_LOCK` permission. На Android 12+ ОС убивает процесс при блокировке. Добавить `WAKE_LOCK`, настроить `AudioContext` для notification usage, foreground service для таймера.
 - **Критерии:** звук таймера играет при заблокированном экране и в фоне.
 - **Тесты:** Android-сборка в CI; ручное тестирование на устройстве.
+- **PR:** #117
 
 ### Задача 15.34: Импорт БД — монохромная иконка уведомлений
 - **Статус:** [ ] в работе
@@ -1581,7 +1582,7 @@ fitnessappai/
 | 15.23 | Звуки — timer.mp3 + notification.mp3 | [x] | task/15.23-sounds | 2026-08-19 |
 | 15.31 | Wake lock — проброс ошибок | [x] | task/15.31-wakelock-fix | 2026-08-19 |
 | 15.32 | Звук таймера — AssetSource путь | [x] | task/15.32-sound-asset-fix | 2026-08-19 |
-| 15.33 | Звук в фоне — AudioContext + foreground | [ ] | task/15.33-sound-background | |
+| 15.33 | Звук в фоне — AudioContext + foreground | [x] | task/15.33-sound-background | 2026-08-19 |
 | 15.34 | Импорт БД — монохромная иконка | [x] | task/15.34-import-icon-fix | 2026-08-19 |
 | 15.35 | Главный экран — обновление после программы | [x] | task/15.35-home-refresh | 2026-08-19 |
 | 15.36 | Версия тега в APK | [ ] | task/15.36-release-version | |
