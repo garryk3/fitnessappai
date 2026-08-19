@@ -29,6 +29,18 @@ class AudioplayersSoundService implements SoundService {
   final AudioPlayer _player = AudioPlayer();
   Timer? _autoStopTimer;
 
+  static Future<void> configureGlobalContext() async {
+    await AudioPlayer.global.setAudioContext(
+      AudioContext(
+        android: const AudioContextAndroid(
+          stayAwake: true,
+          usageType: AndroidUsageType.alarm,
+          audioFocus: AndroidAudioFocus.gain,
+        ),
+      ),
+    );
+  }
+
   @override
   Future<void> playCompletion() async {
     final repository = _repository;

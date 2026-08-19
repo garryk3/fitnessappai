@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/register_core_services.dart';
@@ -27,6 +28,11 @@ Future<void> bootstrap({
     seedJsonLoader: seedJsonLoader,
   );
   await sl.get<ThemeController>().load();
+  try {
+    await AudioplayersSoundService.configureGlobalContext();
+  } catch (e) {
+    log('Не удалось настроить AudioContext', error: e, name: 'bootstrap');
+  }
   try {
     await sl.get<ReminderService>().initialize();
   } catch (e) {
