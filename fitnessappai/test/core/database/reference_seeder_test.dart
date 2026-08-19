@@ -22,7 +22,7 @@ void main() {
             .select(database.muscleGroups)
             .get()
             .then((r) => r.length),
-        18,
+        24,
       );
       expect(
         await database
@@ -40,7 +40,7 @@ void main() {
             .select(database.muscleGroups)
             .get()
             .then((r) => r.length),
-        18,
+        24,
       );
       expect(
         await database
@@ -66,13 +66,36 @@ void main() {
         'shoulders_middle',
         'shoulders_rear',
       ]);
-      expect(
-        await database
-            .select(database.muscleGroups)
-            .get()
-            .then((r) => r.where((row) => row.parentKey != null).length),
-        3,
-      );
+    });
+
+    test('подгруппы груди, рук, спины и ног сидятся с parentKey', () async {
+      final parentKeys = await database
+          .select(database.muscleGroups)
+          .get()
+          .then((r) => r.where((row) => row.parentKey != null).toList());
+
+      expect(parentKeys.map((r) => r.key).toList()..sort(), [
+        'biceps',
+        'calves',
+        'chest_center',
+        'chest_lower',
+        'chest_upper',
+        'forearms',
+        'glutes',
+        'hamstrings',
+        'lats',
+        'lower_back',
+        'quads',
+        'shoulders_front',
+        'shoulders_middle',
+        'shoulders_rear',
+        'traps',
+        'triceps',
+      ]);
+      expect(parentKeys.where((r) => r.parentKey == 'arms').length, 3);
+      expect(parentKeys.where((r) => r.parentKey == 'back').length, 3);
+      expect(parentKeys.where((r) => r.parentKey == 'legs').length, 4);
+      expect(parentKeys.where((r) => r.parentKey == 'chest').length, 3);
     });
 
     test('наборы справочников непустые', () {
