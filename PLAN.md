@@ -1369,6 +1369,70 @@ fitnessappai/
 - **Критерии:** окончание таймера играет timer.mp3; Android-уведомления напоминаний играют notification.mp3.
 - **Тесты:** unit/widget/e2e 14/14 зелёных без регрессий; Android-сборка в CI зелёная.
 
+### Задача 15.31: Wake lock — проброс ошибок и warning в UI
+- **Статус:** [ ] в работе
+- **Модуль:** workout/wakelock
+- **Ветка:** `task/15.31-wakelock-fix`
+- **Описание:** `WakelockPlusService.enable()` молча глотает ошибки — если `WakelockPlus.enable()` падает на устройстве, пользователь не знает. Проброс ошибки наверх, показ warning в UI тренировки. Проверить корректность работы на Android 12+.
+- **Критерии:** при ошибке wakelock показывается предупреждение; логируются все ошибки.
+- **Тесты:** unit/widget без регрессий; e2e 14/14.
+
+### Задача 15.32: Звук таймера — исправить AssetSource путь
+- **Статус:** [x] выполнена (2026-08-19)
+- **Модуль:** app/sound
+- **Ветка:** `task/15.32-sound-asset-fix`
+- **Описание:** `defaultAssetPath = 'assets/sounds/timer.mp3'`, но `AssetSource` в `audioplayers` ожидает путь без префикса `assets/`. Плагин ищет `assets/assets/sounds/timer.mp3` — файла нет, воспроизведение молча проваливается. Заменить на `'sounds/timer.mp3'`, добавить try-catch.
+- **Критерии:** при отсутствии пользовательского звука играет timer.mp3 по умолчанию.
+- **Тесты:** unit/widget/e2e без регрессий; 619/619 unit тестов.
+
+### Задача 15.33: Звук в фоне — AudioContext и foreground service
+- **Статус:** [ ] в работе
+- **Модуль:** app/sound + android
+- **Ветка:** `task/15.33-sound-background`
+- **Описание:** `AudioPlayer` без `AudioContext` для фонового воспроизведения. В `AndroidManifest.xml` нет `WAKE_LOCK` permission. На Android 12+ ОС убивает процесс при блокировке. Добавить `WAKE_LOCK`, настроить `AudioContext` для notification usage, foreground service для таймера.
+- **Критерии:** звук таймера играет при заблокированном экране и в фоне.
+- **Тесты:** Android-сборка в CI; ручное тестирование на устройстве.
+
+### Задача 15.34: Импорт БД — монохромная иконка уведомлений
+- **Статус:** [ ] в работе
+- **Модуль:** notifications + android
+- **Ветка:** `task/15.34-import-icon-fix`
+- **Описание:** PNG `ic_stat_launcher.png` — полнокветровая RGBA, а не монохромная. На Android 12+ small icon **должен** быть alpha-only. Также нет `manifestPlaceholders` в `build.gradle.kts`. При импорте БД создаётся новый `FlutterLocalNotificationsPlugin` → иконка не резолвится. Заменить на vector drawable, добавить `manifestPlaceholders["default_notification_icon"]`.
+- **Критерии:** импорт БД не вызывает ошибку иконки; уведомления отображаются корректно.
+- **Тесты:** Android-сборка в CI; e2e 14/14.
+
+### Задача 15.35: Главный экран — обновление после создания программы
+- **Статус:** [ ] в работе
+- **Модуль:** home
+- **Ветка:** `task/15.35-home-refresh`
+- **Описание:** После создания программы главный экран показывает «Нет программ» (homeNoProgramsTitle). Новая программа создаётся с `isActive: false`, `activeProgram == null`, показывается пустой экран. Изменить текст на «Выберите активную программу»; убедиться, что `hasPrograms` обновляется после `pop()` из конструктора.
+- **Критерии:** после создания программы главный экран показывает «Выберите активную программу» вместо «Нет программ».
+- **Тесты:** widget-тест home_screen; e2e 14/14.
+
+### Задача 15.36: Версия тега в APK через GitHub Actions
+- **Статус:** [ ] в работе
+- **Модуль:** ci/release
+- **Ветка:** `task/15.36-release-version`
+- **Описание:** `release.yml` запускает `flutter build apk --release` без `--build-name`/`--build-number`. Версия всегда `1.0.0+1`. Тег `${{ github.ref_name }}` доступен, но не передаётся в сборку. Извлечь версию из тега и передать в `flutter build apk`.
+- **Критерии:** APK содержит версию из тега; настройки показывают правильную версию.
+- **Тесты:** проверка release workflow (CI).
+
+### Задача 15.37: Напоминания — явный канал и проверка permission
+- **Статус:** [ ] в работе
+- **Модуль:** notifications
+- **Ветка:** `task/15.37-reminder-fix`
+- **Описание:** 3 дефекта: (1) Android notification channel не создаётся явно — на Xiaomi/Samsung может быть无声; (2) `bootstrap.dart` молча глотает ошибки инициализации; (3) `POST_NOTIFICATIONS` permission может быть отозван — повторные `zonedSchedule` молча падают. Явно создавать channel с `Importance.high` + звуком; проверять `areNotificationsEnabled()` перед `schedule()`; логировать ошибки.
+- **Критерии:** напоминания приходят с звуком при заблокированном экране; channel создан явно.
+- **Тесты:** unit-test ReminderService; Android-сборка в CI.
+
+### Задача 15.38: Подсветка мышц — parent/child маппинги
+- **Статус:** [ ] в работе
+- **Модуль:** exercises/muscle-map
+- **Ветка:** `task/15.38-muscle-highlight`
+- **Описание:** `muscle_map.dart:71-79` функция `_isActive()` знает только `shoulders` → children. Новые группы (`arms`, `back`, `legs`, `chest_upper/lower/center`) не обрабатываются. Расширить `_isActive()` на все parent→child и child→parent маппинги.
+- **Критерии:** подсвечиваются руки/спина/ноги (родительские группы) и подгруппы груди.
+- **Тесты:** widget-тест muscle_diagram; e2e 14/14.
+
 ### Задача 15.30: Видео-заставка на экране загрузки
 - **Статус:** [x] выполнена (2026-08-19)
 - **Модуль:** app/splash
@@ -1511,6 +1575,14 @@ fitnessappai/
 | 15.21 | Мышцы — группировка рук/спины/ног + подгруппы груди | [x] | task/15.21-muscle-groups | 2026-08-19 |
 | 15.22 | Прогресс — пустое состояние по центру по вертикали | [x] | task/15.22-progress-empty-center | 2026-08-19 |
 | 15.23 | Звуки — timer.mp3 + notification.mp3 | [x] | task/15.23-sounds | 2026-08-19 |
+| 15.31 | Wake lock — проброс ошибок | [ ] | task/15.31-wakelock-fix | |
+| 15.32 | Звук таймера — AssetSource путь | [x] | task/15.32-sound-asset-fix | 2026-08-19 |
+| 15.33 | Звук в фоне — AudioContext + foreground | [ ] | task/15.33-sound-background | |
+| 15.34 | Импорт БД — монохромная иконка | [ ] | task/15.34-import-icon-fix | |
+| 15.35 | Главный экран — обновление после программы | [ ] | task/15.35-home-refresh | |
+| 15.36 | Версия тега в APK | [ ] | task/15.36-release-version | |
+| 15.37 | Напоминания — канал + permission | [ ] | task/15.37-reminder-fix | |
+| 15.38 | Подсветка мышц — parent/child | [ ] | task/15.38-muscle-highlight | |
 | 15.30 | Видео-заставка на экране загрузки | [x] | task/15.30-video-splash | 2026-08-19 |
 
 ## Порядок выполнения
