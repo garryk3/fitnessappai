@@ -87,6 +87,7 @@ class ReminderService {
           channelDescription: _channelDescription,
           importance: Importance.high,
           priority: Priority.high,
+          sound: RawResourceAndroidNotificationSound('notification'),
         ),
         iOS: DarwinNotificationDetails(),
         macOS: DarwinNotificationDetails(),
