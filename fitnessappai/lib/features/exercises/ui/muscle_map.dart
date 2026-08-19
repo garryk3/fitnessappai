@@ -67,15 +67,41 @@ class MuscleMap extends StatelessWidget {
 }
 
 /// Определяет, активна ли группа: либо явно присутствует в [highlighted],
-/// либо входит в родительскую группу `shoulders`.
+/// либо входит в родительскую группу, либо является родителем для
+/// подсвеченных подгрупп.
 bool _isActive(String group, Set<String> highlighted) {
   if (highlighted.contains(group)) {
     return true;
   }
-  return highlighted.contains('shoulders') &&
-      (group == 'shoulders_front' ||
-          group == 'shoulders_middle' ||
-          group == 'shoulders_rear');
+
+  const parentChildren = <String, Set<String>>{
+    'shoulders': {'shoulders_front', 'shoulders_middle', 'shoulders_rear'},
+    'arms': {'biceps', 'triceps', 'forearms'},
+    'back': {'traps', 'lats', 'lower_back'},
+    'legs': {'quads', 'hamstrings', 'calves', 'glutes'},
+  };
+
+  for (final entry in parentChildren.entries) {
+    if (highlighted.contains(entry.key) && entry.value.contains(group)) {
+      return true;
+    }
+  }
+
+  const childParents = <String, String>{
+    'chest_upper': 'chest',
+    'chest_lower': 'chest',
+    'chest_center': 'chest',
+  };
+  final parent = childParents[group];
+  if (parent != null) {
+    for (final child in childParents.keys) {
+      if (highlighted.contains(child) && childParents[child] == parent) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 String _buildSvg({
