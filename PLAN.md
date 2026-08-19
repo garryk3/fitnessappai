@@ -1361,6 +1361,14 @@ fitnessappai/
 - **Критерии:** текст «Нет тренировок за период» по центру экрана.
 - **Тесты:** widget-тест — текст в нижней половине экрана (вертикальное центрирование под segmented-контролом); e2e 14/14 зелёных.
 
+### Задача 15.23: Звуки — timer.mp3 для таймера, notification.mp3 для напоминаний
+- **Статус:** [x] выполнена (2026-08-19)
+- **Модуль:** app/sound + notifications
+- **Ветка:** `task/15.23-sounds`
+- **Описание:** Добавлены звуковые файлы: `assets/sounds/timer.mp3` (звук окончания таймера — отдых/разминка) заменяет `defaultAssetPath` в `SoundService.playCompletion()`; `android/app/src/main/res/raw/notification.mp3` (звук напоминания о тренировке) подключён через `RawResourceAndroidNotificationSound('notification')` в `AndroidNotificationDetails` (`ReminderService`).
+- **Критерии:** окончание таймера играет timer.mp3; Android-уведомления напоминаний играют notification.mp3.
+- **Тесты:** unit/widget/e2e 14/14 зелёных без регрессий; Android-сборка в CI зелёная.
+
 ### Задача 15.30: Видео-заставка на экране загрузки
 - **Статус:** [x] выполнена (2026-08-19)
 - **Модуль:** app/splash
@@ -1502,6 +1510,7 @@ fitnessappai/
 | 15.20 | Перенести иконку настроек на главный экран | [x] | task/15.20-settings-icon-home | 2026-08-19 |
 | 15.21 | Мышцы — группировка рук/спины/ног + подгруппы груди | [x] | task/15.21-muscle-groups | 2026-08-19 |
 | 15.22 | Прогресс — пустое состояние по центру по вертикали | [x] | task/15.22-progress-empty-center | 2026-08-19 |
+| 15.23 | Звуки — timer.mp3 + notification.mp3 | [x] | task/15.23-sounds | 2026-08-19 |
 | 15.30 | Видео-заставка на экране загрузки | [x] | task/15.30-video-splash | 2026-08-19 |
 
 ## Порядок выполнения
