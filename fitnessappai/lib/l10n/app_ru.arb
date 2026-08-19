@@ -273,6 +273,7 @@
   "exerciseParamsHoldHint": "Пусто — время удержания со счётчика",
   "workoutPrepare": "Подготовка к тренировке",
   "workoutRun": "Тренировка",
+  "workoutWakelockWarning": "Экран может выключаться во время тренировки — блокировка сна недоступна на этой платформе.",
   "workoutPrepareStart": "Начать тренировку",
   "workoutWarmup": "Разминка",
   "workoutWarmupDone": "Разминка завершена",

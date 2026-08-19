@@ -1144,6 +1144,12 @@ abstract class AppLocalizations {
   /// **'Тренировка'**
   String get workoutRun;
 
+  /// No description provided for @workoutWakelockWarning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Экран может выключаться во время тренировки — блокировка сна недоступна на этой платформе.'**
+  String get workoutWakelockWarning;
+
   /// No description provided for @workoutPrepareStart.
   ///
   /// In ru, this message translates to:

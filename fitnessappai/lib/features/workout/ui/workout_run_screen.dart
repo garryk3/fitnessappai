@@ -27,16 +27,24 @@ abstract class WakelockService {
   Future<void> enable();
 
   Future<void> disable();
+
+  bool get isEnabled;
 }
 
 /// Реализация через плагин wakelock_plus.
 class WakelockPlusService implements WakelockService {
-  const WakelockPlusService();
+  WakelockPlusService();
+
+  bool _enabled = false;
+
+  @override
+  bool get isEnabled => _enabled;
 
   @override
   Future<void> enable() async {
     try {
       await WakelockPlus.enable();
+      _enabled = true;
     } catch (e) {
       log('Не удалось включить wakelock', error: e);
     }
@@ -49,6 +57,7 @@ class WakelockPlusService implements WakelockService {
     } catch (e) {
       log('Не удалось выключить wakelock', error: e);
     }
+    _enabled = false;
   }
 }
 
@@ -176,7 +185,25 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
       },
       child: Scaffold(
         appBar: AppBar(title: Text(AppLocalizations.of(context).workoutRun)),
-        body: SignalBuilder(builder: (_) => _buildBody(context)),
+        body: Column(
+          children: [
+            if (!_wakelock.isEnabled)
+              MaterialBanner(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                content: Text(
+                  AppLocalizations.of(context).workoutWakelockWarning,
+                ),
+                leading: const Icon(Icons.warning_amber_rounded),
+                actions: [
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(AppLocalizations.of(context).commonOk),
+                  ),
+                ],
+              ),
+            Expanded(child: SignalBuilder(builder: (_) => _buildBody(context))),
+          ],
+        ),
       ),
     );
   }
