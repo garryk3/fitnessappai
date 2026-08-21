@@ -31,9 +31,13 @@ class _SplashVideoState extends State<SplashVideo> {
           }
           _controller
             ..setLooping(true)
-            ..setVolume(0)
-            ..play();
+            ..setVolume(0);
           setState(() {});
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              _controller.play();
+            }
+          });
         })
         .catchError((Object _) {
           // На платформах без поддержки видео заставка остаётся пустой, а

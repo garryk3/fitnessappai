@@ -13,6 +13,10 @@ abstract class SoundService {
   /// Останавливает воспроизведение.
   Future<void> stop();
 
+  /// Воспроизводит текущий звук независимо от настройки вкл/выкл (для
+  /// предпрослушивания в настройках).
+  Future<void> preview();
+
   /// Освобождает ресурсы аудио-плеера.
   Future<void> dispose();
 }
@@ -62,6 +66,22 @@ class AudioplayersSoundService implements SoundService {
   }
 
   @override
+  Future<void> preview() async {
+    try {
+      final filePath = await _repository.soundFilePath();
+      if (filePath != null && filePath.isNotEmpty) {
+        await _player.play(DeviceFileSource(filePath));
+      } else {
+        await _player.play(AssetSource(defaultAssetPath));
+      }
+      _autoStopTimer?.cancel();
+      _autoStopTimer = Timer(maxDuration, stop);
+    } catch (e) {
+      log('Не удалось воспроизвести звук (preview)', error: e);
+    }
+  }
+
+  @override
   Future<void> stop() async {
     _autoStopTimer?.cancel();
     _autoStopTimer = null;
@@ -79,6 +99,7 @@ class AudioplayersSoundService implements SoundService {
 class StubSoundService implements SoundService {
   int completionCalls = 0;
   int stopCalls = 0;
+  int previewCalls = 0;
 
   @override
   Future<void> playCompletion() async {
@@ -88,6 +109,11 @@ class StubSoundService implements SoundService {
   @override
   Future<void> stop() async {
     stopCalls++;
+  }
+
+  @override
+  Future<void> preview() async {
+    previewCalls++;
   }
 
   @override

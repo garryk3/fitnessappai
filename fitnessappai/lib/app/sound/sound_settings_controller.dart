@@ -3,19 +3,25 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 
 typedef SoundFilePicker = Future<String?> Function();
 
-/// Управляет настройками звуковых сигналов: переключатель и выбор файла.
+/// Управляет настройками звуковых сигналов: переключатель, выбор файла
+/// и предпрослушивание.
 class SoundSettingsController {
   SoundSettingsController({
     required this._repository,
     SoundFilePicker? pickFile,
-  }) : _pickFile = pickFile ?? _defaultPick;
+    SoundService? soundService,
+  }) : _pickFile = pickFile ?? _defaultPick,
+       // ignore: prefer_initializing_formals -- имя параметра публичное.
+       _soundService = soundService;
 
   final SoundSettingsRepository _repository;
   final SoundFilePicker _pickFile;
+  final SoundService? _soundService;
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> enabled = Signal(true);
@@ -37,6 +43,11 @@ class SoundSettingsController {
   Future<void> setEnabled(bool value) async {
     enabled.value = value;
     await _repository.setEnabled(value);
+  }
+
+  /// Воспроизводит текущий звук для предпрослушивания.
+  Future<void> previewSound() async {
+    await _soundService?.preview();
   }
 
   /// Выбирает звуковой файл с устройства и сохраняет путь.

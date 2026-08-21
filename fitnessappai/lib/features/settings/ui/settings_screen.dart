@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/app_restart.dart';
+import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
@@ -45,6 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.soundController ??
         SoundSettingsController(
           repository: locator.get<SoundSettingsRepository>(),
+          soundService: locator.get<SoundService>(),
         );
     _soundController.load();
     _updateController =
@@ -153,6 +155,14 @@ class _SoundSectionState extends State<_SoundSection> {
                     onPressed: () => controller.resetSoundFile(),
                   ),
                 ],
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: l10n.soundPreview,
+                  icon: const Icon(Icons.play_arrow),
+                  onPressed: controller.enabled.value
+                      ? () => controller.previewSound()
+                      : null,
+                ),
               ],
             ),
             const SizedBox(height: 8),
