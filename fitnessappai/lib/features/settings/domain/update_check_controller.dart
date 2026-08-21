@@ -119,7 +119,10 @@ class UpdateCheckController {
   }
 
   static List<int>? _parseVersion(String version) {
-    final clean = version.trim().replaceFirst(RegExp(r'^[vV]'), '');
+    final clean = version
+        .trim()
+        .replaceFirst(RegExp(r'^[vV]'), '')
+        .replaceFirst(RegExp(r'-.*'), '');
     final parts = clean.split('.');
     if (parts.length > 3) {
       return null;
@@ -138,5 +141,6 @@ class UpdateCheckController {
     return result;
   }
 
-  static String _cleanTag(String tag) => tag.replaceFirst(RegExp(r'^[vV]'), '');
+  static String _cleanTag(String tag) =>
+      tag.replaceFirst(RegExp(r'^[vV]'), '').replaceFirst(RegExp(r'-.*'), '');
 }
