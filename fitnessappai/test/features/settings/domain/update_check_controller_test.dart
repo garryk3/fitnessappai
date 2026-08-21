@@ -145,4 +145,42 @@ void main() {
     await controller.openUpdate();
     expect(openedUrl, isNull);
   });
+
+  test('beta-суффикс в теге релиза корректно сравнивается', () async {
+    final controller = buildController(
+      version: '1.0.2-beta',
+      latestTag: 'v1.0.3-beta',
+    );
+    await controller.loadVersion();
+
+    await controller.checkForUpdates();
+
+    expect(controller.hasUpdate.value, isTrue);
+    expect(controller.latestVersion.value, '1.0.3');
+  });
+
+  test('beta-суффикс в текущей версии корректно сравнивается', () async {
+    final controller = buildController(
+      version: '1.0.0-beta',
+      latestTag: 'v1.1.0',
+    );
+    await controller.loadVersion();
+
+    await controller.checkForUpdates();
+
+    expect(controller.hasUpdate.value, isTrue);
+    expect(controller.latestVersion.value, '1.1.0');
+  });
+
+  test('одинаковые версии с beta — обновление не требуется', () async {
+    final controller = buildController(
+      version: '1.0.3-beta',
+      latestTag: 'v1.0.3-beta',
+    );
+    await controller.loadVersion();
+
+    await controller.checkForUpdates();
+
+    expect(controller.hasUpdate.value, isFalse);
+  });
 }
