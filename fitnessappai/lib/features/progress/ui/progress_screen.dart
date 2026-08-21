@@ -143,6 +143,7 @@ class _StatCards extends StatelessWidget {
             label: l10n.progressWorkouts,
             value: '${controller.workoutCount.value}',
             icon: Icons.fitness_center,
+            onTap: () => context.push('/history'),
           ),
         ),
         const SizedBox(width: 8),
@@ -171,40 +172,52 @@ class _StatCard extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        child: Column(
-          children: [
-            Icon(icon, size: 20, color: theme.colorScheme.primary),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: theme.textTheme.titleMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: onTap != null
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: theme.textTheme.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -392,6 +405,8 @@ class _MetricChart extends StatelessWidget {
     final selected = exercises.firstWhereOrNull((e) => e.id == selectedId);
     final values = _displayValues(selected?.type);
     final labels = _sliceLabels(context);
+    final unitSuffix = _unitSuffix(selected?.type);
+    final leftReserved = unitSuffix.isNotEmpty ? 48.0 : 32.0;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -468,7 +483,15 @@ class _MetricChart extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 32,
+                        reservedSize: leftReserved,
+                        getTitlesWidget: (value, meta) {
+                          final label = _yAxisLabel(value, unitSuffix);
+                          return Text(
+                            label,
+                            style: theme.textTheme.labelSmall,
+                            maxLines: 1,
+                          );
+                        },
                       ),
                     ),
                     rightTitles: AxisTitles(
@@ -527,6 +550,19 @@ class _MetricChart extends StatelessWidget {
       ExerciseType.plank => [for (final v in values) v / 60],
       ExerciseType.bodyweight || ExerciseType.strength || null => values,
     };
+  }
+
+  String _unitSuffix(ExerciseType? type) => switch (type) {
+    ExerciseType.plank => 'м',
+    ExerciseType.running => 'км',
+    ExerciseType.strength || ExerciseType.bodyweight || null => 'кг',
+  };
+
+  String _yAxisLabel(double value, String suffix) {
+    final formatted = value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toStringAsFixed(1);
+    return '$formatted $suffix';
   }
 
   List<String> _sliceLabels(BuildContext context) {

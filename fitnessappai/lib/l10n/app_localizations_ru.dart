@@ -77,6 +77,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get soundReset => 'Вернуть стандартный сигнал';
 
   @override
+  String get soundPreview => 'Прослушать';
+
+  @override
   String get soundDefaultLabel => 'Стандартный сигнал';
 
   @override
@@ -710,6 +713,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workoutRunGoProgress => 'К прогрессу';
+
+  @override
+  String get workoutRunExercises => 'Упражнения';
+
+  @override
+  String get workoutRunMuscles => 'Задействованные мышцы';
 
   @override
   String get workoutRunEmpty => 'В этом дне нет упражнений';

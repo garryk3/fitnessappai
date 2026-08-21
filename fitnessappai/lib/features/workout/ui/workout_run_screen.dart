@@ -97,6 +97,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
   late final MediaCache _mediaCache;
   late final WorkoutRepository _workoutRepository;
   late final WakelockService _wakelock;
+  bool _wakelockBannerDismissed = false;
 
   @override
   void initState() {
@@ -187,7 +188,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
         appBar: AppBar(title: Text(AppLocalizations.of(context).workoutRun)),
         body: Column(
           children: [
-            if (!_wakelock.isEnabled)
+            if (!_wakelock.isEnabled && !_wakelockBannerDismissed)
               MaterialBanner(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 content: Text(
@@ -196,7 +197,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
                 leading: const Icon(Icons.warning_amber_rounded),
                 actions: [
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      setState(() => _wakelockBannerDismissed = true);
+                    },
                     child: Text(AppLocalizations.of(context).commonOk),
                   ),
                 ],
@@ -819,7 +822,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
 }
 
 /// Экран итогов завершённой тренировки.
-class _FinishedView extends StatelessWidget {
+class _FinishedView extends StatefulWidget {
   const _FinishedView({
     required this.controller,
     required this.saving,
@@ -831,13 +834,47 @@ class _FinishedView extends StatelessWidget {
   final bool saved;
 
   @override
+  State<_FinishedView> createState() => _FinishedViewState();
+}
+
+class _FinishedViewState extends State<_FinishedView> {
+  List<String> _muscleNames = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMuscles();
+  }
+
+  Future<void> _loadMuscles() async {
+    final exercises = widget.controller.workout.exercises;
+    final repo = widget.controller.exerciseRepository;
+    final allGroups = await repo.getAllMuscleGroups();
+    final groupById = {for (final g in allGroups) g.id!: g};
+    final names = <String>{};
+    for (final we in exercises) {
+      final muscles = await repo.getMuscles(we.exercise.id!);
+      for (final m in muscles) {
+        final group = groupById[m.muscleGroupId];
+        if (group != null) {
+          names.add(group.labelRu);
+        }
+      }
+    }
+    if (mounted) {
+      setState(() => _muscleNames = names.toList()..sort());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final workout = controller.workout;
+    final workout = widget.controller.workout;
     final programName = workout.context?.programName ?? '';
     final setsCount = workout.results.value.length;
-    final minutes = controller.durationMinutes;
+    final minutes = widget.controller.durationMinutes;
+    final exercises = workout.exercises;
 
     return Center(
       child: SingleChildScrollView(
@@ -862,8 +899,64 @@ class _FinishedView extends StatelessWidget {
             const SizedBox(height: 16),
             Text(l10n.workoutRunSetsCount(setsCount)),
             Text(l10n.workoutRunTime(minutes)),
+            if (exercises.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.workoutRunExercises,
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+              const SizedBox(height: 4),
+              for (final we in exercises)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _typeIcon(we.exercise.type),
+                        size: 16,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          we.exercise.name,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            if (_muscleNames.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.workoutRunMuscles,
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final name in _muscleNames)
+                    Chip(
+                      label: Text(name, style: theme.textTheme.labelSmall),
+                      backgroundColor: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.5),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 24),
-            if (saved) ...[
+            if (widget.saved) ...[
               Text(
                 l10n.workoutRunSaved,
                 style: theme.textTheme.titleSmall?.copyWith(
@@ -877,8 +970,10 @@ class _FinishedView extends StatelessWidget {
               ),
             ] else
               FilledButton(
-                onPressed: saving ? null : controller.completeAndSave,
-                child: saving
+                onPressed: widget.saving
+                    ? null
+                    : widget.controller.completeAndSave,
+                child: widget.saving
                     ? const SizedBox(
                         width: 20,
                         height: 20,
@@ -891,6 +986,13 @@ class _FinishedView extends StatelessWidget {
       ),
     );
   }
+
+  IconData _typeIcon(ExerciseType type) => switch (type) {
+    ExerciseType.strength => Icons.fitness_center,
+    ExerciseType.bodyweight => Icons.accessibility_new,
+    ExerciseType.plank => Icons.self_improvement,
+    ExerciseType.running => Icons.directions_run,
+  };
 }
 
 /// Разрешает ввод дробного числа (запятая или точка как разделитель).

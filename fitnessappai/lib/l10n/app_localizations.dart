@@ -226,6 +226,12 @@ abstract class AppLocalizations {
   /// **'Вернуть стандартный сигнал'**
   String get soundReset;
 
+  /// No description provided for @soundPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прослушать'**
+  String get soundPreview;
+
   /// No description provided for @soundDefaultLabel.
   ///
   /// In ru, this message translates to:
@@ -1359,6 +1365,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'К прогрессу'**
   String get workoutRunGoProgress;
+
+  /// No description provided for @workoutRunExercises.
+  ///
+  /// In ru, this message translates to:
+  /// **'Упражнения'**
+  String get workoutRunExercises;
+
+  /// No description provided for @workoutRunMuscles.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задействованные мышцы'**
+  String get workoutRunMuscles;
 
   /// No description provided for @workoutRunEmpty.
   ///
