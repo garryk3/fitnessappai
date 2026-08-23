@@ -40,7 +40,9 @@ part 'app_database.g.dart';
 /// v6: колонка `program_days.warmupMinutes` — разминка перед тренировкой.
 /// v7: колонки `exercises.fixedWeight` и `exercises.perSide`, колонка
 /// `workout_set_results.side` — выполнение «по сторонам».
-const int appDatabaseSchemaVersion = 7;
+/// v8: колонки `exercises.thumbnailBlob` и `exercises.animationBlob`
+/// — хранение изображений в БД для переносимости.
+const int appDatabaseSchemaVersion = 8;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -101,6 +103,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(exercises, exercises.fixedWeight);
         await m.addColumn(exercises, exercises.perSide);
         await m.addColumn(workoutSetResults, workoutSetResults.side);
+      }
+      if (from < 8) {
+        await m.addColumn(exercises, exercises.thumbnailBlob);
+        await m.addColumn(exercises, exercises.animationBlob);
       }
     },
     beforeOpen: (details) async {

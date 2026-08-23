@@ -73,12 +73,14 @@ void main() {
     final source = File(p.join(tempDir.path, 'picked.gif'));
     final bytes = Uint8List.fromList([9, 8, 7]);
     await source.writeAsBytes(bytes);
-    final path = await store(
+    final result = await store(
       assets: <String, Uint8List>{},
       picker: (fileType) async => XFile(source.path),
     ).importFromPicker();
-    expect(path, isNotNull);
-    expect(await File(path!).readAsBytes(), bytes);
+    expect(result, isNotNull);
+    expect(result!.path, endsWith('.gif'));
+    expect(result.bytes, bytes);
+    expect(await File(result.path).readAsBytes(), bytes);
     expect(await source.exists(), isTrue);
   });
 
