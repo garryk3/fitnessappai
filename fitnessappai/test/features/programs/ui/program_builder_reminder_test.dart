@@ -80,6 +80,7 @@ void main() {
         locale: const Locale('ru'),
         home: ProgramBuilderScreen(
           repository: repository,
+          exerciseRepository: exerciseRepository,
           programId: programId,
         ),
       ),

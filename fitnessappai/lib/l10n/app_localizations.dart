@@ -232,6 +232,12 @@ abstract class AppLocalizations {
   /// **'Прослушать'**
   String get soundPreview;
 
+  /// No description provided for @soundStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остановить'**
+  String get soundStop;
+
   /// No description provided for @soundDefaultLabel.
   ///
   /// In ru, this message translates to:

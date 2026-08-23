@@ -10,8 +10,8 @@ import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/validators/program_day_exercise_validator.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
-import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/ui/muscle_panel.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Второй шаг конструктора программы: наполнение тренировочного дня.
@@ -381,7 +381,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
           flex: 2,
           child: SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 16),
-            child: _MusclePanel(
+            child: MusclePanel(
               highlights: _highlights,
               allMuscleGroups: _allMuscleGroups,
               title: l10n.programBuilderMuscles,
@@ -659,116 +659,6 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
         ),
       ],
     );
-  }
-}
-
-/// Панель схемы мускулатуры: спереди и сзади, список мышц с %.
-class _MusclePanel extends StatelessWidget {
-  const _MusclePanel({
-    required this.highlights,
-    required this.title,
-    this.allMuscleGroups = const [],
-  });
-
-  final Map<String, double> highlights;
-  final String title;
-  final List<MuscleGroup> allMuscleGroups;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final usedKeys = highlights.keys.toSet();
-    final unused = allMuscleGroups
-        .where((g) => !usedKeys.contains(g.regionKey))
-        .toList();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(title, style: theme.textTheme.titleSmall),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            MuscleDiagram(
-              view: MuscleView.front,
-              highlights: highlights,
-              size: const Size(80, 160),
-            ),
-            const SizedBox(width: 16),
-            MuscleDiagram(
-              view: MuscleView.back,
-              highlights: highlights,
-              size: const Size(80, 160),
-            ),
-          ],
-        ),
-        if (highlights.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Задействованы',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          for (final entry in highlights.entries) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _muscleKeyToLabel(allMuscleGroups, entry.key),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                  Text(
-                    '${(entry.value * 100).round()}%',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-        if (unused.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Не задействованы',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              for (final group in unused)
-                Chip(
-                  label: Text(group.labelRu, style: theme.textTheme.labelSmall),
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  String _muscleKeyToLabel(List<MuscleGroup> groups, String regionKey) {
-    final match = groups.firstWhereOrNull((g) => g.regionKey == regionKey);
-    return match?.labelRu ?? regionKey;
   }
 }
 

@@ -17,6 +17,12 @@ abstract class SoundService {
   /// предпрослушивания в настройках).
   Future<void> preview();
 
+  /// Идёт ли сейчас воспроизведение.
+  bool get isPlaying;
+
+  /// Стрим изменения состояния воспроизведения.
+  Stream<bool> get isPlayingStream;
+
   /// Освобождает ресурсы аудио-плеера.
   Future<void> dispose();
 }
@@ -24,7 +30,13 @@ abstract class SoundService {
 /// Реализация [SoundService] на `audioplayers`: встроенный ассет
 /// (звук окончания таймера) или выбранный пользователем файл из настроек.
 class AudioplayersSoundService implements SoundService {
-  AudioplayersSoundService(this._repository);
+  AudioplayersSoundService(this._repository) {
+    _player.onPlayerStateChanged.listen((state) {
+      final playing = state == PlayerState.playing;
+      _isPlaying = playing;
+      _isPlayingController.add(playing);
+    });
+  }
 
   static const String defaultAssetPath = 'sounds/timer.mp3';
   static const Duration maxDuration = Duration(seconds: 5);
@@ -32,6 +44,15 @@ class AudioplayersSoundService implements SoundService {
   final SoundSettingsRepository _repository;
   final AudioPlayer _player = AudioPlayer();
   Timer? _autoStopTimer;
+  bool _isPlaying = false;
+  final StreamController<bool> _isPlayingController =
+      StreamController<bool>.broadcast();
+
+  @override
+  bool get isPlaying => _isPlaying;
+
+  @override
+  Stream<bool> get isPlayingStream => _isPlayingController.stream;
 
   static Future<void> configureGlobalContext() async {
     await AudioPlayer.global.setAudioContext(
@@ -91,6 +112,7 @@ class AudioplayersSoundService implements SoundService {
   @override
   Future<void> dispose() async {
     _autoStopTimer?.cancel();
+    await _isPlayingController.close();
     await _player.dispose();
   }
 }
@@ -100,6 +122,13 @@ class StubSoundService implements SoundService {
   int completionCalls = 0;
   int stopCalls = 0;
   int previewCalls = 0;
+  bool _isPlaying = false;
+
+  @override
+  bool get isPlaying => _isPlaying;
+
+  @override
+  Stream<bool> get isPlayingStream => const Stream<bool>.empty();
 
   @override
   Future<void> playCompletion() async {
@@ -109,11 +138,13 @@ class StubSoundService implements SoundService {
   @override
   Future<void> stop() async {
     stopCalls++;
+    _isPlaying = false;
   }
 
   @override
   Future<void> preview() async {
     previewCalls++;
+    _isPlaying = true;
   }
 
   @override
