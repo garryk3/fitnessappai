@@ -623,10 +623,20 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 IconButton(
                   tooltip: l10n.exerciseFormThumbnailRemove,
                   icon: const Icon(Icons.delete_outline),
-                  onPressed: () => setState(() => _thumbnailPath = null),
+                  onPressed: () => setState(() {
+                    _thumbnailPath = null;
+                    _thumbnailBlob = null;
+                  }),
                 ),
               ],
             ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.exerciseFormMediaInfo,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -662,7 +672,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _pickAnimation,
-                  icon: const Icon(Icons.video_file_outlined),
+                  icon: const Icon(Icons.image_outlined),
                   label: Text(
                     l10n.exerciseFormAnimationPick,
                     overflow: TextOverflow.ellipsis,
@@ -674,10 +684,20 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 IconButton(
                   tooltip: l10n.exerciseFormAnimationRemove,
                   icon: const Icon(Icons.delete_outline),
-                  onPressed: () => setState(() => _animationPath = null),
+                  onPressed: () => setState(() {
+                    _animationPath = null;
+                    _animationBlob = null;
+                  }),
                 ),
               ],
             ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.exerciseFormMediaInfo,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

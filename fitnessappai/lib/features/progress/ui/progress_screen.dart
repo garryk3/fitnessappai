@@ -555,7 +555,8 @@ class _MetricChart extends StatelessWidget {
   String _unitSuffix(ExerciseType? type) => switch (type) {
     ExerciseType.plank => 'м',
     ExerciseType.running => 'км',
-    ExerciseType.strength || ExerciseType.bodyweight || null => 'кг',
+    ExerciseType.bodyweight => 'повт',
+    ExerciseType.strength || null => 'кг',
   };
 
   String _yAxisLabel(double value, String suffix) {

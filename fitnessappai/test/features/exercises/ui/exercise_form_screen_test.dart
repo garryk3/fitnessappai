@@ -412,27 +412,27 @@ void main() {
     expect(perSide.value, isTrue);
   });
 
-  testWidgets('выбор анимации сохраняет путь', (tester) async {
+  testWidgets('выбор изображения сохраняет путь', (tester) async {
     await pumpForm(tester);
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Название *'),
       'С анимацией',
     );
-    await scrollFormTo(tester, find.text('Выбрать анимацию'));
+    await scrollFormTo(tester, find.text('Выбрать изображение'));
     lastPicked = XFile(pickedFilePath);
     await tester.runAsync(() async {
-      await tester.tap(find.text('Выбрать анимацию'));
+      await tester.tap(find.text('Выбрать изображение'));
       for (var i = 0; i < 50; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        if (find.byTooltip('Убрать анимацию').evaluate().isNotEmpty) {
+        if (find.byTooltip('Убрать изображение').evaluate().isNotEmpty) {
           return;
         }
       }
     });
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Убрать анимацию'), findsOneWidget);
+    expect(find.byTooltip('Убрать изображение'), findsOneWidget);
 
     await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
@@ -449,20 +449,20 @@ void main() {
       find.widgetWithText(TextFormField, 'Название *'),
       'С миниатюрой',
     );
-    await scrollFormTo(tester, find.text('Выбрать изображение'));
+    await scrollFormTo(tester, find.text('Выбрать миниатюру'));
     lastPicked = XFile(pickedFilePath);
     await tester.runAsync(() async {
-      await tester.tap(find.text('Выбрать изображение'));
+      await tester.tap(find.text('Выбрать миниатюру'));
       for (var i = 0; i < 50; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        if (find.byTooltip('Убрать изображение').evaluate().isNotEmpty) {
+        if (find.byTooltip('Убрать миниатюру').evaluate().isNotEmpty) {
           return;
         }
       }
     });
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Убрать изображение'), findsOneWidget);
+    expect(find.byTooltip('Убрать миниатюру'), findsOneWidget);
 
     await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
@@ -486,10 +486,10 @@ void main() {
     );
 
     await pumpForm(tester, exerciseId: saved.id);
-    await scrollFormTo(tester, find.text('Выбрать изображение'));
+    await scrollFormTo(tester, find.text('Выбрать миниатюру'));
 
+    expect(find.byTooltip('Убрать миниатюру'), findsOneWidget);
     expect(find.byTooltip('Убрать изображение'), findsOneWidget);
-    expect(find.byTooltip('Убрать анимацию'), findsOneWidget);
 
     await selectChestMuscle(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
@@ -608,7 +608,7 @@ void main() {
     );
 
     await pumpForm(tester, exerciseId: saved.id);
-    await scrollFormTo(tester, find.byTooltip('Убрать изображение'));
+    await scrollFormTo(tester, find.byTooltip('Убрать миниатюру'));
 
     final image = tester.widget<Image>(find.byType(Image));
     expect(image.width, double.infinity);
@@ -616,7 +616,7 @@ void main() {
     expect(image.fit, BoxFit.cover);
   });
 
-  testWidgets('ошибка выбора анимации показывает SnackBar без краха', (
+  testWidgets('ошибка выбора изображения показывает SnackBar без краха', (
     tester,
   ) async {
     await pumpForm(
@@ -624,8 +624,8 @@ void main() {
       picker: (fileType) async => throw PlatformException(code: 'pick_failed'),
     );
 
-    await scrollFormTo(tester, find.text('Выбрать анимацию'));
-    await tester.tap(find.text('Выбрать анимацию'));
+    await scrollFormTo(tester, find.text('Выбрать изображение'));
+    await tester.tap(find.text('Выбрать изображение'));
     await tester.pumpAndSettle();
 
     expect(
@@ -642,14 +642,14 @@ void main() {
     );
 
     await pumpForm(tester, exerciseId: saved.id);
-    await scrollFormTo(tester, find.byTooltip('Убрать изображение'));
-    expect(find.byTooltip('Убрать изображение'), findsOneWidget);
+    await scrollFormTo(tester, find.byTooltip('Убрать миниатюру'));
+    expect(find.byTooltip('Убрать миниатюру'), findsOneWidget);
     expect(find.byType(Image), findsWidgets);
 
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Убрать изображение'), findsNothing);
+    expect(find.byTooltip('Убрать миниатюру'), findsNothing);
   });
 
   testWidgets('на узком экране строка выбора медиа не переполняется', (
@@ -669,16 +669,16 @@ void main() {
     );
 
     await pumpForm(tester, exerciseId: saved.id);
-    await scrollFormTo(tester, find.byTooltip('Убрать изображение'));
+    await scrollFormTo(tester, find.byTooltip('Убрать миниатюру'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    await scrollFormTo(tester, find.byTooltip('Убрать анимацию'));
+    await scrollFormTo(tester, find.byTooltip('Убрать изображение'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('выбор миниатюры и анимации вызывает пикер с image-типом', (
+  testWidgets('выбор миниатюры и изображения вызывает пикер с image-типом', (
     tester,
   ) async {
     final fileTypes = <MediaFileType>[];
@@ -690,24 +690,24 @@ void main() {
       },
     );
 
-    await scrollFormTo(tester, find.text('Выбрать изображение'));
+    await scrollFormTo(tester, find.text('Выбрать миниатюру'));
     await tester.runAsync(() async {
-      await tester.tap(find.text('Выбрать изображение'));
+      await tester.tap(find.text('Выбрать миниатюру'));
       for (var i = 0; i < 50; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        if (find.byTooltip('Убрать изображение').evaluate().isNotEmpty) {
+        if (find.byTooltip('Убрать миниатюру').evaluate().isNotEmpty) {
           return;
         }
       }
     });
     await tester.pumpAndSettle();
 
-    await scrollFormTo(tester, find.text('Выбрать анимацию'));
+    await scrollFormTo(tester, find.text('Выбрать изображение'));
     await tester.runAsync(() async {
-      await tester.tap(find.text('Выбрать анимацию'));
+      await tester.tap(find.text('Выбрать изображение'));
       for (var i = 0; i < 50; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        if (find.byTooltip('Убрать анимацию').evaluate().isNotEmpty) {
+        if (find.byTooltip('Убрать изображение').evaluate().isNotEmpty) {
           return;
         }
       }

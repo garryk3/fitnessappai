@@ -33,7 +33,7 @@ class _SplashVideoState extends State<SplashVideo> {
             ..setLooping(true)
             ..setVolume(0);
           setState(() {});
-          Future.delayed(const Duration(seconds: 2), () {
+          Future.delayed(const Duration(seconds: 3), () {
             if (mounted) {
               _controller.play();
             }
