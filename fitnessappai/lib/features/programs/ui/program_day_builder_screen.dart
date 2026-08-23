@@ -4,14 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
-import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/validators/program_day_exercise_validator.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
-import 'package:fitnessappai/features/programs/ui/muscle_panel.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Второй шаг конструктора программы: наполнение тренировочного дня.
@@ -61,11 +59,6 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
   int _nextTempKey = 0;
 
   final Map<int, Exercise> _exercisesById = {};
-  final Map<int, MuscleGroup> _muscleGroupsById = {};
-  final List<MuscleGroup> _allMuscleGroups = [];
-  final Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
-
-  List<_ItemDraft> get _currentItems => _isAlternative ? _altItems : _mainItems;
 
   @override
   void initState() {
@@ -88,7 +81,6 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       (d) => d.day.dayIndex == widget.dayIndex,
     );
     final exercises = await _exerciseRepository.getAll();
-    final groups = await _exerciseRepository.getAllMuscleGroups();
 
     if (!mounted) {
       return;
@@ -113,56 +105,16 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       _exercisesById
         ..clear()
         ..addEntries(exercises.map((e) => MapEntry(e.id!, e)));
-      _muscleGroupsById
-        ..clear()
-        ..addEntries(groups.map((g) => MapEntry(g.id!, g)));
-      _allMuscleGroups
-        ..clear()
-        ..addAll(groups);
       _loading = false;
     });
-
-    for (final item in [..._mainItems, ..._altItems]) {
-      final exerciseId = item.item.exerciseId;
-      if (exerciseId != null) {
-        await _loadMusclesFor(exerciseId);
-      }
-    }
   }
 
-  Future<void> _loadMusclesFor(int exerciseId) async {
-    if (_musclesByExercise.containsKey(exerciseId)) {
-      return;
-    }
-    final muscles = await _exerciseRepository.getMuscles(exerciseId);
-    if (mounted) {
-      setState(() => _musclesByExercise[exerciseId] = muscles);
-    }
-  }
-
-  Map<String, double> get _highlights {
-    final highlights = <String, double>{};
-    for (final draft in _currentItems) {
-      final exerciseId = draft.item.exerciseId;
-      if (exerciseId == null) {
-        continue;
-      }
-      for (final link in _musclesByExercise[exerciseId] ?? const []) {
-        final group = _muscleGroupsById[link.muscleGroupId];
-        if (group == null) {
-          continue;
-        }
-        final intensity = link.intensity == MuscleIntensity.primary ? 1.0 : 0.5;
-        final current = highlights[group.regionKey] ?? 0.0;
-        highlights[group.regionKey] = current > intensity ? current : intensity;
-      }
-    }
-    return highlights;
-  }
+  List<_ItemDraft> get _currentItems => _isAlternative ? _altItems : _mainItems;
 
   Future<void> _addExercise() async {
     final musclesByExercise = await _exerciseRepository
         .muscleGroupsByExercise();
+    final muscleGroups = await _exerciseRepository.getAllMuscleGroups();
     if (!mounted) {
       return;
     }
@@ -170,7 +122,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       context: context,
       builder: (context) => _ExercisePickerDialog(
         exercises: _exercisesById.values.toList(),
-        muscleGroups: _allMuscleGroups,
+        muscleGroups: muscleGroups,
         musclesByExercise: musclesByExercise,
       ),
     );
@@ -189,7 +141,6 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     setState(() {
       _currentItems.add(draft);
     });
-    await _loadMusclesFor(selected.id!);
     if (mounted) {
       await _openExerciseParams(draft);
     }
@@ -376,18 +327,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
                 setState(() => _isAlternative = selection.first),
           ),
         ),
-        Expanded(flex: 3, child: _buildItemsList()),
-        Expanded(
-          flex: 2,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: MusclePanel(
-              highlights: _highlights,
-              allMuscleGroups: _allMuscleGroups,
-              title: l10n.programBuilderMuscles,
-            ),
-          ),
-        ),
+        Expanded(child: _buildItemsList()),
       ],
     );
   }

@@ -107,10 +107,10 @@ class LocalFileSyncService implements SyncService {
       }
       final version =
           probe.select('PRAGMA user_version').single['user_version'] as int;
-      if (version != appDatabaseSchemaVersion) {
+      if (version > appDatabaseSchemaVersion) {
         throw SyncValidationException(
-          'Несовместимая версия схемы: $version (ожидается '
-          '$appDatabaseSchemaVersion)',
+          'Версия схемы $version новее установленной '
+          '$appDatabaseSchemaVersion. Обновите приложение.',
         );
       }
     } on sqlite.SqliteException {

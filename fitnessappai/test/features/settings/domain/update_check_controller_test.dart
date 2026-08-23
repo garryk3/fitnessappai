@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
@@ -95,9 +97,9 @@ void main() {
     expect(controller.statusText.value, 'Релизы ещё не опубликованы');
   });
 
-  test('ошибка сети — статус ошибки', () async {
+  test('ошибка сети — понятный текст ошибки', () async {
     final controller = buildController(latestTag: 'v1.1.0');
-    service.error = Exception('no internet');
+    service.error = SocketException('no internet');
     await controller.loadVersion();
 
     await controller.checkForUpdates();
@@ -106,8 +108,33 @@ void main() {
     expect(controller.hasUpdate.value, isFalse);
     expect(
       controller.statusText.value,
-      'Ошибка проверки обновления: Exception: no internet',
+      'Ошибка проверки версии. Проверьте подключение к интернету.',
     );
+  });
+
+  test('HttpException — понятный текст ошибки', () async {
+    final controller = buildController(latestTag: 'v1.1.0');
+    service.error = HttpException('bad response');
+    await controller.loadVersion();
+
+    await controller.checkForUpdates();
+
+    expect(controller.hasError.value, isTrue);
+    expect(
+      controller.statusText.value,
+      'Ошибка проверки версии. Проверьте подключение к интернету.',
+    );
+  });
+
+  test('прочая ошибка — общий текст ошибки', () async {
+    final controller = buildController(latestTag: 'v1.1.0');
+    service.error = Exception('unknown');
+    await controller.loadVersion();
+
+    await controller.checkForUpdates();
+
+    expect(controller.hasError.value, isTrue);
+    expect(controller.statusText.value, 'Ошибка проверки версии.');
   });
 
   test('повторный вызов во время проверки игнорируется', () async {

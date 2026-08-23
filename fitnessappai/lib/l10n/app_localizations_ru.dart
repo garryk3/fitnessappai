@@ -1007,4 +1007,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get measurementFormNumberError => 'Введите число';
+
+  @override
+  String get updateCheckErrorNetwork =>
+      'Ошибка проверки версии. Проверьте подключение к интернету.';
+
+  @override
+  String get updateCheckError => 'Ошибка проверки версии.';
 }

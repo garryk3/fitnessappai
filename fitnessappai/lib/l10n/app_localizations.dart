@@ -1899,6 +1899,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Введите число'**
   String get measurementFormNumberError;
+
+  /// No description provided for @updateCheckErrorNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка проверки версии. Проверьте подключение к интернету.'**
+  String get updateCheckErrorNetwork;
+
+  /// No description provided for @updateCheckError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка проверки версии.'**
+  String get updateCheckError;
 }
 
 class _AppLocalizationsDelegate
