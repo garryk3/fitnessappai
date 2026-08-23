@@ -19,9 +19,7 @@ void main() {
     parentKey: parentKey,
   );
 
-  testWidgets('подгруппы не отображаются в «Не задействованы»', (
-    tester,
-  ) async {
+  testWidgets('подгруппы не отображаются в «Не задействованы»', (tester) async {
     final groups = [
       group('shoulders'),
       group('shoulders_front', parentKey: 'shoulders'),
@@ -31,11 +29,7 @@ void main() {
 
     await tester.pumpWidget(
       wrap(
-        MusclePanel(
-          highlights: {},
-          allMuscleGroups: groups,
-          title: 'Мышцы',
-        ),
+        MusclePanel(highlights: {}, allMuscleGroups: groups, title: 'Мышцы'),
       ),
     );
 
@@ -47,10 +41,7 @@ void main() {
   });
 
   testWidgets('все группы задействованы — секция скрыта', (tester) async {
-    final groups = [
-      group('chest'),
-      group('quads'),
-    ];
+    final groups = [group('chest'), group('quads')];
 
     await tester.pumpWidget(
       wrap(
