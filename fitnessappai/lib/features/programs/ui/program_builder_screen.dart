@@ -5,14 +5,18 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
+import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/domain/validators/program_validator.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
+import 'package:fitnessappai/features/programs/ui/muscle_panel.dart';
 import 'package:fitnessappai/features/programs/ui/program_validation_dialog.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -20,10 +24,16 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 ///
 /// [programId] равен `null` при создании новой программы.
 class ProgramBuilderScreen extends StatefulWidget {
-  const ProgramBuilderScreen({super.key, this.programId, this.repository});
+  const ProgramBuilderScreen({
+    super.key,
+    this.programId,
+    this.repository,
+    this.exerciseRepository,
+  });
 
   final int? programId;
   final ProgramRepository? repository;
+  final ExerciseRepository? exerciseRepository;
 
   @override
   State<ProgramBuilderScreen> createState() => _ProgramBuilderScreenState();
@@ -67,6 +77,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   int? _programId;
   bool _isActive = false;
 
+  List<MuscleGroup> _allMuscleGroups = [];
+  Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
+  Map<String, double> _highlights = {};
+  bool _muscleDataLoaded = false;
+
   int? get _warmupMinutes {
     final text = _warmupController.text.trim();
     return text.isEmpty ? null : int.tryParse(text);
@@ -92,6 +107,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   Future<void> _load() async {
     final programId = widget.programId;
+
     if (programId != null) {
       final detail = await _repository.getProgram(programId);
       if (detail != null && mounted) {
@@ -99,6 +115,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         _descriptionController.text = detail.program.description;
         _createdAt = detail.program.createdAt;
         _isActive = detail.program.isActive;
+        final firstWarmup = detail.days.firstOrNull?.day.warmupMinutes;
+        if (firstWarmup != null) {
+          _warmupController.text = '$firstWarmup';
+        }
         _days
           ..clear()
           ..addAll([
@@ -121,6 +141,94 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     if (mounted) {
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _loadMuscleData() async {
+    if (!mounted || _muscleDataLoaded) {
+      return;
+    }
+    _muscleDataLoaded = true;
+    final exerciseRepo =
+        widget.exerciseRepository ?? _tryGetExerciseRepository();
+    if (exerciseRepo == null) {
+      return;
+    }
+    try {
+      _allMuscleGroups = await exerciseRepo.getAllMuscleGroups();
+    } catch (_) {
+      _allMuscleGroups = [];
+    }
+    final programId = _programId;
+    if (programId != null) {
+      final detail = await _repository.getProgram(programId);
+      if (detail != null && mounted) {
+        await _loadMuscles(detail, exerciseRepo);
+      }
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  ExerciseRepository? _tryGetExerciseRepository() {
+    try {
+      return locator.get<ExerciseRepository>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _loadMuscles(
+    ProgramDetail detail,
+    ExerciseRepository exerciseRepo,
+  ) async {
+    final exerciseIds = <int>{};
+    for (final day in detail.days) {
+      for (final ex in [...day.mainExercises, ...day.alternativeExercises]) {
+        if (ex.exerciseId != null) {
+          exerciseIds.add(ex.exerciseId!);
+        }
+      }
+    }
+    final musclesByExercise = <int, List<ExerciseMuscle>>{};
+    for (final id in exerciseIds) {
+      final muscles = await exerciseRepo.getMuscles(id);
+      musclesByExercise[id] = muscles;
+    }
+    if (!mounted) {
+      return;
+    }
+    _musclesByExercise = musclesByExercise;
+    _computeHighlights(detail);
+  }
+
+  void _computeHighlights(ProgramDetail detail) {
+    final musclesById = <int, MuscleGroup>{
+      for (final g in _allMuscleGroups) g.id!: g,
+    };
+    final highlights = <String, double>{};
+    for (final day in detail.days) {
+      for (final ex in day.mainExercises) {
+        final exerciseId = ex.exerciseId;
+        if (exerciseId == null) {
+          continue;
+        }
+        for (final link in _musclesByExercise[exerciseId] ?? const []) {
+          final group = musclesById[link.muscleGroupId];
+          if (group == null) {
+            continue;
+          }
+          final intensity = link.intensity == MuscleIntensity.primary
+              ? 1.0
+              : 0.5;
+          final current = highlights[group.regionKey] ?? 0.0;
+          highlights[group.regionKey] = current > intensity
+              ? current
+              : intensity;
+        }
+      }
+    }
+    _highlights = highlights;
   }
 
   void _addDay() {
@@ -429,6 +537,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final l10n = AppLocalizations.of(context);
     final isEditing = _programId != null;
     final nextDay = _firstUnfilledDayIndex();
+    if (!_loading && !_muscleDataLoaded) {
+      _muscleDataLoaded = true;
+      _loadMuscleData();
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? l10n.programEdit : l10n.programNew),
@@ -460,6 +572,14 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                     ),
                     const SizedBox(height: 16),
                     _daysCountField(l10n),
+                    if (_allMuscleGroups.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      MusclePanel(
+                        highlights: _highlights,
+                        allMuscleGroups: _allMuscleGroups,
+                        title: l10n.programBuilderMuscles,
+                      ),
+                    ],
                     const SizedBox(height: 16),
                   ],
                 ),

@@ -76,9 +76,9 @@ class MediaStore {
 
   /// Открывает системный диалог выбора файла и копирует его в storage.
   ///
-  /// Возвращает путь к созданному файлу или `null`, если выбор отменён.
+  /// Возвращает запись `{path, bytes}` или `null`, если выбор отменён.
   /// При ошибке пикера, чтения или копирования бросает [MediaImportException].
-  Future<String?> importFromPicker({
+  Future<({String path, Uint8List bytes})?> importFromPicker({
     MediaFileType fileType = MediaFileType.image,
   }) async {
     final XFile? picked;
@@ -101,7 +101,9 @@ class MediaStore {
       );
     }
     try {
-      return await _writeFile(picked.name, await picked.readAsBytes());
+      final bytes = await picked.readAsBytes();
+      final path = await _writeFile(picked.name, bytes);
+      return (path: path, bytes: bytes);
     } catch (e) {
       throw MediaImportException(
         'Не удалось скопировать файл "${picked.path}"',

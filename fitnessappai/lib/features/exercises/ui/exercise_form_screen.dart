@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
@@ -50,6 +52,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   ExerciseType _type = ExerciseType.strength;
   String? _thumbnailPath;
   String? _animationPath;
+  Uint8List? _thumbnailBlob;
+  Uint8List? _animationBlob;
   bool _saving = false;
   bool _isCustom = true;
   bool _hideOptional = false;
@@ -117,6 +121,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     _type = exercise.type;
     _thumbnailPath = exercise.thumbnailPath;
     _animationPath = exercise.animationPath;
+    _thumbnailBlob = exercise.thumbnailBlob;
+    _animationBlob = exercise.animationBlob;
     _isCustom = exercise.isCustom;
     _hideOptional = exercise.hideOptional;
     _fixedWeight = exercise.fixedWeight;
@@ -152,11 +158,14 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
   void _pickAnimation() async {
     try {
-      final path = await _mediaStore.importFromPicker(
+      final result = await _mediaStore.importFromPicker(
         fileType: MediaFileType.image,
       );
-      if (path != null && mounted) {
-        setState(() => _animationPath = path);
+      if (result != null && mounted) {
+        setState(() {
+          _animationPath = result.path;
+          _animationBlob = result.bytes;
+        });
       }
     } on MediaImportException {
       if (!mounted) {
@@ -171,11 +180,14 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
   void _pickThumbnail() async {
     try {
-      final path = await _mediaStore.importFromPicker(
+      final result = await _mediaStore.importFromPicker(
         fileType: MediaFileType.image,
       );
-      if (path != null && mounted) {
-        setState(() => _thumbnailPath = path);
+      if (result != null && mounted) {
+        setState(() {
+          _thumbnailPath = result.path;
+          _thumbnailBlob = result.bytes;
+        });
       }
     } on MediaImportException {
       if (!mounted) {
@@ -214,6 +226,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         type: _type,
         thumbnailPath: _thumbnailPath,
         animationPath: _animationPath,
+        thumbnailBlob: _thumbnailBlob,
+        animationBlob: _animationBlob,
         isCustom: _isCustom,
         hideOptional: _hideOptional,
         fixedWeight: _fixedWeight,

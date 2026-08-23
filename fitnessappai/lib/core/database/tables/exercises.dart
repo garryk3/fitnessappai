@@ -17,6 +17,8 @@ class Exercises extends Table {
   TextColumn get type => text().map(const ExerciseTypeConverter())();
   TextColumn get thumbnailPath => text().nullable()();
   TextColumn get animationPath => text().nullable()();
+  BlobColumn get thumbnailBlob => blob().nullable()();
+  BlobColumn get animationBlob => blob().nullable()();
   BoolColumn get isCustom => boolean().withDefault(const Constant(false))();
   BoolColumn get hideOptional => boolean().withDefault(const Constant(false))();
   BoolColumn get fixedWeight => boolean().withDefault(const Constant(false))();

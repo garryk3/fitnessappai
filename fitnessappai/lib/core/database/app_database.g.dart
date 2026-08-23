@@ -966,6 +966,30 @@ class $ExercisesTable extends Exercises
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _thumbnailBlobMeta = const VerificationMeta(
+    'thumbnailBlob',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> thumbnailBlob =
+      GeneratedColumn<Uint8List>(
+        'thumbnail_blob',
+        aliasedName,
+        true,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _animationBlobMeta = const VerificationMeta(
+    'animationBlob',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> animationBlob =
+      GeneratedColumn<Uint8List>(
+        'animation_blob',
+        aliasedName,
+        true,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _isCustomMeta = const VerificationMeta(
     'isCustom',
   );
@@ -1054,6 +1078,8 @@ class $ExercisesTable extends Exercises
     type,
     thumbnailPath,
     animationPath,
+    thumbnailBlob,
+    animationBlob,
     isCustom,
     hideOptional,
     fixedWeight,
@@ -1117,6 +1143,24 @@ class $ExercisesTable extends Exercises
         animationPath.isAcceptableOrUnknown(
           data['animation_path']!,
           _animationPathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thumbnail_blob')) {
+      context.handle(
+        _thumbnailBlobMeta,
+        thumbnailBlob.isAcceptableOrUnknown(
+          data['thumbnail_blob']!,
+          _thumbnailBlobMeta,
+        ),
+      );
+    }
+    if (data.containsKey('animation_blob')) {
+      context.handle(
+        _animationBlobMeta,
+        animationBlob.isAcceptableOrUnknown(
+          data['animation_blob']!,
+          _animationBlobMeta,
         ),
       );
     }
@@ -1195,6 +1239,14 @@ class $ExercisesTable extends Exercises
         DriftSqlType.string,
         data['${effectivePrefix}animation_path'],
       ),
+      thumbnailBlob: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}thumbnail_blob'],
+      ),
+      animationBlob: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}animation_blob'],
+      ),
       isCustom: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_custom'],
@@ -1250,6 +1302,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
   final ExerciseType type;
   final String? thumbnailPath;
   final String? animationPath;
+  final Uint8List? thumbnailBlob;
+  final Uint8List? animationBlob;
   final bool isCustom;
   final bool hideOptional;
   final bool fixedWeight;
@@ -1265,6 +1319,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     required this.type,
     this.thumbnailPath,
     this.animationPath,
+    this.thumbnailBlob,
+    this.animationBlob,
     required this.isCustom,
     required this.hideOptional,
     required this.fixedWeight,
@@ -1294,6 +1350,12 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     }
     if (!nullToAbsent || animationPath != null) {
       map['animation_path'] = Variable<String>(animationPath);
+    }
+    if (!nullToAbsent || thumbnailBlob != null) {
+      map['thumbnail_blob'] = Variable<Uint8List>(thumbnailBlob);
+    }
+    if (!nullToAbsent || animationBlob != null) {
+      map['animation_blob'] = Variable<Uint8List>(animationBlob);
     }
     map['is_custom'] = Variable<bool>(isCustom);
     map['hide_optional'] = Variable<bool>(hideOptional);
@@ -1326,6 +1388,12 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       animationPath: animationPath == null && nullToAbsent
           ? const Value.absent()
           : Value(animationPath),
+      thumbnailBlob: thumbnailBlob == null && nullToAbsent
+          ? const Value.absent()
+          : Value(thumbnailBlob),
+      animationBlob: animationBlob == null && nullToAbsent
+          ? const Value.absent()
+          : Value(animationBlob),
       isCustom: Value(isCustom),
       hideOptional: Value(hideOptional),
       fixedWeight: Value(fixedWeight),
@@ -1349,6 +1417,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       type: serializer.fromJson<ExerciseType>(json['type']),
       thumbnailPath: serializer.fromJson<String?>(json['thumbnailPath']),
       animationPath: serializer.fromJson<String?>(json['animationPath']),
+      thumbnailBlob: serializer.fromJson<Uint8List?>(json['thumbnailBlob']),
+      animationBlob: serializer.fromJson<Uint8List?>(json['animationBlob']),
       isCustom: serializer.fromJson<bool>(json['isCustom']),
       hideOptional: serializer.fromJson<bool>(json['hideOptional']),
       fixedWeight: serializer.fromJson<bool>(json['fixedWeight']),
@@ -1369,6 +1439,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       'type': serializer.toJson<ExerciseType>(type),
       'thumbnailPath': serializer.toJson<String?>(thumbnailPath),
       'animationPath': serializer.toJson<String?>(animationPath),
+      'thumbnailBlob': serializer.toJson<Uint8List?>(thumbnailBlob),
+      'animationBlob': serializer.toJson<Uint8List?>(animationBlob),
       'isCustom': serializer.toJson<bool>(isCustom),
       'hideOptional': serializer.toJson<bool>(hideOptional),
       'fixedWeight': serializer.toJson<bool>(fixedWeight),
@@ -1387,6 +1459,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     ExerciseType? type,
     Value<String?> thumbnailPath = const Value.absent(),
     Value<String?> animationPath = const Value.absent(),
+    Value<Uint8List?> thumbnailBlob = const Value.absent(),
+    Value<Uint8List?> animationBlob = const Value.absent(),
     bool? isCustom,
     bool? hideOptional,
     bool? fixedWeight,
@@ -1406,6 +1480,12 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     animationPath: animationPath.present
         ? animationPath.value
         : this.animationPath,
+    thumbnailBlob: thumbnailBlob.present
+        ? thumbnailBlob.value
+        : this.thumbnailBlob,
+    animationBlob: animationBlob.present
+        ? animationBlob.value
+        : this.animationBlob,
     isCustom: isCustom ?? this.isCustom,
     hideOptional: hideOptional ?? this.hideOptional,
     fixedWeight: fixedWeight ?? this.fixedWeight,
@@ -1433,6 +1513,12 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
       animationPath: data.animationPath.present
           ? data.animationPath.value
           : this.animationPath,
+      thumbnailBlob: data.thumbnailBlob.present
+          ? data.thumbnailBlob.value
+          : this.thumbnailBlob,
+      animationBlob: data.animationBlob.present
+          ? data.animationBlob.value
+          : this.animationBlob,
       isCustom: data.isCustom.present ? data.isCustom.value : this.isCustom,
       hideOptional: data.hideOptional.present
           ? data.hideOptional.value
@@ -1457,6 +1543,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           ..write('type: $type, ')
           ..write('thumbnailPath: $thumbnailPath, ')
           ..write('animationPath: $animationPath, ')
+          ..write('thumbnailBlob: $thumbnailBlob, ')
+          ..write('animationBlob: $animationBlob, ')
           ..write('isCustom: $isCustom, ')
           ..write('hideOptional: $hideOptional, ')
           ..write('fixedWeight: $fixedWeight, ')
@@ -1477,6 +1565,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
     type,
     thumbnailPath,
     animationPath,
+    $driftBlobEquality.hash(thumbnailBlob),
+    $driftBlobEquality.hash(animationBlob),
     isCustom,
     hideOptional,
     fixedWeight,
@@ -1496,6 +1586,8 @@ class ExerciseRow extends DataClass implements Insertable<ExerciseRow> {
           other.type == this.type &&
           other.thumbnailPath == this.thumbnailPath &&
           other.animationPath == this.animationPath &&
+          $driftBlobEquality.equals(other.thumbnailBlob, this.thumbnailBlob) &&
+          $driftBlobEquality.equals(other.animationBlob, this.animationBlob) &&
           other.isCustom == this.isCustom &&
           other.hideOptional == this.hideOptional &&
           other.fixedWeight == this.fixedWeight &&
@@ -1513,6 +1605,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
   final Value<ExerciseType> type;
   final Value<String?> thumbnailPath;
   final Value<String?> animationPath;
+  final Value<Uint8List?> thumbnailBlob;
+  final Value<Uint8List?> animationBlob;
   final Value<bool> isCustom;
   final Value<bool> hideOptional;
   final Value<bool> fixedWeight;
@@ -1528,6 +1622,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     this.type = const Value.absent(),
     this.thumbnailPath = const Value.absent(),
     this.animationPath = const Value.absent(),
+    this.thumbnailBlob = const Value.absent(),
+    this.animationBlob = const Value.absent(),
     this.isCustom = const Value.absent(),
     this.hideOptional = const Value.absent(),
     this.fixedWeight = const Value.absent(),
@@ -1544,6 +1640,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     required ExerciseType type,
     this.thumbnailPath = const Value.absent(),
     this.animationPath = const Value.absent(),
+    this.thumbnailBlob = const Value.absent(),
+    this.animationBlob = const Value.absent(),
     this.isCustom = const Value.absent(),
     this.hideOptional = const Value.absent(),
     this.fixedWeight = const Value.absent(),
@@ -1563,6 +1661,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     Expression<String>? type,
     Expression<String>? thumbnailPath,
     Expression<String>? animationPath,
+    Expression<Uint8List>? thumbnailBlob,
+    Expression<Uint8List>? animationBlob,
     Expression<bool>? isCustom,
     Expression<bool>? hideOptional,
     Expression<bool>? fixedWeight,
@@ -1579,6 +1679,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
       if (type != null) 'type': type,
       if (thumbnailPath != null) 'thumbnail_path': thumbnailPath,
       if (animationPath != null) 'animation_path': animationPath,
+      if (thumbnailBlob != null) 'thumbnail_blob': thumbnailBlob,
+      if (animationBlob != null) 'animation_blob': animationBlob,
       if (isCustom != null) 'is_custom': isCustom,
       if (hideOptional != null) 'hide_optional': hideOptional,
       if (fixedWeight != null) 'fixed_weight': fixedWeight,
@@ -1597,6 +1699,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     Value<ExerciseType>? type,
     Value<String?>? thumbnailPath,
     Value<String?>? animationPath,
+    Value<Uint8List?>? thumbnailBlob,
+    Value<Uint8List?>? animationBlob,
     Value<bool>? isCustom,
     Value<bool>? hideOptional,
     Value<bool>? fixedWeight,
@@ -1613,6 +1717,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
       type: type ?? this.type,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
       animationPath: animationPath ?? this.animationPath,
+      thumbnailBlob: thumbnailBlob ?? this.thumbnailBlob,
+      animationBlob: animationBlob ?? this.animationBlob,
       isCustom: isCustom ?? this.isCustom,
       hideOptional: hideOptional ?? this.hideOptional,
       fixedWeight: fixedWeight ?? this.fixedWeight,
@@ -1653,6 +1759,12 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
     if (animationPath.present) {
       map['animation_path'] = Variable<String>(animationPath.value);
     }
+    if (thumbnailBlob.present) {
+      map['thumbnail_blob'] = Variable<Uint8List>(thumbnailBlob.value);
+    }
+    if (animationBlob.present) {
+      map['animation_blob'] = Variable<Uint8List>(animationBlob.value);
+    }
     if (isCustom.present) {
       map['is_custom'] = Variable<bool>(isCustom.value);
     }
@@ -1689,6 +1801,8 @@ class ExercisesCompanion extends UpdateCompanion<ExerciseRow> {
           ..write('type: $type, ')
           ..write('thumbnailPath: $thumbnailPath, ')
           ..write('animationPath: $animationPath, ')
+          ..write('thumbnailBlob: $thumbnailBlob, ')
+          ..write('animationBlob: $animationBlob, ')
           ..write('isCustom: $isCustom, ')
           ..write('hideOptional: $hideOptional, ')
           ..write('fixedWeight: $fixedWeight, ')
@@ -8588,6 +8702,8 @@ typedef $$ExercisesTableCreateCompanionBuilder =
       required ExerciseType type,
       Value<String?> thumbnailPath,
       Value<String?> animationPath,
+      Value<Uint8List?> thumbnailBlob,
+      Value<Uint8List?> animationBlob,
       Value<bool> isCustom,
       Value<bool> hideOptional,
       Value<bool> fixedWeight,
@@ -8605,6 +8721,8 @@ typedef $$ExercisesTableUpdateCompanionBuilder =
       Value<ExerciseType> type,
       Value<String?> thumbnailPath,
       Value<String?> animationPath,
+      Value<Uint8List?> thumbnailBlob,
+      Value<Uint8List?> animationBlob,
       Value<bool> isCustom,
       Value<bool> hideOptional,
       Value<bool> fixedWeight,
@@ -8756,6 +8874,16 @@ class $$ExercisesTableFilterComposer
 
   ColumnFilters<String> get animationPath => $composableBuilder(
     column: $table.animationPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get thumbnailBlob => $composableBuilder(
+    column: $table.thumbnailBlob,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get animationBlob => $composableBuilder(
+    column: $table.animationBlob,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8943,6 +9071,16 @@ class $$ExercisesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<Uint8List> get thumbnailBlob => $composableBuilder(
+    column: $table.thumbnailBlob,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get animationBlob => $composableBuilder(
+    column: $table.animationBlob,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isCustom => $composableBuilder(
     column: $table.isCustom,
     builder: (column) => ColumnOrderings(column),
@@ -9015,6 +9153,16 @@ class $$ExercisesTableAnnotationComposer
 
   GeneratedColumn<String> get animationPath => $composableBuilder(
     column: $table.animationPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get thumbnailBlob => $composableBuilder(
+    column: $table.thumbnailBlob,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get animationBlob => $composableBuilder(
+    column: $table.animationBlob,
     builder: (column) => column,
   );
 
@@ -9186,6 +9334,8 @@ class $$ExercisesTableTableManager
                 Value<ExerciseType> type = const Value.absent(),
                 Value<String?> thumbnailPath = const Value.absent(),
                 Value<String?> animationPath = const Value.absent(),
+                Value<Uint8List?> thumbnailBlob = const Value.absent(),
+                Value<Uint8List?> animationBlob = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
                 Value<bool> hideOptional = const Value.absent(),
                 Value<bool> fixedWeight = const Value.absent(),
@@ -9201,6 +9351,8 @@ class $$ExercisesTableTableManager
                 type: type,
                 thumbnailPath: thumbnailPath,
                 animationPath: animationPath,
+                thumbnailBlob: thumbnailBlob,
+                animationBlob: animationBlob,
                 isCustom: isCustom,
                 hideOptional: hideOptional,
                 fixedWeight: fixedWeight,
@@ -9218,6 +9370,8 @@ class $$ExercisesTableTableManager
                 required ExerciseType type,
                 Value<String?> thumbnailPath = const Value.absent(),
                 Value<String?> animationPath = const Value.absent(),
+                Value<Uint8List?> thumbnailBlob = const Value.absent(),
+                Value<Uint8List?> animationBlob = const Value.absent(),
                 Value<bool> isCustom = const Value.absent(),
                 Value<bool> hideOptional = const Value.absent(),
                 Value<bool> fixedWeight = const Value.absent(),
@@ -9233,6 +9387,8 @@ class $$ExercisesTableTableManager
                 type: type,
                 thumbnailPath: thumbnailPath,
                 animationPath: animationPath,
+                thumbnailBlob: thumbnailBlob,
+                animationBlob: animationBlob,
                 isCustom: isCustom,
                 hideOptional: hideOptional,
                 fixedWeight: fixedWeight,

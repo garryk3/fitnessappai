@@ -80,6 +80,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get soundPreview => 'Прослушать';
 
   @override
+  String get soundStop => 'Остановить';
+
+  @override
   String get soundDefaultLabel => 'Стандартный сигнал';
 
   @override

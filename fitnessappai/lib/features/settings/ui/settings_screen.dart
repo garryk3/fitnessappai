@@ -157,10 +157,14 @@ class _SoundSectionState extends State<_SoundSection> {
                 ],
                 const SizedBox(width: 8),
                 IconButton(
-                  tooltip: l10n.soundPreview,
-                  icon: const Icon(Icons.play_arrow),
+                  tooltip: controller.isPlaying.value
+                      ? l10n.soundStop
+                      : l10n.soundPreview,
+                  icon: Icon(
+                    controller.isPlaying.value ? Icons.stop : Icons.play_arrow,
+                  ),
                   onPressed: controller.enabled.value
-                      ? () => controller.previewSound()
+                      ? () => controller.togglePreview()
                       : null,
                 ),
               ],
@@ -220,7 +224,7 @@ class _SyncSectionState extends State<_SyncSection> {
               ),
             ),
             const SizedBox(height: 16),
-            FilledButton.icon(
+            OutlinedButton.icon(
               onPressed: busy ? null : _export,
               icon: const Icon(Icons.upload_outlined),
               label: Text(l10n.syncShare),

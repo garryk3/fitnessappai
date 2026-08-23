@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -17,17 +18,23 @@ class SoundSettingsController {
     SoundService? soundService,
   }) : _pickFile = pickFile ?? _defaultPick,
        // ignore: prefer_initializing_formals -- имя параметра публичное.
-       _soundService = soundService;
+       _soundService = soundService {
+    _subscription = _soundService?.isPlayingStream.listen((playing) {
+      isPlaying.value = playing;
+    });
+  }
 
   final SoundSettingsRepository _repository;
   final SoundFilePicker _pickFile;
   final SoundService? _soundService;
+  StreamSubscription<bool>? _subscription;
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> enabled = Signal(true);
   final Signal<String?> soundFilePath = Signal(null);
   final Signal<String?> statusText = Signal(null);
   final Signal<bool> hasError = Signal(false);
+  final Signal<bool> isPlaying = Signal(false);
 
   /// Загружает сохранённые настройки звука.
   Future<void> load() async {
@@ -45,9 +52,13 @@ class SoundSettingsController {
     await _repository.setEnabled(value);
   }
 
-  /// Воспроизводит текущий звук для предпрослушивания.
-  Future<void> previewSound() async {
-    await _soundService?.preview();
+  /// Переключает предпрослушивание: play если не играет, stop если играет.
+  Future<void> togglePreview() async {
+    if (isPlaying.value) {
+      await _soundService?.stop();
+    } else {
+      await _soundService?.preview();
+    }
   }
 
   /// Выбирает звуковой файл с устройства и сохраняет путь.
@@ -73,6 +84,11 @@ class SoundSettingsController {
     await _repository.setSoundFile(null);
     statusText.value = 'Стандартный сигнал';
     hasError.value = false;
+  }
+
+  /// Освобождает ресурсы (подписку на состояние воспроизведения).
+  void dispose() {
+    _subscription?.cancel();
   }
 
   static Future<String?> _defaultPick() async {
