@@ -252,7 +252,24 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     setState(() {
       final day = _days.removeAt(oldIndex);
       _days.insert(newIndex, day);
+      final a = _days[oldIndex];
+      final b = _days[newIndex];
+      if (a.dayOfWeek != null && b.dayOfWeek != null) {
+        _days.sort((x, y) {
+          if (x.dayOfWeek == null && y.dayOfWeek == null) return 0;
+          if (x.dayOfWeek == null) return 1;
+          if (y.dayOfWeek == null) return -1;
+          return x.dayOfWeek!.compareTo(y.dayOfWeek!);
+        });
+      }
     });
+    _persistReorder();
+  }
+
+  Future<void> _persistReorder() async {
+    final programId = _programId;
+    if (programId == null) return;
+    await _repository.reorderDays(programId, _days.map((d) => d.key).toList());
   }
 
   Future<void> _openDaySettings(_DayDraft day) async {
@@ -411,6 +428,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final days = [
       for (var i = 0; i < _days.length; i++)
         ProgramDay(
+          id: _days[i].key > 0 ? _days[i].key : null,
           programId: 0,
           dayIndex: i,
           dayOfWeek: _days[i].dayOfWeek,
@@ -465,6 +483,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final days = [
       for (var i = 0; i < _days.length; i++)
         ProgramDay(
+          id: _days[i].key > 0 ? _days[i].key : null,
           programId: 0,
           dayIndex: i,
           dayOfWeek: _days[i].dayOfWeek,

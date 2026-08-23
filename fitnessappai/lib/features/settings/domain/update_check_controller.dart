@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:signals/signals.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -71,7 +73,12 @@ class UpdateCheckController {
         statusText.value = 'Установлена актуальная версия';
       }
     } catch (error) {
-      statusText.value = 'Ошибка проверки обновления: $error';
+      if (error is SocketException || error is HttpException) {
+        statusText.value =
+            'Ошибка проверки версии. Проверьте подключение к интернету.';
+      } else {
+        statusText.value = 'Ошибка проверки версии.';
+      }
       hasError.value = true;
     } finally {
       isChecking.value = false;

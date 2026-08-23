@@ -13,7 +13,6 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
-import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
@@ -157,7 +156,6 @@ void main() {
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(find.text('Заполнено 1 из 1 дней'), findsOneWidget);
     expect(find.text('3 × 10 · 20 кг · отдых 60 с'), findsOneWidget);
-    expect(find.byType(MuscleDiagram), findsNWidgets(2));
   });
 
   testWidgets('сводка bodyweight без веса', (tester) async {
@@ -258,30 +256,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tileTitles(tester), ['Жим штанги', 'Приседания']);
-  });
-
-  testWidgets('схема мышц обновляется при добавлении упражнения', (
-    tester,
-  ) async {
-    final chest = await muscleId('chest');
-    final program = await createProgram('Сплит', 1);
-    await createExercise('Жим штанги', ExerciseType.strength, muscles: [chest]);
-
-    await pumpDayBuilder(tester, programId: program.id!);
-
-    Map<String, double> firstDiagramHighlights() {
-      final diagram = tester.widget<MuscleDiagram>(
-        find.byType(MuscleDiagram).first,
-      );
-      return diagram.highlights;
-    }
-
-    expect(firstDiagramHighlights(), isEmpty);
-
-    await addExercise(tester, 'Жим штанги');
-    await closeParams(tester);
-
-    expect(firstDiagramHighlights(), containsPair('chest', 1.0));
   });
 
   testWidgets('невалидные позиции блокируют сохранение', (tester) async {

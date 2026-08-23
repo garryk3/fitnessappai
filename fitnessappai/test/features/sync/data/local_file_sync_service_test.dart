@@ -143,7 +143,7 @@ void main() {
     },
   );
 
-  test('import отклоняет несовместимую версию схемы', () async {
+  test('import отклоняет версию схемы новее установленной', () async {
     final sourcePath = await createValidSourceDb(version: 99);
 
     await expectLater(
@@ -154,6 +154,16 @@ void main() {
     expect(importCalls, 0);
     final rows = await database.select(database.muscleGroups).get();
     expect(rows.length, greaterThan(0));
+  });
+
+  test('import принимает версию схемы старше установленной', () async {
+    final sourcePath = await createValidSourceDb(
+      version: appDatabaseSchemaVersion - 1,
+    );
+
+    await service.import(sourcePath);
+
+    expect(importCalls, 1);
   });
 
   test('import отклоняет пустой файл', () async {

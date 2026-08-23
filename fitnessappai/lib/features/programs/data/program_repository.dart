@@ -467,22 +467,31 @@ class ProgramRepository {
     final existing = await (_db.select(
       _db.programDays,
     )..where((t) => t.programId.equals(programId))).get();
+    final idById = {for (final row in existing) row.id: row};
     final idByDayIndex = {for (final row in existing) row.dayIndex: row.id};
-    final requestedIndexes = {for (final day in days) day.dayIndex};
+    final requestedIds = <int>{};
 
     for (final day in days) {
-      final existingId = idByDayIndex[day.dayIndex];
+      int? existingId;
+      if (day.id != null && idById.containsKey(day.id)) {
+        existingId = day.id;
+      } else {
+        existingId = idByDayIndex[day.dayIndex];
+      }
       if (existingId != null) {
+        final eid = existingId;
+        requestedIds.add(eid);
         await (_db.update(
           _db.programDays,
-        )..where((t) => t.id.equals(existingId))).write(
+        )..where((t) => t.id.equals(eid))).write(
           ProgramDaysCompanion(
+            dayIndex: Value(day.dayIndex),
             dayOfWeek: Value(day.dayOfWeek),
             warmupMinutes: Value(day.warmupMinutes),
           ),
         );
       } else {
-        await _db
+        final newId = await _db
             .into(_db.programDays)
             .insert(
               ProgramDaysCompanion.insert(
@@ -492,10 +501,11 @@ class ProgramRepository {
                 warmupMinutes: Value(day.warmupMinutes),
               ),
             );
+        requestedIds.add(newId);
       }
     }
     for (final row in existing) {
-      if (!requestedIndexes.contains(row.dayIndex)) {
+      if (!requestedIds.contains(row.id)) {
         await (_db.delete(
           _db.programDays,
         )..where((t) => t.id.equals(row.id))).go();

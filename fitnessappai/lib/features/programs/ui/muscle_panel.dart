@@ -6,8 +6,8 @@ import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 
 /// Панель схемы мускулатуры: спереди и сзади, список мышц с %.
 ///
-/// Используется как в конструкторе дня (`ProgramDayBuilderScreen`),
-/// так и в конструкторе программы (`ProgramBuilderScreen`).
+/// Используется в конструкторе программы (`ProgramBuilderScreen`).
+/// В списке «Не задействованы» показываются только группы без подгрупп.
 class MusclePanel extends StatelessWidget {
   const MusclePanel({
     super.key,
@@ -25,7 +25,7 @@ class MusclePanel extends StatelessWidget {
     final theme = Theme.of(context);
     final usedKeys = highlights.keys.toSet();
     final unused = allMuscleGroups
-        .where((g) => !usedKeys.contains(g.regionKey))
+        .where((g) => !usedKeys.contains(g.regionKey) && g.parentKey == null)
         .toList();
     return Column(
       mainAxisSize: MainAxisSize.min,

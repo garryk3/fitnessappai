@@ -487,5 +487,7 @@
   "profileUnitCm": "см",
   "measurementFormTitle": "Новый замер",
   "measurementFormDate": "Дата",
-  "measurementFormNumberError": "Введите число"
+  "measurementFormNumberError": "Введите число",
+  "updateCheckErrorNetwork": "Ошибка проверки версии. Проверьте подключение к интернету.",
+  "updateCheckError": "Ошибка проверки версии."
 }
