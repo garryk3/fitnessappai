@@ -53,6 +53,7 @@ class MediaStore {
   MediaStore._(this._directoryProvider, this._assetLoader, this._filePicker);
 
   static const String mediaSubDir = 'media';
+  static const int maxFileSizeBytes = 5 * 1024 * 1024;
 
   final MediaDirectoryProvider _directoryProvider;
   final AssetLoader _assetLoader;
@@ -102,6 +103,12 @@ class MediaStore {
     }
     try {
       final bytes = await picked.readAsBytes();
+      if (bytes.lengthInBytes > maxFileSizeBytes) {
+        final mb = (bytes.lengthInBytes / 1024 / 1024).toStringAsFixed(1);
+        throw MediaImportException(
+          'Файл слишком большой ($mb МБ). Максимум: 5 МБ',
+        );
+      }
       final path = await _writeFile(picked.name, bytes);
       return (path: path, bytes: bytes);
     } catch (e) {

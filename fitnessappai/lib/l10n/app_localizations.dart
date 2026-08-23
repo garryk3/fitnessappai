@@ -697,19 +697,19 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseFormAnimation.
   ///
   /// In ru, this message translates to:
-  /// **'Анимация'**
+  /// **'Изображение'**
   String get exerciseFormAnimation;
 
   /// No description provided for @exerciseFormAnimationPick.
   ///
   /// In ru, this message translates to:
-  /// **'Выбрать анимацию'**
+  /// **'Выбрать изображение'**
   String get exerciseFormAnimationPick;
 
   /// No description provided for @exerciseFormAnimationRemove.
   ///
   /// In ru, this message translates to:
-  /// **'Убрать анимацию'**
+  /// **'Убрать изображение'**
   String get exerciseFormAnimationRemove;
 
   /// No description provided for @exerciseFormAnimationError.
@@ -727,14 +727,20 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseFormThumbnailPick.
   ///
   /// In ru, this message translates to:
-  /// **'Выбрать изображение'**
+  /// **'Выбрать миниатюру'**
   String get exerciseFormThumbnailPick;
 
   /// No description provided for @exerciseFormThumbnailRemove.
   ///
   /// In ru, this message translates to:
-  /// **'Убрать изображение'**
+  /// **'Убрать миниатюру'**
   String get exerciseFormThumbnailRemove;
+
+  /// No description provided for @exerciseFormMediaInfo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Форматы: jpg, png, webp, gif. Максимум: 5 МБ'**
+  String get exerciseFormMediaInfo;
 
   /// No description provided for @exerciseFormNameRequired.
   ///

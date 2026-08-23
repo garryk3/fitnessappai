@@ -320,13 +320,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseFormContraindications => 'Противопоказания';
 
   @override
-  String get exerciseFormAnimation => 'Анимация';
+  String get exerciseFormAnimation => 'Изображение';
 
   @override
-  String get exerciseFormAnimationPick => 'Выбрать анимацию';
+  String get exerciseFormAnimationPick => 'Выбрать изображение';
 
   @override
-  String get exerciseFormAnimationRemove => 'Убрать анимацию';
+  String get exerciseFormAnimationRemove => 'Убрать изображение';
 
   @override
   String get exerciseFormAnimationError =>
@@ -336,10 +336,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseFormThumbnail => 'Миниатюра';
 
   @override
-  String get exerciseFormThumbnailPick => 'Выбрать изображение';
+  String get exerciseFormThumbnailPick => 'Выбрать миниатюру';
 
   @override
-  String get exerciseFormThumbnailRemove => 'Убрать изображение';
+  String get exerciseFormThumbnailRemove => 'Убрать миниатюру';
+
+  @override
+  String get exerciseFormMediaInfo =>
+      'Форматы: jpg, png, webp, gif. Максимум: 5 МБ';
 
   @override
   String get exerciseFormNameRequired => 'Введите название';

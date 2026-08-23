@@ -339,12 +339,6 @@ class _AboutSectionState extends State<_AboutSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.settingsAboutHint,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
             if (version case final versionText?) ...[
               const SizedBox(height: 8),
               Text(
