@@ -91,6 +91,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
               onDelete: () => _confirmDelete(context, item.program),
               onCopyJson: () => _copyProgramJson(context, item.program),
               onSetActive: () => _makeActive(context, item.program),
+              onDeactivate: () => _deactivate(context, item.program),
             ),
           );
         },
@@ -100,6 +101,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
 
   Future<void> _makeActive(BuildContext context, Program program) async {
     await _controller.setActive(program.id!);
+  }
+
+  Future<void> _deactivate(BuildContext context, Program program) async {
+    await _controller.deactivate(program.id!);
   }
 
   Future<void> _copyProgramJson(BuildContext context, Program program) async {
@@ -149,6 +154,7 @@ class _ProgramCard extends StatelessWidget {
     required this.onDelete,
     required this.onCopyJson,
     required this.onSetActive,
+    required this.onDeactivate,
   });
 
   final ProgramListItem item;
@@ -156,6 +162,7 @@ class _ProgramCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onCopyJson;
   final VoidCallback onSetActive;
+  final VoidCallback onDeactivate;
 
   @override
   Widget build(BuildContext context) {
@@ -228,10 +235,17 @@ class _ProgramCard extends StatelessWidget {
                     onCopyJson();
                   } else if (value == 'set-active') {
                     onSetActive();
+                  } else if (value == 'deactivate') {
+                    onDeactivate();
                   }
                 },
                 itemBuilder: (context) => [
-                  if (!program.isActive)
+                  if (program.isActive)
+                    PopupMenuItem(
+                      value: 'deactivate',
+                      child: Text(l10n.programDeactivate),
+                    )
+                  else
                     PopupMenuItem(
                       value: 'set-active',
                       child: Text(l10n.programMakeActive),

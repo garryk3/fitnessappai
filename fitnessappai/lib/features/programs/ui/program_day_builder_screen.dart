@@ -6,6 +6,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
+import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/validators/program_day_exercise_validator.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -308,8 +309,9 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     return Column(
       children: [
         _buildProgress(detail),
+        _buildDayOfWeekSelector(currentDay.day),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: SegmentedButton<bool>(
             segments: [
               ButtonSegment(
@@ -349,6 +351,59 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildDayOfWeekSelector(ProgramDay day) {
+    final selected = day.dayOfWeek;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.programBuilderDayOfWeek,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            children: [
+              for (final entry in [
+                (1, l10n.weekdayMon),
+                (2, l10n.weekdayTue),
+                (3, l10n.weekdayWed),
+                (4, l10n.weekdayThu),
+                (5, l10n.weekdayFri),
+                (6, l10n.weekdaySat),
+                (7, l10n.weekdaySun),
+              ])
+                ChoiceChip(
+                  label: Text(entry.$2),
+                  selected: selected == entry.$1,
+                  onSelected: (_) => _setDayOfWeek(day, entry.$1),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _setDayOfWeek(ProgramDay day, int dayOfWeek) async {
+    final updated = day.copyWith(
+      dayOfWeek: day.dayOfWeek == dayOfWeek ? null : dayOfWeek,
+    );
+    final saved = await _repository.updateDay(updated);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _currentDay = ProgramDayDetail(
+        day: saved,
+        mainExercises: _currentDay!.mainExercises,
+        alternativeExercises: _currentDay!.alternativeExercises,
+      );
+    });
   }
 
   Widget _buildItemsList() {

@@ -231,10 +231,29 @@ void main() {
     expect(find.byIcon(Icons.error_outline), findsNothing);
   });
 
+  testWidgets('импорт с отменой предупреждения не открывает пикер', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await tester.tap(find.text('Импортировать БД'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Импорт базы данных'), findsOneWidget);
+    expect(find.text('Отмена'), findsOneWidget);
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+
+    expect(service.importCalls, 0);
+    expect(find.byIcon(Icons.error_outline), findsNothing);
+  });
+
   testWidgets('импорт с отменой выбора не трогает БД', (tester) async {
     await pumpScreen(tester);
 
     await tester.tap(find.text('Импортировать БД'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Согласен'));
     await tester.pumpAndSettle();
 
     expect(service.importCalls, 0);
@@ -252,6 +271,8 @@ void main() {
 
     await tester.tap(find.text('Импортировать БД'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Согласен'));
+    await tester.pumpAndSettle();
 
     expect(service.importCalls, 1);
     expect(
@@ -266,6 +287,8 @@ void main() {
     await pumpScreen(tester);
 
     await tester.tap(find.text('Импортировать БД'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Согласен'));
     await tester.pumpAndSettle();
 
     expect(service.importCalls, 1);
@@ -305,6 +328,8 @@ void main() {
 
     await tester.tap(find.text('Импортировать БД'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Согласен'));
+    await tester.pumpAndSettle();
 
     expect(service.importCalls, 0);
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
@@ -320,6 +345,8 @@ void main() {
     await pumpScreen(tester);
 
     await tester.tap(find.text('Импортировать БД'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Согласен'));
     await tester.pumpAndSettle();
 
     expect(service.importCalls, 1);

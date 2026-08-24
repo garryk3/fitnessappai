@@ -287,14 +287,18 @@ class _Thumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const size = 56.0;
-    final path = exercise.thumbnailPath ?? exercise.animationPath;
-    if (path == null) {
+    final provider = mediaCache.imageFor(
+      exercise.thumbnailPath ?? exercise.animationPath,
+      blob: exercise.thumbnailBlob ?? exercise.animationBlob,
+      cacheWidth: 112,
+    );
+    if (provider == null) {
       return _placeholder(context, size);
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Image(
-        image: mediaCache.imageFor(path, cacheWidth: 112),
+        image: provider,
         width: size,
         height: size,
         fit: BoxFit.cover,

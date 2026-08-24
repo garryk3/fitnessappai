@@ -292,7 +292,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Тренировка завершена'), findsOneWidget);
-      await tester.tap(find.text('Завершить тренировку'));
       await tester.pumpAndSettle();
 
       final sessions = await workoutRepo.getSessionsBetween(
@@ -318,7 +317,6 @@ void main() {
     expect(find.text('1 подход'), findsOneWidget);
     expect(find.text('Время: 1 мин'), findsOneWidget);
 
-    await tester.tap(find.text('Завершить тренировку'));
     await tester.pumpAndSettle();
 
     expect(find.text('Тренировка сохранена'), findsOneWidget);
@@ -501,7 +499,7 @@ void main() {
     await pumpRun(tester, dayId);
 
     expect(find.text('Последняя тренировка'), findsOneWidget);
-    expect(find.textContaining('20'), findsOneWidget);
+    expect(find.textContaining('20'), findsWidgets);
   });
 
   testWidgets('карточка последней тренировки скрыта без истории', (

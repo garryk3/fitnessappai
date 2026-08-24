@@ -554,7 +554,7 @@ void main() {
       expect(await repo.getActiveProgram(), isNull);
     });
 
-    test('setActive помечает программу и снимает остальные', () async {
+    test('setActive помечает программу, не снимая остальные', () async {
       final first = await repo.create(program(), [day(dayIndex: 0)]);
       final second = await repo.create(program(name: 'Вторая'), [
         day(dayIndex: 0),
@@ -565,10 +565,11 @@ void main() {
       expect((await repo.getById(second.id!))!.isActive, isFalse);
 
       await repo.setActive(second.id!);
-      expect((await repo.getById(first.id!))!.isActive, isFalse);
+      expect((await repo.getById(first.id!))!.isActive, isTrue);
       expect((await repo.getById(second.id!))!.isActive, isTrue);
 
-      expect((await repo.getActiveProgram())!.id, second.id);
+      final active = await repo.getActivePrograms();
+      expect(active, hasLength(2));
     });
 
     test('setActive уведомляет подписчиков', () async {

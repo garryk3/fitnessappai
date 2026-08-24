@@ -126,20 +126,31 @@ class SyncController {
     if (error is UnimplementedError || error is MissingPluginException) {
       return '$action: операция недоступна на этой платформе';
     }
+    if (error is PlatformException) {
+      return '$action: не удалось открыть выбор файла';
+    }
     return '$action: $error';
   }
 
   static SyncService _defaultService() => locator.get<SyncService>();
 
   static Future<String?> _defaultPick() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['sqlite', 'db', 'sqlite3'],
-    );
-    if (result == null || result.files.isEmpty) {
-      return null;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['sqlite', 'db', 'sqlite3'],
+      );
+      if (result == null || result.files.isEmpty) {
+        return null;
+      }
+      return result.files.single.path;
+    } on PlatformException {
+      final result = await FilePicker.platform.pickFiles(type: FileType.any);
+      if (result == null || result.files.isEmpty) {
+        return null;
+      }
+      return result.files.single.path;
     }
-    return result.files.single.path;
   }
 
   static Future<void> _defaultShare(String filePath) async {

@@ -122,11 +122,16 @@ class AdaptiveNavigation extends StatelessWidget {
         );
         final allDestinations = _destinations(context);
 
-        // На узких экранах (< 400dp) убираем «Программы» из нижней навигации.
+        // На узких экранах (< 400dp) убираем «Программы» и переставляем
+        // порядок: Прогресс, План, Главная, Упражнения, Профиль.
         final barDestinations = narrowBar
-            ? allDestinations
-                  .where((d) => d.branchIndex != _programsBranchIndex)
-                  .toList()
+            ? [
+                for (final d in allDestinations)
+                  if (d.branchIndex == 4 || d.branchIndex == 3) d,
+                allDestinations.firstWhere((d) => d.branchIndex == 0),
+                for (final d in allDestinations)
+                  if (d.branchIndex == 1 || d.branchIndex == 5) d,
+              ]
             : allDestinations;
 
         if (expanded) {
@@ -158,7 +163,18 @@ class AdaptiveNavigation extends StatelessWidget {
             labelBehavior: narrowBar
                 ? NavigationDestinationLabelBehavior.alwaysHide
                 : NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: barDestinations.map((d) => d.bar).toList(),
+            destinations: [
+              for (final d in barDestinations)
+                NavigationDestination(
+                  icon: d.branchIndex == 0 && narrowBar
+                      ? const Icon(Icons.home_outlined, size: 28)
+                      : d.bar.icon,
+                  selectedIcon: d.branchIndex == 0 && narrowBar
+                      ? const Icon(Icons.home, size: 28)
+                      : d.bar.selectedIcon,
+                  label: d.bar.label,
+                ),
+            ],
           ),
         );
       },

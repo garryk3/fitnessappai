@@ -293,12 +293,33 @@ class _SyncSectionState extends State<_SyncSection> {
 
   Future<void> _import() async {
     final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.syncImportWarningTitle),
+        content: Text(l10n.syncImportWarningBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.syncImportConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
     final imported = await widget.controller.importDatabase();
     if (!imported || !mounted) {
       return;
     }
     final restart = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Text(l10n.syncImportSuccess),
         content: Text(l10n.syncRestartHint),
@@ -310,7 +331,7 @@ class _SyncSectionState extends State<_SyncSection> {
         ],
       ),
     );
-    if (restart == true) {
+    if (restart == true && mounted) {
       restartApp();
     }
   }

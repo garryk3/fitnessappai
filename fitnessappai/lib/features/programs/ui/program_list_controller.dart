@@ -42,6 +42,8 @@ class ProgramListController {
 
   Future<void> setActive(int programId) => _repository.setActive(programId);
 
+  Future<void> deactivate(int programId) => _repository.deactivate(programId);
+
   Future<void> _load() async {
     isLoading.value = true;
     try {

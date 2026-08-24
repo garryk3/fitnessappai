@@ -69,32 +69,24 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
                   value: selectedKeys.contains(tag.key),
                   onChanged: isSaving
                       ? null
-                      : (enabled) => _controller.toggle(tag.key, enabled),
+                      : (enabled) => _toggleWithFeedback(tag.key, enabled),
                 ),
               ],
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: isSaving ? null : _save,
-          icon: const Icon(Icons.check),
-          label: Text(l10n.commonSave),
-        ),
       ],
     );
   }
 
-  Future<void> _save() async {
-    final l10n = AppLocalizations.of(context);
-    final saved = await _controller.save();
-    if (!saved || !mounted) {
+  Future<void> _toggleWithFeedback(String key, bool enabled) async {
+    await _controller.toggle(key, enabled);
+    if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.contraindicationsSaved)));
-    Navigator.of(context).pop();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).contraindicationsSaved)),
+    );
   }
 
   String _description(AppLocalizations l10n, String key) => switch (key) {
