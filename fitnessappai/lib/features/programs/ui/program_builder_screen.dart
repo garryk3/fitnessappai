@@ -138,6 +138,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     if (_days.isEmpty) {
       _addDay();
     }
+    _loadMuscleData();
     if (mounted) {
       setState(() => _loading = false);
     }
@@ -556,10 +557,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final l10n = AppLocalizations.of(context);
     final isEditing = _programId != null;
     final nextDay = _firstUnfilledDayIndex();
-    if (!_loading && !_muscleDataLoaded) {
-      _muscleDataLoaded = true;
-      _loadMuscleData();
-    }
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? l10n.programEdit : l10n.programNew),

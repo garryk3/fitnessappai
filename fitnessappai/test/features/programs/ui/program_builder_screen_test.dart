@@ -323,7 +323,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('разминка 5 мин'), findsOneWidget);
+    final warmupText = find.textContaining('разминка 5 мин');
+    if (warmupText.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        warmupText,
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+    }
+    expect(warmupText, findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
     await tester.pumpAndSettle();
@@ -393,6 +402,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.ensureVisible(find.byIcon(Icons.tune).at(1));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.tune).at(1));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButtonFormField<int?>));
