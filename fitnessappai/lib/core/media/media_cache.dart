@@ -20,19 +20,12 @@ class MediaCache {
   ///
   /// [cacheWidth] ограничивает размер декодируемого изображения и учитывается
   /// в ключе кэша: разные [cacheWidth] дают разные провайдеры.
-  ImageProvider? imageFor(
-    String? path, {
-    Uint8List? blob,
-    int? cacheWidth,
-  }) {
+  ImageProvider? imageFor(String? path, {Uint8List? blob, int? cacheWidth}) {
     if (path != null && File(path).existsSync()) {
       return _cache.putIfAbsent(
         _key(path, cacheWidth),
-        () => ResizeImage.resizeIfNeeded(
-          cacheWidth,
-          null,
-          FileImage(File(path)),
-        ),
+        () =>
+            ResizeImage.resizeIfNeeded(cacheWidth, null, FileImage(File(path))),
       );
     }
     if (blob != null && blob.isNotEmpty) {
@@ -45,11 +38,8 @@ class MediaCache {
     if (path != null) {
       return _cache.putIfAbsent(
         _key(path, cacheWidth),
-        () => ResizeImage.resizeIfNeeded(
-          cacheWidth,
-          null,
-          FileImage(File(path)),
-        ),
+        () =>
+            ResizeImage.resizeIfNeeded(cacheWidth, null, FileImage(File(path))),
       );
     }
     return null;

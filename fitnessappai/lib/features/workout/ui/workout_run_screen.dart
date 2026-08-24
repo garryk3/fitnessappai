@@ -427,9 +427,8 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
     }
   }
 
-  String _fmtWeight(double v) => v == v.roundToDouble()
-      ? v.toInt().toString()
-      : v.toStringAsFixed(1);
+  String _fmtWeight(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 }
 
 /// Анимация упражнения с плейсхолдером при отсутствии файла.

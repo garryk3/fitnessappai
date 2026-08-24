@@ -583,10 +583,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _thumbnailEditor(AppLocalizations l10n) {
-    final provider = _mediaCache.imageFor(
-      _thumbnailPath,
-      blob: _thumbnailBlob,
-    );
+    final provider = _mediaCache.imageFor(_thumbnailPath, blob: _thumbnailBlob);
     return _Section(
       title: l10n.exerciseFormThumbnail,
       child: Column(
@@ -648,10 +645,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _animationEditor(AppLocalizations l10n) {
-    final provider = _mediaCache.imageFor(
-      _animationPath,
-      blob: _animationBlob,
-    );
+    final provider = _mediaCache.imageFor(_animationPath, blob: _animationBlob);
     return _Section(
       title: l10n.exerciseFormAnimation,
       child: Column(
