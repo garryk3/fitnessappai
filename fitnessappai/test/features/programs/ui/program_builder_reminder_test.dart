@@ -88,6 +88,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> tapTuneIcon(WidgetTester tester) async {
+    final iconFinder = find.byIcon(Icons.tune);
+    if (iconFinder.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        iconFinder,
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
+    await tester.pumpAndSettle();
+    await tester.tap(iconFinder);
+    await tester.pumpAndSettle();
+  }
+
   Future<void> enterName(WidgetTester tester, String name) async {
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Название'),
@@ -149,8 +163,7 @@ void main() {
     tester,
   ) async {
     await pumpBuilder(tester);
-    await tester.tap(find.byIcon(Icons.tune));
-    await tester.pumpAndSettle();
+    await tapTuneIcon(tester);
 
     final tile = tester.widget<SwitchListTile>(
       find.widgetWithText(SwitchListTile, 'Напоминать'),
@@ -166,8 +179,7 @@ void main() {
       await pumpBuilder(tester, programId: programId);
       await enterName(tester, 'Сплит');
 
-      await tester.tap(find.byIcon(Icons.tune));
-      await tester.pumpAndSettle();
+      await tapTuneIcon(tester);
       await setWeekday(tester, 'Пн');
       await tester.tap(find.text('Напоминать'));
       await tester.pumpAndSettle();
@@ -206,8 +218,7 @@ void main() {
       programId: (await repository.getPrograms()).single.program.id,
     );
 
-    await tester.tap(find.byIcon(Icons.tune));
-    await tester.pumpAndSettle();
+    await tapTuneIcon(tester);
     expect(find.text('18:45'), findsOneWidget);
 
     await tester.tap(find.text('Напоминать'));
@@ -229,8 +240,7 @@ void main() {
     final programId = (await repository.getPrograms()).single.program.id!;
     await pumpBuilder(tester, programId: programId);
 
-    await tester.tap(find.byIcon(Icons.tune));
-    await tester.pumpAndSettle();
+    await tapTuneIcon(tester);
 
     final tile = tester.widget<SwitchListTile>(
       find.widgetWithText(SwitchListTile, 'Напоминать'),
@@ -246,8 +256,7 @@ void main() {
     await pumpBuilder(tester, programId: programId);
     await enterName(tester, 'Сплит');
 
-    await tester.tap(find.byIcon(Icons.tune));
-    await tester.pumpAndSettle();
+    await tapTuneIcon(tester);
     await setWeekday(tester, 'Вт');
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
     await tester.pumpAndSettle();
