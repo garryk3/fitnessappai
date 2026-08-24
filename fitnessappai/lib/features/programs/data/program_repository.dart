@@ -128,16 +128,28 @@ class ProgramRepository {
     return row == null ? null : _toProgram(row);
   }
 
-  /// Делает программу [id] активной, сбрасывая флаг у остальных программ.
+  /// Возвращает все активные программы (мульти-активный режим).
+  Future<List<Program>> getActivePrograms() async {
+    final rows = await (_db.select(
+      _db.programs,
+    )..where((t) => t.isActive.equals(true))).get();
+    return rows.map(_toProgram).toList();
+  }
+
+  /// Делает программу [id] активной, НЕ сбрасывая флаг у остальных
+  /// (мульти-активный режим).
   Future<void> setActive(int id) async {
-    await _db.transaction(() async {
-      await (_db.update(_db.programs)..where((t) => t.id.isNotValue(id))).write(
-        ProgramsCompanion(isActive: const Value(false)),
-      );
-      await (_db.update(_db.programs)..where((t) => t.id.equals(id))).write(
-        ProgramsCompanion(isActive: const Value(true)),
-      );
-    });
+    await (_db.update(_db.programs)..where((t) => t.id.equals(id))).write(
+      ProgramsCompanion(isActive: const Value(true)),
+    );
+    _notify();
+  }
+
+  /// Снимает флаг «активная» с программы [id].
+  Future<void> deactivate(int id) async {
+    await (_db.update(_db.programs)..where((t) => t.id.equals(id))).write(
+      ProgramsCompanion(isActive: const Value(false)),
+    );
     _notify();
   }
 

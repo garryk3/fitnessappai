@@ -583,16 +583,17 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _thumbnailEditor(AppLocalizations l10n) {
+    final provider = _mediaCache.imageFor(_thumbnailPath, blob: _thumbnailBlob);
     return _Section(
       title: l10n.exerciseFormThumbnail,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_thumbnailPath != null) ...[
+          if (provider != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image(
-                image: _mediaCache.imageFor(_thumbnailPath!),
+                image: provider,
                 width: double.infinity,
                 height: 120,
                 fit: BoxFit.cover,
@@ -618,7 +619,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   ),
                 ),
               ),
-              if (_thumbnailPath != null) ...[
+              if (_thumbnailPath != null || _thumbnailBlob != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
                   tooltip: l10n.exerciseFormThumbnailRemove,
@@ -644,16 +645,17 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _animationEditor(AppLocalizations l10n) {
+    final provider = _mediaCache.imageFor(_animationPath, blob: _animationBlob);
     return _Section(
       title: l10n.exerciseFormAnimation,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_animationPath != null) ...[
+          if (provider != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image(
-                image: _mediaCache.imageFor(_animationPath!),
+                image: provider,
                 width: double.infinity,
                 height: 160,
                 fit: BoxFit.cover,
@@ -679,7 +681,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   ),
                 ),
               ),
-              if (_animationPath != null) ...[
+              if (_animationPath != null || _animationBlob != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
                   tooltip: l10n.exerciseFormAnimationRemove,

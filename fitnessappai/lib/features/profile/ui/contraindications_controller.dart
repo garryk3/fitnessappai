@@ -28,8 +28,8 @@ class ContraindicationsController {
     }
   }
 
-  /// Переключает тег с ключом [key].
-  void toggle(String key, bool enabled) {
+  /// Переключает тег с ключом [key] и автоматически сохраняет.
+  Future<void> toggle(String key, bool enabled) async {
     final next = {...selectedKeys.value};
     if (enabled) {
       next.add(key);
@@ -37,6 +37,7 @@ class ContraindicationsController {
       next.remove(key);
     }
     selectedKeys.value = next;
+    await save();
   }
 
   /// Сохраняет выбранные теги. Возвращает `true` при успехе.

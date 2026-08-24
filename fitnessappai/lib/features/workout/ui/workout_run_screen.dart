@@ -139,25 +139,47 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
     final l10n = AppLocalizations.of(context);
     final action = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.workoutRunExitTitle),
-        content: Text(l10n.workoutRunExitBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop('cancel'),
-            child: Text(l10n.commonCancel),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop('save'),
-            child: Text(l10n.workoutRunFinishEarly),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop('exit'),
-            child: Text(l10n.workoutRunExit),
-          ),
-        ],
+      builder: (context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 350;
+          return AlertDialog(
+            title: Text(l10n.workoutRunExitTitle),
+            content: Text(l10n.workoutRunExitBody),
+            actions: narrow
+                ? [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop('cancel'),
+                      child: Text(l10n.commonCancel),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop('save'),
+                      child: Text(l10n.workoutRunFinishEarly),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop('exit'),
+                      child: Text(l10n.workoutRunExit),
+                    ),
+                  ]
+                : [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop('cancel'),
+                      child: Text(l10n.commonCancel),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop('save'),
+                      child: Text(l10n.workoutRunFinishEarly),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop('exit'),
+                      child: Text(l10n.workoutRunExit),
+                    ),
+                  ],
+          );
+        },
       ),
     );
     if (!mounted) {
@@ -296,6 +318,16 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
               ],
             ],
           ),
+          if (!exercise.exercise.hideOptional) ...[
+            const SizedBox(height: 4),
+            Text(
+              _paramsSummary(l10n, exercise),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
           if (exercise.type == ExerciseType.plank && holdTarget != null) ...[
             const SizedBox(height: 12),
             _PlankHoldPanel(
@@ -362,6 +394,41 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
       ),
     );
   }
+
+  String _paramsSummary(AppLocalizations l10n, WorkoutExercise exercise) {
+    final p = exercise.position;
+    final sets = p.sets;
+    final reps = p.reps;
+    final weight = p.weightKg;
+    final duration = p.durationSeconds;
+    final distance = p.distanceMeters;
+    switch (exercise.type) {
+      case ExerciseType.strength:
+        final base = sets != null
+            ? '$sets × ${reps ?? 0} ${l10n.workoutUnitReps}'
+            : '';
+        if (weight != null && weight > 0) {
+          return '$base · ${_fmtWeight(weight)} ${l10n.workoutUnitKg}';
+        }
+        return base;
+      case ExerciseType.bodyweight:
+        return sets != null
+            ? '$sets × ${reps ?? 0} ${l10n.workoutUnitReps}'
+            : '';
+      case ExerciseType.plank:
+        return sets != null && duration != null
+            ? '$sets × $duration ${l10n.workoutUnitSeconds}'
+            : '';
+      case ExerciseType.running:
+        return distance != null && duration != null
+            ? '${(distance / 1000).toStringAsFixed(1)} ${l10n.workoutUnitKm} · '
+                  '${(duration / 60).toStringAsFixed(1)} ${l10n.workoutUnitMinutes}'
+            : '';
+    }
+  }
+
+  String _fmtWeight(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 }
 
 /// Анимация упражнения с плейсхолдером при отсутствии файла.
@@ -373,14 +440,17 @@ class _ExerciseMedia extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final path = exercise.animationPath ?? exercise.thumbnailPath;
-    if (path == null) {
+    final provider = mediaCache.imageFor(
+      exercise.animationPath ?? exercise.thumbnailPath,
+      blob: exercise.animationBlob ?? exercise.thumbnailBlob,
+    );
+    if (provider == null) {
       return _mediaPlaceholder(context);
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Image(
-        image: mediaCache.imageFor(path),
+        image: provider,
         height: 180,
         width: double.infinity,
         fit: BoxFit.cover,
@@ -844,6 +914,13 @@ class _FinishedViewState extends State<_FinishedView> {
   void initState() {
     super.initState();
     _loadMuscles();
+    if (!widget.saved) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.controller.completeAndSave();
+        }
+      });
+    }
   }
 
   Future<void> _loadMuscles() async {
@@ -956,31 +1033,26 @@ class _FinishedViewState extends State<_FinishedView> {
               ),
             ],
             const SizedBox(height: 24),
-            if (widget.saved) ...[
-              Text(
-                l10n.workoutRunSaved,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
+            if (widget.saving)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else ...[
+              if (widget.saved)
+                Text(
+                  l10n.workoutRunSaved,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
-              ),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => context.go('/progress'),
                 child: Text(l10n.workoutRunGoProgress),
               ),
-            ] else
-              FilledButton(
-                onPressed: widget.saving
-                    ? null
-                    : widget.controller.completeAndSave,
-                child: widget.saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(l10n.workoutRunFinish),
-              ),
+            ],
           ],
         ),
       ),

@@ -351,14 +351,17 @@ class _ExercisePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const height = 220.0;
-    final path = exercise.animationPath ?? exercise.thumbnailPath;
-    if (path == null) {
+    final provider = mediaCache.imageFor(
+      exercise.animationPath ?? exercise.thumbnailPath,
+      blob: exercise.animationBlob ?? exercise.thumbnailBlob,
+    );
+    if (provider == null) {
       return _placeholder(context, height);
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Image(
-        image: mediaCache.imageFor(path),
+        image: provider,
         width: double.infinity,
         height: height,
         fit: BoxFit.cover,

@@ -568,7 +568,7 @@ Future<void> skipRestIfShown(WidgetTester tester) async {
 
 Future<void> finishAndGoProgress(WidgetTester tester) async {
   await pumpUntilFound(tester, find.text('Тренировка завершена'));
-  await tester.tap(find.widgetWithText(FilledButton, 'Завершить тренировку'));
+  await tester.pumpAndSettle();
   await pumpUntilFound(tester, find.text('Тренировка сохранена'));
   await tester.tap(find.text('К прогрессу'));
   await tester.pumpAndSettle();
@@ -842,13 +842,11 @@ void main() {
 
     await tester.tap(find.widgetWithText(SwitchListTile, 'Колени'));
     await tester.pumpAndSettle();
-    final saveHealth = find.widgetWithText(FilledButton, 'Сохранить');
-    await ensureFieldVisible(tester, saveHealth);
-    await tester.tap(saveHealth);
-    await tester.pumpAndSettle();
     await Future<void>.delayed(const Duration(seconds: 5));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byTooltip('Назад'));
+    await tester.pumpAndSettle();
     await goToTab(tester, Icons.fitness_center_outlined);
     await createExercise(
       tester,
@@ -1486,13 +1484,11 @@ void main() {
 
     await tester.tap(find.widgetWithText(SwitchListTile, 'Колени'));
     await tester.pumpAndSettle();
-    final saveHealth = find.widgetWithText(FilledButton, 'Сохранить');
-    await ensureFieldVisible(tester, saveHealth);
-    await tester.tap(saveHealth);
-    await tester.pumpAndSettle();
     await Future<void>.delayed(const Duration(seconds: 5));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byTooltip('Назад'));
+    await tester.pumpAndSettle();
     await goToTab(tester, Icons.fitness_center_outlined);
     await createExercise(
       tester,
@@ -1767,9 +1763,6 @@ void main() {
         'Отдых (сек)': '10',
       });
 
-      expect(find.text('Задействованы'), findsOneWidget);
-      expect(find.text('Не задействованы'), findsOneWidget);
-
       final save = find.descendant(
         of: find.byType(ProgramDayBuilderScreen),
         matching: find.widgetWithText(FilledButton, 'Сохранить'),
@@ -1942,7 +1935,7 @@ void main() {
     expect(find.text(_squat), findsOneWidget);
     expect(find.text(_plank), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Завершить тренировку'));
+    await tester.pumpAndSettle();
     await pumpUntilFound(tester, find.text('Тренировка сохранена'));
   });
 

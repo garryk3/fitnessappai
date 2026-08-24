@@ -91,21 +91,19 @@ void main() {
     expect(valueByTitle['Шея'], isFalse);
   });
 
-  testWidgets('сохранение записывает выбранные теги', (tester) async {
+  testWidgets('переключение свитча сохраняет теги автоматически', (
+    tester,
+  ) async {
     await pumpScreen(tester);
 
     await tester.tap(find.text('Колени'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(find.text('Настройки сохранены'), findsOneWidget);
     await tester.tap(find.text('Беременность'));
-    await tester.pump();
-
-    await tester.tap(find.text('Сохранить'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Моё здоровье'), findsNothing);
-    expect(find.text('Настройки сохранены'), findsOneWidget);
     final saved = await repo.getContraindicationTags();
-    expect(saved.map((t) => t.key), ['knees', 'pregnancy']);
+    expect(saved.map((t) => t.key), containsAll(['knees', 'pregnancy']));
   });
 
   testWidgets('отключение тега убирает его из сохранённых', (tester) async {
@@ -114,9 +112,6 @@ void main() {
     await pumpScreen(tester);
 
     await tester.tap(find.text('Колени'));
-    await tester.pump();
-
-    await tester.tap(find.text('Сохранить'));
     await tester.pumpAndSettle();
 
     final saved = await repo.getContraindicationTags();

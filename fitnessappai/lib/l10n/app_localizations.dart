@@ -460,6 +460,12 @@ abstract class AppLocalizations {
   /// **'Быстрый старт'**
   String get weekPlanQuickStart;
 
+  /// No description provided for @programBuilderDayOfWeek.
+  ///
+  /// In ru, this message translates to:
+  /// **'Привязка к дню недели'**
+  String get programBuilderDayOfWeek;
+
   /// No description provided for @muscleAbs.
   ///
   /// In ru, this message translates to:
@@ -831,6 +837,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Активная'**
   String get programActive;
+
+  /// No description provided for @programDeactivate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Деактивировать'**
+  String get programDeactivate;
 
   /// No description provided for @programCopyJson.
   ///
@@ -1719,6 +1731,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Для полного применения изменений приложение будет перезапущено.'**
   String get syncRestartHint;
+
+  /// No description provided for @syncImportWarningTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Импорт базы данных'**
+  String get syncImportWarningTitle;
+
+  /// No description provided for @syncImportWarningBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все текущие данные будут перезаписаны. Это действие необратимо.'**
+  String get syncImportWarningBody;
+
+  /// No description provided for @syncImportConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Согласен'**
+  String get syncImportConfirm;
 
   /// No description provided for @contraindications.
   ///

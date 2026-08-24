@@ -204,7 +204,6 @@ void main() {
 
       expect(find.text('Тренировка завершена'), findsOneWidget);
 
-      await tester.tap(find.text('Завершить тренировку'));
       await tester.pumpAndSettle();
 
       expect(find.text('Тренировка сохранена'), findsOneWidget);
@@ -247,7 +246,6 @@ void main() {
 
     expect(find.text('Тренировка завершена'), findsOneWidget);
 
-    await tester.tap(find.text('Завершить тренировку'));
     await tester.pumpAndSettle();
 
     expect(find.text('Тренировка сохранена'), findsOneWidget);
@@ -304,7 +302,6 @@ void main() {
 
     expect(find.text('Тренировка завершена'), findsOneWidget);
 
-    await tester.tap(find.text('Завершить тренировку'));
     await tester.pumpAndSettle();
 
     expect(find.text('Тренировка сохранена'), findsOneWidget);
@@ -348,7 +345,6 @@ void main() {
 
       expect(find.text('Тренировка завершена'), findsOneWidget);
 
-      await tester.tap(find.text('Завершить тренировку'));
       await tester.pumpAndSettle();
 
       expect(find.text('Тренировка сохранена'), findsOneWidget);

@@ -14,6 +14,7 @@ import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/domain/validators/program_validator.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/muscle_panel.dart';
@@ -552,6 +553,27 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     }
   }
 
+  Future<void> _copyProgramJson() async {
+    final l10n = AppLocalizations.of(context);
+    final service = locator.get<LlmExportService>();
+    final json = await service.programToJson(_programId!);
+    if (!mounted) {
+      return;
+    }
+    if (json == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.copyJsonNotFound)));
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: json));
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.copyJsonCopied)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -560,6 +582,14 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? l10n.programEdit : l10n.programNew),
+        actions: [
+          if (isEditing && nextDay == null)
+            IconButton(
+              tooltip: l10n.programCopyJson,
+              icon: const Icon(Icons.copy_outlined),
+              onPressed: _copyProgramJson,
+            ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

@@ -198,6 +198,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanQuickStart => 'Быстрый старт';
 
   @override
+  String get programBuilderDayOfWeek => 'Привязка к дню недели';
+
+  @override
   String get muscleAbs => 'Пресс';
 
   @override
@@ -393,6 +396,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programActive => 'Активная';
+
+  @override
+  String get programDeactivate => 'Деактивировать';
 
   @override
   String get programCopyJson => 'Скопировать JSON';
@@ -908,6 +914,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get syncRestartHint =>
       'Для полного применения изменений приложение будет перезапущено.';
+
+  @override
+  String get syncImportWarningTitle => 'Импорт базы данных';
+
+  @override
+  String get syncImportWarningBody =>
+      'Все текущие данные будут перезаписаны. Это действие необратимо.';
+
+  @override
+  String get syncImportConfirm => 'Согласен';
 
   @override
   String get contraindications => 'Противопоказания';
