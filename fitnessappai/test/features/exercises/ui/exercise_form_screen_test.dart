@@ -716,4 +716,71 @@ void main() {
 
     expect(fileTypes, [MediaFileType.image, MediaFileType.image]);
   });
+
+  testWidgets('при типе bodyweight чекбокс фиксированного веса скрыт', (
+    tester,
+  ) async {
+    await pumpForm(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название *'),
+      'Подтягивания',
+    );
+
+    await tester.tap(find.text('Силовые'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Свой вес').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Фиксированный вес'), findsNothing);
+  });
+
+  testWidgets(
+    'при смене типа на bodyweight фиксированный вес сбрасывается',
+    (tester) async {
+      await pumpForm(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Название *'),
+        'Подтягивания',
+      );
+
+      await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
+      await tester.tap(checkboxInRow('Фиксированный вес'));
+      await tester.pumpAndSettle();
+
+      expect(
+        (tester.widget<CheckboxListTile>(checkboxInRow('Фиксированный вес')))
+            .value,
+        isTrue,
+      );
+
+      final scrollableFinder = find
+          .descendant(
+            of: find.byType(ExerciseFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      final state = tester.state<ScrollableState>(scrollableFinder);
+      state.position.jumpTo(0);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Силовые'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Свой вес').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Свой вес'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Силовые').last);
+      await tester.pumpAndSettle();
+
+      await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
+      expect(
+        (tester.widget<CheckboxListTile>(checkboxInRow('Фиксированный вес')))
+            .value,
+        isFalse,
+      );
+    },
+  );
 }

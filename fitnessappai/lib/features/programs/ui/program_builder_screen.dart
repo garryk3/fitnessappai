@@ -19,6 +19,7 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/muscle_panel.dart';
 import 'package:fitnessappai/features/programs/ui/program_validation_dialog.dart';
+import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Конструктор программы: параметры и тренировочные дни.
@@ -80,7 +81,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   List<MuscleGroup> _allMuscleGroups = [];
   Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
-  Map<String, double> _highlights = {};
+  List<MuscleGroupLoad> _muscleLoads = [];
   bool _muscleDataLoaded = false;
 
   int? get _warmupMinutes {
@@ -208,7 +209,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final musclesById = <int, MuscleGroup>{
       for (final g in _allMuscleGroups) g.id!: g,
     };
-    final highlights = <String, double>{};
+    final groupsByKey = <String, MuscleGroup>{
+      for (final g in _allMuscleGroups) g.key: g,
+    };
+    final weights = <String, double>{};
     for (final day in detail.days) {
       for (final ex in day.mainExercises) {
         final exerciseId = ex.exerciseId;
@@ -220,17 +224,77 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           if (group == null) {
             continue;
           }
-          final intensity = link.intensity == MuscleIntensity.primary
+          final weight = link.intensity == MuscleIntensity.primary
               ? 1.0
               : 0.5;
-          final current = highlights[group.regionKey] ?? 0.0;
-          highlights[group.regionKey] = current > intensity
-              ? current
-              : intensity;
+          weights.update(
+            group.key,
+            (value) => value + weight,
+            ifAbsent: () => weight,
+          );
         }
       }
     }
-    _highlights = highlights;
+    if (weights.isEmpty) {
+      _muscleLoads = [];
+      return;
+    }
+    final total = weights.values.fold<double>(0, (sum, w) => sum + w);
+
+    final parentWeights = <String, double>{};
+    final parentChildren = <String, Map<String, double>>{};
+    for (final entry in weights.entries) {
+      final group = groupsByKey[entry.key];
+      if (group == null) {
+        continue;
+      }
+      final parentKey = group.parentKey;
+      if (parentKey != null) {
+        parentWeights[parentKey] =
+            (parentWeights[parentKey] ?? 0) + entry.value;
+        parentChildren
+            .putIfAbsent(parentKey, () => {})
+            .addAll({entry.key: entry.value});
+      } else {
+        parentWeights[entry.key] =
+            (parentWeights[entry.key] ?? 0) + entry.value;
+      }
+    }
+
+    final loads = <MuscleGroupLoad>[];
+    for (final entry in parentWeights.entries) {
+      final parentGroup = groupsByKey[entry.key];
+      if (parentGroup == null) {
+        continue;
+      }
+      final children = parentChildren[entry.key];
+      final childLoads = <MuscleGroupLoad>[];
+      if (children != null && children.isNotEmpty && entry.value > 0) {
+        final sorted = children.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        for (final child in sorted) {
+          final childGroup = groupsByKey[child.key];
+          if (childGroup == null) {
+            continue;
+          }
+          childLoads.add(
+            MuscleGroupLoad(
+              muscleGroup: childGroup,
+              percent: child.value / entry.value * 100,
+            ),
+          );
+        }
+      }
+      loads.add(
+        MuscleGroupLoad(
+          muscleGroup: parentGroup,
+          percent: entry.value / total * 100,
+          children: childLoads,
+        ),
+      );
+    }
+    loads.sort((a, b) => b.percent.compareTo(a.percent));
+    _muscleLoads = loads;
   }
 
   void _addDay() {
@@ -621,7 +685,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                     if (_allMuscleGroups.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       MusclePanel(
-                        highlights: _highlights,
+                        loads: _muscleLoads,
                         allMuscleGroups: _allMuscleGroups,
                         title: l10n.programBuilderMuscles,
                       ),
