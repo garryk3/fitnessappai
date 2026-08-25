@@ -306,7 +306,7 @@ class _WorkoutsChart extends StatelessWidget {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: 1,
+                    horizontalInterval: niceInterval(maxY),
                     getDrawingHorizontalLine: (value) => FlLine(
                       color: Theme.of(
                         context,
@@ -410,6 +410,8 @@ class _MetricChart extends StatelessWidget {
     final labels = rawLabels.sublist(0, rawLabels.length - trimCount);
     final unitSuffix = _unitSuffix(selected?.type);
     final leftReserved = unitSuffix.isNotEmpty ? 48.0 : 32.0;
+    final maxY = values.isEmpty ? 1.0 : values.reduce((a, b) => a > b ? a : b);
+    final yInterval = niceInterval(maxY);
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -474,7 +476,7 @@ class _MetricChart extends StatelessWidget {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: 1,
+                    horizontalInterval: yInterval,
                     getDrawingHorizontalLine: (value) => FlLine(
                       color: Theme.of(
                         context,
@@ -487,6 +489,7 @@ class _MetricChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: leftReserved,
+                        maxIncluded: false,
                         getTitlesWidget: (value, meta) {
                           final label = _yAxisLabel(value, unitSuffix);
                           return Text(
@@ -739,3 +742,35 @@ String _monthLabel(AppLocalizations l10n, int month) => switch (month) {
 String _fmt(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toStringAsFixed(1);
+
+/// Вычисляет «красивый» интервал для оси Y по алгоритму nice numbers.
+///
+/// Возвращает значение из ряда 1, 2, 5, 10, 20, 50, 100, 200, 500…
+/// так, чтобы на графике было ~5–8 горизонтальных линий сетки.
+double niceInterval(double maxValue, {int targetTicks = 6}) {
+  if (maxValue <= 0) {
+    return 1;
+  }
+  final rough = maxValue / targetTicks;
+  if (rough <= 0) {
+    return 1;
+  }
+  final magnitude = _pow10(rough.floor());
+  final residual = rough / magnitude;
+  if (residual <= 1.5) {
+    return magnitude;
+  } else if (residual <= 3) {
+    return 2 * magnitude;
+  } else if (residual <= 7) {
+    return 5 * magnitude;
+  }
+  return 10 * magnitude;
+}
+
+double _pow10(int exponent) {
+  var result = 1.0;
+  for (var i = 0; i < exponent.abs(); i++) {
+    result *= 10;
+  }
+  return exponent < 0 ? 1 / result : result;
+}

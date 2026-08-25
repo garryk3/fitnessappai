@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -116,9 +118,16 @@ Future<void> _rebuildAfterImport(ServiceLocator sl) async {
   final database = sl.get<AppDatabase>();
   await ReferenceSeeder(database).seed();
   await seedExercises(sl);
-  final reminders = sl.get<ReminderService>();
-  await reminders.initialize();
-  await reminders.rescheduleAll();
+  try {
+    final reminders = sl.get<ReminderService>();
+    await reminders.initialize();
+    await reminders.rescheduleAll();
+  } catch (e) {
+    developer.log(
+      'Reminder init failed after import (non-fatal): $e',
+      name: 'SyncService',
+    );
+  }
 }
 
 /// Заливает стартовый набор упражнений из ассетов в БД из контейнера.

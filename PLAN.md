@@ -1641,6 +1641,37 @@ fitnessappai/
 
 ---
 
+## Этап 21: Баг-фиксы и улучшения
+
+### 21.1 Ошибка импорта БД — platform exception при нотификациях
+
+- **Описание:** При импорте БД в настройках `_rebuildAfterImport()` → `reminders.initialize()` бросает `PlatformException` из-за `ic_stat_launcher` (векторный drawable не валиден как small icon на Android 12+). Исключение ловится в `SyncController` → `hasError = true`, `imported = false`, диалог перезапуска не показывается. БД при этом заменилась. Исправить: обернуть `reminders.initialize()` в try/catch в `_rebuildAfterImport`, в `importDatabase()` считать импорт успешным если файл заменился (т.е. `import()` не бросил до замены).
+- **Статус:** [x]
+
+### 21.2 Фоновый режим — persistence state тренировки
+
+- **Описание:** `WorkoutController` хранит state in-memory в `Signal`-ах. Нет `WidgetsBindingObserver`, нет persistence. Если ОС убивает процесс в фоне — тренировка сбрасывается. Добавить `WidgetsBindingObserver` в `WorkoutRunScreen`, на `paused` — сериализовать state в файл через `WorkoutCheckpoint`, на `resumed` — восстанавливать. На `detached` — сохранять.
+- **Статус:** [x]
+
+### 21.3 Шкала Y-axis — корректный interval
+
+- **Описание:** fl_chart `SideTitles.maxIncluded` по умолчанию `true` — всегда добавляет точное значение максимума как тик, даже если он попадает между regular interval (0, 10, ..., 100, **102**). Также `horizontalInterval: 1` создаёт 103 grid-линии для диапазона 0–102. Вычислять interval вручную (nice numbers: 1, 2, 5, 10, 20, 50...), ставить `maxIncluded: false`, привязывать `horizontalInterval` к вычисленному interval.
+- **Статус:** [x]
+
+### 21.4 Привязка дня недели — stale state в program builder
+
+- **Описание:** `_refreshFilledDays()` в `ProgramBuilderScreen` после возврата из day builder обновляет только `filled` флаг `_DayDraft`, но не `dayOfWeek`. Данные в БД правильные, но UI показывает stale значение. В `_refreshFilledDays()` также обновлять `dayOfWeek` из свежего `ProgramDetail`.
+- **Статус:** [x]
+
+### 21.5 Две активные программы → crash в HomeController
+
+- **Описание:** `getActiveProgram()` (ед. число) использует `getSingleOrNull()`, который бросает `StateError` при >1 строке. `HomeController._load()` не ловит исключение → `hasPrograms` остаётся `false` → показ "Нет программ". Заменить `getSingleOrNull()` на `.get()` + `.firstOrNull`.
+- **Статус:** [x]
+
+**Зависимости этапа 21:** Задачи независимы, выполняются по порядку.
+
+---
+
 ## Таблица прогресса
 
 | Задача | Название | Статус | Ветка / PR | Дата завершения |
@@ -1822,6 +1853,11 @@ fitnessappai/
 | 20.3 | Сортировка дней по дню недели | [x] | task/20.3-day-sort | 2026-08-25 |
 | 20.4 | Скрытие фикс. веса для bodyweight | [x] | task/20.4-fixed-weight-bodyweight | 2026-08-25 |
 | 20.5 | Обрезка хвостовых нулей в графике | [x] | task/20.5-trim-zeros-chart | 2026-08-25 |
+| 21.1 | Ошибка импорта БД — platform exception | [x] | task/21.1-db-import-fix | 2026-08-25 |
+| 21.2 | Фоновый режим — persistence тренировки | [x] | | 2026-08-26 |
+| 21.3 | Шкала Y-axis — корректный interval | [x] | | 2026-08-26 |
+| 21.4 | Привязка дня недели — stale state | [x] | | 2026-08-26 |
+| 21.5 | Две активные программы → crash | [x] | | 2026-08-26 |
 
 ## Порядок выполнения
 
@@ -1834,3 +1870,4 @@ fitnessappai/
 6. **Этап 18:** задачи 18.1–18.6 независимы, выполняются по порядку.
 7. **Этап 19:** 19.6, 19.1–19.5, 19.7–19.14 выполнены.
 8. **Этап 20:** задачи 20.1–20.5 независимы, выполняются по порядку.
+9. **Этап 21:** задачи 21.1–21.5 независимы, выполняются по порядку.

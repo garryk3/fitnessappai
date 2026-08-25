@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -179,7 +180,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        horizontalInterval: 1,
+        horizontalInterval: niceInterval(maxY),
         getDrawingHorizontalLine: (value) => FlLine(
           color: Theme.of(
             context,
@@ -192,6 +193,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 40,
+            maxIncluded: false,
             getTitlesWidget: (value, meta) {
               final title = _formatMetricValue(exercise.type, value);
               return Padding(

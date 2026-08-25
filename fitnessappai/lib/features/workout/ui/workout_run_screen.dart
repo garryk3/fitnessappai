@@ -16,6 +16,7 @@ import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
 import 'package:fitnessappai/features/workout/domain/workout_exercise.dart';
 import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
@@ -75,6 +76,9 @@ class WorkoutRunScreen extends StatefulWidget {
     this.clock,
     this.timerFactory,
     this.soundService,
+    this.checkpointLoader,
+    this.checkpointSaver,
+    this.checkpointClearer,
   });
 
   final int programDayId;
@@ -87,12 +91,16 @@ class WorkoutRunScreen extends StatefulWidget {
   final DateTime Function()? clock;
   final TimerFactory? timerFactory;
   final SoundService? soundService;
+  final Future<WorkoutCheckpoint?> Function()? checkpointLoader;
+  final Future<void> Function(WorkoutCheckpoint checkpoint)? checkpointSaver;
+  final Future<void> Function()? checkpointClearer;
 
   @override
   State<WorkoutRunScreen> createState() => _WorkoutRunScreenState();
 }
 
-class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
+class _WorkoutRunScreenState extends State<WorkoutRunScreen>
+    with WidgetsBindingObserver {
   late final WorkoutRunController _controller;
   late final MediaCache _mediaCache;
   late final WorkoutRepository _workoutRepository;
@@ -102,6 +110,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
     _workoutRepository =
         widget.workoutRepository ?? locator.get<WorkoutRepository>();
@@ -120,13 +129,66 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
     );
     _wakelock = widget.wakelockService ?? locator.get<WakelockService>();
     _wakelock.enable();
+    _restoreCheckpointIfNeeded();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.workout.dispose();
     _wakelock.disable();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _saveCheckpoint();
+    }
+  }
+
+  Future<void> _saveCheckpointIfNeeded() async {
+    final workout = _controller.workout;
+    if (workout.phase.value == WorkoutPhase.idle ||
+        workout.phase.value == WorkoutPhase.finished) {
+      return;
+    }
+    final ctx = workout.context;
+    if (ctx == null) {
+      return;
+    }
+    final checkpoint = workout.toCheckpoint(
+      programDayId: widget.programDayId,
+      programId: ctx.programId,
+      programName: ctx.programName,
+      dayIndex: ctx.dayIndex,
+    );
+    final saver = widget.checkpointSaver ?? WorkoutCheckpoint.saveStatic;
+    await saver(checkpoint);
+  }
+
+  void _saveCheckpoint() {
+    _saveCheckpointIfNeeded();
+  }
+
+  Future<void> _restoreCheckpointIfNeeded() async {
+    final loader = widget.checkpointLoader ?? WorkoutCheckpoint.load;
+    final checkpoint = await loader();
+    if (checkpoint == null || !mounted) {
+      return;
+    }
+    if (_controller.workout.phase.value != WorkoutPhase.idle) {
+      return;
+    }
+    await _controller.loadFromCheckpoint(checkpoint);
+    final clearer = widget.checkpointClearer ?? WorkoutCheckpoint.clear;
+    await clearer();
+  }
+
+  Future<void> _clearCheckpoint() async {
+    final clearer = widget.checkpointClearer ?? WorkoutCheckpoint.clear;
+    await clearer();
   }
 
   Future<void> _handlePopRequest() async {
@@ -188,11 +250,13 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen> {
     if (action == 'save') {
       _controller.workout.finishEarly();
       await _controller.completeAndSave();
+      await _clearCheckpoint();
       if (mounted) {
         Navigator.of(context).pop();
       }
     } else if (action == 'exit') {
       _controller.workout.cancelWorkout();
+      await _clearCheckpoint();
       Navigator.of(context).pop();
     }
   }

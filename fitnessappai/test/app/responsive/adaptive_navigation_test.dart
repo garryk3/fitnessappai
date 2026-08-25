@@ -88,9 +88,7 @@ void main() {
     );
   });
 
-  testWidgets('на широком экране подписи навигации скрыты', (
-    tester,
-  ) async {
+  testWidgets('на широком экране подписи навигации скрыты', (tester) async {
     await pumpAtSize(tester, const Size(800, 800));
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(
