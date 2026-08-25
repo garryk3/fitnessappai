@@ -31,6 +31,8 @@ flutter build apk --debug
 - Repo language is Russian: PLAN.md, commit messages, UI strings. Write commit messages as `task/NN.NN: <краткое описание на русском> (#PR)`.
 - **Before every commit, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`, ~2 min, not in CI). The user may opt out; never run them silently or skip the question.
 - Each task = branch `task/<NN>-<slug>` from `main` → PR → green CI → squash merge, in dependency order.
+- **Before every commit, run the `plan-review` agent** to verify: (1) the task is recorded in `PLAN.md` with correct status `[x]` and completion date; (2) if a work plan was drafted for this task, it was written into `PLAN.md`. Block the commit if either check fails.
+- **After composing a work plan for a task, always write it into `PLAN.md`** before implementation begins — plan must exist in the file before code changes start.
 - Keep the `@DriftDatabase` annotation on the database class, NOT on a top-level `const` — drift_dev 2.34 fails to detect the DB otherwise.
 - If `build_runner` reports stale/skipped outputs after a schema change, `rm -rf .dart_tool/build` and rebuild.
 
