@@ -257,7 +257,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     } else if (action == 'exit') {
       _controller.workout.cancelWorkout();
       await _clearCheckpoint();
-      Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
