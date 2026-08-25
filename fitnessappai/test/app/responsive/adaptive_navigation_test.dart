@@ -88,7 +88,7 @@ void main() {
     );
   });
 
-  testWidgets('на широком экране подписи навигации присутствуют', (
+  testWidgets('на широком экране подписи навигации скрыты', (
     tester,
   ) async {
     await pumpAtSize(tester, const Size(800, 800));
@@ -100,7 +100,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(navLabelOpacity(tester, 'Главная'), 1.0);
+    expect(navLabelOpacity(tester, 'Главная'), 0.0);
   });
 
   testWidgets('на самом узком экране (320dp) нет overflow', (tester) async {

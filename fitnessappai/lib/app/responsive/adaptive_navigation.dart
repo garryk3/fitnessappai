@@ -160,9 +160,7 @@ class AdaptiveNavigation extends StatelessWidget {
             onDestinationSelected: (uiIndex) {
               _onDestinationSelected(barDestinations[uiIndex].branchIndex);
             },
-            labelBehavior: narrowBar
-                ? NavigationDestinationLabelBehavior.alwaysHide
-                : NavigationDestinationLabelBehavior.alwaysShow,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             destinations: [
               for (final d in barDestinations)
                 NavigationDestination(
