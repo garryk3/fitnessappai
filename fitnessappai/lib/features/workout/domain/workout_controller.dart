@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:signals/signals.dart';
 
@@ -8,6 +9,7 @@ import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/domain/validators/program_day_exercise_validator.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_exercise.dart';
 import 'package:fitnessappai/features/workout/domain/workout_session_context.dart';
 import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
@@ -138,6 +140,78 @@ class WorkoutController {
     restRemainingSeconds.value = null;
     currentSide.value = null;
     sideRest.value = null;
+    _prepareHoldTimer();
+  }
+
+  /// Сохраняет текущий state в чекпоинт для восстановления после убийства ОС.
+  WorkoutCheckpoint toCheckpoint({
+    required int programDayId,
+    int? programId,
+    required String programName,
+    required int dayIndex,
+  }) {
+    return WorkoutCheckpoint(
+      programDayId: programDayId,
+      exerciseIndex: currentExerciseIndex.value,
+      currentSet: currentSet.value,
+      completedSets: completedSets.value,
+      resultsJson: jsonEncode([
+        for (final r in results.value)
+          {
+            'exerciseId': r.exerciseId,
+            'exerciseName': r.exerciseName,
+            'exerciseType': r.exerciseType.name,
+            'setIndex': r.setIndex,
+            'reps': r.reps,
+            'weightKg': r.weightKg,
+            'durationSeconds': r.durationSeconds,
+            'distanceMeters': r.distanceMeters,
+            'completedAt': r.completedAt.toIso8601String(),
+          },
+      ]),
+      startedAt: _startedAt ?? _clock(),
+      programId: programId,
+      programName: programName,
+      dayIndex: dayIndex,
+      currentSide: currentSide.value,
+    );
+  }
+
+  /// Восстанавливает state из чекпоинта.
+  void restoreFromCheckpoint(
+    WorkoutCheckpoint checkpoint,
+    List<WorkoutExercise> exercises,
+  ) {
+    _cancelTimers();
+    _exercises
+      ..clear()
+      ..addAll(exercises);
+    _startedAt = checkpoint.startedAt;
+    phase.value = WorkoutPhase.exercise;
+    currentExerciseIndex.value = checkpoint.exerciseIndex;
+    currentSet.value = checkpoint.currentSet;
+    completedSets.value = checkpoint.completedSets;
+    currentSide.value = checkpoint.currentSide;
+    restRemainingSeconds.value = null;
+    sideRest.value = null;
+    final decoded = jsonDecode(checkpoint.resultsJson) as List;
+    results.value = [
+      for (final item in decoded)
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: item['exerciseId'] as int,
+          exerciseName: item['exerciseName'] as String,
+          exerciseType: ExerciseType.values.firstWhere(
+            (e) => e.name == item['exerciseType'],
+          ),
+          setIndex: item['setIndex'] as int,
+          reps: item['reps'] as int?,
+          weightKg: (item['weightKg'] as num?)?.toDouble(),
+          durationSeconds: item['durationSeconds'] as int?,
+          distanceMeters: (item['distanceMeters'] as num?)?.toDouble(),
+          completedAt: DateTime.parse(item['completedAt'] as String),
+        ),
+    ];
     _prepareHoldTimer();
   }
 

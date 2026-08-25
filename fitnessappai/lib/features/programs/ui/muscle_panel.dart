@@ -68,9 +68,7 @@ class MusclePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          for (final load in loads) ...[
-            _MuscleGroupTile(load: load),
-          ],
+          for (final load in loads) ...[_MuscleGroupTile(load: load)],
         ],
         if (unused.isNotEmpty) ...[
           const SizedBox(height: 8),

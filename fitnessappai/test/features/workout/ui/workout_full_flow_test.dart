@@ -152,6 +152,9 @@ void main() {
             mediaCache: MediaCache(),
             wakelockService: wakelock,
             soundService: StubSoundService(),
+            checkpointLoader: () async => null,
+            checkpointSaver: (_) async {},
+            checkpointClearer: () async {},
           ),
         ),
         GoRoute(

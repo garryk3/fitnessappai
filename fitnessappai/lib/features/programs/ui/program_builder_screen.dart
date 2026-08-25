@@ -224,9 +224,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           if (group == null) {
             continue;
           }
-          final weight = link.intensity == MuscleIntensity.primary
-              ? 1.0
-              : 0.5;
+          final weight = link.intensity == MuscleIntensity.primary ? 1.0 : 0.5;
           weights.update(
             group.key,
             (value) => value + weight,
@@ -252,9 +250,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       if (parentKey != null) {
         parentWeights[parentKey] =
             (parentWeights[parentKey] ?? 0) + entry.value;
-        parentChildren
-            .putIfAbsent(parentKey, () => {})
-            .addAll({entry.key: entry.value});
+        parentChildren.putIfAbsent(parentKey, () => {}).addAll({
+          entry.key: entry.value,
+        });
       } else {
         parentWeights[entry.key] =
             (parentWeights[entry.key] ?? 0) + entry.value;
@@ -459,8 +457,16 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         for (final day in detail?.days ?? const <ProgramDayDetail>[])
           if (day.mainExercises.any((e) => !e.isAlternative)) day.day.id,
       };
+      final dayOfWeekByKey = {
+        for (final day in detail?.days ?? const <ProgramDayDetail>[])
+          if (day.day.id != null) day.day.id!: day.day.dayOfWeek,
+      };
       for (final draft in _days) {
         draft.filled = filledDayIds.contains(draft.key);
+        final freshDow = dayOfWeekByKey[draft.key];
+        if (freshDow != null) {
+          draft.dayOfWeek = freshDow;
+        }
       }
     });
   }

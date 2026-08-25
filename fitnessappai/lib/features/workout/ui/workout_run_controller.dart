@@ -5,6 +5,7 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
 import 'package:fitnessappai/features/workout/domain/workout_exercise.dart';
 import 'package:fitnessappai/features/workout/domain/workout_session_context.dart';
@@ -61,7 +62,7 @@ class WorkoutRunController {
     return duration.inMinutes.clamp(1, 1 << 31);
   }
 
-  Future<void> _load() async {
+  Future<void> _load({WorkoutCheckpoint? checkpoint}) async {
     isLoading.value = true;
     notFound.value = false;
     emptyDay.value = false;
@@ -96,19 +97,28 @@ class WorkoutRunController {
         emptyDay.value = true;
         return;
       }
-      workout.start(
-        exercises,
-        context: WorkoutSessionContext(
-          programId: program?.id,
-          programName: program?.name ?? '',
-          programDayId: day.id,
-          dayIndex: day.dayIndex,
-          variant: variant,
-        ),
-      );
+      if (checkpoint != null) {
+        workout.restoreFromCheckpoint(checkpoint, exercises);
+      } else {
+        workout.start(
+          exercises,
+          context: WorkoutSessionContext(
+            programId: program?.id,
+            programName: program?.name ?? '',
+            programDayId: day.id,
+            dayIndex: day.dayIndex,
+            variant: variant,
+          ),
+        );
+      }
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Восстанавливает сессию из чекпоинта (после убийства процесса ОС).
+  Future<void> loadFromCheckpoint(WorkoutCheckpoint checkpoint) async {
+    await _load(checkpoint: checkpoint);
   }
 
   /// Фиксирует введённые значения подхода.

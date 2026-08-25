@@ -39,9 +39,7 @@ void main() {
     ];
 
     await tester.pumpWidget(
-      wrap(
-        MusclePanel(loads: [], allMuscleGroups: groups, title: 'Мышцы'),
-      ),
+      wrap(MusclePanel(loads: [], allMuscleGroups: groups, title: 'Мышцы')),
     );
 
     expect(find.text('Не задействованы'), findsOneWidget);
@@ -104,9 +102,7 @@ void main() {
       wrap(
         MusclePanel(
           loads: [
-            load(arms, percent: 60, children: [
-              load(biceps, percent: 100),
-            ]),
+            load(arms, percent: 60, children: [load(biceps, percent: 100)]),
           ],
           allMuscleGroups: [arms, biceps],
           title: 'Мышцы',
@@ -129,9 +125,7 @@ void main() {
       wrap(
         MusclePanel(
           loads: [
-            load(arms, percent: 60, children: [
-              load(biceps, percent: 100),
-            ]),
+            load(arms, percent: 60, children: [load(biceps, percent: 100)]),
           ],
           allMuscleGroups: [arms, biceps],
           title: 'Мышцы',
@@ -147,11 +141,7 @@ void main() {
   testWidgets('пустые loads — только заголовок и диаграмма', (tester) async {
     await tester.pumpWidget(
       wrap(
-        MusclePanel(
-          loads: const [],
-          allMuscleGroups: const [],
-          title: 'Мышцы',
-        ),
+        MusclePanel(loads: const [], allMuscleGroups: const [], title: 'Мышцы'),
       ),
     );
 

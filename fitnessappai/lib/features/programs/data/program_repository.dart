@@ -122,10 +122,10 @@ class ProgramRepository {
 
   /// Возвращает активную программу или `null`, если активной нет.
   Future<Program?> getActiveProgram() async {
-    final row = await (_db.select(
+    final rows = await (_db.select(
       _db.programs,
-    )..where((t) => t.isActive.equals(true))).getSingleOrNull();
-    return row == null ? null : _toProgram(row);
+    )..where((t) => t.isActive.equals(true))).get();
+    return rows.isEmpty ? null : _toProgram(rows.first);
   }
 
   /// Возвращает все активные программы (мульти-активный режим).
