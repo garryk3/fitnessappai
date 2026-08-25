@@ -2002,4 +2002,145 @@ void main() {
     await skipRestIfShown(tester);
     await finishAndGoProgress(tester);
   });
+
+  testWidgets(
+    'привязка дня недели в конструкторе дня: создание → заполнение → '
+    'привязка → возврат',
+    (tester) async {
+      final db = AppDatabase(executor: NativeDatabase.memory());
+      addTearDown(() => db.close());
+      await pumpApp(tester, db);
+
+      await goToTab(tester, Icons.fitness_center_outlined);
+      await createExercise(tester, _squat, ExerciseType.strength);
+      await pullToRefreshExercises(tester);
+      expect(find.text(_squat), findsOneWidget);
+
+      await goToTab(tester, Icons.calendar_month_outlined);
+      await tester.tap(find.byTooltip('Новая программа'));
+      await tester.pumpAndSettle();
+      await enterField(
+        tester,
+        find.widgetWithText(TextFormField, 'Название'),
+        _programName,
+      );
+
+      await tester.tap(find.text('2').last);
+      await tester.pumpAndSettle();
+
+      final dayLabel1 = find.text('День 1');
+      await tester.scrollUntilVisible(
+        dayLabel1,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final dayCard1 = find.ancestor(of: dayLabel1, matching: find.byType(Card));
+      await tester.tap(
+        find.descendant(of: dayCard1, matching: find.byIcon(Icons.playlist_add)),
+      );
+      await tester.pumpAndSettle();
+
+      await addDayExercise(
+        tester,
+        _squat,
+        {
+          'Подходы': '1',
+          'Повторения': '10',
+          'Вес (кг)': '40',
+          'Отдых (сек)': '10',
+        },
+      );
+
+      expect(find.byType(ProgramDayBuilderScreen), findsOneWidget);
+
+      final today = DateTime.now().weekday;
+      final todayLabel = weekdayLabel(today);
+      final chip = find.widgetWithText(ChoiceChip, todayLabel);
+      await tester.scrollUntilVisible(
+        chip,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(chip);
+      await tester.pumpAndSettle();
+      await tester.tap(chip);
+      await tester.pumpAndSettle();
+
+      final selectedChip = tester.widget<ChoiceChip>(chip);
+      expect(selectedChip.selected, isTrue);
+
+      final save = find.descendant(
+        of: find.byType(ProgramDayBuilderScreen),
+        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+      );
+      await ensureFieldVisible(tester, save);
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProgramBuilderScreen), findsOneWidget);
+
+      final daySubtitle = find.descendant(
+        of: dayCard1,
+        matching: find.byType(Text),
+      );
+      final subtitleTexts = daySubtitle.evaluate().map((e) {
+        final widget = e.widget as Text;
+        return widget.data ?? '';
+      }).toList();
+      expect(
+        subtitleTexts.any((t) => t.contains(todayLabel)),
+        isTrue,
+        reason: 'Day tile should show bound weekday label "$todayLabel"',
+      );
+
+      final dayLabel2 = find.text('День 2');
+      await tester.scrollUntilVisible(
+        dayLabel2,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final dayCard2 = find.ancestor(of: dayLabel2, matching: find.byType(Card));
+      await tester.tap(
+        find.descendant(of: dayCard2, matching: find.byIcon(Icons.playlist_add)),
+      );
+      await tester.pumpAndSettle();
+
+      await addDayExercise(
+        tester,
+        _squat,
+        {
+          'Подходы': '1',
+          'Повторения': '10',
+          'Вес (кг)': '40',
+          'Отдых (сек)': '10',
+        },
+      );
+
+      expect(find.byType(ProgramDayBuilderScreen), findsOneWidget);
+
+      final save2 = find.descendant(
+        of: find.byType(ProgramDayBuilderScreen),
+        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+      );
+      await ensureFieldVisible(tester, save2);
+      await tester.tap(save2);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProgramBuilderScreen), findsOneWidget);
+
+      final programSave = find.descendant(
+        of: find.byType(ProgramBuilderScreen),
+        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+      );
+      await ensureFieldVisible(tester, programSave);
+      await tester.tap(programSave);
+      await tester.pumpAndSettle();
+      await pullToRefreshPrograms(tester);
+      expect(find.text(_programName), findsOneWidget);
+    },
+  );
 }

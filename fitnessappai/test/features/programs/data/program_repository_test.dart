@@ -585,5 +585,45 @@ void main() {
       expect(notifications, greaterThan(0));
       changes.removeListener(onChanged);
     });
+
+    test('reorderDaysByDayOfWeek сортирует дни по порядку недели', () async {
+      final created = await repo.create(program(daysCount: 3), [
+        day(dayIndex: 0, dayOfWeek: 5),
+        day(dayIndex: 1, dayOfWeek: 3),
+        day(dayIndex: 2, dayOfWeek: 1),
+      ]);
+
+      await repo.reorderDaysByDayOfWeek(created.id!);
+
+      final days = await repo.getDays(created.id!);
+      expect(days, hasLength(3));
+      expect(days[0].dayOfWeek, 1);
+      expect(days[0].dayIndex, 0);
+      expect(days[1].dayOfWeek, 3);
+      expect(days[1].dayIndex, 1);
+      expect(days[2].dayOfWeek, 5);
+      expect(days[2].dayIndex, 2);
+    });
+
+    test(
+      'reorderDaysByDayOfWeek: непривязанные дни остаются в конце',
+      () async {
+        final created = await repo.create(program(daysCount: 3), [
+          day(dayIndex: 0, dayOfWeek: null),
+          day(dayIndex: 1, dayOfWeek: 5),
+          day(dayIndex: 2, dayOfWeek: 1),
+        ]);
+
+        await repo.reorderDaysByDayOfWeek(created.id!);
+
+        final days = await repo.getDays(created.id!);
+        expect(days[0].dayOfWeek, 1);
+        expect(days[0].dayIndex, 0);
+        expect(days[1].dayOfWeek, 5);
+        expect(days[1].dayIndex, 1);
+        expect(days[2].dayOfWeek, isNull);
+        expect(days[2].dayIndex, 2);
+      },
+    );
   });
 }

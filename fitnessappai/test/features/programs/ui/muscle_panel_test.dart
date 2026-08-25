@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
+import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/programs/ui/muscle_panel.dart';
 
 void main() {
@@ -19,6 +20,16 @@ void main() {
     parentKey: parentKey,
   );
 
+  MuscleGroupLoad load(
+    MuscleGroup muscleGroup, {
+    double percent = 50,
+    List<MuscleGroupLoad> children = const [],
+  }) => MuscleGroupLoad(
+    muscleGroup: muscleGroup,
+    percent: percent,
+    children: children,
+  );
+
   testWidgets('подгруппы не отображаются в «Не задействованы»', (tester) async {
     final groups = [
       group('shoulders'),
@@ -29,7 +40,7 @@ void main() {
 
     await tester.pumpWidget(
       wrap(
-        MusclePanel(highlights: {}, allMuscleGroups: groups, title: 'Мышцы'),
+        MusclePanel(loads: [], allMuscleGroups: groups, title: 'Мышцы'),
       ),
     );
 
@@ -46,7 +57,10 @@ void main() {
     await tester.pumpWidget(
       wrap(
         MusclePanel(
-          highlights: {'chest': 1.0, 'quads': 0.5},
+          loads: [
+            load(group('chest'), percent: 67),
+            load(group('quads'), percent: 33),
+          ],
           allMuscleGroups: groups,
           title: 'Мышцы',
         ),
@@ -69,7 +83,10 @@ void main() {
     await tester.pumpWidget(
       wrap(
         MusclePanel(
-          highlights: {'chest': 1.0, 'shoulders': 0.5},
+          loads: [
+            load(group('chest'), percent: 67),
+            load(group('shoulders'), percent: 33),
+          ],
           allMuscleGroups: groups,
           title: 'Мышцы',
         ),
@@ -77,5 +94,68 @@ void main() {
     );
 
     expect(find.text('Не задействованы'), findsNothing);
+  });
+
+  testWidgets('родительские группы отображаются жирным', (tester) async {
+    final arms = group('arms');
+    final biceps = group('biceps', parentKey: 'arms');
+
+    await tester.pumpWidget(
+      wrap(
+        MusclePanel(
+          loads: [
+            load(arms, percent: 60, children: [
+              load(biceps, percent: 100),
+            ]),
+          ],
+          allMuscleGroups: [arms, biceps],
+          title: 'Мышцы',
+        ),
+      ),
+    );
+
+    final armsText = tester.widget<Text>(find.text('arms'));
+    expect(armsText.style?.fontWeight, FontWeight.w600);
+
+    final bicepsText = tester.widget<Text>(find.text('biceps'));
+    expect(bicepsText.style?.fontWeight, isNot(FontWeight.w600));
+  });
+
+  testWidgets('дети отображаются с отступом', (tester) async {
+    final biceps = group('biceps', parentKey: 'arms');
+    final arms = group('arms');
+
+    await tester.pumpWidget(
+      wrap(
+        MusclePanel(
+          loads: [
+            load(arms, percent: 60, children: [
+              load(biceps, percent: 100),
+            ]),
+          ],
+          allMuscleGroups: [arms, biceps],
+          title: 'Мышцы',
+        ),
+      ),
+    );
+
+    expect(find.text('arms'), findsOneWidget);
+    expect(find.text('biceps'), findsOneWidget);
+    expect(find.text('100%'), findsOneWidget);
+  });
+
+  testWidgets('пустые loads — только заголовок и диаграмма', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        MusclePanel(
+          loads: const [],
+          allMuscleGroups: const [],
+          title: 'Мышцы',
+        ),
+      ),
+    );
+
+    expect(find.text('Мышцы'), findsOneWidget);
+    expect(find.text('Задействованы'), findsNothing);
   });
 }

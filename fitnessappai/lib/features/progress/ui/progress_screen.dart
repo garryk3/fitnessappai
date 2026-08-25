@@ -403,8 +403,11 @@ class _MetricChart extends StatelessWidget {
     final exercises = controller.exercises.value;
     final selectedId = controller.selectedExerciseId.value;
     final selected = exercises.firstWhereOrNull((e) => e.id == selectedId);
-    final values = _displayValues(selected?.type);
-    final labels = _sliceLabels(context);
+    final rawValues = _displayValues(selected?.type);
+    final rawLabels = _sliceLabels(context);
+    final trimCount = _trailingZeroCount(rawValues);
+    final values = rawValues.sublist(0, rawValues.length - trimCount);
+    final labels = rawLabels.sublist(0, rawLabels.length - trimCount);
     final unitSuffix = _unitSuffix(selected?.type);
     final leftReserved = unitSuffix.isNotEmpty ? 48.0 : 32.0;
     return Card(
@@ -558,6 +561,14 @@ class _MetricChart extends StatelessWidget {
     ExerciseType.bodyweight => 'повт',
     ExerciseType.strength || null => 'кг',
   };
+
+  int _trailingZeroCount(List<double> values) {
+    var count = 0;
+    for (var i = values.length - 1; i >= 0 && values[i] == 0.0; i--) {
+      count++;
+    }
+    return count;
+  }
 
   String _yAxisLabel(double value, String suffix) {
     final formatted = value == value.roundToDouble()

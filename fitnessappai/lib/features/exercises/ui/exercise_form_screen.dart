@@ -305,8 +305,10 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   const SizedBox(height: 16),
                   _hideOptionalField(l10n),
                   const SizedBox(height: 8),
-                  _fixedWeightField(l10n),
-                  const SizedBox(height: 8),
+                  if (_type != ExerciseType.bodyweight) ...[
+                    _fixedWeightField(l10n),
+                    const SizedBox(height: 8),
+                  ],
                   _perSideField(l10n),
                 ],
               ),
@@ -368,7 +370,12 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
       ],
       onChanged: (value) {
         if (value != null) {
-          setState(() => _type = value);
+          setState(() {
+            _type = value;
+            if (value == ExerciseType.bodyweight) {
+              _fixedWeight = false;
+            }
+          });
         }
       },
     );

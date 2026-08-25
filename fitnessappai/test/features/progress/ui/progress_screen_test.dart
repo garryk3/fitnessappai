@@ -448,4 +448,45 @@ void main() {
     expect(find.text('База'), findsOneWidget);
     expect(find.text('10 августа 2026'), findsWidgets);
   });
+
+  testWidgets('хвостовые нули графика обрезаются до последнего дня', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Жим штанги');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId, weightKg: 60),
+    ]);
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 11)), [
+      setResult(exerciseId: exerciseId, weightKg: 65),
+    ]);
+
+    await pumpProgressRouter(tester);
+
+    final labels = tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byType(LineChart),
+            matching: find.byType(Text),
+          ),
+        )
+        .map((w) => w.data ?? '')
+        .toList();
+    final lastLabel = labels.lastWhere(
+      (l) => l.isNotEmpty && l != 'кг',
+      orElse: () => '',
+    );
+    expect(lastLabel, isNotEmpty);
+
+    final slices = aggregator.slices(StatPeriod.week);
+    final lastNonEmptyIndex = slices.indexWhere(
+      (s) =>
+          !s.$1.isAfter(DateTime(2026, 8, 11)) &&
+          !s.$2.isBefore(DateTime(2026, 8, 11)),
+    );
+    expect(lastNonEmptyIndex, lessThan(slices.length - 1));
+  });
 }

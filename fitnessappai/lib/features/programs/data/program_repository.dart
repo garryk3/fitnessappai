@@ -331,6 +331,31 @@ class ProgramRepository {
     _notify();
   }
 
+  /// Переставляет дни программы в порядке дней недели.
+  ///
+  /// Дни с `dayOfWeek == null` остаются в конце в исходном порядке.
+  Future<void> reorderDaysByDayOfWeek(int programId) async {
+    final rows =
+        await (_db.select(_db.programDays)
+              ..where((t) => t.programId.equals(programId))
+              ..orderBy([(t) => OrderingTerm.asc(t.dayIndex)]))
+            .get();
+    final withWeekday = rows.where((r) => r.dayOfWeek != null).toList()
+      ..sort((a, b) => a.dayOfWeek!.compareTo(b.dayOfWeek!));
+    final withoutWeekday = rows.where((r) => r.dayOfWeek == null).toList();
+    final sorted = [...withWeekday, ...withoutWeekday];
+    await _db.batch((batch) {
+      for (var i = 0; i < sorted.length; i++) {
+        batch.update(
+          _db.programDays,
+          ProgramDaysCompanion(dayIndex: Value(i)),
+          where: (t) => t.id.equals(sorted[i].id),
+        );
+      }
+    });
+    _notify();
+  }
+
   /// Добавляет упражнение в день в конец набора ([isAlternative]).
   Future<ProgramDayExercise> addExerciseToDay(
     int dayId,

@@ -394,6 +394,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       dayOfWeek: day.dayOfWeek == dayOfWeek ? null : dayOfWeek,
     );
     final saved = await _repository.updateDay(updated);
+    await _repository.reorderDaysByDayOfWeek(widget.programId);
     if (!mounted) {
       return;
     }
