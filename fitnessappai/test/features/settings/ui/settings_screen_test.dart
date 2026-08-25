@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
@@ -351,6 +352,66 @@ void main() {
 
     expect(service.importCalls, 1);
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
+  });
+
+  testWidgets('импорт перехватывает PlatformException из пикера', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      pickFile: () async =>
+          throw PlatformException(code: 'pick_failed', message: 'no icon'),
+    );
+
+    await tester.tap(find.text('Импортировать БД'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Согласен'));
+    await tester.pumpAndSettle();
+
+    expect(service.importCalls, 0);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(
+      find.textContaining('не удалось открыть выбор файла'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('экспорт перехватывает PlatformException из шаринга', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      shareFile: (_) async =>
+          throw PlatformException(code: 'share_failed', message: 'no share'),
+    );
+
+    await tester.tap(find.text('Поделиться'));
+    await tester.pumpAndSettle();
+
+    expect(service.exportCalls, 1);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(
+      find.textContaining('не удалось открыть выбор файла'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('экспорт в файл перехватывает PlatformException', (tester) async {
+    await pumpScreen(
+      tester,
+      saveFile: (_) async =>
+          throw PlatformException(code: 'save_failed', message: 'no save'),
+    );
+
+    await tester.tap(find.text('Сохранить в файлы'));
+    await tester.pumpAndSettle();
+
+    expect(service.exportCalls, 1);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(
+      find.textContaining('не удалось открыть выбор файла'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('показывает секцию «О приложении» с версией', (tester) async {
