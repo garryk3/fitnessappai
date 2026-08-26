@@ -445,6 +445,58 @@ class ProgramRepository {
     _notify();
   }
 
+  /// Копирует день [sourceDayId] со всеми упражнениями в конец программы.
+  ///
+  /// Возвращает новый id дня. Новый день не привязан к дню недели.
+  Future<int> copyDay(int sourceDayId) async {
+    final sourceRow = await (_db.select(
+      _db.programDays,
+    )..where((t) => t.id.equals(sourceDayId))).getSingle();
+    final programId = sourceRow.programId;
+    final existing = await _daysOf(programId);
+    final maxIndex = existing.fold<int>(
+      -1,
+      (max, d) => d.dayIndex > max ? d.dayIndex : max,
+    );
+    final newDayId = await _db
+        .into(_db.programDays)
+        .insert(
+          ProgramDaysCompanion.insert(
+            programId: programId,
+            dayIndex: maxIndex + 1,
+            dayOfWeek: const Value(null),
+            warmupMinutes: Value(sourceRow.warmupMinutes),
+          ),
+        );
+    final sourceExercises =
+        await (_db.select(_db.programDayExercises)
+              ..where((t) => t.dayId.equals(sourceDayId))
+              ..orderBy([(t) => OrderingTerm.asc(t.orderIndex)]))
+            .get();
+    await _db.batch((batch) {
+      for (var i = 0; i < sourceExercises.length; i++) {
+        final src = sourceExercises[i];
+        batch.insert(
+          _db.programDayExercises,
+          ProgramDayExercisesCompanion.insert(
+            dayId: newDayId,
+            exerciseId: Value(src.exerciseId),
+            orderIndex: i,
+            sets: Value(src.sets),
+            reps: Value(src.reps),
+            weightKg: Value(src.weightKg),
+            isAlternative: Value(src.isAlternative),
+            durationSeconds: Value(src.durationSeconds),
+            distanceMeters: Value(src.distanceMeters),
+          ),
+        );
+      }
+    });
+    await _syncDaysCount(programId);
+    _notify();
+    return newDayId;
+  }
+
   /// Возвращает `true`, если предупреждения для программы скрыты.
   Future<bool> isWarningDismissed(int programId) async {
     final row = await (_db.select(

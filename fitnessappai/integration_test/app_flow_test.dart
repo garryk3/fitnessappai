@@ -352,9 +352,7 @@ Future<void> configureDay(
     await selectWeekday(tester, weekdayLabel(weekday));
   }
 
-  await tester.tap(
-    find.descendant(of: dayCard, matching: find.byIcon(Icons.playlist_add)),
-  );
+  await tester.tap(dayLabel);
   await tester.pumpAndSettle();
 
   for (final (name, params) in mainSets) {
@@ -383,6 +381,49 @@ Future<void> enterWarmup(WidgetTester tester, String minutes) async {
     find.widgetWithText(TextFormField, 'Разминка, мин'),
     minutes,
   );
+}
+
+/// Закрывает попап «Сделать программу активной?», если он появился.
+Future<void> dismissActivatePopupIfShown(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+  final dialog = find.byType(AlertDialog);
+  if (dialog.evaluate().isNotEmpty) {
+    final cancel = find.descendant(
+      of: dialog,
+      matching: find.byType(TextButton),
+    );
+    if (cancel.evaluate().isNotEmpty) {
+      await tester.tap(cancel.first);
+      await tester.pumpAndSettle();
+    }
+  }
+}
+
+/// Нажимает «Сохранить» в конструкторе программы и закрывает попап активации.
+Future<void> saveProgramBuilder(WidgetTester tester) async {
+  final programSave = find.descendant(
+    of: find.byType(ProgramBuilderScreen),
+    matching: find.widgetWithText(FilledButton, 'Сохранить'),
+  );
+  await tester.tap(programSave);
+  // Ждём появления попапа (асинхронный сохранение в БД).
+  for (var i = 0; i < 60; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    final dialog = find.byType(AlertDialog);
+    if (dialog.evaluate().isNotEmpty) {
+      final cancel = find.descendant(
+        of: dialog,
+        matching: find.byType(TextButton),
+      );
+      if (cancel.evaluate().isNotEmpty) {
+        await tester.tap(cancel.first);
+        await tester.pumpAndSettle();
+        return;
+      }
+    }
+  }
+  // Если попап не появился — просто дожидаемся стабилизации.
+  await tester.pumpAndSettle();
 }
 
 /// Запускает тренировку из плана недели: «Начать» → подготовка →
@@ -676,12 +717,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
     expect(find.text(_programName), findsOneWidget);
 
@@ -785,13 +821,7 @@ void main() {
       ],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -886,13 +916,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -949,13 +973,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1034,13 +1052,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1114,13 +1126,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1192,13 +1198,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.home_outlined);
@@ -1286,13 +1286,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1359,13 +1353,7 @@ void main() {
         alternativeSets: const [],
       );
 
-      final programSave = find.descendant(
-        of: find.byType(ProgramBuilderScreen),
-        matching: find.widgetWithText(FilledButton, 'Сохранить'),
-      );
-      await ensureFieldVisible(tester, programSave);
-      await tester.tap(programSave);
-      await tester.pumpAndSettle();
+      await saveProgramBuilder(tester);
       await pullToRefreshPrograms(tester);
       expect(find.text(_programName), findsOneWidget);
 
@@ -1400,13 +1388,7 @@ void main() {
       await tester.pumpAndSettle();
       final nameField = find.widgetWithText(TextFormField, 'Название');
       await enterField(tester, nameField, '$_programName 2');
-      final editSave = find.descendant(
-        of: find.byType(ProgramBuilderScreen),
-        matching: find.widgetWithText(FilledButton, 'Сохранить'),
-      );
-      await ensureFieldVisible(tester, editSave);
-      await tester.tap(editSave);
-      await tester.pumpAndSettle();
+      await saveProgramBuilder(tester);
       await pullToRefreshPrograms(tester);
       expect(find.text('$_programName 2'), findsOneWidget);
 
@@ -1549,13 +1531,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1637,13 +1613,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1695,13 +1665,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1747,13 +1711,10 @@ void main() {
         _programName,
       );
 
-      final dayCard = find.ancestor(
-        of: find.text('День 1'),
-        matching: find.byType(Card),
-      );
-      await tester.tap(
-        find.descendant(of: dayCard, matching: find.byIcon(Icons.playlist_add)),
-      );
+      final dayLabel = find.text('День 1');
+      await tester.ensureVisible(dayLabel);
+      await tester.pumpAndSettle();
+      await tester.tap(dayLabel);
       await tester.pumpAndSettle();
 
       await addDayExercise(tester, _squat, {
@@ -1834,13 +1795,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1912,13 +1867,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -1979,13 +1928,7 @@ void main() {
       alternativeSets: const [],
     );
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
@@ -2035,9 +1978,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final dayCard1 = find.ancestor(of: dayLabel1, matching: find.byType(Card));
-    await tester.tap(
-      find.descendant(of: dayCard1, matching: find.byIcon(Icons.playlist_add)),
-    );
+    await tester.tap(dayLabel1);
     await tester.pumpAndSettle();
 
     await addDayExercise(tester, _squat, {
@@ -2097,10 +2038,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final dayCard2 = find.ancestor(of: dayLabel2, matching: find.byType(Card));
-    await tester.tap(
-      find.descendant(of: dayCard2, matching: find.byIcon(Icons.playlist_add)),
-    );
+    await tester.tap(dayLabel2);
     await tester.pumpAndSettle();
 
     await addDayExercise(tester, _squat, {
@@ -2122,13 +2060,7 @@ void main() {
 
     expect(find.byType(ProgramBuilderScreen), findsOneWidget);
 
-    final programSave = find.descendant(
-      of: find.byType(ProgramBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
-    );
-    await ensureFieldVisible(tester, programSave);
-    await tester.tap(programSave);
-    await tester.pumpAndSettle();
+    await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
     expect(find.text(_programName), findsOneWidget);
   });

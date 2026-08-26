@@ -31,11 +31,13 @@ class ProgramBuilderScreen extends StatefulWidget {
     this.programId,
     this.repository,
     this.exerciseRepository,
+    @visibleForTesting this.forceInitiallyNew = false,
   });
 
   final int? programId;
   final ProgramRepository? repository;
   final ExerciseRepository? exerciseRepository;
+  final bool forceInitiallyNew;
 
   @override
   State<ProgramBuilderScreen> createState() => _ProgramBuilderScreenState();
@@ -78,6 +80,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   DateTime? _createdAt;
   int? _programId;
   bool _isActive = false;
+  late final bool _initiallyNew;
 
   List<MuscleGroup> _allMuscleGroups = [];
   Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
@@ -96,6 +99,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     _reminderRepository = locator.get<WorkoutReminderRepository>();
     _reminderService = locator.get<ReminderService>();
     _programId = widget.programId;
+    _initiallyNew = widget.forceInitiallyNew || widget.programId == null;
     _load();
   }
 
@@ -436,6 +440,31 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   }
 
   /// Пересчитывает, какие дни заполнены, после возврата из наполнения дня.
+  Future<void> _copyDay(int sourceIndex) async {
+    final programId = _programId;
+    if (programId == null) {
+      return;
+    }
+    final sourceDay = _days[sourceIndex];
+    await _repository.copyDay(sourceDay.key);
+    final detail = await _repository.getProgram(programId);
+    if (detail == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _days
+        ..clear()
+        ..addAll([
+          for (final day in detail.days)
+            _DayDraft(
+              day.day.id ?? _nextDayKey--,
+              dayOfWeek: day.day.dayOfWeek,
+              filled: day.mainExercises.any((e) => !e.isAlternative),
+            ),
+        ]);
+    });
+  }
+
   Future<void> _refreshFilledDays() async {
     final programId = _programId;
     if (programId == null) {
@@ -605,12 +634,20 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       }
       return;
     }
+    final shouldActivate = _initiallyNew;
     setState(() => _saving = true);
     try {
       final previousReminders = await _previousReminders();
       final saved = await _persist();
       if (saved != null && mounted) {
         await _applyReminders(saved.id!, previousReminders);
+        if (shouldActivate && mounted) {
+          final activate = await _showActivateDialog();
+          if (activate == true && mounted) {
+            await _repository.setActive(saved.id!);
+            setState(() => _isActive = true);
+          }
+        }
         if (!mounted) {
           return;
         }
@@ -621,6 +658,26 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         setState(() => _saving = false);
       }
     }
+  }
+
+  Future<bool?> _showActivateDialog() {
+    final l10n = AppLocalizations.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.programActivatePrompt),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.programMakeActive),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _copyProgramJson() async {
@@ -799,11 +856,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                tooltip: l10n.programBuilderAddExercise,
-                icon: const Icon(Icons.playlist_add),
-                onPressed: () => _openDayFill(index),
-              ),
+              if (_days.length < 7)
+                IconButton(
+                  tooltip: l10n.programBuilderCopyDay,
+                  icon: const Icon(Icons.content_copy),
+                  onPressed: () => _copyDay(index),
+                ),
               IconButton(
                 tooltip: l10n.programBuilderDaySettings,
                 icon: const Icon(Icons.tune),

@@ -155,6 +155,37 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseListOnlyCustom => 'Только свои упражнения';
 
   @override
+  String exerciseListDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '#',
+      few: '#',
+      one: '#',
+    );
+    return 'Удалить упражнение ($_temp0)?';
+  }
+
+  @override
+  String exerciseListDeleteConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# выбранных упражнений',
+      few: '# выбранных упражнения',
+      one: 'выбранное упражнение',
+    );
+    return 'Удалить $_temp0?';
+  }
+
+  @override
+  String get exerciseListDeleteButton => 'Удалить';
+
+  @override
+  String get exerciseListDeleteWarning =>
+      'Упражнение используется в программах:';
+
+  @override
   String get schedulePerformed => 'Выполнено';
 
   @override
@@ -395,6 +426,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programMakeActive => 'Сделать активной';
 
   @override
+  String get programActivatePrompt => 'Сделать программу активной?';
+
+  @override
   String get programActive => 'Активная';
 
   @override
@@ -509,6 +543,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programBuilderAddExercise => 'Добавить упражнение';
+
+  @override
+  String get programBuilderCopyDay => 'Копировать день';
 
   @override
   String get programBuilderPickExercise => 'Выберите упражнение';

@@ -122,8 +122,7 @@ void main() {
 
     expect(controller.isLoading.value, isFalse);
     expect(controller.hasPrograms.value, isFalse);
-    expect(controller.activeProgram.value, isNull);
-    expect(controller.upcomingDay.value, isNull);
+    expect(controller.activePrograms.value, isEmpty);
     expect(controller.recentWorkouts.value, isEmpty);
   });
 
@@ -145,9 +144,10 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(controller.hasPrograms.value, isTrue);
-    expect(controller.activeProgram.value?.name, 'Силовая');
-    expect(controller.upcomingDay.value?.dayOfWeek, 2);
-    expect(controller.upcomingExerciseNames.value, ['Жим штанги']);
+    expect(controller.activePrograms.value, hasLength(1));
+    expect(controller.activePrograms.value.first.program.name, 'Силовая');
+    expect(controller.activePrograms.value.first.upcomingDay?.dayOfWeek, 2);
+    expect(controller.activePrograms.value.first.exerciseNames, ['Жим штанги']);
   });
 
   test('перенос ближайшего дня на начало недели', () async {
@@ -165,7 +165,7 @@ void main() {
 
     await Future<void>.delayed(Duration.zero);
 
-    expect(controller.upcomingDay.value?.dayOfWeek, 2);
+    expect(controller.activePrograms.value.first.upcomingDay?.dayOfWeek, 2);
   });
 
   test(
@@ -184,10 +184,10 @@ void main() {
 
       await Future<void>.delayed(Duration.zero);
 
-      expect(controller.activeProgram.value?.id, program.id);
+      expect(controller.activePrograms.value.first.program.id, program.id);
       // Непривязанный день теперь отображается как ближайший.
-      expect(controller.upcomingDay.value, isNotNull);
-      expect(controller.upcomingExerciseNames.value, isEmpty);
+      expect(controller.activePrograms.value.first.upcomingDay, isNotNull);
+      expect(controller.activePrograms.value.first.exerciseNames, isEmpty);
     },
   );
 
@@ -232,6 +232,51 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(controller.hasPrograms.value, isTrue);
-    expect(controller.activeProgram.value, isNull);
+    expect(controller.activePrograms.value, isEmpty);
   });
+
+  test(
+    'две активные программы — обе отображаются с правильными днями',
+    () async {
+      final exId = await insertExercise('Жим штанги');
+      // Программа 1: привязана к четвергу (4).
+      final p1 = await createProgram(name: 'Силовая', dayOfWeeks: [4]);
+      await addExerciseToDay(p1, exId);
+      await programRepository.setActive(p1.id!);
+
+      // Программа 2: привязана к среде (3) — сегодня среда.
+      final p2 = await createProgram(name: 'Кардио', dayOfWeeks: [3]);
+      await programRepository.setActive(p2.id!);
+
+      // Среда (3): P2 (среда) приоритетнее P1 (четверг).
+      final controller = HomeController(
+        programRepository: programRepository,
+        exerciseRepository: exerciseRepository,
+        workoutRepository: workoutRepository,
+        clock: () => DateTime(2026, 8, 12), // среда
+      );
+      addTearDown(controller.dispose);
+
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.hasPrograms.value, isTrue);
+      expect(controller.activePrograms.value, hasLength(2));
+
+      // P2 — среда (ближе к сегодня), P1 — четверг.
+      final names = controller.activePrograms.value
+          .map((i) => i.program.name)
+          .toList();
+      expect(names, containsAll(['Силовая', 'Кардио']));
+
+      final p2Info = controller.activePrograms.value.firstWhere(
+        (i) => i.program.name == 'Кардио',
+      );
+      expect(p2Info.upcomingDay?.dayOfWeek, 3);
+
+      final p1Info = controller.activePrograms.value.firstWhere(
+        (i) => i.program.name == 'Силовая',
+      );
+      expect(p1Info.upcomingDay?.dayOfWeek, 4);
+    },
+  );
 }

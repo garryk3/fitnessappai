@@ -14,6 +14,8 @@ import 'package:fitnessappai/features/exercises/ui/exercise_detail_controller.da
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
+import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Экран деталей упражнения: анимация, описание, техника, мышцы,
@@ -26,6 +28,7 @@ class ExerciseDetailScreen extends StatefulWidget {
     this.mediaCache,
     this.profileRepository,
     this.statsAggregator,
+    this.workoutRepository,
   });
 
   final int exerciseId;
@@ -33,6 +36,7 @@ class ExerciseDetailScreen extends StatefulWidget {
   final MediaCache? mediaCache;
   final UserProfileRepository? profileRepository;
   final StatsAggregator? statsAggregator;
+  final WorkoutRepository? workoutRepository;
 
   @override
   State<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
@@ -43,6 +47,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   late final ExerciseRepository _repository;
   late final MediaCache _mediaCache;
   late final StatsAggregator _statsAggregator;
+  late final WorkoutRepository _workoutRepository;
 
   @override
   void initState() {
@@ -50,6 +55,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     _repository = widget.repository ?? locator.get<ExerciseRepository>();
     _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
     _statsAggregator = widget.statsAggregator ?? locator.get<StatsAggregator>();
+    _workoutRepository =
+        widget.workoutRepository ?? locator.get<WorkoutRepository>();
     _controller = ExerciseDetailController(
       _repository,
       widget.exerciseId,
@@ -247,6 +254,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           _RecentHistorySection(
             exercise: exercise,
             statsAggregator: _statsAggregator,
+            workoutRepository: _workoutRepository,
           ),
         ],
       ],
@@ -254,27 +262,29 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 }
 
-/// Секция истории выполнения упражнения за последние 3 дня.
+/// Секция истории выполнения упражнения: последние выполнения с подходами.
 class _RecentHistorySection extends StatefulWidget {
   const _RecentHistorySection({
     required this.exercise,
     required this.statsAggregator,
+    required this.workoutRepository,
   });
 
   final Exercise exercise;
   final StatsAggregator statsAggregator;
+  final WorkoutRepository workoutRepository;
 
   @override
   State<_RecentHistorySection> createState() => _RecentHistorySectionState();
 }
 
 class _RecentHistorySectionState extends State<_RecentHistorySection> {
-  late final Future<List<ProgressionPoint>> _future;
+  late final Future<List<WorkoutSetResult>> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = widget.statsAggregator.exerciseHistoryLastDays(
+    _future = widget.workoutRepository.lastResultsForExercise(
       widget.exercise.id!,
     );
   }
@@ -282,43 +292,39 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FutureBuilder<List<ProgressionPoint>>(
+    return FutureBuilder<List<WorkoutSetResult>>(
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const SizedBox.shrink();
         }
-        final points = snapshot.data;
-        if (points == null) {
-          return const SizedBox.shrink();
-        }
-        if (points.isEmpty) {
+        final results = snapshot.data;
+        if (results == null || results.isEmpty) {
           return const SizedBox.shrink();
         }
         final theme = Theme.of(context);
+        final date = results.first.completedAt;
         return _Section(
           title: l10n.exerciseDetailHistoryRecent,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final point in points)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  DateFormat('d MMMM yyyy', 'ru').format(date),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              for (final result in results)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          DateFormat('d MMMM yyyy', 'ru').format(point.date),
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                      Text(
-                        _formatMetric(l10n, widget.exercise.type, point.metric),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 1),
+                  child: Text(
+                    '${_sideLabel(result.setIndex, result.side)} '
+                    '${_formatResult(l10n, result)}',
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ),
             ],
@@ -328,12 +334,26 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
     );
   }
 
-  String _formatMetric(AppLocalizations l10n, ExerciseType type, double value) {
-    return switch (type) {
-      ExerciseType.strength => '${_fmt(value)} ${l10n.workoutUnitKg}',
-      ExerciseType.bodyweight => '${value.round()} ${l10n.workoutUnitReps}',
-      ExerciseType.running => '${_fmt(value / 1000)} ${l10n.workoutUnitKm}',
-      ExerciseType.plank => '${_fmt(value / 60)} ${l10n.workoutUnitMinutes}',
+  String _sideLabel(int setIndex, String? side) {
+    final suffix = switch (side) {
+      'left' => 'л',
+      'right' => 'п',
+      _ => '',
+    };
+    return '$setIndex$suffix.';
+  }
+
+  String _formatResult(AppLocalizations l10n, WorkoutSetResult result) {
+    return switch (result.exerciseType) {
+      ExerciseType.strength when result.weightKg != null =>
+        '${result.reps ?? 0} × ${_fmt(result.weightKg!)} ${l10n.workoutUnitKg}',
+      ExerciseType.strength ||
+      ExerciseType.bodyweight => '${result.reps ?? 0} ${l10n.workoutUnitReps}',
+      ExerciseType.plank =>
+        '${result.durationSeconds ?? 0} ${l10n.workoutUnitSeconds}',
+      ExerciseType.running =>
+        '${_fmt((result.distanceMeters ?? 0) / 1000)} ${l10n.workoutUnitKm} × '
+            '${(result.durationSeconds ?? 0) ~/ 60} ${l10n.workoutUnitMinutes}',
     };
   }
 }

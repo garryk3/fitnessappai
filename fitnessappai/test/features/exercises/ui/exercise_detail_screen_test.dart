@@ -72,6 +72,7 @@ void main() {
             workoutRepository: workoutRepository,
             exerciseRepository: repository,
           ),
+          workoutRepository: workoutRepository,
         ),
       ),
     );
@@ -339,6 +340,7 @@ void main() {
                   workoutRepository: WorkoutRepository(db),
                   exerciseRepository: repository,
                 ),
+                workoutRepository: WorkoutRepository(db),
               ),
             ),
             GoRoute(
@@ -395,7 +397,7 @@ void main() {
     expect(find.text('Новая техника'), findsOneWidget);
   });
 
-  testWidgets('показывает историю за последние 3 дня', (tester) async {
+  testWidgets('показывает историю выполнения с подходами', (tester) async {
     final created = await repository.create(exercise('Приседания'), const []);
     final workoutRepository = WorkoutRepository(db);
     await workoutRepository.saveSession(
@@ -442,7 +444,8 @@ void main() {
 
     expect(find.text('История за последние 3 дня'), findsOneWidget);
     expect(find.text('14 августа 2026'), findsOneWidget);
-    expect(find.textContaining('20'), findsWidgets);
+    expect(find.textContaining('8 ×'), findsOneWidget);
+    expect(find.textContaining('6 ×'), findsOneWidget);
   });
 
   testWidgets('история скрыта, если упражнение не выполнялось', (tester) async {

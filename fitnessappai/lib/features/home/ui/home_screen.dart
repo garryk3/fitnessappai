@@ -134,8 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    final program = controller.activeProgram.value;
-    if (program == null) {
+    final programs = controller.activePrograms.value;
+    if (programs.isEmpty) {
       return _EmptyHint(
         icon: Icons.star_outline,
         title: l10n.homeActiveProgram,
@@ -145,7 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    final day = controller.upcomingDay.value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -153,7 +152,9 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: Text(
-                l10n.homeActiveProgram,
+                programs.length == 1
+                    ? l10n.homeActiveProgram
+                    : '${l10n.homeActiveProgram} (${programs.length})',
                 style: theme.textTheme.titleMedium,
               ),
             ),
@@ -165,12 +166,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        _ActiveProgramCard(
-          programName: program.name,
-          day: day,
-          exerciseNames: controller.upcomingExerciseNames.value,
-          onTap: () => context.push('/programs/${program.id}/edit'),
-        ),
+        for (final info in programs) ...[
+          _ActiveProgramCard(
+            programName: info.program.name,
+            day: info.upcomingDay,
+            exerciseNames: info.exerciseNames,
+            onTap: () => context.push('/programs/${info.program.id}/edit'),
+          ),
+          const SizedBox(height: 8),
+        ],
       ],
     );
   }
