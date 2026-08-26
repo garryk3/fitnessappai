@@ -153,7 +153,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.playlist_add).at(0));
+    await tester.tap(find.text('День 1').last);
     await tester.pumpAndSettle();
     expect(find.text('Наполнение дня'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.arrow_back));
@@ -174,6 +174,9 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.pump(const Duration(milliseconds: 500));
+    // Новая программа — попап «Сделать активной?».
+    await tester.tap(find.text('Отмена'));
     await tester.pumpAndSettle();
 
     expect(find.text('Программы'), findsOneWidget);
@@ -389,8 +392,8 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.byIcon(Icons.playlist_add).at(0));
-      await tester.tap(find.byIcon(Icons.playlist_add).at(0));
+      await tester.ensureVisible(find.text('День 1').last);
+      await tester.tap(find.text('День 1').last);
       await tester.pumpAndSettle();
       expect(find.text('Наполнение дня'), findsOneWidget);
 
@@ -412,7 +415,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.playlist_add).at(1));
+      await tester.tap(find.text('День 2').last);
       await tester.pumpAndSettle();
 
       final programs = await repository.getPrograms();
@@ -710,4 +713,155 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Сохранить'), findsNothing);
     },
   );
+
+  testWidgets('при сохранении новой программы показывается попап активации', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final created = await repository.create(program('Новая'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final days = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(days.single.id!, exercise.id!);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: ProgramBuilderScreen(
+          repository: repository,
+          exerciseRepository: exerciseRepository,
+          programId: created.id,
+          forceInitiallyNew: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await enterName(tester, 'Новая');
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Сделать программу активной?'), findsOneWidget);
+    expect(find.text('Сделать активной'), findsOneWidget);
+  });
+
+  testWidgets('выбор «Сделать активной» в попапе активирует программу', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final created = await repository.create(program('Новая'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final days = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(days.single.id!, exercise.id!);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: ProgramBuilderScreen(
+          repository: repository,
+          exerciseRepository: exerciseRepository,
+          programId: created.id,
+          forceInitiallyNew: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await enterName(tester, 'Новая');
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.tap(find.text('Сделать активной'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final programs = await repository.getPrograms();
+    expect(programs, hasLength(1));
+    expect(programs.first.program.isActive, isTrue);
+  });
+
+  testWidgets(
+    'копирование дня дублирует упражнения и увеличивает количество дней',
+    (tester) async {
+      final exercise = await createExercise(
+        'Жим штанги',
+        ExerciseType.strength,
+      );
+      final created = await repository.create(program('Новая'), [
+        ProgramDay(programId: 0, dayIndex: 0),
+      ]);
+      final days = await repository.getDays(created.id!);
+      await repository.addExerciseToDay(days.single.id!, exercise.id!);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          home: ProgramBuilderScreen(
+            repository: repository,
+            programId: created.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Иконка копирования видна при 1 дне.
+      expect(find.byIcon(Icons.content_copy), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.content_copy));
+      await tester.pumpAndSettle();
+
+      // Стало 2 дня.
+      expect(find.text('День 2'), findsOneWidget);
+      final programs = await repository.getPrograms();
+      expect(programs.single.program.daysCount, 2);
+      final allDays = await repository.getDays(created.id!);
+      expect(allDays, hasLength(2));
+    },
+  );
+
+  testWidgets('при 7 днях иконка копирования скрыта', (tester) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final dayList = [
+      for (var i = 0; i < 7; i++) ProgramDay(programId: 0, dayIndex: i),
+    ];
+    final created = await repository.create(
+      program('Семёрка', daysCount: 7),
+      dayList,
+    );
+    final days = await repository.getDays(created.id!);
+    for (final day in days) {
+      await repository.addExerciseToDay(day.id!, exercise.id!);
+    }
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: ProgramBuilderScreen(
+          repository: repository,
+          programId: created.id,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.content_copy), findsNothing);
+  });
 }

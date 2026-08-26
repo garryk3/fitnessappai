@@ -20,7 +20,20 @@ class HomeWorkoutItem {
   Duration get duration => session.endedAt.difference(session.startedAt);
 }
 
-/// Управляет домашним экраном: активная программа, ближайший день,
+/// Информация об одной активной программе для домашнего экрана.
+class ActiveProgramInfo {
+  const ActiveProgramInfo({
+    required this.program,
+    required this.upcomingDay,
+    required this.exerciseNames,
+  });
+
+  final Program program;
+  final ProgramDay? upcomingDay;
+  final List<String> exerciseNames;
+}
+
+/// Управляет домашним экраном: активные программы, ближайшие дни,
 /// последние тренировки.
 class HomeController {
   HomeController({
@@ -45,11 +58,9 @@ class HomeController {
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> hasPrograms = Signal(false);
-  final Signal<Program?> activeProgram = Signal(null);
-  final Signal<ProgramDay?> upcomingDay = Signal(null);
 
-  /// Названия упражнений ближайшего дня (основной набор).
-  final Signal<List<String>> upcomingExerciseNames = Signal(const []);
+  /// Все активные программы с информацией о ближайшем дне.
+  final Signal<List<ActiveProgramInfo>> activePrograms = Signal(const []);
 
   /// Последние тренировки, свежие сверху.
   final Signal<List<HomeWorkoutItem>> recentWorkouts = Signal(const []);
@@ -59,25 +70,29 @@ class HomeController {
   Future<void> _load() async {
     isLoading.value = true;
     try {
-      final active = await programRepository.getActiveProgram();
-      activeProgram.value = active;
+      final allActive = await programRepository.getActivePrograms();
       hasPrograms.value =
-          active != null || (await programRepository.getPrograms()).isNotEmpty;
+          allActive.isNotEmpty ||
+          (await programRepository.getPrograms()).isNotEmpty;
 
-      if (active != null) {
-        final detail = await programRepository.getProgram(active.id!);
-        if (detail != null) {
-          final today = _dateOnly(_now()).weekday;
-          upcomingDay.value = _findUpcomingDay(detail.days, today);
-          upcomingExerciseNames.value = await _exerciseNamesOf(
-            detail,
-            upcomingDay.value,
-          );
+      final infos = <ActiveProgramInfo>[];
+      final today = _dateOnly(_now()).weekday;
+      for (final program in allActive) {
+        final detail = await programRepository.getProgram(program.id!);
+        if (detail == null) {
+          continue;
         }
-      } else {
-        upcomingDay.value = null;
-        upcomingExerciseNames.value = const [];
+        final upcomingDay = _findUpcomingDay(detail.days, today);
+        final exerciseNames = await _exerciseNamesOf(detail, upcomingDay);
+        infos.add(
+          ActiveProgramInfo(
+            program: program,
+            upcomingDay: upcomingDay,
+            exerciseNames: exerciseNames,
+          ),
+        );
       }
+      activePrograms.value = infos;
 
       final sessions = await workoutRepository.getAllSessions();
       final workouts = <HomeWorkoutItem>[];

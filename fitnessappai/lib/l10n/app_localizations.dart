@@ -376,6 +376,30 @@ abstract class AppLocalizations {
   /// **'Только свои упражнения'**
   String get exerciseListOnlyCustom;
 
+  /// No description provided for @exerciseListDeleteTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить упражнение ({count, plural, one{#} few{#} other{#}})?'**
+  String exerciseListDeleteTitle(int count);
+
+  /// No description provided for @exerciseListDeleteConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить {count, plural, one{выбранное упражнение} few{# выбранных упражнения} other{# выбранных упражнений}}?'**
+  String exerciseListDeleteConfirm(int count);
+
+  /// No description provided for @exerciseListDeleteButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get exerciseListDeleteButton;
+
+  /// No description provided for @exerciseListDeleteWarning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Упражнение используется в программах:'**
+  String get exerciseListDeleteWarning;
+
   /// No description provided for @schedulePerformed.
   ///
   /// In ru, this message translates to:
@@ -832,6 +856,12 @@ abstract class AppLocalizations {
   /// **'Сделать активной'**
   String get programMakeActive;
 
+  /// No description provided for @programActivatePrompt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сделать программу активной?'**
+  String get programActivatePrompt;
+
   /// No description provided for @programActive.
   ///
   /// In ru, this message translates to:
@@ -1011,6 +1041,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Добавить упражнение'**
   String get programBuilderAddExercise;
+
+  /// No description provided for @programBuilderCopyDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копировать день'**
+  String get programBuilderCopyDay;
 
   /// No description provided for @programBuilderPickExercise.
   ///

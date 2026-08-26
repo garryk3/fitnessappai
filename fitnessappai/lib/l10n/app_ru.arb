@@ -64,6 +64,16 @@
   "exerciseFilterAll": "Все",
   "exerciseListCreate": "Новое упражнение",
   "exerciseListOnlyCustom": "Только свои упражнения",
+  "exerciseListDeleteTitle": "Удалить упражнение ({count, plural, one{#} few{#} other{#}})?",
+  "@exerciseListDeleteTitle": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "exerciseListDeleteConfirm": "Удалить {count, plural, one{выбранное упражнение} few{# выбранных упражнения} other{# выбранных упражнений}}?",
+  "@exerciseListDeleteConfirm": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "exerciseListDeleteButton": "Удалить",
+  "exerciseListDeleteWarning": "Упражнение используется в программах:",
   "schedulePerformed": "Выполнено",
   "scheduleRescheduled": "Перенесено",
   "scheduleSkipped": "Пропущено",
@@ -159,6 +169,7 @@
   "programListEmpty": "Список программ пуст",
   "programListCreate": "Новая программа",
   "programMakeActive": "Сделать активной",
+  "programActivatePrompt": "Сделать программу активной?",
   "programActive": "Активная",
   "programDeactivate": "Деактивировать",
   "programCopyJson": "Скопировать JSON",
@@ -240,6 +251,7 @@
     }
   },
   "programBuilderAddExercise": "Добавить упражнение",
+  "programBuilderCopyDay": "Копировать день",
   "programBuilderPickExercise": "Выберите упражнение",
   "programBuilderMainSet": "Основной набор",
   "programBuilderAlternativeSet": "Альтернативный набор",

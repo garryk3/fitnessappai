@@ -32,6 +32,9 @@ class ExercisesScreen extends StatefulWidget {
 class _ExercisesScreenState extends State<ExercisesScreen> {
   late final ExerciseListController _controller;
   late final MediaCache _mediaCache;
+  final Set<int> _selectedIds = {};
+
+  bool get _selectionMode => _selectedIds.isNotEmpty;
 
   @override
   void initState() {
@@ -50,11 +53,122 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     super.dispose();
   }
 
+  void _toggleSelection(int id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _enterSelectionMode(int id) {
+    setState(() {
+      _selectedIds.add(id);
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectedIds.clear();
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    final l10n = AppLocalizations.of(context);
+    final repo = widget.repository ?? locator.get<ExerciseRepository>();
+    final selected = List<int>.from(_selectedIds);
+
+    // Собираем ссылки упражнений в программы.
+    final refsByName = <String, List<String>>{};
+    for (final id in selected) {
+      final programs = await repo.referencedPrograms(id);
+      if (programs.isNotEmpty) {
+        final name = (await repo.getById(id))?.name ?? '$id';
+        refsByName[name] = programs;
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    String? warning;
+    if (refsByName.isNotEmpty) {
+      final buffer = StringBuffer();
+      for (final entry in refsByName.entries) {
+        buffer.writeln('• ${entry.key} → ${entry.value.join(', ')}');
+      }
+      warning =
+          '${l10n.exerciseListDeleteWarning}\n\n${buffer.toString().trim()}';
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.exerciseListDeleteTitle(selected.length)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (warning != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  warning,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            Text(l10n.exerciseListDeleteConfirm(selected.length)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.exerciseListDeleteButton),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    for (final id in selected) {
+      await repo.delete(id);
+    }
+    _exitSelectionMode();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navExercises)),
+      appBar: AppBar(
+        title: _selectionMode
+            ? Text('${_selectedIds.length}')
+            : Text(l10n.navExercises),
+        leading: _selectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _exitSelectionMode,
+              )
+            : null,
+        actions: _selectionMode
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: _deleteSelected,
+                ),
+              ]
+            : null,
+      ),
       body: Column(
         children: [
           Padding(
@@ -147,12 +261,23 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
+          final id = item.exercise.id!;
+          final selected = _selectedIds.contains(id);
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: _ExerciseCard(
               item: item,
               mediaCache: _mediaCache,
-              onTap: () => context.push('/exercises/${item.exercise.id}'),
+              selected: selected,
+              selectionMode: _selectionMode,
+              onTap: () {
+                if (_selectionMode) {
+                  _toggleSelection(id);
+                } else {
+                  context.push('/exercises/$id');
+                }
+              },
+              onLongPress: () => _enterSelectionMode(id),
             ),
           );
         },
@@ -173,11 +298,17 @@ class _ExerciseCard extends StatelessWidget {
     required this.item,
     required this.mediaCache,
     required this.onTap,
+    required this.onLongPress,
+    this.selected = false,
+    this.selectionMode = false,
   });
 
   final ExerciseListItem item;
   final MediaCache mediaCache;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final bool selected;
+  final bool selectionMode;
 
   @override
   Widget build(BuildContext context) {
@@ -185,12 +316,19 @@ class _ExerciseCard extends StatelessWidget {
     final exercise = item.exercise;
     return Card(
       clipBehavior: Clip.antiAlias,
+      color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
+              if (selectionMode)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Checkbox(value: selected, onChanged: (_) => onTap()),
+                ),
               _Thumbnail(exercise: exercise, mediaCache: mediaCache),
               const SizedBox(width: 16),
               Expanded(
