@@ -391,13 +391,18 @@ class _MetricLineChart extends StatelessWidget {
                 if (index < 0 || index >= labels.length) {
                   return const SizedBox.shrink();
                 }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    labels[index],
-                    style: theme.textTheme.labelSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                return SideTitleWidget(
+                  meta: meta,
+                  space: 4,
+                  fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      labels[index],
+                      style: theme.textTheme.labelSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 );
               },

@@ -145,6 +145,52 @@ void main() {
     expect(_chartYs(tester), [180, 179, 180]);
   });
 
+  testWidgets('график: подписи снизу не выходят за пределы блока (fitInside)', (
+    tester,
+  ) async {
+    await repo.add(measurement(date: DateTime(2026, 8, 1), weightKg: 84));
+    await repo.add(measurement(date: DateTime(2026, 8, 5), weightKg: 82));
+    await repo.add(measurement(date: DateTime(2026, 8, 10), weightKg: 81));
+
+    await pumpProfile(tester);
+
+    expect(find.byType(LineChart), findsOneWidget);
+    final titles = tester
+        .widgetList<SideTitleWidget>(find.byType(SideTitleWidget))
+        .toList();
+    // Нижние подписи обёрнуты в SideTitleWidget с включённым fitInside,
+    // чтобы последняя подпись не выходила за правый край графика.
+    expect(titles, isNotEmpty);
+    for (final title in titles) {
+      expect(title.fitInside.enabled, isTrue);
+    }
+  });
+
+  testWidgets('график: подпись «Сегодня» для замера текущего дня', (
+    tester,
+  ) async {
+    await repo.add(measurement(date: DateTime.now(), weightKg: 80));
+
+    await pumpProfile(tester);
+
+    expect(find.byType(LineChart), findsOneWidget);
+    expect(find.text('Сегодня'), findsWidgets);
+  });
+
+  testWidgets('график: дата замера в формате «д.мес» рядом с «Сегодня»', (
+    tester,
+  ) async {
+    final past = DateTime.now().subtract(const Duration(days: 3));
+    await repo.add(measurement(date: past, weightKg: 80));
+
+    await pumpProfile(tester);
+
+    final expected = DateFormat('d.M', 'ru').format(past);
+    expect(find.byType(LineChart), findsOneWidget);
+    expect(find.text(expected), findsOneWidget);
+    expect(find.text('Сегодня'), findsWidgets);
+  });
+
   testWidgets('удаление замера с подтверждением', (tester) async {
     await repo.add(measurement(weightKg: 80));
 

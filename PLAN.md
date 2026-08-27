@@ -1916,6 +1916,20 @@ fitnessappai/
 | 23.2 | Переименовать тип упражнения «планка» → «время» | [x] | task/23-stage | 2026-08-27 |
 | 23.3 | Не сохранять упражнение при выходе без «Сохранить» | [x] | task/23-stage | 2026-08-27 |
 | 23.4 | Навигация: единый порядок иконок, вкладка «Программы» всегда видна | [x] | task/23-stage | 2026-08-27 |
+| 24.1 | Профиль «Динамика»: последнее измерение выходит за границы блока | [x] | task/24-settings-dynamics-fixes | 2026-08-27 |
+| 24.2 | Настройки: после «Обновить» ничего не происходит (нет редиректа/скачивания) | [x] | task/24-settings-dynamics-fixes | 2026-08-27 |
+
+### План работы — Этап 24
+
+**Задача 24.1 — «Динамика», переполнение последнего измерения.**
+- Причина: `_MetricLineChart` (`lib/features/profile/ui/profile_screen.dart`, `getTitlesWidget` нижних подписей) возвращает голый `Padding`+`Text` без `SideTitleWidget`/`fitInside`; fl_chart центрирует подпись по правой точке → «Сегодня»/дата выходит за край графика.
+- Фикс: обернуть нижнюю подпись в `SideTitleWidget(meta, space:4, fitInside: SideTitleFitInsideData.fromTitleMeta(meta))`.
+- Тесты: подписи обёрнуты в `SideTitleWidget` с `fitInside.enabled`; лейбл «Сегодня» для замера текущего дня; дата в формате «д.мес» рядом с «Сегодня».
+
+**Задача 24.2 — «Обновить» ничего не делает.**
+- Причины: (A) в `AndroidManifest.xml` нет `<queries>` для `ACTION_VIEW`/`https` → `canLaunchUrl` возвращает `false` на Android 11+ → `_defaultOpenRelease` молча пропускает `launchUrl`; (B) `openUpdate`/`launchUrl` без try/catch → невидимая ошибка; (C) всегда предпочитается `apkUrl` без fallback на `htmlUrl`.
+- Фикс: добавить `<queries><intent><action VIEW/><data scheme=https/></intent></queries>`; в `UpdateCheckController` обернуть открытие в try/catch с видимым статусом ошибки и fallback `apkUrl`→`htmlUrl` при ошибке открытия; `_defaultOpenRelease` бросает ошибку вместо молчаливого пропуска.
+- Тесты: fallback на `htmlUrl` при ошибке открытия APK; ошибка открытия → `hasError`+`statusText`; реальный `launchUrl` через мок `UrlLauncherPlatform` (и `canLaunch=false` → видимый статус); UI показывает сообщение об ошибке.
 
 ## Порядок выполнения
 
@@ -1931,3 +1945,4 @@ fitnessappai/
 9. **Этап 21:** задачи 21.1–21.5 независимы, выполняются по порядку.
 10. **Этап 22:** задачи 22.1–22.5 независимы, выполняются по порядку; 22.6 — исследование, отдельно.
 11. **Этап 23:** задачи 23.1–23.4 независимы, выполняются по порядку.
+12. **Этап 24:** задачи 24.1–24.2 независимы, выполняются по порядку.

@@ -466,4 +466,34 @@ void main() {
     expect(find.text('Установлена актуальная версия'), findsOneWidget);
     expect(find.text('Доступна новая версия'), findsNothing);
   });
+
+  testWidgets('ошибка открытия APK — показывается сообщение об ошибке', (
+    tester,
+  ) async {
+    final updateController = UpdateCheckController(
+      service: _FakeUpdateService(
+        release: const ReleaseInfo(
+          tagName: 'v1.1.0',
+          apkUrl: 'https://example.com/app.apk',
+          htmlUrl: 'https://example.com/release/1.1.0',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+      openRelease: (_) async => throw Exception('ACTIVITY_NOT_FOUND'),
+    );
+    await pumpScreen(tester, updateController: updateController);
+
+    await tester.tap(find.text('Проверить обновление'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Доступна новая версия'), findsOneWidget);
+
+    await tester.tap(find.text('Обновить'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Не удалось открыть ссылку на обновление.'),
+      findsOneWidget,
+    );
+  });
 }

@@ -61,5 +61,12 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Позволяет url_launcher находить браузер (package visibility на
+             Android 11+), иначе canLaunchUrl возвращает false и открытие
+             ссылки «Обновить» молча не срабатывает. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
     </queries>
 </manifest>

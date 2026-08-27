@@ -86,6 +86,9 @@ class UpdateCheckController {
   }
 
   /// Открывает ссылку на скачивание последнего релиза в браузере.
+  ///
+  /// При неудачной попытке открыть APK пробует страницу релиза как запасной
+  /// вариант, а если и она не открылась — выставляет видимый статус ошибки.
   Future<void> openUpdate() async {
     final release = _latestRelease;
     if (release == null) {
@@ -95,7 +98,30 @@ class UpdateCheckController {
     if (url == null || url.isEmpty) {
       return;
     }
-    await _openRelease(url);
+    final opened = await _openWithFallback(url, release.htmlUrl);
+    if (!opened) {
+      statusText.value = 'Не удалось открыть ссылку на обновление.';
+      hasError.value = true;
+    }
+  }
+
+  /// Открывает [url]; при ошибке пробует запасной [fallback] и возвращает
+  /// `true`, если хотя бы одна из попыток увенчалась успехом.
+  Future<bool> _openWithFallback(String url, String? fallback) async {
+    try {
+      await _openRelease(url);
+      return true;
+    } catch (_) {
+      if (fallback != null && fallback.isNotEmpty && fallback != url) {
+        try {
+          await _openRelease(fallback);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+      return false;
+    }
   }
 
   static Future<String> _defaultLoadVersion() async {
@@ -105,9 +131,14 @@ class UpdateCheckController {
 
   static Future<void> _defaultOpenRelease(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (uri.scheme != 'https' && uri.scheme != 'http') {
+      throw ArgumentError('Неподдерживаемый протокол ссылки: ${uri.scheme}');
     }
+    final canOpen = await canLaunchUrl(uri);
+    if (!canOpen) {
+      throw StateError('Нет приложения для просмотра ссылки: $url');
+    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   /// Сравнивает семантические версии без префикса `v`: `latest` новее `current`.

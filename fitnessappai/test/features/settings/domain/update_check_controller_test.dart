@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:url_launcher_platform_interface/link.dart';
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
 import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
@@ -20,6 +22,27 @@ class _FakeUpdateService implements UpdateService {
       throw error;
     }
     return release;
+  }
+}
+
+/// Поддельная платформа url_launcher: [canLaunchResult] управляет
+/// результатом `canLaunchUrl`.
+class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
+  _FakeUrlLauncherPlatform(this.canLaunchResult);
+
+  final bool canLaunchResult;
+  String? launchedUrl;
+
+  @override
+  LinkDelegate? get linkDelegate => null;
+
+  @override
+  Future<bool> canLaunch(String url) async => canLaunchResult;
+
+  @override
+  Future<bool> launchUrl(String url, LaunchOptions options) async {
+    launchedUrl = url;
+    return true;
   }
 }
 
@@ -167,6 +190,58 @@ void main() {
     expect(openedUrl, 'https://example.com/app.apk');
   });
 
+  test('openUpdate при ошибке APK открывает запасную страницу релиза', () async {
+    final calls = <String>[];
+    final controller = UpdateCheckController(
+      service: _FakeUpdateService(
+        release: const ReleaseInfo(
+          tagName: 'v1.1.0',
+          apkUrl: 'https://example.com/app.apk',
+          htmlUrl: 'https://example.com/release/1.1.0',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+      openRelease: (url) async {
+        if (url.contains('app.apk')) {
+          throw Exception('ACTIVITY_NOT_FOUND');
+        }
+        calls.add(url);
+      },
+    );
+    await controller.loadVersion();
+    await controller.checkForUpdates();
+
+    await controller.openUpdate();
+
+    expect(calls, ['https://example.com/release/1.1.0']);
+    expect(controller.hasError.value, isFalse);
+    expect(controller.statusText.value, 'Доступна новая версия 1.1.0');
+  });
+
+  test('openUpdate при ошибке APK и страницы релиза показывает ошибку', () async {
+    final controller = UpdateCheckController(
+      service: _FakeUpdateService(
+        release: const ReleaseInfo(
+          tagName: 'v1.1.0',
+          apkUrl: 'https://example.com/app.apk',
+          htmlUrl: 'https://example.com/release/1.1.0',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+      openRelease: (_) async => throw Exception('ACTIVITY_NOT_FOUND'),
+    );
+    await controller.loadVersion();
+    await controller.checkForUpdates();
+
+    await controller.openUpdate();
+
+    expect(controller.hasError.value, isTrue);
+    expect(
+      controller.statusText.value,
+      'Не удалось открыть ссылку на обновление.',
+    );
+  });
+
   test('openUpdate без найденного релиза ничего не делает', () async {
     final controller = buildController(latestTag: 'v1.1.0');
     await controller.openUpdate();
@@ -209,5 +284,53 @@ void main() {
     await controller.checkForUpdates();
 
     expect(controller.hasUpdate.value, isFalse);
+  });
+
+  test('можно открыть — реальный launchUrl вызывается с https-ссылкой', () async {
+    const url = 'https://example.com/app.apk';
+    final controller = UpdateCheckController(
+      service: _FakeUpdateService(
+        release: const ReleaseInfo(tagName: 'v1.1.0', apkUrl: url),
+      ),
+      loadVersion: () async => '1.0.0',
+    );
+    final previous = UrlLauncherPlatform.instance;
+    UrlLauncherPlatform.instance = _FakeUrlLauncherPlatform(true);
+    addTearDown(() => UrlLauncherPlatform.instance = previous);
+    await controller.loadVersion();
+    await controller.checkForUpdates();
+
+    await controller.openUpdate();
+
+    final fake = UrlLauncherPlatform.instance as _FakeUrlLauncherPlatform;
+    expect(fake.launchedUrl, url);
+    expect(controller.hasError.value, isFalse);
+  });
+
+  test('нечем открыть (canLaunch=false) — статус ошибки, а не тишина', () async {
+    final controller = UpdateCheckController(
+      service: _FakeUpdateService(
+        release: const ReleaseInfo(
+          tagName: 'v1.1.0',
+          apkUrl: 'https://example.com/app.apk',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+    );
+    final previous = UrlLauncherPlatform.instance;
+    UrlLauncherPlatform.instance = _FakeUrlLauncherPlatform(false);
+    addTearDown(() => UrlLauncherPlatform.instance = previous);
+    await controller.loadVersion();
+    await controller.checkForUpdates();
+
+    await controller.openUpdate();
+
+    final fake = UrlLauncherPlatform.instance as _FakeUrlLauncherPlatform;
+    expect(fake.launchedUrl, isNull);
+    expect(controller.hasError.value, isTrue);
+    expect(
+      controller.statusText.value,
+      'Не удалось открыть ссылку на обновление.',
+    );
   });
 }
