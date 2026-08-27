@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -81,6 +82,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   int? _programId;
   bool _isActive = false;
   late final bool _initiallyNew;
+  bool _createdNewProgram = false;
+  bool _programFinalized = false;
 
   List<MuscleGroup> _allMuscleGroups = [];
   Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
@@ -105,6 +108,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   @override
   void dispose() {
+    final programId = _programId;
+    if (_createdNewProgram &&
+        !_programFinalized &&
+        programId != null &&
+        _days.every((d) => !d.filled)) {
+      unawaited(_repository.delete(programId));
+    }
     _nameController.dispose();
     _descriptionController.dispose();
     _warmupController.dispose();
@@ -539,6 +549,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final saved = _programId == null
         ? await _repository.create(program, days)
         : await _repository.update(program, days: days);
+    if (_programId == null) {
+      _createdNewProgram = true;
+    }
     _programId = saved.id;
     await _syncDayKeys();
     return saved;
@@ -640,6 +653,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       final previousReminders = await _previousReminders();
       final saved = await _persist();
       if (saved != null && mounted) {
+        _programFinalized = true;
         await _applyReminders(saved.id!, previousReminders);
         if (shouldActivate && mounted) {
           final activate = await _showActivateDialog();

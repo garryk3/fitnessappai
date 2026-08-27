@@ -295,7 +295,10 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: FilledButton(
-                  onPressed: _saving ? null : _save,
+                  onPressed:
+                      _saving || (_mainItems.isEmpty && _altItems.isEmpty)
+                      ? null
+                      : _save,
                   child: _saving
                       ? const SizedBox(
                           width: 20,

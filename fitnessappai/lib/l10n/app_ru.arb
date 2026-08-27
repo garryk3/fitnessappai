@@ -64,16 +64,17 @@
   "exerciseFilterAll": "Все",
   "exerciseListCreate": "Новое упражнение",
   "exerciseListOnlyCustom": "Только свои упражнения",
-  "exerciseListDeleteTitle": "Удалить упражнение ({count, plural, one{#} few{#} other{#}})?",
+  "exerciseListDeleteTitle": "Удалить упражнение ({count})?",
   "@exerciseListDeleteTitle": {
     "placeholders": {"count": {"type": "int"}}
   },
-  "exerciseListDeleteConfirm": "Удалить {count, plural, one{выбранное упражнение} few{# выбранных упражнения} other{# выбранных упражнений}}?",
+  "exerciseListDeleteConfirm": "Удалить {count, plural, one{{count} упражнение} few{{count} упражнения} other{{count} упражнений}}?",
   "@exerciseListDeleteConfirm": {
     "placeholders": {"count": {"type": "int"}}
   },
   "exerciseListDeleteButton": "Удалить",
   "exerciseListDeleteWarning": "Упражнение используется в программах:",
+  "exerciseListDeleteBlockedHint": "Сначала удалите его из программы.",
   "schedulePerformed": "Выполнено",
   "scheduleRescheduled": "Перенесено",
   "scheduleSkipped": "Пропущено",

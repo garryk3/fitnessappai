@@ -156,14 +156,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String exerciseListDeleteTitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '#',
-      few: '#',
-      one: '#',
-    );
-    return 'Удалить упражнение ($_temp0)?';
+    return 'Удалить упражнение ($count)?';
   }
 
   @override
@@ -171,9 +164,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '# выбранных упражнений',
-      few: '# выбранных упражнения',
-      one: 'выбранное упражнение',
+      other: '$count упражнений',
+      few: '$count упражнения',
+      one: '$count упражнение',
     );
     return 'Удалить $_temp0?';
   }
@@ -184,6 +177,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get exerciseListDeleteWarning =>
       'Упражнение используется в программах:';
+
+  @override
+  String get exerciseListDeleteBlockedHint =>
+      'Сначала удалите его из программы.';
 
   @override
   String get schedulePerformed => 'Выполнено';
