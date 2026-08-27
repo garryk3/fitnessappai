@@ -187,6 +187,10 @@ void main() {
       expect(controller.activePrograms.value.first.program.id, program.id);
       // Непривязанный день теперь отображается как ближайший.
       expect(controller.activePrograms.value.first.upcomingDay, isNotNull);
+      expect(
+        controller.activePrograms.value.first.upcomingDay?.dayOfWeek,
+        isNull,
+      );
       expect(controller.activePrograms.value.first.exerciseNames, isEmpty);
     },
   );

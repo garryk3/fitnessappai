@@ -5,8 +5,8 @@ import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Адаптивная оболочка: на широких экранах — NavigationRail,
-/// на узких — NavigationBar. На экранах < 400dp вкладка «Программы»
-/// скрыта из нижней навигации (доступна через кнопку на главном экране).
+/// на узких — NavigationBar. Порядок вкладок и набор иконок одинаковые
+/// для всех размеров экрана.
 class AdaptiveNavigation extends StatelessWidget {
   const AdaptiveNavigation({super.key, required this.navigationShell});
 
@@ -117,22 +117,7 @@ class AdaptiveNavigation extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool expanded = AppBreakpoints.isExpanded(constraints.maxWidth);
-        final bool narrowBar = AppBreakpoints.hidesBarLabels(
-          constraints.maxWidth,
-        );
         final allDestinations = _destinations(context);
-
-        // На узких экранах (< 400dp) убираем «Программы» и переставляем
-        // порядок: Прогресс, План, Главная, Упражнения, Профиль.
-        final barDestinations = narrowBar
-            ? [
-                for (final d in allDestinations)
-                  if (d.branchIndex == 4 || d.branchIndex == 3) d,
-                allDestinations.firstWhere((d) => d.branchIndex == 0),
-                for (final d in allDestinations)
-                  if (d.branchIndex == 1 || d.branchIndex == 5) d,
-              ]
-            : allDestinations;
 
         if (expanded) {
           return Scaffold(
@@ -152,27 +137,12 @@ class AdaptiveNavigation extends StatelessWidget {
         return Scaffold(
           body: navigationShell,
           bottomNavigationBar: NavigationBar(
-            selectedIndex: narrowBar
-                ? barDestinations.indexWhere(
-                    (d) => d.branchIndex == navigationShell.currentIndex,
-                  )
-                : navigationShell.currentIndex,
+            selectedIndex: navigationShell.currentIndex,
             onDestinationSelected: (uiIndex) {
-              _onDestinationSelected(barDestinations[uiIndex].branchIndex);
+              _onDestinationSelected(allDestinations[uiIndex].branchIndex);
             },
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-            destinations: [
-              for (final d in barDestinations)
-                NavigationDestination(
-                  icon: d.branchIndex == 0 && narrowBar
-                      ? const Icon(Icons.home_outlined, size: 28)
-                      : d.bar.icon,
-                  selectedIcon: d.branchIndex == 0 && narrowBar
-                      ? const Icon(Icons.home, size: 28)
-                      : d.bar.selectedIcon,
-                  label: d.bar.label,
-                ),
-            ],
+            destinations: [for (final d in allDestinations) d.bar],
           ),
         );
       },

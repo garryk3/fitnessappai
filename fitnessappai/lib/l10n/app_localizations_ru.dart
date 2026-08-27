@@ -134,7 +134,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseTypeBodyweight => 'Свой вес';
 
   @override
-  String get exerciseTypePlank => 'Планка';
+  String get exerciseTypePlank => 'Время';
 
   @override
   String get exerciseTypeRunning => 'Бег';
@@ -875,6 +875,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeUpcomingDay => 'Ближайший день';
+
+  @override
+  String get homeUpcomingDayNotAssigned => 'не назначен';
 
   @override
   String get homeRecentWorkouts => 'Последние тренировки';

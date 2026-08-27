@@ -137,6 +137,25 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> addAndSaveStrength(
+    WidgetTester tester,
+    String name, {
+    int sets = 3,
+    int reps = 10,
+  }) async {
+    await addExercise(tester, name);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Подходы'),
+      '$sets',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Повторения'),
+      '$reps',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+  }
+
   List<String> tileTitles(WidgetTester tester) => tester
       .widgetList<ListTile>(find.byType(ListTile))
       .map((tile) => (tile.title as Text).data!)
@@ -177,26 +196,63 @@ void main() {
     expect(find.textContaining('кг'), findsNothing);
   });
 
-  testWidgets('добавление упражнения сразу открывает экран параметров', (
-    tester,
-  ) async {
-    final program = await createProgram('Сплит', 1);
-    await createExercise('Приседания', ExerciseType.strength);
+  testWidgets(
+    'добавление упражнения и выход без сохранения — упражнение не добавляется',
+    (tester) async {
+      final program = await createProgram('Сплит', 1);
+      await createExercise('Приседания', ExerciseType.strength);
 
-    await pumpDayBuilder(tester, programId: program.id!);
-    expect(find.text('В этом дне пока нет упражнений'), findsOneWidget);
+      await pumpDayBuilder(tester, programId: program.id!);
+      expect(find.text('В этом дне пока нет упражнений'), findsOneWidget);
 
-    await addExercise(tester, 'Приседания');
+      await addExercise(tester, 'Приседания');
 
-    expect(find.text('Параметры упражнения'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'Подходы'), findsOneWidget);
+      expect(find.text('Параметры упражнения'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, 'Подходы'), findsOneWidget);
 
-    await closeParams(tester);
+      await closeParams(tester);
 
-    expect(find.text('Приседания'), findsOneWidget);
-    expect(find.text('Параметры не заданы'), findsOneWidget);
-    expect(find.text('В этом дне пока нет упражнений'), findsNothing);
-  });
+      expect(find.text('Приседания'), findsNothing);
+      expect(find.text('Параметры не заданы'), findsNothing);
+      expect(find.text('В этом дне пока нет упражнений'), findsOneWidget);
+
+      final days = await programRepository.getDays(program.id!);
+      final exercises = await programRepository.getExercises(days[0].id!);
+      expect(exercises, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'добавление упражнения и сохранение параметров — упражнение остаётся',
+    (tester) async {
+      final program = await createProgram('Сплит', 1);
+      await createExercise('Приседания', ExerciseType.strength);
+
+      await pumpDayBuilder(tester, programId: program.id!);
+      await addExercise(tester, 'Приседания');
+
+      expect(find.text('Параметры упражнения'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Подходы'),
+        '3',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Повторения'),
+        '10',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Приседания'), findsOneWidget);
+      expect(find.text('Параметры не заданы'), findsNothing);
+
+      final days = await programRepository.getDays(program.id!);
+      final exercises = await programRepository.getExercises(days[0].id!);
+      expect(exercises, hasLength(1));
+      expect(exercises.single.sets, 3);
+      expect(exercises.single.reps, 10);
+    },
+  );
 
   testWidgets('альтернативный набор редактируется отдельно', (tester) async {
     final program = await createProgram('Сплит', 1);
@@ -204,13 +260,11 @@ void main() {
     await createExercise('Рывок гири', ExerciseType.strength);
 
     await pumpDayBuilder(tester, programId: program.id!);
-    await addExercise(tester, 'Приседания');
-    await closeParams(tester);
+    await addAndSaveStrength(tester, 'Приседания');
 
     await tester.tap(find.text('Альтернативный набор'));
     await tester.pumpAndSettle();
-    await addExercise(tester, 'Рывок гири');
-    await closeParams(tester);
+    await addAndSaveStrength(tester, 'Рывок гири');
 
     expect(find.text('Рывок гири'), findsOneWidget);
     expect(find.text('Приседания'), findsNothing);
@@ -259,12 +313,12 @@ void main() {
   });
 
   testWidgets('невалидные позиции блокируют сохранение', (tester) async {
+    final exercise = await createExercise('Приседания', ExerciseType.strength);
     final program = await createProgram('Сплит', 1);
-    await createExercise('Приседания', ExerciseType.strength);
+    final days = await programRepository.getDays(program.id!);
+    await programRepository.addExerciseToDay(days[0].id!, exercise.id!);
 
     await pumpDayBuilder(tester, programId: program.id!);
-    await addExercise(tester, 'Приседания');
-    await closeParams(tester);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();

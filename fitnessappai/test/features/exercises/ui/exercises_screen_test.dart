@@ -104,12 +104,18 @@ void main() {
       exercise('Бег трусцой', type: ExerciseType.running),
       const [],
     );
+    await repository.create(
+      exercise('Планка', type: ExerciseType.plank),
+      const [],
+    );
     await pumpExercises(tester);
 
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(find.text('Бег трусцой'), findsOneWidget);
+    expect(find.text('Планка'), findsOneWidget);
     expect(find.text('Силовые'), findsWidgets);
     expect(find.text('Бег'), findsWidgets);
+    expect(find.text('Время'), findsWidgets);
   });
 
   testWidgets('поиск фильтрует список по названию', (tester) async {
@@ -136,7 +142,7 @@ void main() {
     await pumpExercises(tester);
 
     await tester.tap(
-      find.ancestor(of: find.text('Планка'), matching: find.byType(FilterChip)),
+      find.ancestor(of: find.text('Время'), matching: find.byType(FilterChip)),
     );
     await tester.pumpAndSettle();
 

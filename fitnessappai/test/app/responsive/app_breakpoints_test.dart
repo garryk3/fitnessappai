@@ -19,12 +19,5 @@ void main() {
       expect(AppBreakpoints.isExpanded(1200), isTrue);
       expect(AppBreakpoints.isExpanded(800), isFalse);
     });
-
-    test('hidesBarLabels: подписи скрываются ниже 400dp', () {
-      expect(AppBreakpoints.hidesBarLabels(320), isTrue);
-      expect(AppBreakpoints.hidesBarLabels(399), isTrue);
-      expect(AppBreakpoints.hidesBarLabels(400), isFalse);
-      expect(AppBreakpoints.hidesBarLabels(800), isFalse);
-    });
   });
 }
