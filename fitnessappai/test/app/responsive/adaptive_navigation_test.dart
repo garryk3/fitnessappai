@@ -65,13 +65,13 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.text('Главная'), findsWidgets);
     expect(navLabelOpacity(tester, 'Главная'), 0.0);
-    // На экранах < 400dp вкладка «Программы» скрыта из нижней навигации.
+    // «Программы» видна на всех размерах экрана.
     expect(
       find.descendant(
         of: find.byType(NavigationBar),
         matching: find.text('Программы'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
     expect(find.byIcon(Icons.fitness_center_outlined), findsOneWidget);
   });
@@ -86,6 +86,30 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('порядок вкладок одинаковый на узком и среднем экране', (
+    tester,
+  ) async {
+    // Порядок читаем через вкладки NavigationBar.
+    Future<List<String>> destinationLabels(Size size) async {
+      await pumpAtSize(tester, size);
+      final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+      return bar.destinations
+          .map((d) => (d as NavigationDestination).label)
+          .toList();
+    }
+
+    const expected = [
+      'Главная',
+      'Упражнения',
+      'Программы',
+      'План',
+      'Прогресс',
+      'Профиль',
+    ];
+    expect(await destinationLabels(const Size(360, 800)), expected);
+    expect(await destinationLabels(const Size(800, 800)), expected);
   });
 
   testWidgets('на широком экране подписи навигации скрыты', (tester) async {
