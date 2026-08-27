@@ -379,13 +379,13 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseListDeleteTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Удалить упражнение ({count, plural, one{#} few{#} other{#}})?'**
+  /// **'Удалить упражнение ({count})?'**
   String exerciseListDeleteTitle(int count);
 
   /// No description provided for @exerciseListDeleteConfirm.
   ///
   /// In ru, this message translates to:
-  /// **'Удалить {count, plural, one{выбранное упражнение} few{# выбранных упражнения} other{# выбранных упражнений}}?'**
+  /// **'Удалить {count, plural, one{{count} упражнение} few{{count} упражнения} other{{count} упражнений}}?'**
   String exerciseListDeleteConfirm(int count);
 
   /// No description provided for @exerciseListDeleteButton.
@@ -399,6 +399,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Упражнение используется в программах:'**
   String get exerciseListDeleteWarning;
+
+  /// No description provided for @exerciseListDeleteBlockedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала удалите его из программы.'**
+  String get exerciseListDeleteBlockedHint;
 
   /// No description provided for @schedulePerformed.
   ///

@@ -530,4 +530,23 @@ void main() {
 
     expect(find.byType(Divider), findsWidgets);
   });
+
+  testWidgets('Сохранить заблокирован, пока в дне нет упражнений', (
+    tester,
+  ) async {
+    final program = await createProgram('Сплит', 1);
+    await createExercise('Жим штанги', ExerciseType.strength);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    FilledButton saveButton() => tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Сохранить'),
+    );
+    expect(saveButton().onPressed, isNull);
+
+    await addExercise(tester, 'Жим штанги');
+    await tester.pumpAndSettle();
+
+    expect(saveButton().onPressed, isNotNull);
+  });
 }

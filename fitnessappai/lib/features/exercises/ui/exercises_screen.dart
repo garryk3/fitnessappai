@@ -120,6 +120,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
+            if (refsByName.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  l10n.exerciseListDeleteBlockedHint,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
             Text(l10n.exerciseListDeleteConfirm(selected.length)),
           ],
         ),
@@ -129,7 +137,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: refsByName.isEmpty
+                ? () => Navigator.of(context).pop(true)
+                : null,
             child: Text(l10n.exerciseListDeleteButton),
           ),
         ],

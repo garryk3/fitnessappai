@@ -864,4 +864,60 @@ void main() {
 
     expect(find.byIcon(Icons.content_copy), findsNothing);
   });
+
+  testWidgets(
+    'новая пустая программа удаляется при выходе без заполнения дней',
+    (tester) async {
+      final router = GoRouter(
+        initialLocation: '/home/programs/new',
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) =>
+                const Scaffold(body: Center(child: Text('Программы'))),
+            routes: [
+              GoRoute(
+                path: 'programs/new',
+                builder: (context, state) =>
+                    ProgramBuilderScreen(repository: repository),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/programs/:id/day/:dayIndex',
+            builder: (context, state) =>
+                Scaffold(appBar: AppBar(title: const Text('Наполнение дня'))),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await enterName(tester, 'Пустая');
+      expect(await repository.getPrograms(), isEmpty);
+
+      await tester.tap(find.text('День 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Наполнение дня'), findsOneWidget);
+      // Скаффолд уже персистится при открытии дня.
+      expect(await repository.getPrograms(), hasLength(1));
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      // Размонтируем конструктор — программа без единого упражнения удаляется.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+
+      expect(await repository.getPrograms(), isEmpty);
+    },
+  );
 }

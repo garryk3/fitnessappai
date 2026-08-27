@@ -10,11 +10,14 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -224,4 +227,133 @@ void main() {
     expect(find.byType(Image), findsNothing);
     expect(find.byIcon(Icons.fitness_center), findsOneWidget);
   });
+
+  Future<void> selectExercises(WidgetTester tester, List<String> names) async {
+    await tester.longPress(find.text(names.first));
+    await tester.pumpAndSettle();
+    for (final name in names.skip(1)) {
+      await tester.tap(find.text(name));
+      await tester.pumpAndSettle();
+    }
+  }
+
+  Future<void> addToProgram(int exerciseId, String programName) async {
+    final programRepo = ProgramRepository(db);
+    final created = await programRepo.create(
+      Program(
+        name: programName,
+        daysCount: 1,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
+    final dayRow = (await programRepo.getDays(created.id!)).single;
+    await programRepo.addExerciseToDay(dayRow.id!, exerciseId);
+  }
+
+  testWidgets('диалог удаления показывает число и склонение без «#»', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await repository.create(exercise('Жим штанги'), const []);
+    await repository.create(exercise('Приседания'), const []);
+    await repository.create(exercise('Выпады'), const []);
+    await repository.create(exercise('Подтягивания'), const []);
+    await repository.create(exercise('Отжимания'), const []);
+    await pumpExercises(tester);
+
+    await selectExercises(tester, [
+      'Жим штанги',
+      'Приседания',
+      'Выпады',
+      'Подтягивания',
+      'Отжимания',
+    ]);
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Удалить упражнение (5)?'), findsOneWidget);
+    expect(find.text('Удалить 5 упражнений?'), findsOneWidget);
+    expect(find.textContaining('#'), findsNothing);
+    expect(find.textContaining('Приседания → '), findsNothing);
+  });
+
+  testWidgets('диалог удаления двух упражнений склоняет корректно', (
+    tester,
+  ) async {
+    await repository.create(exercise('Жим штанги'), const []);
+    await repository.create(exercise('Приседания'), const []);
+    await pumpExercises(tester);
+
+    await selectExercises(tester, ['Жим штанги', 'Приседания']);
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Удалить упражнение (2)?'), findsOneWidget);
+    expect(find.text('Удалить 2 упражнения?'), findsOneWidget);
+  });
+
+  testWidgets('кнопка удаления заблокирована, если выбранное используется', (
+    tester,
+  ) async {
+    final used = await repository.create(exercise('Жим штанги'), const []);
+    final other = await repository.create(exercise('Приседания'), const []);
+    await addToProgram(used.id!, 'Программа А');
+    await pumpExercises(tester);
+
+    await selectExercises(tester, ['Жим штанги', 'Приседания']);
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Упражнение используется в программах'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Программа А'), findsOneWidget);
+    expect(find.text('Сначала удалите его из программы.'), findsOneWidget);
+
+    final deleteButton = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text('Удалить'),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    expect(deleteButton.onPressed, isNull);
+
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+
+    expect(await repository.getById(used.id!), isNotNull);
+    expect(await repository.getById(other.id!), isNotNull);
+  });
+
+  testWidgets(
+    'кнопка удаления активна и удаляет, если ничего не используется',
+    (tester) async {
+      final first = await repository.create(exercise('Жим штанги'), const []);
+      final second = await repository.create(exercise('Приседания'), const []);
+      await pumpExercises(tester);
+
+      await selectExercises(tester, ['Жим штанги', 'Приседания']);
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+
+      final deleteButton = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text('Удалить'),
+          matching: find.byType(FilledButton),
+        ),
+      );
+      expect(deleteButton.onPressed, isNotNull);
+
+      await tester.tap(find.text('Удалить'));
+      await tester.pumpAndSettle();
+
+      expect(await repository.getById(first.id!), isNull);
+      expect(await repository.getById(second.id!), isNull);
+    },
+  );
 }
