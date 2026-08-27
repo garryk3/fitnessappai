@@ -162,6 +162,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
   Future<void> _openExerciseParams(_ItemDraft draft) async {
     var item = draft.item;
+    var wasNew = false;
     if (item.id == null) {
       final exerciseId = item.exerciseId;
       if (exerciseId == null) {
@@ -177,13 +178,24 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       }
       setState(() => _replaceDraft(draft, persisted));
       item = persisted;
+      wasNew = true;
     }
     final updated = await context.push<ProgramDayExercise>(
       '/program-day/${item.id}/exercise-params',
     );
     if (updated != null && mounted) {
       setState(() => _replaceItem(item.id!, updated));
+    } else if (wasNew && mounted) {
+      await _repository.removeExercise(item.id!);
+      if (mounted) {
+        setState(() => _removeItemById(item.id!));
+      }
     }
+  }
+
+  void _removeItemById(int id) {
+    _mainItems.removeWhere((d) => d.item.id == id);
+    _altItems.removeWhere((d) => d.item.id == id);
   }
 
   void _replaceDraft(_ItemDraft draft, ProgramDayExercise item) {

@@ -221,7 +221,7 @@ Future<void> createExercise(
     find.text(switch (type) {
       ExerciseType.strength => 'Силовые',
       ExerciseType.bodyweight => 'Свой вес',
-      ExerciseType.plank => 'Планка',
+      ExerciseType.plank => 'Время',
       ExerciseType.running => 'Бег',
     }).last,
   );

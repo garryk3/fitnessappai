@@ -105,7 +105,7 @@ void main() {
 
   Future<Program> createProgram({
     String name = 'Силовая',
-    int dayOfWeek = 1,
+    int? dayOfWeek = 1,
   }) async {
     final program = await programRepo.create(
       Program(
@@ -181,6 +181,27 @@ void main() {
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(find.textContaining('Ближайший день'), findsOneWidget);
   });
+
+  testWidgets(
+    'активная программа без привязки дня — показывает «не назначен»',
+    (WidgetTester tester) async {
+      final exId = await insertExercise('Жим штанги');
+      await createProgram(name: 'Силовая', dayOfWeek: null);
+      final program = (await programRepo.getPrograms()).single.program;
+      final day = (await programRepo.getDays(program.id!)).single;
+      await programRepo.addExerciseToDay(day.id!, exId);
+      await programRepo.setActive(program.id!);
+
+      await pumpHome(tester);
+
+      expect(find.text('Силовая'), findsOneWidget);
+      expect(find.text('Жим штанги'), findsOneWidget);
+      expect(
+        find.textContaining('Ближайший день: не назначен'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('карточка активной программы открывает редактирование', (
     WidgetTester tester,

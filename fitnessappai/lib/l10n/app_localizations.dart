@@ -337,7 +337,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseTypePlank.
   ///
   /// In ru, this message translates to:
-  /// **'Планка'**
+  /// **'Время'**
   String get exerciseTypePlank;
 
   /// No description provided for @exerciseTypeRunning.
@@ -1647,6 +1647,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ближайший день'**
   String get homeUpcomingDay;
+
+  /// No description provided for @homeUpcomingDayNotAssigned.
+  ///
+  /// In ru, this message translates to:
+  /// **'не назначен'**
+  String get homeUpcomingDayNotAssigned;
 
   /// No description provided for @homeRecentWorkouts.
   ///

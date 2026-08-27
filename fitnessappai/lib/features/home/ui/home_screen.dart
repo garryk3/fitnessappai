@@ -398,5 +398,5 @@ String _weekdayLabel(AppLocalizations l10n, int? dayOfWeek) =>
       5 => l10n.weekdayFri,
       6 => l10n.weekdaySat,
       7 => l10n.weekdaySun,
-      _ => '',
+      _ => l10n.homeUpcomingDayNotAssigned,
     };
