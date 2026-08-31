@@ -322,6 +322,12 @@ abstract class AppLocalizations {
   /// **'Повторить'**
   String get commonRetry;
 
+  /// No description provided for @commonStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остановить звук'**
+  String get commonStop;
+
   /// No description provided for @exerciseTypeStrength.
   ///
   /// In ru, this message translates to:
@@ -1179,6 +1185,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Параметры не заданы'**
   String get programBuilderNoMetrics;
+
+  /// No description provided for @programBuilderDeleteDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить дни'**
+  String get programBuilderDeleteDays;
+
+  /// No description provided for @programBuilderDeleteSelected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить выбранное'**
+  String get programBuilderDeleteSelected;
 
   /// No description provided for @exerciseParamsSets.
   ///

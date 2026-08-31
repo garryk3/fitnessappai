@@ -150,6 +150,10 @@ void main() {
           builder: (context, state) => const Scaffold(body: Text('home')),
         ),
         GoRoute(
+          path: '/home',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
           path: '/workout/run',
           builder: (context, state) => WorkoutRunScreen(
             programDayId:

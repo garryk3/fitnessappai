@@ -30,6 +30,8 @@ void main() {
         daysCount: 1,
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
+        isActive: true,
+        activatedAt: DateTime(2024, 1, 1),
       ),
       [ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: dayOfWeek)],
     );
@@ -55,7 +57,8 @@ void main() {
         daysCount: 7,
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
-        activatedAt: activatedAt,
+        isActive: true,
+        activatedAt: activatedAt ?? DateTime(2024, 1, 1),
         deactivatedAt: deactivatedAt,
       ),
       [
@@ -372,6 +375,34 @@ void main() {
     expect(controller.items.value, hasLength(1));
     // Единственный день — Пн текущей недели (08-10).
     expect(controller.items.value.single.scheduledDate, DateTime(2026, 8, 10));
+
+    controller.dispose();
+  });
+
+  test('неактивная программа не попадает в план', () async {
+    final today = DateTime(2026, 8, 10);
+    // Активная программа.
+    await createDay(1);
+    // Неактивная программа: создаём без isActive.
+    await programRepo.create(
+      Program(
+        name: 'Неактивная',
+        daysCount: 1,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      [ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 3)],
+    );
+
+    final controller = WeekPlanController(
+      programRepository: programRepo,
+      workoutRepository: workoutRepo,
+      clock: () => today,
+    );
+    await controller.refresh();
+
+    expect(controller.items.value, hasLength(1));
+    expect(controller.items.value.single.programName, 'База');
 
     controller.dispose();
   });

@@ -168,10 +168,10 @@ class WeekPlanController {
     isLoading.value = true;
     try {
       final now = _dateOnly(_now());
-      final summaries = await programRepository.getPrograms();
+      final activePrograms = await programRepository.getActivePrograms();
       final plannedItems = <WeekPlanItem>[];
-      for (final summary in summaries) {
-        final detail = await programRepository.getProgram(summary.program.id!);
+      for (final program in activePrograms) {
+        final detail = await programRepository.getProgram(program.id!);
         if (detail == null) {
           continue;
         }

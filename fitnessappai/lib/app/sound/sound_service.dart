@@ -39,11 +39,9 @@ class AudioplayersSoundService implements SoundService {
   }
 
   static const String defaultAssetPath = 'sounds/timer.mp3';
-  static const Duration maxDuration = Duration(seconds: 5);
 
   final SoundSettingsRepository _repository;
   final AudioPlayer _player = AudioPlayer();
-  Timer? _autoStopTimer;
   bool _isPlaying = false;
   final StreamController<bool> _isPlayingController =
       StreamController<bool>.broadcast();
@@ -79,8 +77,6 @@ class AudioplayersSoundService implements SoundService {
       } else {
         await _player.play(AssetSource(defaultAssetPath));
       }
-      _autoStopTimer?.cancel();
-      _autoStopTimer = Timer(maxDuration, stop);
     } catch (e) {
       log('Не удалось воспроизвести звук таймера', error: e);
     }
@@ -95,8 +91,6 @@ class AudioplayersSoundService implements SoundService {
       } else {
         await _player.play(AssetSource(defaultAssetPath));
       }
-      _autoStopTimer?.cancel();
-      _autoStopTimer = Timer(maxDuration, stop);
     } catch (e) {
       log('Не удалось воспроизвести звук (preview)', error: e);
     }
@@ -104,14 +98,11 @@ class AudioplayersSoundService implements SoundService {
 
   @override
   Future<void> stop() async {
-    _autoStopTimer?.cancel();
-    _autoStopTimer = null;
     await _player.stop();
   }
 
   @override
   Future<void> dispose() async {
-    _autoStopTimer?.cancel();
     await _isPlayingController.close();
     await _player.dispose();
   }

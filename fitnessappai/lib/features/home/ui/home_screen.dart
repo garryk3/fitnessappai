@@ -9,11 +9,9 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
-import 'package:fitnessappai/features/workout/ui/quick_start_bar.dart';
-import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-/// Домашний экран: быстрый старт, активная программа и последние тренировки.
+/// Домашний экран: активная программа и последние тренировки.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -36,7 +34,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final HomeController _controller;
-  late final WeekPlanController _weekPlanController;
 
   @override
   void initState() {
@@ -52,17 +49,11 @@ class _HomeScreenState extends State<HomeScreen> {
       workoutRepository: workoutRepository,
       clock: widget.clock,
     );
-    _weekPlanController = WeekPlanController(
-      programRepository: programRepository,
-      workoutRepository: workoutRepository,
-      clock: widget.clock,
-    );
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _weekPlanController.dispose();
     super.dispose();
   }
 
@@ -87,32 +78,12 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           return ListView(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              16,
-              16,
-              _weekPlanController.nextPending != null ? 88 : 16,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             children: [
               _buildProgramSection(context),
               const SizedBox(height: 24),
               _buildWorkoutsSection(context),
             ],
-          );
-        },
-      ),
-      floatingActionButton: SignalBuilder(
-        builder: (context) {
-          final next = _weekPlanController.nextPending;
-          if (next == null) {
-            return const SizedBox.shrink();
-          }
-          return FloatingActionButton.extended(
-            heroTag: 'home-fab',
-            onPressed: () =>
-                startPlannedWorkout(context, _weekPlanController, next),
-            icon: const Icon(Icons.play_arrow),
-            label: Text(l10n.weekPlanQuickStart),
           );
         },
       ),
@@ -172,6 +143,9 @@ class _HomeScreenState extends State<HomeScreen> {
             day: info.upcomingDay,
             exerciseNames: info.exerciseNames,
             onTap: () => context.push('/programs/${info.program.id}/edit'),
+            onStart: info.upcomingDay != null
+                ? () => context.push('/workout/prepare/${info.upcomingDay!.id}')
+                : null,
           ),
           const SizedBox(height: 8),
         ],
@@ -220,12 +194,14 @@ class _ActiveProgramCard extends StatelessWidget {
     required this.day,
     required this.exerciseNames,
     required this.onTap,
+    this.onStart,
   });
 
   final String programName;
   final ProgramDay? day;
   final List<String> exerciseNames;
   final VoidCallback onTap;
+  final VoidCallback? onStart;
 
   @override
   Widget build(BuildContext context) {
@@ -241,11 +217,23 @@ class _ActiveProgramCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                programName,
-                style: theme.textTheme.titleLarge,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      programName,
+                      style: theme.textTheme.titleLarge,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (onStart != null)
+                    IconButton(
+                      icon: const Icon(Icons.play_circle_outline),
+                      tooltip: l10n.weekPlanStart,
+                      onPressed: onStart,
+                    ),
+                ],
               ),
               if (day != null) ...[
                 const SizedBox(height: 8),

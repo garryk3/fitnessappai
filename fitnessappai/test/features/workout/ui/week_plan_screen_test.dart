@@ -70,6 +70,8 @@ void main() {
     daysCount: 1,
     createdAt: DateTime(2024, 1, 1),
     updatedAt: DateTime(2024, 1, 1),
+    isActive: true,
+    activatedAt: DateTime(2024, 1, 1),
   );
 
   Future<ProgramDay> createDay(int dayOfWeek, {String name = 'База'}) async {

@@ -128,6 +128,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonRetry => 'Повторить';
 
   @override
+  String get commonStop => 'Остановить звук';
+
+  @override
   String get exerciseTypeStrength => 'Силовые';
 
   @override
@@ -612,6 +615,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programBuilderNoMetrics => 'Параметры не заданы';
+
+  @override
+  String get programBuilderDeleteDays => 'Удалить дни';
+
+  @override
+  String get programBuilderDeleteSelected => 'Удалить выбранное';
 
   @override
   String get exerciseParamsSets => 'Подходы';

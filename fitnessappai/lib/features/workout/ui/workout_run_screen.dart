@@ -201,7 +201,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   Future<void> _handlePopRequest() async {
     if (_controller.saved.value) {
       if (mounted) {
-        Navigator.of(context).pop();
+        context.go('/home');
       }
       return;
     }
@@ -259,13 +259,13 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       await _controller.completeAndSave();
       await _clearCheckpoint();
       if (mounted) {
-        Navigator.of(context).pop();
+        context.go('/home');
       }
     } else if (action == 'exit') {
       _controller.workout.cancelWorkout();
       await _clearCheckpoint();
       if (mounted) {
-        Navigator.of(context).pop();
+        context.go('/home');
       }
     }
   }
@@ -459,9 +459,20 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: workout.skipRest,
-            child: Text(l10n.workoutRunSkipRest),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FilledButton(
+                onPressed: workout.skipRest,
+                child: Text(l10n.workoutRunSkipRest),
+              ),
+              const SizedBox(width: 16),
+              IconButton(
+                tooltip: l10n.commonStop,
+                onPressed: _controller.workout.stopSound,
+                icon: const Icon(Icons.stop_circle_outlined),
+              ),
+            ],
           ),
         ],
       ),

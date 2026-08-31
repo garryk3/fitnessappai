@@ -406,6 +406,11 @@ class WorkoutController {
     holdTargetSeconds.value = null;
   }
 
+  /// Останавливает воспроизведение звука.
+  void stopSound() {
+    _soundService?.stop();
+  }
+
   void dispose() {
     _cancelTimers();
   }

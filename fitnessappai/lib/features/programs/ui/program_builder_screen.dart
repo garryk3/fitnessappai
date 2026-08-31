@@ -85,6 +85,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   late final bool _initiallyNew;
   bool _createdNewProgram = false;
   bool _programFinalized = false;
+  bool _deleteMode = false;
+  final Set<int> _selectedDayKeys = {};
 
   List<MuscleGroup> _allMuscleGroups = [];
   Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
@@ -322,6 +324,36 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   void _addDay() {
     _days.add(_DayDraft(_nextDayKey--));
+  }
+
+  void _toggleDeleteMode() {
+    setState(() {
+      _deleteMode = !_deleteMode;
+      _selectedDayKeys.clear();
+    });
+  }
+
+  void _toggleDaySelection(int index) {
+    final key = _days[index].key;
+    setState(() {
+      if (_selectedDayKeys.contains(key)) {
+        _selectedDayKeys.remove(key);
+      } else {
+        _selectedDayKeys.add(key);
+      }
+    });
+  }
+
+  bool get _canDeleteSelected =>
+      _selectedDayKeys.isNotEmpty && _days.length - _selectedDayKeys.length >= 1;
+
+  void _deleteSelectedDays() {
+    if (!_canDeleteSelected) return;
+    setState(() {
+      _days.removeWhere((d) => _selectedDayKeys.contains(d.key));
+      _selectedDayKeys.clear();
+      _deleteMode = false;
+    });
   }
 
   void _setDaysCount(int count) {
@@ -737,6 +769,14 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       appBar: AppBar(
         title: Text(isEditing ? l10n.programEdit : l10n.programNew),
         actions: [
+          if (isEditing && _days.length > 1)
+            IconButton(
+              tooltip: l10n.programBuilderDeleteDays,
+              icon: Icon(
+                _deleteMode ? Icons.close : Icons.delete_outline,
+              ),
+              onPressed: _toggleDeleteMode,
+            ),
           if (isEditing && nextDay == null)
             IconButton(
               tooltip: l10n.programCopyJson,
@@ -802,24 +842,29 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            onPressed: _saving
-                ? null
-                : nextDay == null
-                ? _save
-                : () => _openDayFill(nextDay),
-            child: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(
-                    nextDay == null
-                        ? l10n.programBuilderSave
-                        : l10n.programBuilderFillNextDay(nextDay + 1),
-                  ),
-          ),
+          child: _deleteMode
+              ? FilledButton(
+                  onPressed: _canDeleteSelected ? _deleteSelectedDays : null,
+                  child: Text(l10n.programBuilderDeleteSelected),
+                )
+              : FilledButton(
+                  onPressed: _saving
+                      ? null
+                      : nextDay == null
+                      ? _save
+                      : () => _openDayFill(nextDay),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          nextDay == null
+                              ? l10n.programBuilderSave
+                              : l10n.programBuilderFillNextDay(nextDay + 1),
+                        ),
+                ),
         ),
       ),
     );
@@ -879,11 +924,18 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: ListTile(
-          onTap: () => _openDayFill(index),
-          leading: ReorderableDragStartListener(
-            index: index,
-            child: const Icon(Icons.drag_indicator),
-          ),
+          onTap: _deleteMode
+              ? () => _toggleDaySelection(index)
+              : () => _openDayFill(index),
+          leading: _deleteMode
+              ? Checkbox(
+                  value: _selectedDayKeys.contains(day.key),
+                  onChanged: (_) => _toggleDaySelection(index),
+                )
+              : ReorderableDragStartListener(
+                  index: index,
+                  child: const Icon(Icons.drag_indicator),
+                ),
           title: Text(l10n.programBuilderDay(index + 1)),
           subtitle: Text(
             _weekdayLabel(l10n, day.dayOfWeek) +
@@ -891,22 +943,24 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                     ? ' • ${l10n.programBuilderWarmupShort(_warmupMinutes!)}'
                     : ''),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_days.length < 7)
-                IconButton(
-                  tooltip: l10n.programBuilderCopyDay,
-                  icon: const Icon(Icons.content_copy),
-                  onPressed: () => _copyDay(index),
+          trailing: _deleteMode
+              ? null
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_days.length < 7)
+                      IconButton(
+                        tooltip: l10n.programBuilderCopyDay,
+                        icon: const Icon(Icons.content_copy),
+                        onPressed: () => _copyDay(index),
+                      ),
+                    IconButton(
+                      tooltip: l10n.programBuilderDaySettings,
+                      icon: const Icon(Icons.tune),
+                      onPressed: () => _openDaySettings(day),
+                    ),
+                  ],
                 ),
-              IconButton(
-                tooltip: l10n.programBuilderDaySettings,
-                icon: const Icon(Icons.tune),
-                onPressed: () => _openDaySettings(day),
-              ),
-            ],
-          ),
         ),
       ),
     );

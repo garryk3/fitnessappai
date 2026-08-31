@@ -129,6 +129,11 @@ void main() {
       initialLocation: '/workout/prepare/$dayId',
       routes: [
         GoRoute(
+          path: '/home',
+          builder: (context, state) =>
+              const Scaffold(body: Text('home-route')),
+        ),
+        GoRoute(
           path: '/workout/prepare/:programDayId',
           builder: (context, state) => WorkoutPrepareScreen(
             programDayId: int.parse(state.pathParameters['programDayId']!),
@@ -358,6 +363,75 @@ void main() {
       );
       final detail = await workoutRepo.getSession(sessions.first.id!);
       expect(detail!.results.single.durationSeconds, 7);
+    },
+  );
+
+  testWidgets(
+    'выход из тренировки по «Выйти» ведёт на главный экран',
+    (tester) async {
+      final dayId = await createDay(
+        name: 'Приседания',
+        sets: 2,
+        restSeconds: 60,
+      );
+      await pumpFlow(tester, dayId);
+      await startWorkout(tester);
+
+      await tester.enterText(find.byType(TextFormField).first, '10');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pump();
+
+      await tester.tap(find.text('Пропустить отдых'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Выйти из тренировки'), findsOneWidget);
+
+      await tester.tap(find.text('Выйти'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('home-route'), findsOneWidget);
+
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      expect(sessions, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'выход из тренировки по «Завершить и сохранить» ведёт на главный экран',
+    (tester) async {
+      final dayId = await createDay(
+        name: 'Приседания',
+        sets: 2,
+        restSeconds: 60,
+      );
+      await pumpFlow(tester, dayId);
+      await startWorkout(tester);
+
+      await tester.enterText(find.byType(TextFormField).first, '10');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pump();
+
+      await tester.tap(find.text('Пропустить отдых'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Завершить и сохранить'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('home-route'), findsOneWidget);
+
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      expect(sessions, hasLength(1));
     },
   );
 }
