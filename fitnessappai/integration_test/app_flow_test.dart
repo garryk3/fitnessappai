@@ -1220,9 +1220,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Активная программа'), findsOneWidget);
     expect(find.text(_programName), findsWidgets);
-    expect(find.text('Быстрый старт'), findsOneWidget);
+    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
 
-    await tester.tap(find.text('Быстрый старт'));
+    await tester.tap(find.byIcon(Icons.play_circle_outline));
     await tester.pumpAndSettle();
     expect(
       find.widgetWithText(FilledButton, 'Начать тренировку'),
@@ -1623,8 +1623,8 @@ void main() {
 
     await goToTab(tester, Icons.home_outlined);
     await tester.pumpAndSettle();
-    expect(find.text('Быстрый старт'), findsOneWidget);
-    await tester.tap(find.text('Быстрый старт'));
+    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.play_circle_outline));
     await tester.pumpAndSettle();
     expect(
       find.widgetWithText(FilledButton, 'Начать тренировку'),
