@@ -12,4 +12,15 @@ class Programs extends Table {
   IntColumn get createdAt => integer().map(const DateTimeConverter())();
   IntColumn get updatedAt => integer().map(const DateTimeConverter())();
   BoolColumn get isActive => boolean().withDefault(const Constant(false))();
+
+  /// Момент последней активации программы (null — никогда не активировалась).
+  IntColumn get activatedAt =>
+      integer().nullable().map(const DateTimeConverter())();
+
+  /// Момент последней деактивации (null — активна сейчас или деактиваций не было).
+  IntColumn get deactivatedAt =>
+      integer().nullable().map(const DateTimeConverter())();
+
+  /// Пауза в секундах между упражнениями (null — не задана).
+  IntColumn get exerciseRestSeconds => integer().nullable()();
 }

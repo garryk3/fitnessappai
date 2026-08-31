@@ -1,6 +1,7 @@
 import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/app/sound/sound_service.dart';
+import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -11,19 +12,25 @@ import 'package:fitnessappai/features/workout/domain/workout_exercise.dart';
 import 'package:fitnessappai/features/workout/domain/workout_session_context.dart';
 import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
 
-/// Управляет экраном выполнения тренировки: загрузка дня по [programDayId],
-/// запуск сессии через [WorkoutController] и сохранение результатов.
+/// Управляет экраном выполнения тренировки: загрузка дня по [programDayId]
+/// или одиночного упражнения по [exerciseId], запуск сессии через
+/// [WorkoutController] и сохранение результатов.
 class WorkoutRunController {
   WorkoutRunController({
     required this.programRepository,
     required this.exerciseRepository,
     required this.workoutRepository,
-    required this.programDayId,
-    required this.variant,
+    this.programDayId,
+    this.variant,
+    this.exerciseId,
     DateTime Function()? clock,
     TimerFactory? timerFactory,
     SoundService? soundService,
-  }) : workout = WorkoutController(
+  }) : assert(
+         (programDayId != null) != (exerciseId != null),
+         'Укажите либо programDayId, либо exerciseId',
+       ),
+       workout = WorkoutController(
          clock: clock,
          timerFactory: timerFactory,
          soundService: soundService,
@@ -36,8 +43,9 @@ class WorkoutRunController {
   final ProgramRepository programRepository;
   final ExerciseRepository exerciseRepository;
   final WorkoutRepository workoutRepository;
-  final int programDayId;
-  final WorkoutVariant variant;
+  final int? programDayId;
+  final WorkoutVariant? variant;
+  final int? exerciseId;
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> notFound = Signal(false);
@@ -67,52 +75,93 @@ class WorkoutRunController {
     notFound.value = false;
     emptyDay.value = false;
     try {
-      final day = await programRepository.getDay(programDayId);
-      if (day == null || day.id == null) {
-        notFound.value = true;
-        return;
-      }
-      final program = await programRepository.getById(day.programId);
-      final all = await programRepository.getExercises(day.id!);
-      final selected = all
-          .where(
-            (e) => e.isAlternative == (variant == WorkoutVariant.alternative),
-          )
-          .toList();
-      if (selected.isEmpty) {
-        emptyDay.value = true;
-        return;
-      }
-      final exercises = <WorkoutExercise>[];
-      for (final position in selected) {
-        final exercise = position.exerciseId == null
-            ? null
-            : await exerciseRepository.getById(position.exerciseId!);
-        if (exercise == null) {
-          continue;
-        }
-        exercises.add(WorkoutExercise(position: position, exercise: exercise));
-      }
-      if (exercises.isEmpty) {
-        emptyDay.value = true;
-        return;
-      }
-      if (checkpoint != null) {
-        workout.restoreFromCheckpoint(checkpoint, exercises);
+      if (exerciseId != null) {
+        await _loadSingleExercise(exerciseId!, checkpoint: checkpoint);
       } else {
-        workout.start(
-          exercises,
-          context: WorkoutSessionContext(
-            programId: program?.id,
-            programName: program?.name ?? '',
-            programDayId: day.id,
-            dayIndex: day.dayIndex,
-            variant: variant,
-          ),
-        );
+        await _loadFromProgram(programDayId!, variant!, checkpoint: checkpoint);
       }
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadSingleExercise(
+    int id, {
+    WorkoutCheckpoint? checkpoint,
+  }) async {
+    final exercise = await exerciseRepository.getById(id);
+    if (exercise == null) {
+      notFound.value = true;
+      return;
+    }
+    final position = ProgramDayExercise(
+      dayId: 0,
+      exerciseId: exercise.id,
+      orderIndex: 0,
+      sets: 3,
+      reps: 10,
+      restSeconds: 60,
+    );
+    final exercises = [WorkoutExercise(position: position, exercise: exercise)];
+    if (checkpoint != null) {
+      workout.restoreFromCheckpoint(checkpoint, exercises);
+    } else {
+      workout.start(
+        exercises,
+        context: WorkoutSessionContext(programName: exercise.name, dayIndex: 0),
+      );
+    }
+  }
+
+  Future<void> _loadFromProgram(
+    int dayId,
+    WorkoutVariant variant, {
+    WorkoutCheckpoint? checkpoint,
+  }) async {
+    final day = await programRepository.getDay(dayId);
+    if (day == null || day.id == null) {
+      notFound.value = true;
+      return;
+    }
+    final program = await programRepository.getById(day.programId);
+    final all = await programRepository.getExercises(day.id!);
+    final selected = all
+        .where(
+          (e) => e.isAlternative == (variant == WorkoutVariant.alternative),
+        )
+        .toList();
+    if (selected.isEmpty) {
+      emptyDay.value = true;
+      return;
+    }
+    final exercises = <WorkoutExercise>[];
+    for (final position in selected) {
+      final exercise = position.exerciseId == null
+          ? null
+          : await exerciseRepository.getById(position.exerciseId!);
+      if (exercise == null) {
+        continue;
+      }
+      exercises.add(WorkoutExercise(position: position, exercise: exercise));
+    }
+    if (exercises.isEmpty) {
+      emptyDay.value = true;
+      return;
+    }
+    if (checkpoint != null) {
+      workout.restoreFromCheckpoint(checkpoint, exercises);
+    } else {
+      workout.start(
+        exercises,
+        context: WorkoutSessionContext(
+          programId: program?.id,
+          programName: program?.name ?? '',
+          programDayId: day.id,
+          dayIndex: day.dayIndex,
+          variant: variant,
+          exerciseRestSeconds: program?.exerciseRestSeconds,
+        ),
+      );
     }
   }
 

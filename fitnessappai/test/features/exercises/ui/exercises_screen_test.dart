@@ -356,4 +356,38 @@ void main() {
       expect(await repository.getById(second.id!), isNull);
     },
   );
+
+  testWidgets('иконка play показывается на карточке упражнения', (
+    tester,
+  ) async {
+    await repository.create(exercise('Жим штанги'), const []);
+    await pumpExercises(tester);
+
+    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
+  });
+
+  testWidgets('нажатие play показывает диалог подтверждения', (tester) async {
+    await repository.create(exercise('Жим штанги'), const []);
+    await pumpExercises(tester);
+
+    await tester.tap(find.byIcon(Icons.play_circle_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Начать тренировку'), findsWidgets);
+    expect(
+      find.text('Начать тренировку с упражнением «Жим штанги»?'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('play не показывается в режиме выбора', (tester) async {
+    await repository.create(exercise('Жим штанги'), const []);
+    await repository.create(exercise('Приседания'), const []);
+    await pumpExercises(tester);
+
+    await tester.longPress(find.text('Жим штанги'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.play_circle_outline), findsNothing);
+  });
 }

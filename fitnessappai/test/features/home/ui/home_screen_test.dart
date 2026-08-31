@@ -28,7 +28,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
-    programRepo = ProgramRepository(db);
+    programRepo = ProgramRepository(db, clock: () => fixedNow);
     exerciseRepo = ExerciseRepository(db, MediaStore());
     workoutRepo = WorkoutRepository(db);
   });

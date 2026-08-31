@@ -183,6 +183,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сначала удалите его из программы.';
 
   @override
+  String get exerciseListStartWorkout => 'Начать тренировку';
+
+  @override
+  String exerciseListStartWorkoutConfirm(String name) {
+    return 'Начать тренировку с упражнением «$name»?';
+  }
+
+  @override
   String get schedulePerformed => 'Выполнено';
 
   @override
@@ -221,6 +229,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get weekPlanNextWeek => 'Следующая неделя';
+
+  @override
+  String get weekPlanPrevMonth => 'Предыдущий месяц';
+
+  @override
+  String get weekPlanNextMonth => 'Следующий месяц';
+
+  @override
+  String get weekPlanViewWeek => 'Неделя';
+
+  @override
+  String get weekPlanViewMonth => 'Месяц';
 
   @override
   String get weekPlanQuickStart => 'Быстрый старт';
@@ -518,6 +538,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programBuilderWarmupMinutes => 'Разминка, мин';
+
+  @override
+  String get programBuilderExerciseRestSeconds =>
+      'Отдых между упражнениями, сек';
 
   @override
   String programBuilderWarmupShort(int minutes) {

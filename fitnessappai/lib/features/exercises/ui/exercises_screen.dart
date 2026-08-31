@@ -75,6 +75,31 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     });
   }
 
+  void _confirmStartExercise(Exercise exercise) {
+    final l10n = AppLocalizations.of(context);
+    showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.exerciseListStartWorkout),
+        content: Text(l10n.exerciseListStartWorkoutConfirm(exercise.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.exerciseListStartWorkout),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true && mounted) {
+        context.push('/workout/run?exerciseId=${exercise.id}');
+      }
+    });
+  }
+
   Future<void> _deleteSelected() async {
     final l10n = AppLocalizations.of(context);
     final repo = widget.repository ?? locator.get<ExerciseRepository>();
@@ -288,6 +313,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 }
               },
               onLongPress: () => _enterSelectionMode(id),
+              onStart: _selectionMode
+                  ? null
+                  : () => _confirmStartExercise(item.exercise),
             ),
           );
         },
@@ -311,6 +339,7 @@ class _ExerciseCard extends StatelessWidget {
     required this.onLongPress,
     this.selected = false,
     this.selectionMode = false,
+    this.onStart,
   });
 
   final ExerciseListItem item;
@@ -319,6 +348,7 @@ class _ExerciseCard extends StatelessWidget {
   final VoidCallback onLongPress;
   final bool selected;
   final bool selectionMode;
+  final VoidCallback? onStart;
 
   @override
   Widget build(BuildContext context) {
@@ -377,6 +407,16 @@ class _ExerciseCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onStart != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.play_circle_outline),
+                  tooltip: AppLocalizations.of(
+                    context,
+                  ).exerciseListStartWorkout,
+                  onPressed: onStart,
+                ),
+              ],
             ],
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:fitnessappai/app/responsive/adaptive_navigation.dart';
 import 'package:fitnessappai/app/screens/not_found_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
+import 'package:fitnessappai/app/bootstrap.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
 import 'package:fitnessappai/features/home/ui/home_screen.dart';
 import 'package:fitnessappai/features/profile/ui/contraindications_screen.dart';
@@ -18,6 +19,7 @@ import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_sc
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/features/settings/ui/settings_screen.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
@@ -26,10 +28,20 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 
 /// Конфигурация маршрутов приложения.
 class AppRouter {
-  static GoRouter create() {
+  /// Если передан [initialCheckpoint], роутер перенаправит на `/workout/run`
+  /// для восстановления тренировки после сбоя/блокировки экрана.
+  /// По умолчанию читает [restoredCheckpoint] из [bootstrap].
+  static GoRouter create({WorkoutCheckpoint? initialCheckpoint}) {
+    final checkpoint = initialCheckpoint ?? restoredCheckpoint;
     return GoRouter(
       initialLocation: '/home',
       errorBuilder: (context, state) => const NotFoundScreen(),
+      redirect: checkpoint != null
+          ? (context, state) {
+              if (state.matchedLocation == '/workout/run') return null;
+              return '/workout/run?programDayId=${checkpoint.programDayId}';
+            }
+          : null,
       routes: [
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
@@ -152,14 +164,21 @@ class AppRouter {
         GoRoute(
           path: '/workout/run',
           builder: (context, state) {
-            final dayId =
-                int.tryParse(state.uri.queryParameters['programDayId'] ?? '') ??
-                -1;
+            final dayId = int.tryParse(
+              state.uri.queryParameters['programDayId'] ?? '',
+            );
+            final exerciseId = int.tryParse(
+              state.uri.queryParameters['exerciseId'] ?? '',
+            );
             final variant =
                 state.uri.queryParameters['variant'] == 'alternative'
                 ? WorkoutVariant.alternative
                 : WorkoutVariant.main;
-            return WorkoutRunScreen(programDayId: dayId, variant: variant);
+            return WorkoutRunScreen(
+              programDayId: dayId,
+              variant: dayId != null ? variant : null,
+              exerciseId: exerciseId,
+            );
           },
         ),
         GoRoute(

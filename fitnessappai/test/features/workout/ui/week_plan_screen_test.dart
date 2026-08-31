@@ -9,6 +9,7 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -40,6 +41,7 @@ void main() {
           builder: (context, state) => WeekPlanScreen(
             programRepository: programRepo,
             workoutRepository: workoutRepo,
+            planViewSettingsRepository: PlanViewSettingsRepository(db),
             clock: () => fixedNow,
           ),
         ),
@@ -159,6 +161,28 @@ void main() {
     expect(find.text('Начать'), findsOneWidget);
   });
 
+  testWidgets(
+    'прошлая неделя: невыполненная тренировка без кнопок «Пропущено»',
+    (tester) async {
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      // Текущая неделя: день сегодня — активен.
+      expect(find.text('Запланировано'), findsOneWidget);
+      expect(find.text('Начать'), findsOneWidget);
+
+      // Переходим на прошлую неделю — тренировка старше окна переноса.
+      await tester.tap(find.byTooltip('Предыдущая неделя'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Пропущено'), findsOneWidget);
+      expect(find.text('Начать'), findsNothing);
+      expect(find.text('Перенести на сегодня'), findsNothing);
+      expect(find.text('Пропустить'), findsNothing);
+      expect(find.text('Отменить пропуск'), findsNothing);
+    },
+  );
+
   testWidgets('быстрый старт: кнопки нет на плане при pending-дне', (
     tester,
   ) async {
@@ -272,6 +296,59 @@ void main() {
       expect(badgeColor(tester, 'Пропущено'), cs.onError);
     });
   }
+
+  group('режим «Месяц»', () {
+    testWidgets('тумблер переключает на месяц и показывает сетку', (
+      tester,
+    ) async {
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Август 2026'), findsOneWidget);
+      // Дни месяца видны в сетке даже без тренировок.
+      expect(find.text('10'), findsWidgets);
+    });
+
+    testWidgets('тап по дню с тренировкой открывает попап', (tester) async {
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('10'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Сплит'), findsOneWidget);
+      expect(find.text('Начать'), findsOneWidget);
+    });
+
+    testWidgets('день без тренировки некликабелен', (tester) async {
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+
+      // «15» августа — выходной без тренировки: тап ничего не открывает.
+      await tester.tap(find.text('15'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsNothing);
+    });
+
+    testWidgets('выбор «Месяц» сохраняется между открытиями', (tester) async {
+      await pumpPlan(tester);
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+      expect(find.text('Август 2026'), findsOneWidget);
+
+      await pumpPlan(tester);
+      await tester.pumpAndSettle();
+      expect(find.text('Август 2026'), findsOneWidget);
+    });
+  });
 }
 
 Future<void> saveSession(

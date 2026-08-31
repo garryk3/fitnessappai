@@ -42,7 +42,10 @@ part 'app_database.g.dart';
 /// `workout_set_results.side` — выполнение «по сторонам».
 /// v8: колонки `exercises.thumbnailBlob` и `exercises.animationBlob`
 /// — хранение изображений в БД для переносимости.
-const int appDatabaseSchemaVersion = 8;
+/// v9: колонки `programs.activatedAt` и `programs.deactivatedAt` — период
+/// активности программы (для плана). Старым программам активация проставляется
+/// по дате создания.
+const int appDatabaseSchemaVersion = 10;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -107,6 +110,18 @@ class AppDatabase extends _$AppDatabase {
       if (from < 8) {
         await m.addColumn(exercises, exercises.thumbnailBlob);
         await m.addColumn(exercises, exercises.animationBlob);
+      }
+      if (from < 9) {
+        await m.addColumn(programs, programs.activatedAt);
+        await m.addColumn(programs, programs.deactivatedAt);
+        // Legacy: считаем, что программа в расписании была с момента создания.
+        await m.database.customStatement(
+          'UPDATE programs SET activated_at = created_at '
+          'WHERE activated_at IS NULL',
+        );
+      }
+      if (from < 10) {
+        await m.addColumn(programs, programs.exerciseRestSeconds);
       }
     },
     beforeOpen: (details) async {

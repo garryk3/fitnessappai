@@ -91,6 +91,9 @@ class WorkoutController {
   Timer? _restTimer;
   Timer? _holdTimer;
 
+  /// Идёт ли пауза отдыха между упражнениями (перед переходом к следующему).
+  bool _restBetweenExercises = false;
+
   /// Неизменяемый список упражнений текущей сессии.
   List<WorkoutExercise> get exercises => List.unmodifiable(_exercises);
 
@@ -140,6 +143,7 @@ class WorkoutController {
     restRemainingSeconds.value = null;
     currentSide.value = null;
     sideRest.value = null;
+    _restBetweenExercises = false;
     _prepareHoldTimer();
   }
 
@@ -194,6 +198,7 @@ class WorkoutController {
     currentSide.value = checkpoint.currentSide;
     restRemainingSeconds.value = null;
     sideRest.value = null;
+    _restBetweenExercises = false;
     final decoded = jsonDecode(checkpoint.resultsJson) as List;
     results.value = [
       for (final item in decoded)
@@ -268,10 +273,15 @@ class WorkoutController {
       currentSet.value++;
       _startRest(exercise.restSeconds);
     } else if (!isLastExercise) {
-      currentExerciseIndex.value++;
-      currentSet.value = 1;
-      phase.value = WorkoutPhase.exercise;
-      _prepareHoldTimer();
+      // Все подходы упражнения выполнены: перед следующим упражнением —
+      // пауза отдыха, если она задана на программе.
+      final betweenRest = _context?.exerciseRestSeconds ?? 0;
+      if (betweenRest > 0) {
+        _restBetweenExercises = true;
+        _startRestBetween(betweenRest);
+        return;
+      }
+      _advanceToNextExercise();
     } else {
       phase.value = WorkoutPhase.finished;
     }
@@ -306,6 +316,11 @@ class WorkoutController {
     _restEndsAt = null;
     restRemainingSeconds.value = null;
     sideRest.value = null;
+    if (_restBetweenExercises) {
+      _restBetweenExercises = false;
+      _advanceToNextExercise();
+      return;
+    }
     phase.value = WorkoutPhase.exercise;
     _prepareHoldTimer();
   }
@@ -322,6 +337,7 @@ class WorkoutController {
     restRemainingSeconds.value = null;
     sideRest.value = null;
     currentSide.value = null;
+    _restBetweenExercises = false;
     currentExerciseIndex.value++;
     currentSet.value = 1;
     phase.value = WorkoutPhase.exercise;
@@ -384,6 +400,7 @@ class WorkoutController {
     restRemainingSeconds.value = null;
     currentSide.value = null;
     sideRest.value = null;
+    _restBetweenExercises = false;
     holdRunning.value = false;
     holdElapsedSeconds.value = 0;
     holdTargetSeconds.value = null;
@@ -421,6 +438,37 @@ class WorkoutController {
         remainingSignal.value = remaining;
       }
     });
+  }
+
+  /// Начинает паузу отдыха между упражнениями. По завершении переходит
+  /// к следующему упражнению.
+  void _startRestBetween(int restSeconds) {
+    phase.value = WorkoutPhase.rest;
+    _restEndsAt = _clock().add(Duration(seconds: restSeconds));
+    restRemainingSeconds.value = restSeconds;
+    _restTimer?.cancel();
+    _restTimer = _timerFactory(const Duration(seconds: 1), (timer) {
+      final remaining = _restEndsAt!.difference(_clock()).inSeconds;
+      if (remaining <= 0) {
+        timer.cancel();
+        _restTimer = null;
+        _restEndsAt = null;
+        restRemainingSeconds.value = null;
+        _restBetweenExercises = false;
+        _advanceToNextExercise();
+        _soundService?.playCompletion();
+      } else {
+        restRemainingSeconds.value = remaining;
+      }
+    });
+  }
+
+  /// Переходит к следующему упражнению после паузы между упражнениями.
+  void _advanceToNextExercise() {
+    currentExerciseIndex.value++;
+    currentSet.value = 1;
+    phase.value = WorkoutPhase.exercise;
+    _prepareHoldTimer();
   }
 
   /// Подготавливает счётчик удержания планки: сбрасывает значение и задаёт

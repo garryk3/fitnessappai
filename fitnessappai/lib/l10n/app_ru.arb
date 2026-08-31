@@ -75,6 +75,11 @@
   "exerciseListDeleteButton": "Удалить",
   "exerciseListDeleteWarning": "Упражнение используется в программах:",
   "exerciseListDeleteBlockedHint": "Сначала удалите его из программы.",
+  "exerciseListStartWorkout": "Начать тренировку",
+  "exerciseListStartWorkoutConfirm": "Начать тренировку с упражнением «{name}»?",
+  "@exerciseListStartWorkoutConfirm": {
+    "placeholders": {"name": {"type": "String"}}
+  },
   "schedulePerformed": "Выполнено",
   "scheduleRescheduled": "Перенесено",
   "scheduleSkipped": "Пропущено",
@@ -88,6 +93,10 @@
   "weekPlanHint": "Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане",
   "weekPlanPrevWeek": "Предыдущая неделя",
   "weekPlanNextWeek": "Следующая неделя",
+  "weekPlanPrevMonth": "Предыдущий месяц",
+  "weekPlanNextMonth": "Следующий месяц",
+  "weekPlanViewWeek": "Неделя",
+  "weekPlanViewMonth": "Месяц",
   "weekPlanQuickStart": "Быстрый старт",
   "programBuilderDayOfWeek": "Привязка к дню недели",
   "muscleAbs": "Пресс",
@@ -228,6 +237,7 @@
   "programBuilderDayWeekday": "День недели",
   "programBuilderDaySettings": "Настройка дня",
   "programBuilderWarmupMinutes": "Разминка, мин",
+  "programBuilderExerciseRestSeconds": "Отдых между упражнениями, сек",
   "programBuilderWarmupShort": "разминка {minutes} мин",
   "@programBuilderWarmupShort": {
     "description": "Короткая подпись разминки в тайле дня",

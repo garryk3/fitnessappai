@@ -344,9 +344,38 @@ void main() {
     expect(savedDay.warmupMinutes, 5);
   });
 
+  testWidgets('отдых между упражнениями сохраняется для программы', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final created = await repository.create(program('Сплит', daysCount: 1), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final createdDays = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(createdDays.single.id!, exercise.id!);
+
+    await pumpBuilder(tester, programId: created.id);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Отдых между упражнениями, сек'),
+      '90',
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.pumpAndSettle();
+
+    final saved = (await repository.getById(created.id!))!;
+    expect(saved.exerciseRestSeconds, 90);
+  });
+
   testWidgets(
     'наполнение дней не создаёт дубликат программы и сохраняет дни недели',
     (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       final router = GoRouter(
         initialLocation: '/programs/new',
         routes: [
@@ -540,6 +569,8 @@ void main() {
       expect(find.text('Заполнить день 2'), findsOneWidget);
 
       // Переносим заполненный день 1 (позиция 0) в конец списка.
+      await tester.ensureVisible(find.byIcon(Icons.drag_indicator).at(0));
+      await tester.pumpAndSettle();
       await tester.timedDrag(
         find.byIcon(Icons.drag_indicator).at(0),
         const Offset(0, 220),
@@ -822,6 +853,8 @@ void main() {
       // Иконка копирования видна при 1 дне.
       expect(find.byIcon(Icons.content_copy), findsOneWidget);
 
+      await tester.ensureVisible(find.byIcon(Icons.content_copy));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.content_copy));
       await tester.pumpAndSettle();
 
@@ -904,6 +937,8 @@ void main() {
       await enterName(tester, 'Пустая');
       expect(await repository.getPrograms(), isEmpty);
 
+      await tester.ensureVisible(find.text('День 1'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('День 1'));
       await tester.pumpAndSettle();
       expect(find.text('Наполнение дня'), findsOneWidget);

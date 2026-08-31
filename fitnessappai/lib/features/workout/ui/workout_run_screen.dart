@@ -66,8 +66,9 @@ class WakelockPlusService implements WakelockService {
 class WorkoutRunScreen extends StatefulWidget {
   const WorkoutRunScreen({
     super.key,
-    required this.programDayId,
-    required this.variant,
+    this.programDayId,
+    this.variant,
+    this.exerciseId,
     this.programRepository,
     this.exerciseRepository,
     this.workoutRepository,
@@ -81,8 +82,9 @@ class WorkoutRunScreen extends StatefulWidget {
     this.checkpointClearer,
   });
 
-  final int programDayId;
-  final WorkoutVariant variant;
+  final int? programDayId;
+  final WorkoutVariant? variant;
+  final int? exerciseId;
   final ProgramRepository? programRepository;
   final ExerciseRepository? exerciseRepository;
   final WorkoutRepository? workoutRepository;
@@ -117,6 +119,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     _controller = WorkoutRunController(
       programDayId: widget.programDayId,
       variant: widget.variant,
+      exerciseId: widget.exerciseId,
       programRepository:
           widget.programRepository ?? locator.get<ProgramRepository>(),
       exerciseRepository:
@@ -158,8 +161,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     if (ctx == null) {
       return;
     }
+    final programDayId = widget.programDayId;
+    if (programDayId == null) {
+      return;
+    }
     final checkpoint = workout.toCheckpoint(
-      programDayId: widget.programDayId,
+      programDayId: programDayId,
       programId: ctx.programId,
       programName: ctx.programName,
       dayIndex: ctx.dayIndex,

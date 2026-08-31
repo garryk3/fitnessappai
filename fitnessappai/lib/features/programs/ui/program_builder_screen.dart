@@ -74,6 +74,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _warmupController = TextEditingController();
+  final _exerciseRestController = TextEditingController();
   final List<_DayDraft> _days = [];
   int _nextDayKey = -1;
   bool _loading = true;
@@ -92,6 +93,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   int? get _warmupMinutes {
     final text = _warmupController.text.trim();
+    return text.isEmpty ? null : int.tryParse(text);
+  }
+
+  int? get _exerciseRestSeconds {
+    final text = _exerciseRestController.text.trim();
     return text.isEmpty ? null : int.tryParse(text);
   }
 
@@ -118,6 +124,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _warmupController.dispose();
+    _exerciseRestController.dispose();
     super.dispose();
   }
 
@@ -134,6 +141,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         final firstWarmup = detail.days.firstOrNull?.day.warmupMinutes;
         if (firstWarmup != null) {
           _warmupController.text = '$firstWarmup';
+        }
+        final rest = detail.program.exerciseRestSeconds;
+        if (rest != null) {
+          _exerciseRestController.text = '$rest';
         }
         _days
           ..clear()
@@ -535,6 +546,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       createdAt: _createdAt ?? now,
       updatedAt: now,
       isActive: _isActive,
+      exerciseRestSeconds: _exerciseRestSeconds,
     );
     final days = [
       for (var i = 0; i < _days.length; i++)
@@ -593,6 +605,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       createdAt: _createdAt ?? now,
       updatedAt: now,
       isActive: _isActive,
+      exerciseRestSeconds: _exerciseRestSeconds,
     );
     final days = [
       for (var i = 0; i < _days.length; i++)
@@ -752,6 +765,17 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                       onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
                         labelText: l10n.programBuilderWarmupMinutes,
+                        border: const OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _exerciseRestController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        labelText: l10n.programBuilderExerciseRestSeconds,
                         border: const OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
