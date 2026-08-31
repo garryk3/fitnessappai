@@ -411,12 +411,12 @@ Future<void> saveProgramBuilder(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 100));
     final dialog = find.byType(AlertDialog);
     if (dialog.evaluate().isNotEmpty) {
-      final cancel = find.descendant(
+      final activate = find.descendant(
         of: dialog,
-        matching: find.byType(TextButton),
+        matching: find.widgetWithText(FilledButton, 'Сделать активной'),
       );
-      if (cancel.evaluate().isNotEmpty) {
-        await tester.tap(cancel.first);
+      if (activate.evaluate().isNotEmpty) {
+        await tester.tap(activate.first);
         await tester.pumpAndSettle();
         return;
       }
