@@ -59,6 +59,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonAdd => 'Добавить';
 
   @override
+  String get commonExit => 'Выйти';
+
+  @override
+  String get programBuilderExitTitle => 'Выйти из редактора?';
+
+  @override
+  String get programBuilderExitBody => 'Изменения не сохранятся. Выйти?';
+
+  @override
   String get settings => 'Настройки';
 
   @override
@@ -187,11 +196,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exerciseListStartWorkout => 'Начать тренировку';
-
-  @override
-  String exerciseListStartWorkoutConfirm(String name) {
-    return 'Начать тренировку с упражнением «$name»?';
-  }
 
   @override
   String get schedulePerformed => 'Выполнено';

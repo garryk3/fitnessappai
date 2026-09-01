@@ -76,22 +76,18 @@ class StatsAggregator {
     final now = _clock();
     switch (period) {
       case StatPeriod.week:
-        final monday = DateTime(
-          now.year,
-          now.month,
-          now.day - (now.weekday - DateTime.monday),
-        );
-        return (monday, monday.add(const Duration(days: 7)));
+        final start = DateTime(now.year, now.month, now.day - 6);
+        return (start, DateTime(now.year, now.month, now.day + 1));
       case StatPeriod.month:
-        final first = DateTime(now.year, now.month, 1);
-        return (first, DateTime(now.year, now.month + 1, 1));
+        final start = DateTime(now.year, now.month, now.day - 29);
+        return (start, DateTime(now.year, now.month, now.day + 1));
       case StatPeriod.year:
         return (DateTime(now.year, 1, 1), DateTime(now.year + 1, 1, 1));
     }
   }
 
-  /// Срезы периода для графиков: неделя — 7 дней, месяц — недели
-  /// (с понедельника, крайние срезы укорочены), год — 12 месяцев.
+  /// Срезы периода для графиков: неделя — 7 дней, месяц — 4 недели,
+  /// год — 12 месяцев.
   List<(DateTime, DateTime)> slices(StatPeriod period) {
     final (start, end) = periodBounds(period);
     switch (period) {
@@ -101,15 +97,13 @@ class StatsAggregator {
             (start.add(Duration(days: i)), start.add(Duration(days: i + 1))),
         ];
       case StatPeriod.month:
+        final totalDays = end.difference(start).inDays;
+        final sliceSize = (totalDays / 4).ceil();
         final result = <(DateTime, DateTime)>[];
         var cursor = start;
-        while (cursor.isBefore(end)) {
-          final daysToMonday = cursor.weekday == DateTime.monday
-              ? 7
-              : DateTime.daysPerWeek + DateTime.monday - cursor.weekday;
-          final nextMonday = cursor.add(Duration(days: daysToMonday));
-          final sliceEnd = nextMonday.isBefore(end) ? nextMonday : end;
-          result.add((cursor, sliceEnd));
+        for (var i = 0; i < 4; i++) {
+          final sliceEnd = cursor.add(Duration(days: sliceSize));
+          result.add((cursor, sliceEnd.isBefore(end) ? sliceEnd : end));
           cursor = sliceEnd;
         }
         return result;

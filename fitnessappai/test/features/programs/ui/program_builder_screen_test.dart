@@ -956,6 +956,60 @@ void main() {
     },
   );
 
+  testWidgets('выход из редактора показывает диалог подтверждения', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/home/programs/new',
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, state) =>
+              const Scaffold(body: Center(child: Text('Программы'))),
+          routes: [
+            GoRoute(
+              path: 'programs/new',
+              builder: (context, state) =>
+                  ProgramBuilderScreen(repository: repository),
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await enterName(tester, 'Черновик');
+
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Выйти из редактора?'), findsOneWidget);
+    expect(find.text('Изменения не сохранятся. Выйти?'), findsOneWidget);
+
+    // Отмена оставляет на экране редактора.
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    expect(find.text('Выйти из редактора?'), findsNothing);
+    expect(find.text('Черновик'), findsOneWidget);
+
+    // Подтверждение выхода возвращает на список программ.
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Выйти'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Программы'), findsOneWidget);
+  });
+
   testWidgets('режим удаления дней: кнопка в AppBar переключает режим', (
     tester,
   ) async {

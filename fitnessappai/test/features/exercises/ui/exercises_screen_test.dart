@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -16,6 +17,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
+import 'package:fitnessappai/features/exercises/ui/single_exercise_params_screen.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -45,17 +47,33 @@ void main() {
   });
 
   Future<void> pumpExercises(WidgetTester tester) async {
+    final router = GoRouter(
+      initialLocation: '/exercises',
+      routes: [
+        GoRoute(
+          path: '/exercises',
+          builder: (context, state) => ExercisesScreen(
+            repository: repository,
+            mediaCache: MediaCache(),
+            profileRepository: profileRepository,
+          ),
+        ),
+        GoRoute(
+          path: '/exercises/:id/params',
+          builder: (context, state) => SingleExerciseParamsScreen(
+            exerciseId: int.parse(state.pathParameters['id']!),
+            exerciseRepository: repository,
+          ),
+        ),
+      ],
+    );
     await tester.pumpWidget(
-      MaterialApp(
+      MaterialApp.router(
+        routerConfig: router,
         theme: AppTheme.dark(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
-        home: ExercisesScreen(
-          repository: repository,
-          mediaCache: MediaCache(),
-          profileRepository: profileRepository,
-        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -366,18 +384,18 @@ void main() {
     expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
   });
 
-  testWidgets('нажатие play показывает диалог подтверждения', (tester) async {
+  testWidgets('нажатие play открывает экран параметров упражнения', (
+    tester,
+  ) async {
     await repository.create(exercise('Жим штанги'), const []);
     await pumpExercises(tester);
 
     await tester.tap(find.byIcon(Icons.play_circle_outline));
     await tester.pumpAndSettle();
 
-    expect(find.text('Начать тренировку'), findsWidgets);
-    expect(
-      find.text('Начать тренировку с упражнением «Жим штанги»?'),
-      findsOneWidget,
-    );
+    expect(find.byType(SingleExerciseParamsScreen), findsOneWidget);
+    expect(find.text('Параметры упражнения'), findsOneWidget);
+    expect(find.text('Жим штанги'), findsOneWidget);
   });
 
   testWidgets('play не показывается в режиме выбора', (tester) async {

@@ -83,7 +83,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   int? _programId;
   bool _isActive = false;
   late final bool _initiallyNew;
-  bool _createdNewProgram = false;
   bool _programFinalized = false;
   bool _deleteMode = false;
   final Set<int> _selectedDayKeys = {};
@@ -117,8 +116,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   @override
   void dispose() {
     final programId = _programId;
-    if (_createdNewProgram &&
-        !_programFinalized &&
+    if (!_programFinalized &&
         programId != null &&
         _days.every((d) => !d.filled)) {
       unawaited(_repository.delete(programId));
@@ -594,9 +592,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final saved = _programId == null
         ? await _repository.create(program, days)
         : await _repository.update(program, days: days);
-    if (_programId == null) {
-      _createdNewProgram = true;
-    }
     _programId = saved.id;
     await _syncDayKeys();
     return saved;
@@ -766,104 +761,139 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     final l10n = AppLocalizations.of(context);
     final isEditing = _programId != null;
     final nextDay = _firstUnfilledDayIndex();
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? l10n.programEdit : l10n.programNew),
-        actions: [
-          if (isEditing && _days.length > 1)
-            IconButton(
-              tooltip: l10n.programBuilderDeleteDays,
-              icon: Icon(_deleteMode ? Icons.close : Icons.delete_outline),
-              onPressed: _toggleDeleteMode,
-            ),
-          if (isEditing && nextDay == null)
-            IconButton(
-              tooltip: l10n.programCopyJson,
-              icon: const Icon(Icons.copy_outlined),
-              onPressed: _copyProgramJson,
-            ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: ReorderableListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                buildDefaultDragHandles: false,
-                header: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _nameField(l10n),
-                    const SizedBox(height: 16),
-                    _descriptionField(l10n),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _warmupController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        labelText: l10n.programBuilderWarmupMinutes,
-                        border: const OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _exerciseRestController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        labelText: l10n.programBuilderExerciseRestSeconds,
-                        border: const OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    ),
-                    const SizedBox(height: 16),
-                    _daysCountField(l10n),
-                    if (_allMuscleGroups.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      MusclePanel(
-                        loads: _muscleLoads,
-                        allMuscleGroups: _allMuscleGroups,
-                        title: l10n.programBuilderMuscles,
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                  ],
-                ),
-                itemCount: _days.length,
-                onReorderItem: _onReorder,
-                itemBuilder: (context, index) => _buildDayTile(l10n, index),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        if (_programFinalized) {
+          if (mounted) Navigator.of(context).pop();
+          return;
+        }
+        final l10n = AppLocalizations.of(context);
+        final exit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.programBuilderExitTitle),
+            content: Text(l10n.programBuilderExitBody),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.commonCancel),
               ),
-            ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: _deleteMode
-              ? FilledButton(
-                  onPressed: _canDeleteSelected ? _deleteSelectedDays : null,
-                  child: Text(l10n.programBuilderDeleteSelected),
-                )
-              : FilledButton(
-                  onPressed: _saving
-                      ? null
-                      : nextDay == null
-                      ? _save
-                      : () => _openDayFill(nextDay),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          nextDay == null
-                              ? l10n.programBuilderSave
-                              : l10n.programBuilderFillNextDay(nextDay + 1),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(l10n.commonExit),
+              ),
+            ],
+          ),
+        );
+        if (exit == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isEditing ? l10n.programEdit : l10n.programNew),
+          actions: [
+            if (isEditing && _days.length > 1)
+              IconButton(
+                tooltip: l10n.programBuilderDeleteDays,
+                icon: Icon(_deleteMode ? Icons.close : Icons.delete_outline),
+                onPressed: _toggleDeleteMode,
+              ),
+            if (isEditing && nextDay == null)
+              IconButton(
+                tooltip: l10n.programCopyJson,
+                icon: const Icon(Icons.copy_outlined),
+                onPressed: _copyProgramJson,
+              ),
+          ],
+        ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: ReorderableListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  buildDefaultDragHandles: false,
+                  header: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _nameField(l10n),
+                      const SizedBox(height: 16),
+                      _descriptionField(l10n),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _warmupController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          labelText: l10n.programBuilderWarmupMinutes,
+                          border: const OutlineInputBorder(),
                         ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _exerciseRestController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          labelText: l10n.programBuilderExerciseRestSeconds,
+                          border: const OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _daysCountField(l10n),
+                      if (_allMuscleGroups.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        MusclePanel(
+                          loads: _muscleLoads,
+                          allMuscleGroups: _allMuscleGroups,
+                          title: l10n.programBuilderMuscles,
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                  itemCount: _days.length,
+                  onReorderItem: _onReorder,
+                  itemBuilder: (context, index) => _buildDayTile(l10n, index),
                 ),
+              ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _deleteMode
+                ? FilledButton(
+                    onPressed: _canDeleteSelected ? _deleteSelectedDays : null,
+                    child: Text(l10n.programBuilderDeleteSelected),
+                  )
+                : FilledButton(
+                    onPressed: _saving
+                        ? null
+                        : nextDay == null
+                        ? _save
+                        : () => _openDayFill(nextDay),
+                    child: _saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            nextDay == null
+                                ? l10n.programBuilderSave
+                                : l10n.programBuilderFillNextDay(nextDay + 1),
+                          ),
+                  ),
+          ),
         ),
       ),
     );

@@ -190,6 +190,24 @@ abstract class AppLocalizations {
   /// **'Добавить'**
   String get commonAdd;
 
+  /// No description provided for @commonExit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти'**
+  String get commonExit;
+
+  /// No description provided for @programBuilderExitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из редактора?'**
+  String get programBuilderExitTitle;
+
+  /// No description provided for @programBuilderExitBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменения не сохранятся. Выйти?'**
+  String get programBuilderExitBody;
+
   /// No description provided for @settings.
   ///
   /// In ru, this message translates to:
@@ -417,12 +435,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начать тренировку'**
   String get exerciseListStartWorkout;
-
-  /// No description provided for @exerciseListStartWorkoutConfirm.
-  ///
-  /// In ru, this message translates to:
-  /// **'Начать тренировку с упражнением «{name}»?'**
-  String exerciseListStartWorkoutConfirm(String name);
 
   /// No description provided for @schedulePerformed.
   ///

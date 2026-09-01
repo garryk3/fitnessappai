@@ -21,7 +21,7 @@ class ExerciseSeeder {
 
   ExerciseSeeder._(this._db, this._mediaStore, this._seedJsonLoader);
 
-  static const String seededFlagKey = 'exercises_seeded';
+  static const String seededFlagKey = 'exercises_seeded_v2';
   static const String exercisesAssetDir = 'assets/exercises';
 
   /// Путь к seed-файлу упражнений в ассетах приложения.
@@ -51,6 +51,12 @@ class ExerciseSeeder {
     final now = DateTime.now();
 
     for (final seed in exercises) {
+      final existing = await (_db.select(
+        _db.exercises,
+      )..where((t) => t.name.equals(seed.name))).getSingleOrNull();
+      if (existing != null) {
+        continue;
+      }
       final animationPath = await _mediaStore.copyAssetToStorage(
         '$exercisesAssetDir/${seed.animation}',
       );

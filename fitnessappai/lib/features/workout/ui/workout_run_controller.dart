@@ -2,6 +2,7 @@ import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
+import 'package:fitnessappai/core/domain/models/single_exercise_params.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -23,6 +24,7 @@ class WorkoutRunController {
     this.programDayId,
     this.variant,
     this.exerciseId,
+    this.singleExerciseParams,
     DateTime Function()? clock,
     TimerFactory? timerFactory,
     SoundService? soundService,
@@ -44,6 +46,9 @@ class WorkoutRunController {
   final int? programDayId;
   final WorkoutVariant? variant;
   final int? exerciseId;
+
+  /// Параметры одиночного упражнения из экрана [SingleExerciseParamsScreen].
+  final SingleExerciseParams? singleExerciseParams;
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> notFound = Signal(false);
@@ -95,13 +100,17 @@ class WorkoutRunController {
       notFound.value = true;
       return;
     }
+    final params = singleExerciseParams;
     final position = ProgramDayExercise(
       dayId: 0,
       exerciseId: exercise.id,
       orderIndex: 0,
-      sets: 3,
-      reps: 10,
-      restSeconds: 60,
+      sets: params?.sets ?? 3,
+      reps: params?.reps ?? 10,
+      weightKg: params?.weightKg,
+      durationSeconds: params?.durationSeconds,
+      distanceMeters: params?.distanceMeters,
+      restSeconds: params?.restSeconds ?? 60,
     );
     final exercises = [WorkoutExercise(position: position, exercise: exercise)];
     if (checkpoint != null) {

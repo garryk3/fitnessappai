@@ -76,28 +76,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   }
 
   void _confirmStartExercise(Exercise exercise) {
-    final l10n = AppLocalizations.of(context);
-    showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.exerciseListStartWorkout),
-        content: Text(l10n.exerciseListStartWorkoutConfirm(exercise.name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.exerciseListStartWorkout),
-          ),
-        ],
-      ),
-    ).then((confirmed) {
-      if (confirmed == true && mounted) {
-        context.push('/workout/run?exerciseId=${exercise.id}');
-      }
-    });
+    context.push('/exercises/${exercise.id}/params');
   }
 
   Future<void> _deleteSelected() async {

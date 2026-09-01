@@ -42,7 +42,7 @@ void main() {
   Future<int> exercisesCount() =>
       db.select(db.exercises).get().then((rows) => rows.length);
 
-  test('bootstrap заливает 16 упражнений и ставит флаг в app_meta', () async {
+  test('bootstrap заливает 8 упражнений и ставит флаг в app_meta', () async {
     await bootstrap(
       container: container,
       database: db,
@@ -50,7 +50,7 @@ void main() {
       seedJsonLoader: seedJson,
     );
 
-    expect(await exercisesCount(), 16);
+    expect(await exercisesCount(), 8);
     final flag =
         await (db.select(db.appMeta)
               ..where((t) => t.key.equals(ExerciseSeeder.seededFlagKey)))

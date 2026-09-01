@@ -327,6 +327,29 @@ void main() {
       expect(find.text('Начать'), findsOneWidget);
     });
 
+    testWidgets('имя программы в попапе ограничено двумя строками', (
+      tester,
+    ) async {
+      await createDay(
+        fixedNow.weekday,
+        name:
+            'Очень длинное название тренировочной программы для проверки переноса',
+      );
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('10'));
+      await tester.pumpAndSettle();
+
+      final title = tester.widget<Text>(
+        find.textContaining('Очень длинное название').first,
+      );
+      expect(title.maxLines, 2);
+      expect(title.overflow, TextOverflow.ellipsis);
+    });
+
     testWidgets('день без тренировки некликабелен', (tester) async {
       await pumpPlan(tester);
 

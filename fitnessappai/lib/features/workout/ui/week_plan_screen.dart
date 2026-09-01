@@ -944,7 +944,11 @@ class _MonthDayActionTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final status = item.status;
     return ListTile(
-      title: Text(item.programName),
+      title: Text(
+        item.programName,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: switch (status) {
         WeekPlanStatus.pending => Row(
           mainAxisSize: MainAxisSize.min,

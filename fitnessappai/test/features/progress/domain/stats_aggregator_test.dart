@@ -94,16 +94,16 @@ void main() {
   );
 
   group('границы периодов', () {
-    test('неделя начинается с понедельника', () {
+    test('неделя — rolling 7 дней от текущей даты', () {
       final (start, end) = aggregator.periodBounds(StatPeriod.week);
-      expect(start, DateTime(2026, 8, 10));
-      expect(end, DateTime(2026, 8, 17));
+      expect(start, DateTime(2026, 8, 6));
+      expect(end, DateTime(2026, 8, 13));
     });
 
-    test('месяц и год считаются от начала календарного периода', () {
+    test('месяц — rolling 30 дней, год — календарный', () {
       final (monthStart, monthEnd) = aggregator.periodBounds(StatPeriod.month);
-      expect(monthStart, DateTime(2026, 8, 1));
-      expect(monthEnd, DateTime(2026, 9, 1));
+      expect(monthStart, DateTime(2026, 7, 14));
+      expect(monthEnd, DateTime(2026, 8, 13));
 
       final (yearStart, yearEnd) = aggregator.periodBounds(StatPeriod.year);
       expect(yearStart, DateTime(2026, 1, 1));
@@ -113,19 +113,15 @@ void main() {
     test('срезы недели — 7 дней', () {
       final slices = aggregator.slices(StatPeriod.week);
       expect(slices, hasLength(7));
-      expect(slices.first.$1, DateTime(2026, 8, 10));
-      expect(slices.last.$2, DateTime(2026, 8, 17));
+      expect(slices.first.$1, DateTime(2026, 8, 6));
+      expect(slices.last.$2, DateTime(2026, 8, 13));
     });
 
-    test('срезы месяца — недели с понедельника, крайние укорочены', () {
+    test('срезы месяца — 4 недельных среза', () {
       final slices = aggregator.slices(StatPeriod.month);
-      expect(slices.first.$1, DateTime(2026, 8, 1));
-      expect(slices.first.$2, DateTime(2026, 8, 3));
-      expect(slices.last.$1, DateTime(2026, 8, 31));
-      expect(slices.last.$2, DateTime(2026, 9, 1));
-      for (var i = 1; i < slices.length - 1; i++) {
-        expect(slices[i].$2.difference(slices[i].$1).inDays, 7);
-      }
+      expect(slices, hasLength(4));
+      expect(slices.first.$1, DateTime(2026, 7, 14));
+      expect(slices.last.$2, DateTime(2026, 8, 13));
     });
 
     test('срезы года — 12 месяцев', () {
@@ -293,9 +289,8 @@ void main() {
           exercise.id!,
           StatPeriod.week,
         );
-        expect(metric[2], 30);
-        expect(metric.sublist(3), everyElement(0));
-        expect(metric.sublist(0, 2), everyElement(0));
+        expect(metric[6], 30);
+        expect(metric.sublist(0, 6), everyElement(0));
       },
     );
 
@@ -413,13 +408,13 @@ void main() {
         await workoutRepo.saveSession(session(DateTime(2026, 8, 12)), []);
 
         expect(await aggregator.workoutCountPerSlice(StatPeriod.week), [
+          0,
+          0,
+          0,
+          0,
           2,
           0,
           1,
-          0,
-          0,
-          0,
-          0,
         ]);
       },
     );
