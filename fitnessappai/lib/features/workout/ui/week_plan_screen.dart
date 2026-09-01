@@ -5,22 +5,25 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/quick_start_bar.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-/// Экран «План недели»: сетка Пн–Вс с тренировочными днями и статусами.
+/// Экран «План»: сетка недели или календарь месяца с тренировочными днями.
 class WeekPlanScreen extends StatefulWidget {
   const WeekPlanScreen({
     super.key,
     this.programRepository,
     this.workoutRepository,
+    this.planViewSettingsRepository,
     this.clock,
   });
 
   final ProgramRepository? programRepository;
   final WorkoutRepository? workoutRepository;
+  final PlanViewSettingsRepository? planViewSettingsRepository;
 
   /// Часы для детерминированных тестов: «сегодня» внутри экрана.
   final DateTime Function()? clock;
@@ -31,10 +34,14 @@ class WeekPlanScreen extends StatefulWidget {
 
 class _WeekPlanScreenState extends State<WeekPlanScreen> {
   late final WeekPlanController _controller;
+  late final PlanViewSettingsRepository _viewSettings;
 
   @override
   void initState() {
     super.initState();
+    _viewSettings =
+        widget.planViewSettingsRepository ??
+        locator.get<PlanViewSettingsRepository>();
     _controller = WeekPlanController(
       programRepository:
           widget.programRepository ?? locator.get<ProgramRepository>(),
@@ -42,12 +49,25 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           widget.workoutRepository ?? locator.get<WorkoutRepository>(),
       clock: widget.clock,
     );
+    _restoreViewMode();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _restoreViewMode() async {
+    final mode = await _viewSettings.getViewMode();
+    if (mode != PlanViewMode.week) {
+      await _controller.setViewMode(mode);
+    }
+  }
+
+  Future<void> _onModeChanged(PlanViewMode mode) async {
+    await _viewSettings.setViewMode(mode);
+    await _controller.setViewMode(mode);
   }
 
   Future<void> _skip(WeekPlanItem item) => _controller.markSkipped(item);
@@ -69,25 +89,61 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   Widget _buildBody(BuildContext context) {
     final controller = _controller;
     final l10n = AppLocalizations.of(context);
-    final weekStart = controller.weekStart.value;
-    final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
-    final rangeLabel = _weekRangeLabel(days.first, days.last, l10n);
+    final mode = controller.viewMode.value;
+    final today = controller.selectedDate.value;
 
     return Column(
       children: [
-        _WeekSwitcher(
-          label: rangeLabel,
-          onPrev: () => controller.shiftWeek(-1),
-          onNext: () => controller.shiftWeek(1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: SegmentedButton<PlanViewMode>(
+            segments: [
+              ButtonSegment(
+                value: PlanViewMode.week,
+                label: Text(l10n.weekPlanViewWeek),
+              ),
+              ButtonSegment(
+                value: PlanViewMode.month,
+                label: Text(l10n.weekPlanViewMonth),
+              ),
+            ],
+            selected: {mode},
+            onSelectionChanged: (selection) => _onModeChanged(selection.first),
+          ),
         ),
-        Expanded(child: _buildContent(context, days)),
+        if (mode == PlanViewMode.month)
+          _buildMonthSwitcher(context, controller, l10n)
+        else
+          _buildWeekSwitcher(context, controller, l10n),
+        Expanded(
+          child: mode == PlanViewMode.month
+              ? _buildMonthContent(context, controller, l10n, today)
+              : _buildWeekContent(context, controller, l10n, today),
+        ),
       ],
     );
   }
 
-  Widget _buildContent(BuildContext context, List<DateTime> days) {
-    final controller = _controller;
-    final l10n = AppLocalizations.of(context);
+  Widget _buildWeekSwitcher(
+    BuildContext context,
+    WeekPlanController controller,
+    AppLocalizations l10n,
+  ) {
+    final weekStart = controller.weekStart.value;
+    final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
+    return _WeekSwitcher(
+      label: _weekRangeLabel(days.first, days.last, l10n),
+      onPrev: () => controller.shiftWeek(-1),
+      onNext: () => controller.shiftWeek(1),
+    );
+  }
+
+  Widget _buildWeekContent(
+    BuildContext context,
+    WeekPlanController controller,
+    AppLocalizations l10n,
+    DateTime today,
+  ) {
     final items = controller.items.value;
     if (controller.isLoading.value && items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -95,7 +151,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     if (items.isEmpty) {
       return _WeekEmpty(l10n: l10n);
     }
-    final today = controller.selectedDate.value;
+    final weekStart = controller.weekStart.value;
+    final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     return LayoutBuilder(
       builder: (context, constraints) {
         if (AppBreakpoints.isExpanded(constraints.maxWidth)) {
@@ -117,6 +174,86 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           onUnskip: _unskip,
         );
       },
+    );
+  }
+
+  Widget _buildMonthSwitcher(
+    BuildContext context,
+    WeekPlanController controller,
+    AppLocalizations l10n,
+  ) {
+    return _MonthSwitcher(
+      label: _monthLabel(controller.monthStart.value),
+      onPrev: () => controller.shiftMonth(-1),
+      onNext: () => controller.shiftMonth(1),
+    );
+  }
+
+  Widget _buildMonthContent(
+    BuildContext context,
+    WeekPlanController controller,
+    AppLocalizations l10n,
+    DateTime today,
+  ) {
+    final items = controller.items.value;
+    if (controller.isLoading.value && items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return _MonthGrid(
+      monthStart: controller.monthStart.value,
+      items: items,
+      today: today,
+      onDayTap: (date, _) => _showDayActions(context, controller, date, l10n),
+    );
+  }
+
+  Future<void> _showDayActions(
+    BuildContext context,
+    WeekPlanController controller,
+    DateTime date,
+    AppLocalizations l10n,
+  ) {
+    final dayItems = controller.items.value
+        .where((item) => _sameDay(item.scheduledDate, date))
+        .toList();
+    if (dayItems.isEmpty) {
+      return Future.value();
+    }
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                DateFormat('d MMMM yyyy', 'ru').format(date),
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final item in dayItems)
+              _MonthDayActionTile(
+                item: item,
+                isToday: _sameDay(date, controller.selectedDate.value),
+                onStart: () {
+                  Navigator.of(sheetContext).pop();
+                  _start(item);
+                },
+                onSkip: () {
+                  Navigator.of(sheetContext).pop();
+                  _skip(item);
+                },
+                onUnskip: () {
+                  Navigator.of(sheetContext).pop();
+                  _unskip(item);
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -153,6 +290,46 @@ class _WeekSwitcher extends StatelessWidget {
           IconButton(
             onPressed: onNext,
             tooltip: l10n.weekPlanNextWeek,
+            icon: const Icon(Icons.chevron_right),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MonthSwitcher extends StatelessWidget {
+  const _MonthSwitcher({
+    required this.label,
+    required this.onPrev,
+    required this.onNext,
+  });
+
+  final String label;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onPrev,
+            tooltip: l10n.weekPlanPrevMonth,
+            icon: const Icon(Icons.chevron_left),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(label, style: theme.textTheme.titleMedium),
+            ),
+          ),
+          IconButton(
+            onPressed: onNext,
+            tooltip: l10n.weekPlanNextMonth,
             icon: const Icon(Icons.chevron_right),
           ),
         ],
@@ -506,6 +683,11 @@ class _StatusBadge extends StatelessWidget {
         colorScheme.error,
         colorScheme.onError,
       ),
+      WeekPlanStatus.pastSkipped => (
+        l10n.scheduleSkipped,
+        colorScheme.error,
+        colorScheme.onError,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -564,6 +746,233 @@ class _WeekEmpty extends StatelessWidget {
   }
 }
 
+class _MonthGrid extends StatelessWidget {
+  const _MonthGrid({
+    required this.monthStart,
+    required this.items,
+    required this.today,
+    required this.onDayTap,
+  });
+
+  final DateTime monthStart;
+  final List<WeekPlanItem> items;
+  final DateTime today;
+
+  /// [date, items] — дата и привязанные тренировки при тапе по ячейке.
+  final void Function(DateTime date, List<WeekPlanItem> items) onDayTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final firstDay = DateTime(monthStart.year, monthStart.month, 1);
+    final daysInMonth = DateTime(monthStart.year, monthStart.month + 1, 0).day;
+    final leadingBlanks = firstDay.weekday - 1;
+    final cellCount = ((leadingBlanks + daysInMonth) / 7).ceil() * 7;
+    final gridStart = firstDay.subtract(Duration(days: leadingBlanks));
+    final theme = Theme.of(context);
+
+    final dayNames = [
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThu,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+      l10n.weekdaySun,
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+      children: [
+        Row(
+          children: [
+            for (final name in dayNames)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    name,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (var row = 0; row < cellCount ~/ 7; row++) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var col = 0; col < 7; col++) ...[
+                Expanded(
+                  child: _buildCell(
+                    context,
+                    gridStart.add(Duration(days: row * 7 + col)),
+                  ),
+                ),
+                if (col < 6) const SizedBox(width: 6),
+              ],
+            ],
+          ),
+          if (row < cellCount ~/ 7 - 1) const SizedBox(height: 6),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCell(BuildContext context, DateTime date) {
+    if (date.month != monthStart.month || date.year != monthStart.year) {
+      return const SizedBox(height: 52);
+    }
+    final dayItems = _itemsForDay(items, date);
+    final isToday = _sameDay(date, today);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final (background, foreground, border) = _cellStyle(
+      dayItems,
+      date,
+      colorScheme,
+    );
+
+    final tooltip = dayItems.map((e) => e.programName).join(', ');
+
+    return Tooltip(
+      message: dayItems.isEmpty ? '' : tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: dayItems.isEmpty ? null : () => onDayTap(date, dayItems),
+          child: Container(
+            height: 52,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(12),
+              border: isToday ? Border.all(color: colorScheme.primary) : border,
+            ),
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${date.day}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: isToday ? colorScheme.primary : foreground,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                if (dayItems.isNotEmpty)
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Icon(
+                      Icons.fitness_center,
+                      size: 14,
+                      color: foreground,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  (Color, Color, BoxBorder?) _cellStyle(
+    List<WeekPlanItem> dayItems,
+    DateTime date,
+    ColorScheme colorScheme,
+  ) {
+    if (dayItems.isEmpty) {
+      return (
+        colorScheme.surfaceContainerLow,
+        colorScheme.onSurfaceVariant,
+        null,
+      );
+    }
+    final anyPerformed = dayItems.any(
+      (e) => e.status == WeekPlanStatus.performed,
+    );
+    final anySkipped = dayItems.any((e) => e.status == WeekPlanStatus.skipped);
+    if (anyPerformed) {
+      return (
+        colorScheme.primaryContainer,
+        colorScheme.onPrimaryContainer,
+        null,
+      );
+    }
+    if (_isPast(date)) {
+      // Прошедший день без выполнения — «неуспешный» окрас.
+      return (colorScheme.errorContainer, colorScheme.onErrorContainer, null);
+    }
+    if (anySkipped) {
+      return (colorScheme.errorContainer, colorScheme.onErrorContainer, null);
+    }
+    return (
+      colorScheme.secondaryContainer,
+      colorScheme.onSecondaryContainer,
+      null,
+    );
+  }
+
+  bool _isPast(DateTime date) {
+    final now = _dateOnly(DateTime.now());
+    return date.isBefore(now);
+  }
+}
+
+class _MonthDayActionTile extends StatelessWidget {
+  const _MonthDayActionTile({
+    required this.item,
+    required this.isToday,
+    required this.onStart,
+    required this.onSkip,
+    required this.onUnskip,
+  });
+
+  final WeekPlanItem item;
+  final bool isToday;
+  final VoidCallback onStart;
+  final VoidCallback onSkip;
+  final VoidCallback onUnskip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final status = item.status;
+    return ListTile(
+      title: Text(item.programName),
+      trailing: switch (status) {
+        WeekPlanStatus.pending => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FilledButton.tonalIcon(
+              onPressed: onStart,
+              icon: const Icon(Icons.play_arrow),
+              label: Text(
+                isToday ? l10n.weekPlanStart : l10n.weekPlanReschedule,
+              ),
+            ),
+            const SizedBox(width: 4),
+            TextButton(onPressed: onSkip, child: Text(l10n.weekPlanSkip)),
+          ],
+        ),
+        WeekPlanStatus.skipped => TextButton.icon(
+          onPressed: onUnskip,
+          icon: const Icon(Icons.undo, size: 18),
+          label: Text(l10n.weekPlanUnskip),
+        ),
+        WeekPlanStatus.performed ||
+        WeekPlanStatus.rescheduled ||
+        WeekPlanStatus.pastSkipped => _StatusBadge(status: status),
+      },
+    );
+  }
+}
+
 String _weekRangeLabel(DateTime start, DateTime end, AppLocalizations l10n) {
   final fmt = DateFormat('d MMMM', 'ru');
   if (start.year == end.year && start.month == end.month) {
@@ -572,11 +981,19 @@ String _weekRangeLabel(DateTime start, DateTime end, AppLocalizations l10n) {
   return '${fmt.format(start)} – ${fmt.format(end)}';
 }
 
+String _monthLabel(DateTime month) {
+  final formatted = DateFormat('LLLL yyyy', 'ru').format(month);
+  return formatted[0].toUpperCase() + formatted.substring(1);
+}
+
 List<WeekPlanItem> _itemsForDay(List<WeekPlanItem> items, DateTime day) =>
     items.where((item) => _sameDay(item.scheduledDate, day)).toList();
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
 
 String _weekdayLabel(AppLocalizations l10n, int weekday) => switch (weekday) {
   1 => l10n.weekdayMon,

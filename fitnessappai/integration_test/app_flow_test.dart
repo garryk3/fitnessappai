@@ -411,12 +411,12 @@ Future<void> saveProgramBuilder(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 100));
     final dialog = find.byType(AlertDialog);
     if (dialog.evaluate().isNotEmpty) {
-      final cancel = find.descendant(
+      final activate = find.descendant(
         of: dialog,
-        matching: find.byType(TextButton),
+        matching: find.widgetWithText(FilledButton, 'Сделать активной'),
       );
-      if (cancel.evaluate().isNotEmpty) {
-        await tester.tap(cancel.first);
+      if (activate.evaluate().isNotEmpty) {
+        await tester.tap(activate.first);
         await tester.pumpAndSettle();
         return;
       }
@@ -1201,28 +1201,14 @@ void main() {
     await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
-    await goToTab(tester, Icons.home_outlined);
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Выберите активную программу, чтобы начать тренировку.'),
-      findsOneWidget,
-    );
-
-    await goToTab(tester, Icons.calendar_month_outlined);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.more_vert).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Сделать активной'));
-    await tester.pumpAndSettle();
-    expect(find.text('Активная'), findsOneWidget);
-
+    // Программа уже активна (saveProgramBuilder активирует по умолчанию).
     await goToTab(tester, Icons.home_outlined);
     await tester.pumpAndSettle();
     expect(find.text('Активная программа'), findsOneWidget);
     expect(find.text(_programName), findsWidgets);
-    expect(find.text('Быстрый старт'), findsOneWidget);
+    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
 
-    await tester.tap(find.text('Быстрый старт'));
+    await tester.tap(find.byIcon(Icons.play_circle_outline));
     await tester.pumpAndSettle();
     expect(
       find.widgetWithText(FilledButton, 'Начать тренировку'),
@@ -1357,10 +1343,8 @@ void main() {
       await pullToRefreshPrograms(tester);
       expect(find.text(_programName), findsOneWidget);
 
+      // Программа уже активна (saveProgramBuilder активирует по умолчанию).
       await goToTab(tester, Icons.calendar_month_outlined);
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Сделать активной'));
       await tester.pumpAndSettle();
       expect(find.text('Активная'), findsOneWidget);
 
@@ -1623,8 +1607,8 @@ void main() {
 
     await goToTab(tester, Icons.home_outlined);
     await tester.pumpAndSettle();
-    expect(find.text('Быстрый старт'), findsOneWidget);
-    await tester.tap(find.text('Быстрый старт'));
+    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.play_circle_outline));
     await tester.pumpAndSettle();
     expect(
       find.widgetWithText(FilledButton, 'Начать тренировку'),
@@ -1712,7 +1696,11 @@ void main() {
       );
 
       final dayLabel = find.text('День 1');
-      await tester.ensureVisible(dayLabel);
+      await tester.scrollUntilVisible(
+        dayLabel,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       await tester.tap(dayLabel);
       await tester.pumpAndSettle();

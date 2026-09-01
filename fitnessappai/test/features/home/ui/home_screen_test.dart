@@ -28,7 +28,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
-    programRepo = ProgramRepository(db);
+    programRepo = ProgramRepository(db, clock: () => fixedNow);
     exerciseRepo = ExerciseRepository(db, MediaStore());
     workoutRepo = WorkoutRepository(db);
   });
@@ -233,7 +233,7 @@ void main() {
     expect(find.text('history-route'), findsOneWidget);
   });
 
-  testWidgets('FAB быстрого старта показывается при pending-дне', (
+  testWidgets('иконка play на карточке открывает подготовку тренировки', (
     WidgetTester tester,
   ) async {
     final program = await createProgram(name: 'Силовая', dayOfWeek: 1);
@@ -241,10 +241,9 @@ void main() {
 
     await pumpHome(tester);
 
-    expect(find.byType(FloatingActionButton), findsOneWidget);
-    expect(find.text('Быстрый старт'), findsOneWidget);
+    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
 
-    await tester.tap(find.text('Быстрый старт'));
+    await tester.tap(find.byIcon(Icons.play_circle_outline));
     await tester.pumpAndSettle();
 
     final day = (await programRepo.getDays(program.id!)).single;

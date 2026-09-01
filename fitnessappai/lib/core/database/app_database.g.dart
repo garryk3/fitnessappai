@@ -3190,6 +3190,34 @@ class $ProgramsTable extends Programs
     defaultValue: const Constant(false),
   );
   @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, int> activatedAt =
+      GeneratedColumn<int>(
+        'activated_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      ).withConverter<DateTime?>($ProgramsTable.$converteractivatedAtn);
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, int> deactivatedAt =
+      GeneratedColumn<int>(
+        'deactivated_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      ).withConverter<DateTime?>($ProgramsTable.$converterdeactivatedAtn);
+  static const VerificationMeta _exerciseRestSecondsMeta =
+      const VerificationMeta('exerciseRestSeconds');
+  @override
+  late final GeneratedColumn<int> exerciseRestSeconds = GeneratedColumn<int>(
+    'exercise_rest_seconds',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     name,
@@ -3198,6 +3226,9 @@ class $ProgramsTable extends Programs
     createdAt,
     updatedAt,
     isActive,
+    activatedAt,
+    deactivatedAt,
+    exerciseRestSeconds,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3243,6 +3274,15 @@ class $ProgramsTable extends Programs
         isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
       );
     }
+    if (data.containsKey('exercise_rest_seconds')) {
+      context.handle(
+        _exerciseRestSecondsMeta,
+        exerciseRestSeconds.isAcceptableOrUnknown(
+          data['exercise_rest_seconds']!,
+          _exerciseRestSecondsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3284,6 +3324,22 @@ class $ProgramsTable extends Programs
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
       )!,
+      activatedAt: $ProgramsTable.$converteractivatedAtn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}activated_at'],
+        ),
+      ),
+      deactivatedAt: $ProgramsTable.$converterdeactivatedAtn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}deactivated_at'],
+        ),
+      ),
+      exerciseRestSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exercise_rest_seconds'],
+      ),
     );
   }
 
@@ -3296,6 +3352,14 @@ class $ProgramsTable extends Programs
       const DateTimeConverter();
   static TypeConverter<DateTime, int> $converterupdatedAt =
       const DateTimeConverter();
+  static TypeConverter<DateTime, int> $converteractivatedAt =
+      const DateTimeConverter();
+  static TypeConverter<DateTime?, int?> $converteractivatedAtn =
+      NullAwareTypeConverter.wrap($converteractivatedAt);
+  static TypeConverter<DateTime, int> $converterdeactivatedAt =
+      const DateTimeConverter();
+  static TypeConverter<DateTime?, int?> $converterdeactivatedAtn =
+      NullAwareTypeConverter.wrap($converterdeactivatedAt);
 }
 
 class ProgramRow extends DataClass implements Insertable<ProgramRow> {
@@ -3306,6 +3370,15 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
+
+  /// Момент последней активации программы (null — никогда не активировалась).
+  final DateTime? activatedAt;
+
+  /// Момент последней деактивации (null — активна сейчас или деактиваций не было).
+  final DateTime? deactivatedAt;
+
+  /// Пауза в секундах между упражнениями (null — не задана).
+  final int? exerciseRestSeconds;
   const ProgramRow({
     required this.id,
     required this.name,
@@ -3314,6 +3387,9 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     required this.createdAt,
     required this.updatedAt,
     required this.isActive,
+    this.activatedAt,
+    this.deactivatedAt,
+    this.exerciseRestSeconds,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3333,6 +3409,19 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       );
     }
     map['is_active'] = Variable<bool>(isActive);
+    if (!nullToAbsent || activatedAt != null) {
+      map['activated_at'] = Variable<int>(
+        $ProgramsTable.$converteractivatedAtn.toSql(activatedAt),
+      );
+    }
+    if (!nullToAbsent || deactivatedAt != null) {
+      map['deactivated_at'] = Variable<int>(
+        $ProgramsTable.$converterdeactivatedAtn.toSql(deactivatedAt),
+      );
+    }
+    if (!nullToAbsent || exerciseRestSeconds != null) {
+      map['exercise_rest_seconds'] = Variable<int>(exerciseRestSeconds);
+    }
     return map;
   }
 
@@ -3345,6 +3434,15 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       isActive: Value(isActive),
+      activatedAt: activatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activatedAt),
+      deactivatedAt: deactivatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deactivatedAt),
+      exerciseRestSeconds: exerciseRestSeconds == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exerciseRestSeconds),
     );
   }
 
@@ -3361,6 +3459,11 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      activatedAt: serializer.fromJson<DateTime?>(json['activatedAt']),
+      deactivatedAt: serializer.fromJson<DateTime?>(json['deactivatedAt']),
+      exerciseRestSeconds: serializer.fromJson<int?>(
+        json['exerciseRestSeconds'],
+      ),
     );
   }
   @override
@@ -3374,6 +3477,9 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isActive': serializer.toJson<bool>(isActive),
+      'activatedAt': serializer.toJson<DateTime?>(activatedAt),
+      'deactivatedAt': serializer.toJson<DateTime?>(deactivatedAt),
+      'exerciseRestSeconds': serializer.toJson<int?>(exerciseRestSeconds),
     };
   }
 
@@ -3385,6 +3491,9 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isActive,
+    Value<DateTime?> activatedAt = const Value.absent(),
+    Value<DateTime?> deactivatedAt = const Value.absent(),
+    Value<int?> exerciseRestSeconds = const Value.absent(),
   }) => ProgramRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -3393,6 +3502,13 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     isActive: isActive ?? this.isActive,
+    activatedAt: activatedAt.present ? activatedAt.value : this.activatedAt,
+    deactivatedAt: deactivatedAt.present
+        ? deactivatedAt.value
+        : this.deactivatedAt,
+    exerciseRestSeconds: exerciseRestSeconds.present
+        ? exerciseRestSeconds.value
+        : this.exerciseRestSeconds,
   );
   ProgramRow copyWithCompanion(ProgramsCompanion data) {
     return ProgramRow(
@@ -3405,6 +3521,15 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      activatedAt: data.activatedAt.present
+          ? data.activatedAt.value
+          : this.activatedAt,
+      deactivatedAt: data.deactivatedAt.present
+          ? data.deactivatedAt.value
+          : this.deactivatedAt,
+      exerciseRestSeconds: data.exerciseRestSeconds.present
+          ? data.exerciseRestSeconds.value
+          : this.exerciseRestSeconds,
     );
   }
 
@@ -3417,7 +3542,10 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
           ..write('daysCount: $daysCount, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('isActive: $isActive')
+          ..write('isActive: $isActive, ')
+          ..write('activatedAt: $activatedAt, ')
+          ..write('deactivatedAt: $deactivatedAt, ')
+          ..write('exerciseRestSeconds: $exerciseRestSeconds')
           ..write(')'))
         .toString();
   }
@@ -3431,6 +3559,9 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     createdAt,
     updatedAt,
     isActive,
+    activatedAt,
+    deactivatedAt,
+    exerciseRestSeconds,
   );
   @override
   bool operator ==(Object other) =>
@@ -3442,7 +3573,10 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
           other.daysCount == this.daysCount &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.isActive == this.isActive);
+          other.isActive == this.isActive &&
+          other.activatedAt == this.activatedAt &&
+          other.deactivatedAt == this.deactivatedAt &&
+          other.exerciseRestSeconds == this.exerciseRestSeconds);
 }
 
 class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
@@ -3453,6 +3587,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<bool> isActive;
+  final Value<DateTime?> activatedAt;
+  final Value<DateTime?> deactivatedAt;
+  final Value<int?> exerciseRestSeconds;
   const ProgramsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -3461,6 +3598,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.activatedAt = const Value.absent(),
+    this.deactivatedAt = const Value.absent(),
+    this.exerciseRestSeconds = const Value.absent(),
   });
   ProgramsCompanion.insert({
     this.id = const Value.absent(),
@@ -3470,6 +3610,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     required DateTime createdAt,
     required DateTime updatedAt,
     this.isActive = const Value.absent(),
+    this.activatedAt = const Value.absent(),
+    this.deactivatedAt = const Value.absent(),
+    this.exerciseRestSeconds = const Value.absent(),
   }) : name = Value(name),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
@@ -3481,6 +3624,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
     Expression<bool>? isActive,
+    Expression<int>? activatedAt,
+    Expression<int>? deactivatedAt,
+    Expression<int>? exerciseRestSeconds,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3490,6 +3636,10 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isActive != null) 'is_active': isActive,
+      if (activatedAt != null) 'activated_at': activatedAt,
+      if (deactivatedAt != null) 'deactivated_at': deactivatedAt,
+      if (exerciseRestSeconds != null)
+        'exercise_rest_seconds': exerciseRestSeconds,
     });
   }
 
@@ -3501,6 +3651,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<bool>? isActive,
+    Value<DateTime?>? activatedAt,
+    Value<DateTime?>? deactivatedAt,
+    Value<int?>? exerciseRestSeconds,
   }) {
     return ProgramsCompanion(
       id: id ?? this.id,
@@ -3510,6 +3663,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
+      activatedAt: activatedAt ?? this.activatedAt,
+      deactivatedAt: deactivatedAt ?? this.deactivatedAt,
+      exerciseRestSeconds: exerciseRestSeconds ?? this.exerciseRestSeconds,
     );
   }
 
@@ -3541,6 +3697,19 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
+    if (activatedAt.present) {
+      map['activated_at'] = Variable<int>(
+        $ProgramsTable.$converteractivatedAtn.toSql(activatedAt.value),
+      );
+    }
+    if (deactivatedAt.present) {
+      map['deactivated_at'] = Variable<int>(
+        $ProgramsTable.$converterdeactivatedAtn.toSql(deactivatedAt.value),
+      );
+    }
+    if (exerciseRestSeconds.present) {
+      map['exercise_rest_seconds'] = Variable<int>(exerciseRestSeconds.value);
+    }
     return map;
   }
 
@@ -3553,7 +3722,10 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
           ..write('daysCount: $daysCount, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('isActive: $isActive')
+          ..write('isActive: $isActive, ')
+          ..write('activatedAt: $activatedAt, ')
+          ..write('deactivatedAt: $deactivatedAt, ')
+          ..write('exerciseRestSeconds: $exerciseRestSeconds')
           ..write(')'))
         .toString();
   }
@@ -11049,6 +11221,9 @@ typedef $$ProgramsTableCreateCompanionBuilder =
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<bool> isActive,
+      Value<DateTime?> activatedAt,
+      Value<DateTime?> deactivatedAt,
+      Value<int?> exerciseRestSeconds,
     });
 typedef $$ProgramsTableUpdateCompanionBuilder =
     ProgramsCompanion Function({
@@ -11059,6 +11234,9 @@ typedef $$ProgramsTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<bool> isActive,
+      Value<DateTime?> activatedAt,
+      Value<DateTime?> deactivatedAt,
+      Value<int?> exerciseRestSeconds,
     });
 
 final class $$ProgramsTableReferences
@@ -11172,6 +11350,23 @@ class $$ProgramsTableFilterComposer
 
   ColumnFilters<bool> get isActive => $composableBuilder(
     column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, int> get activatedAt =>
+      $composableBuilder(
+        column: $table.activatedAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, int> get deactivatedAt =>
+      $composableBuilder(
+        column: $table.deactivatedAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get exerciseRestSeconds => $composableBuilder(
+    column: $table.exerciseRestSeconds,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11296,6 +11491,21 @@ class $$ProgramsTableOrderingComposer
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get activatedAt => $composableBuilder(
+    column: $table.activatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deactivatedAt => $composableBuilder(
+    column: $table.deactivatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get exerciseRestSeconds => $composableBuilder(
+    column: $table.exerciseRestSeconds,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProgramsTableAnnotationComposer
@@ -11329,6 +11539,23 @@ class $$ProgramsTableAnnotationComposer
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime?, int> get activatedAt =>
+      $composableBuilder(
+        column: $table.activatedAt,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<DateTime?, int> get deactivatedAt =>
+      $composableBuilder(
+        column: $table.deactivatedAt,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get exerciseRestSeconds => $composableBuilder(
+    column: $table.exerciseRestSeconds,
+    builder: (column) => column,
+  );
 
   Expression<T> programDaysRefs<T extends Object>(
     Expression<T> Function($$ProgramDaysTableAnnotationComposer a) f,
@@ -11447,6 +11674,9 @@ class $$ProgramsTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<DateTime?> activatedAt = const Value.absent(),
+                Value<DateTime?> deactivatedAt = const Value.absent(),
+                Value<int?> exerciseRestSeconds = const Value.absent(),
               }) => ProgramsCompanion(
                 id: id,
                 name: name,
@@ -11455,6 +11685,9 @@ class $$ProgramsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 isActive: isActive,
+                activatedAt: activatedAt,
+                deactivatedAt: deactivatedAt,
+                exerciseRestSeconds: exerciseRestSeconds,
               ),
           createCompanionCallback:
               ({
@@ -11465,6 +11698,9 @@ class $$ProgramsTableTableManager
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<bool> isActive = const Value.absent(),
+                Value<DateTime?> activatedAt = const Value.absent(),
+                Value<DateTime?> deactivatedAt = const Value.absent(),
+                Value<int?> exerciseRestSeconds = const Value.absent(),
               }) => ProgramsCompanion.insert(
                 id: id,
                 name: name,
@@ -11473,6 +11709,9 @@ class $$ProgramsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 isActive: isActive,
+                activatedAt: activatedAt,
+                deactivatedAt: deactivatedAt,
+                exerciseRestSeconds: exerciseRestSeconds,
               ),
           withReferenceMapper: (p0) => p0
               .map(

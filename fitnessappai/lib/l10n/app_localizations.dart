@@ -322,6 +322,12 @@ abstract class AppLocalizations {
   /// **'Повторить'**
   String get commonRetry;
 
+  /// No description provided for @commonStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остановить звук'**
+  String get commonStop;
+
   /// No description provided for @exerciseTypeStrength.
   ///
   /// In ru, this message translates to:
@@ -406,6 +412,18 @@ abstract class AppLocalizations {
   /// **'Сначала удалите его из программы.'**
   String get exerciseListDeleteBlockedHint;
 
+  /// No description provided for @exerciseListStartWorkout.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать тренировку'**
+  String get exerciseListStartWorkout;
+
+  /// No description provided for @exerciseListStartWorkoutConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать тренировку с упражнением «{name}»?'**
+  String exerciseListStartWorkoutConfirm(String name);
+
   /// No description provided for @schedulePerformed.
   ///
   /// In ru, this message translates to:
@@ -483,6 +501,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Следующая неделя'**
   String get weekPlanNextWeek;
+
+  /// No description provided for @weekPlanPrevMonth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предыдущий месяц'**
+  String get weekPlanPrevMonth;
+
+  /// No description provided for @weekPlanNextMonth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Следующий месяц'**
+  String get weekPlanNextMonth;
+
+  /// No description provided for @weekPlanViewWeek.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неделя'**
+  String get weekPlanViewWeek;
+
+  /// No description provided for @weekPlanViewMonth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Месяц'**
+  String get weekPlanViewMonth;
 
   /// No description provided for @weekPlanQuickStart.
   ///
@@ -1012,6 +1054,12 @@ abstract class AppLocalizations {
   /// **'Разминка, мин'**
   String get programBuilderWarmupMinutes;
 
+  /// No description provided for @programBuilderExerciseRestSeconds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отдых между упражнениями, сек'**
+  String get programBuilderExerciseRestSeconds;
+
   /// Короткая подпись разминки в тайле дня
   ///
   /// In ru, this message translates to:
@@ -1137,6 +1185,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Параметры не заданы'**
   String get programBuilderNoMetrics;
+
+  /// No description provided for @programBuilderDeleteDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить дни'**
+  String get programBuilderDeleteDays;
+
+  /// No description provided for @programBuilderDeleteSelected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить выбранное'**
+  String get programBuilderDeleteSelected;
 
   /// No description provided for @exerciseParamsSets.
   ///

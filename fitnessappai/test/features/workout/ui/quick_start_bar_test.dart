@@ -49,6 +49,8 @@ void main() {
         daysCount: 1,
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
+        isActive: true,
+        activatedAt: DateTime(2024, 1, 1),
       ),
       [ProgramDay(programId: 0, dayIndex: 0)],
     );

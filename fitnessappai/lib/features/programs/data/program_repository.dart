@@ -52,11 +52,16 @@ class ProgramDetail {
 
 /// Репозиторий программ: CRUD, дни и упражнения с реордером, валидация.
 class ProgramRepository {
-  ProgramRepository(this._db, {DataChangeNotifier? changes})
-    : _changes = changes ?? appDataChanges;
+  ProgramRepository(
+    this._db, {
+    DataChangeNotifier? changes,
+    DateTime Function()? clock,
+  }) : _changes = changes ?? appDataChanges,
+       _now = clock ?? DateTime.now;
 
   final AppDatabase _db;
   final DataChangeNotifier _changes;
+  final DateTime Function() _now;
 
   void _notify() => _changes.notifyChanged();
 
@@ -137,18 +142,26 @@ class ProgramRepository {
   }
 
   /// Делает программу [id] активной, НЕ сбрасывая флаг у остальных
-  /// (мульти-активный режим).
+  /// (мульти-активный режим). Активация фиксирует период активности в плане.
   Future<void> setActive(int id) async {
     await (_db.update(_db.programs)..where((t) => t.id.equals(id))).write(
-      ProgramsCompanion(isActive: const Value(true)),
+      ProgramsCompanion(
+        isActive: const Value(true),
+        activatedAt: Value(_now()),
+        deactivatedAt: const Value(null),
+      ),
     );
     _notify();
   }
 
-  /// Снимает флаг «активная» с программы [id].
+  /// Снимает флаг «активная» с программы [id] и закрывает её период
+  /// активности в плане.
   Future<void> deactivate(int id) async {
     await (_db.update(_db.programs)..where((t) => t.id.equals(id))).write(
-      ProgramsCompanion(isActive: const Value(false)),
+      ProgramsCompanion(
+        isActive: const Value(false),
+        deactivatedAt: Value(_now()),
+      ),
     );
     _notify();
   }
@@ -713,6 +726,9 @@ class ProgramRepository {
     createdAt: Value(p.createdAt),
     updatedAt: Value(p.updatedAt),
     isActive: Value(p.isActive),
+    activatedAt: Value(p.activatedAt),
+    deactivatedAt: Value(p.deactivatedAt),
+    exerciseRestSeconds: Value(p.exerciseRestSeconds),
   );
 
   ProgramDayExercisesCompanion _toDayExerciseCompanion(ProgramDayExercise e) =>
@@ -738,6 +754,9 @@ class ProgramRepository {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     isActive: row.isActive,
+    activatedAt: row.activatedAt,
+    deactivatedAt: row.deactivatedAt,
+    exerciseRestSeconds: row.exerciseRestSeconds,
   );
 
   ProgramDay _toDay(ProgramDayRow row) => ProgramDay(

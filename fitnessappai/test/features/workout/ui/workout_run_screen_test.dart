@@ -150,6 +150,10 @@ void main() {
           builder: (context, state) => const Scaffold(body: Text('home')),
         ),
         GoRoute(
+          path: '/home',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
           path: '/workout/run',
           builder: (context, state) => WorkoutRunScreen(
             programDayId:
@@ -534,5 +538,132 @@ void main() {
       find.widgetWithText(TextFormField, 'Вес (кг)'),
     );
     expect(weightField.controller!.text, isEmpty);
+  });
+
+  Future<void> pumpRunSingle(WidgetTester tester, int exerciseId) async {
+    final router = GoRouter(
+      initialLocation: '/workout/run?exerciseId=$exerciseId',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) => WorkoutRunScreen(
+            exerciseId: int.tryParse(
+              state.uri.queryParameters['exerciseId'] ?? '',
+            ),
+            programRepository: programRepo,
+            exerciseRepository: exerciseRepo,
+            workoutRepository: workoutRepo,
+            mediaCache: MediaCache(),
+            wakelockService: wakelock,
+            soundService: StubSoundService(),
+            checkpointLoader: () async => null,
+            checkpointSaver: (_) async {},
+            checkpointClearer: () async {},
+          ),
+        ),
+        GoRoute(
+          path: '/exercises/:id',
+          builder: (context, state) =>
+              Scaffold(body: Text('detail ${state.pathParameters['id']}')),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('одиночная сессия: упражнение загружается без программы', (
+    tester,
+  ) async {
+    final exId = await insertExercise('Жим штанги');
+    await pumpRunSingle(tester, exId);
+
+    expect(find.text('Жим штанги'), findsWidgets);
+    expect(find.text('Упражнение 1 из 1 · Подход 1 из 3'), findsOneWidget);
+    expect(find.byType(TextFormField), findsWidgets);
+  });
+
+  testWidgets('одиночная сессия: завершение сохраняет сессию без программы', (
+    tester,
+  ) async {
+    final exId = await insertExercise('Подтягивания');
+
+    final router = GoRouter(
+      initialLocation: '/workout/run?exerciseId=$exId',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) => WorkoutRunScreen(
+            exerciseId: int.tryParse(
+              state.uri.queryParameters['exerciseId'] ?? '',
+            ),
+            programRepository: programRepo,
+            exerciseRepository: exerciseRepo,
+            workoutRepository: workoutRepo,
+            mediaCache: MediaCache(),
+            wakelockService: wakelock,
+            soundService: StubSoundService(),
+            checkpointLoader: () async => null,
+            checkpointSaver: (_) async {},
+            checkpointClearer: () async {},
+          ),
+        ),
+        GoRoute(
+          path: '/progress',
+          builder: (context, state) => const Scaffold(body: Text('progress')),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Ввести повторы и завершить подход (3 подхода × 1 подход)
+    for (var i = 0; i < 3; i++) {
+      await tester.enterText(find.byType(TextFormField).first, '10');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+      if (i < 2) {
+        await tester.tap(find.text('Пропустить отдых'));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    // Проверить, что показан экран завершения
+    expect(find.text('Тренировка завершена'), findsOneWidget);
+
+    // Подождать завершения сохранения (async в _FinishedView)
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    // Проверить, что сессия сохранена
+    final sessions = await workoutRepo.getAllSessions();
+    expect(sessions, hasLength(1));
+    expect(sessions.first.programName, 'Подтягивания');
+    expect(sessions.first.programId, isNull);
+    expect(sessions.first.programDayId, isNull);
   });
 }

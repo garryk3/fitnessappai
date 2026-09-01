@@ -128,6 +128,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonRetry => 'Повторить';
 
   @override
+  String get commonStop => 'Остановить звук';
+
+  @override
   String get exerciseTypeStrength => 'Силовые';
 
   @override
@@ -183,6 +186,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сначала удалите его из программы.';
 
   @override
+  String get exerciseListStartWorkout => 'Начать тренировку';
+
+  @override
+  String exerciseListStartWorkoutConfirm(String name) {
+    return 'Начать тренировку с упражнением «$name»?';
+  }
+
+  @override
   String get schedulePerformed => 'Выполнено';
 
   @override
@@ -221,6 +232,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get weekPlanNextWeek => 'Следующая неделя';
+
+  @override
+  String get weekPlanPrevMonth => 'Предыдущий месяц';
+
+  @override
+  String get weekPlanNextMonth => 'Следующий месяц';
+
+  @override
+  String get weekPlanViewWeek => 'Неделя';
+
+  @override
+  String get weekPlanViewMonth => 'Месяц';
 
   @override
   String get weekPlanQuickStart => 'Быстрый старт';
@@ -520,6 +543,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderWarmupMinutes => 'Разминка, мин';
 
   @override
+  String get programBuilderExerciseRestSeconds =>
+      'Отдых между упражнениями, сек';
+
+  @override
   String programBuilderWarmupShort(int minutes) {
     return 'разминка $minutes мин';
   }
@@ -588,6 +615,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programBuilderNoMetrics => 'Параметры не заданы';
+
+  @override
+  String get programBuilderDeleteDays => 'Удалить дни';
+
+  @override
+  String get programBuilderDeleteSelected => 'Удалить выбранное';
 
   @override
   String get exerciseParamsSets => 'Подходы';

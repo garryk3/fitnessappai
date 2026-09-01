@@ -324,6 +324,70 @@ void main() {
     });
   });
 
+  test('отдых между упражнениями: по завершении переходит к следующему', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      controller.start(
+        [strengthExercise(sets: 1), runningExercise()],
+        context: const WorkoutSessionContext(
+          programId: 5,
+          programName: 'База',
+          programDayId: 7,
+          dayIndex: 2,
+          exerciseRestSeconds: 90,
+        ),
+      );
+
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+
+      expect(controller.phase.value, WorkoutPhase.rest);
+      expect(controller.restRemainingSeconds.value, 90);
+      expect(controller.currentExerciseIndex.value, 0);
+
+      async.elapse(const Duration(seconds: 90));
+      expect(controller.phase.value, WorkoutPhase.exercise);
+      expect(controller.restRemainingSeconds.value, isNull);
+      expect(controller.currentExerciseIndex.value, 1);
+      expect(controller.currentExercise!.name, 'Бег');
+      expect(controller.currentSet.value, 1);
+      controller.dispose();
+    });
+  });
+
+  test('отдых между упражнениями: skipRest переходит к следующему', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start(
+        [strengthExercise(sets: 1), runningExercise()],
+        context: const WorkoutSessionContext(
+          programId: 5,
+          programName: 'База',
+          programDayId: 7,
+          dayIndex: 2,
+          exerciseRestSeconds: 90,
+        ),
+      );
+
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+      expect(controller.phase.value, WorkoutPhase.rest);
+
+      controller.skipRest();
+      expect(controller.phase.value, WorkoutPhase.exercise);
+      expect(controller.currentExerciseIndex.value, 1);
+      expect(controller.currentExercise!.name, 'Бег');
+      expect(controller.restRemainingSeconds.value, isNull);
+
+      async.elapse(const Duration(seconds: 10));
+      expect(controller.restRemainingSeconds.value, isNull);
+      expect(controller.currentExerciseIndex.value, 1);
+      controller.dispose();
+    });
+  });
+
   test('nextExercise переходит к следующему упражнению, пропуская отдых', () {
     fakeAsync((async) {
       final controller = WorkoutController(clock: () => startTime);
@@ -694,6 +758,100 @@ void main() {
       ]);
       expect(controller.results.value.map((r) => r.setIndex), [1, 1, 2, 2]);
       controller.dispose();
+    });
+  });
+
+  test('checkpoint round-trip: toCheckpoint → restoreFromCheckpoint', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      controller.start(
+        [strengthExercise(sets: 2, rest: 60), runningExercise()],
+        context: const WorkoutSessionContext(
+          programId: 5,
+          programName: 'База',
+          programDayId: 7,
+          dayIndex: 2,
+        ),
+      );
+
+      controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
+      controller.confirmSet();
+      async.elapse(const Duration(seconds: 60));
+      controller.setResult(const WorkoutSetInput(reps: 6, weightKg: 25));
+      controller.confirmSet();
+      expect(controller.currentExerciseIndex.value, 1);
+      expect(controller.currentSet.value, 1);
+      expect(controller.completedSets.value, 2);
+
+      final checkpoint = controller.toCheckpoint(
+        programDayId: 7,
+        programId: 5,
+        programName: 'База',
+        dayIndex: 2,
+      );
+
+      final restored = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      final exercises = [
+        strengthExercise(sets: 2, rest: 60),
+        runningExercise(),
+      ];
+      restored.restoreFromCheckpoint(checkpoint, exercises);
+
+      expect(restored.phase.value, WorkoutPhase.exercise);
+      expect(restored.currentExerciseIndex.value, 1);
+      expect(restored.currentSet.value, 1);
+      expect(restored.completedSets.value, 2);
+      expect(restored.results.value, hasLength(2));
+      expect(restored.results.value[0].reps, 8);
+      expect(restored.results.value[0].weightKg, 20);
+      expect(restored.results.value[1].reps, 6);
+      expect(restored.results.value[1].weightKg, 25);
+      expect(restored.currentExercise!.name, 'Бег');
+
+      controller.dispose();
+      restored.dispose();
+    });
+  });
+
+  test('checkpoint round-trip: mid-set в одном упражнении', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      controller.start(
+        [strengthExercise(sets: 3, rest: 60)],
+        context: const WorkoutSessionContext(programName: 'Тест', dayIndex: 0),
+      );
+
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+      async.elapse(const Duration(seconds: 60));
+      expect(controller.currentSet.value, 2);
+
+      final checkpoint = controller.toCheckpoint(
+        programDayId: 1,
+        programName: 'Тест',
+        dayIndex: 0,
+      );
+
+      final restored = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      restored.restoreFromCheckpoint(checkpoint, [
+        strengthExercise(sets: 3, rest: 60),
+      ]);
+
+      expect(restored.currentExerciseIndex.value, 0);
+      expect(restored.currentSet.value, 2);
+      expect(restored.completedSets.value, 1);
+      expect(restored.results.value, hasLength(1));
+
+      controller.dispose();
+      restored.dispose();
     });
   });
 }

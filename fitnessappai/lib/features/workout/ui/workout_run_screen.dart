@@ -66,8 +66,9 @@ class WakelockPlusService implements WakelockService {
 class WorkoutRunScreen extends StatefulWidget {
   const WorkoutRunScreen({
     super.key,
-    required this.programDayId,
-    required this.variant,
+    this.programDayId,
+    this.variant,
+    this.exerciseId,
     this.programRepository,
     this.exerciseRepository,
     this.workoutRepository,
@@ -81,8 +82,9 @@ class WorkoutRunScreen extends StatefulWidget {
     this.checkpointClearer,
   });
 
-  final int programDayId;
-  final WorkoutVariant variant;
+  final int? programDayId;
+  final WorkoutVariant? variant;
+  final int? exerciseId;
   final ProgramRepository? programRepository;
   final ExerciseRepository? exerciseRepository;
   final WorkoutRepository? workoutRepository;
@@ -117,6 +119,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     _controller = WorkoutRunController(
       programDayId: widget.programDayId,
       variant: widget.variant,
+      exerciseId: widget.exerciseId,
       programRepository:
           widget.programRepository ?? locator.get<ProgramRepository>(),
       exerciseRepository:
@@ -158,8 +161,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     if (ctx == null) {
       return;
     }
+    final programDayId = widget.programDayId;
+    if (programDayId == null) {
+      return;
+    }
     final checkpoint = workout.toCheckpoint(
-      programDayId: widget.programDayId,
+      programDayId: programDayId,
       programId: ctx.programId,
       programName: ctx.programName,
       dayIndex: ctx.dayIndex,
@@ -194,7 +201,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   Future<void> _handlePopRequest() async {
     if (_controller.saved.value) {
       if (mounted) {
-        Navigator.of(context).pop();
+        context.go('/home');
       }
       return;
     }
@@ -252,13 +259,13 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       await _controller.completeAndSave();
       await _clearCheckpoint();
       if (mounted) {
-        Navigator.of(context).pop();
+        context.go('/home');
       }
     } else if (action == 'exit') {
       _controller.workout.cancelWorkout();
       await _clearCheckpoint();
       if (mounted) {
-        Navigator.of(context).pop();
+        context.go('/home');
       }
     }
   }
@@ -452,9 +459,20 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: workout.skipRest,
-            child: Text(l10n.workoutRunSkipRest),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FilledButton(
+                onPressed: workout.skipRest,
+                child: Text(l10n.workoutRunSkipRest),
+              ),
+              const SizedBox(width: 16),
+              IconButton(
+                tooltip: l10n.commonStop,
+                onPressed: _controller.workout.stopSound,
+                icon: const Icon(Icons.stop_circle_outlined),
+              ),
+            ],
           ),
         ],
       ),

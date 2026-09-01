@@ -22,15 +22,20 @@ void main() {
     await db.close();
   });
 
-  Program program({int? id, String name = 'Программа', int daysCount = 1}) =>
-      Program(
-        id: id,
-        name: name,
-        description: 'Описание',
-        daysCount: daysCount,
-        createdAt: DateTime(2026, 1, 1),
-        updatedAt: DateTime(2026, 1, 2),
-      );
+  Program program({
+    int? id,
+    String name = 'Программа',
+    int daysCount = 1,
+    int? exerciseRestSeconds,
+  }) => Program(
+    id: id,
+    name: name,
+    description: 'Описание',
+    daysCount: daysCount,
+    createdAt: DateTime(2026, 1, 1),
+    updatedAt: DateTime(2026, 1, 2),
+    exerciseRestSeconds: exerciseRestSeconds,
+  );
 
   ProgramDay day({
     int? id,
@@ -120,6 +125,21 @@ void main() {
 
     test('getProgram возвращает null для отсутствующего id', () async {
       expect(await repo.getProgram(999), isNull);
+    });
+
+    test('create/update сохраняет exerciseRestSeconds', () async {
+      final created = await repo.create(
+        program(daysCount: 1, exerciseRestSeconds: 90),
+        [day(dayIndex: 0)],
+      );
+      expect(created.exerciseRestSeconds, 90);
+      expect((await repo.getById(created.id!))!.exerciseRestSeconds, 90);
+
+      final updated = await repo.update(
+        created.copyWith(exerciseRestSeconds: 45),
+      );
+      expect(updated.exerciseRestSeconds, 45);
+      expect((await repo.getById(created.id!))!.exerciseRestSeconds, 45);
     });
 
     test('getPrograms сортирует по названию и считает упражнения', () async {
@@ -584,6 +604,46 @@ void main() {
 
       expect(notifications, greaterThan(0));
       changes.removeListener(onChanged);
+    });
+
+    test('setActive фиксирует активацию, deactivate закрывает период', () async {
+      final created = await repo.create(program(), [day(dayIndex: 0)]);
+      final now = DateTime.now();
+
+      await repo.setActive(created.id!);
+      final activated = (await repo.getById(created.id!))!;
+      expect(activated.isActive, isTrue);
+      expect(activated.activatedAt, isNotNull);
+      expect(
+        activated.activatedAt!.isAfter(
+          now.subtract(const Duration(minutes: 2)),
+        ),
+        isTrue,
+      );
+      expect(activated.deactivatedAt, isNull);
+
+      await repo.deactivate(created.id!);
+      final deactivated = (await repo.getById(created.id!))!;
+      expect(deactivated.isActive, isFalse);
+      expect(deactivated.deactivatedAt, isNotNull);
+      expect(
+        deactivated.deactivatedAt!.isBefore(
+          DateTime.now().add(const Duration(minutes: 2)),
+        ),
+        isTrue,
+      );
+
+      // Повторная активация сбрасывает период деактивации и ставит новую дату.
+      await repo.setActive(created.id!);
+      final reactivated = (await repo.getById(created.id!))!;
+      expect(reactivated.isActive, isTrue);
+      expect(reactivated.deactivatedAt, isNull);
+      expect(
+        reactivated.activatedAt!.isAfter(
+          now.subtract(const Duration(minutes: 2)),
+        ),
+        isTrue,
+      );
     });
 
     test('reorderDaysByDayOfWeek сортирует дни по порядку недели', () async {
