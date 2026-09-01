@@ -1201,21 +1201,7 @@ void main() {
     await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
-    await goToTab(tester, Icons.home_outlined);
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Выберите активную программу, чтобы начать тренировку.'),
-      findsOneWidget,
-    );
-
-    await goToTab(tester, Icons.calendar_month_outlined);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.more_vert).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Сделать активной'));
-    await tester.pumpAndSettle();
-    expect(find.text('Активная'), findsOneWidget);
-
+    // Программа уже активна (saveProgramBuilder активирует по умолчанию).
     await goToTab(tester, Icons.home_outlined);
     await tester.pumpAndSettle();
     expect(find.text('Активная программа'), findsOneWidget);
@@ -1357,10 +1343,8 @@ void main() {
       await pullToRefreshPrograms(tester);
       expect(find.text(_programName), findsOneWidget);
 
+      // Программа уже активна (saveProgramBuilder активирует по умолчанию).
       await goToTab(tester, Icons.calendar_month_outlined);
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Сделать активной'));
       await tester.pumpAndSettle();
       expect(find.text('Активная'), findsOneWidget);
 
