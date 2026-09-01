@@ -13,22 +13,24 @@ void main() {
   test('парсит реальный seed JSON', () {
     final source = File('assets/data/exercises_seed.json').readAsStringSync();
     final exercises = parser.parse(source);
-    expect(exercises.length, greaterThanOrEqualTo(15));
+    expect(exercises.length, greaterThanOrEqualTo(8));
     expect(
       exercises.map((e) => e.type).toSet(),
-      containsAll(ExerciseType.values),
+      containsAll([
+        ExerciseType.bodyweight,
+        ExerciseType.plank,
+        ExerciseType.running,
+      ]),
     );
     for (final e in exercises) {
       expect(e.name, isNotEmpty);
       expect(e.animation, isNotEmpty);
       expect(e.muscles, isNotEmpty);
     }
-    final squat = exercises.firstWhere(
-      (e) => e.name == 'Приседания со штангой',
-    );
-    expect(squat.muscles.map((m) => m.key), contains('quads'));
-    expect(squat.contraindications, containsAll(['knees', 'back']));
-    expect(squat.instructions, isNotEmpty);
+    final pullUp = exercises.firstWhere((e) => e.name == 'Подтягивания');
+    expect(pullUp.muscles.map((m) => m.key), contains('lats'));
+    expect(pullUp.contraindications, containsAll(['shoulders', 'elbows']));
+    expect(pullUp.instructions, isNotEmpty);
 
     final pushUps = exercises.firstWhere((e) => e.name == 'Отжимания');
     expect(pushUps.type, ExerciseType.bodyweight);

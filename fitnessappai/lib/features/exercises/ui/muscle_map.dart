@@ -10,7 +10,8 @@ import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 ///
 /// Region-ключи соответствуют справочнику `muscle_groups`:
 /// `neck`, `shoulders`, `shoulders_front`, `shoulders_middle`,
-/// `shoulders_rear`, `chest`, `biceps`, `triceps`, `forearms`, `abs`,
+/// `shoulders_rear`, `chest`, `chest_upper`, `chest_center`, `chest_lower`,
+/// `biceps`, `triceps`, `forearms`, `abs`,
 /// `obliques`, `traps`, `lats`, `lower_back`, `glutes`, `quads`,
 /// `hamstrings`, `calves`.
 class MuscleMap extends StatelessWidget {
@@ -67,8 +68,7 @@ class MuscleMap extends StatelessWidget {
 }
 
 /// Определяет, активна ли группа: либо явно присутствует в [highlighted],
-/// либо входит в родительскую группу, либо является родителем для
-/// подсвеченных подгрупп.
+/// либо входит в родительскую группу, которая подсвечена.
 bool _isActive(String group, Set<String> highlighted) {
   if (highlighted.contains(group)) {
     return true;
@@ -76,6 +76,7 @@ bool _isActive(String group, Set<String> highlighted) {
 
   const parentChildren = <String, Set<String>>{
     'shoulders': {'shoulders_front', 'shoulders_middle', 'shoulders_rear'},
+    'chest': {'chest_upper', 'chest_center', 'chest_lower'},
     'arms': {'biceps', 'triceps', 'forearms'},
     'back': {'traps', 'lats', 'lower_back'},
     'legs': {'quads', 'hamstrings', 'calves', 'glutes'},
@@ -84,20 +85,6 @@ bool _isActive(String group, Set<String> highlighted) {
   for (final entry in parentChildren.entries) {
     if (highlighted.contains(entry.key) && entry.value.contains(group)) {
       return true;
-    }
-  }
-
-  const childParents = <String, String>{
-    'chest_upper': 'chest',
-    'chest_lower': 'chest',
-    'chest_center': 'chest',
-  };
-  final parent = childParents[group];
-  if (parent != null) {
-    for (final child in childParents.keys) {
-      if (highlighted.contains(child) && childParents[child] == parent) {
-        return true;
-      }
     }
   }
 
@@ -173,9 +160,17 @@ String _frontSvg(
   ${p('shoulders_middle', 'M158 264C138 265 127 258 125 245C125 263 128 292 151 307L177 294L195 250Z')}
   ${p('shoulders_middle', 'M382 264C402 265 413 258 415 245C415 263 412 292 389 307L363 294L345 250Z')}
 
-  <!-- Грудь -->
-  ${p('chest', 'M216 245C233 224 257 221 268 236L268 317C248 327 214 316 198 292C194 275 201 258 216 245Z')}
-  ${p('chest', 'M324 245C307 224 283 221 272 236L272 317C292 327 326 316 342 292C346 275 339 258 324 245Z')}
+  <!-- Грудь: верх -->
+  ${p('chest_upper', 'M216 245C233 224 257 221 268 236L268 265C247 271 220 268 206 253C201 250 208 247 216 245Z')}
+  ${p('chest_upper', 'M324 245C307 224 283 221 272 236L272 265C293 271 320 268 334 253C339 250 332 247 324 245Z')}
+
+  <!-- Грудь: центр -->
+  ${p('chest_center', 'M206 253C220 268 247 271 268 265L268 300C247 306 220 303 207 288C199 276 200 264 206 253Z')}
+  ${p('chest_center', 'M334 253C320 268 293 271 272 265L272 300C293 306 320 303 333 288C341 276 340 264 334 253Z')}
+
+  <!-- Грудь: низ -->
+  ${p('chest_lower', 'M207 288C220 303 247 306 268 300L268 317C248 327 214 316 198 292C202 290 205 289 207 288Z')}
+  ${p('chest_lower', 'M333 288C320 303 293 306 272 300L272 317C292 327 326 316 342 292C338 290 335 289 333 288Z')}
 
   <!-- Бицепс -->
   ${p('biceps', 'M181 292C164 295 155 316 159 345L173 400C181 416 199 411 206 394L214 335C212 311 201 296 181 292Z')}

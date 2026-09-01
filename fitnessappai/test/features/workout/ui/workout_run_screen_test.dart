@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -13,6 +14,7 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/single_exercise_params.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
@@ -41,6 +43,44 @@ class _FakeWakelock implements WakelockService {
   Future<void> disable() async {
     disableCalls++;
   }
+}
+
+class _DisabledWakelock implements WakelockService {
+  @override
+  bool get isEnabled => false;
+
+  @override
+  Future<void> enable() async {}
+
+  @override
+  Future<void> disable() async {}
+}
+
+class _ControllableSoundService implements SoundService {
+  final _isPlayingController = StreamController<bool>.broadcast();
+  int stopCalls = 0;
+
+  @override
+  bool get isPlaying => false;
+
+  @override
+  Stream<bool> get isPlayingStream => _isPlayingController.stream;
+
+  void emit(bool playing) => _isPlayingController.add(playing);
+
+  @override
+  Future<void> playCompletion() async {}
+
+  @override
+  Future<void> stop() async {
+    stopCalls++;
+  }
+
+  @override
+  Future<void> preview() async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 void main() {
@@ -142,6 +182,8 @@ void main() {
     String initialLocation = '',
     Future<void> Function(WorkoutCheckpoint)? checkpointSaver,
     WorkoutForegroundService? foregroundService,
+    WakelockService? wakelockService,
+    SoundService? soundService,
   }) async {
     final location = initialLocation.isEmpty
         ? '/workout/run?programDayId=$dayId&variant=${variant.name}'
@@ -170,10 +212,10 @@ void main() {
             exerciseRepository: exerciseRepo,
             workoutRepository: workoutRepo,
             mediaCache: MediaCache(),
-            wakelockService: wakelock,
+            wakelockService: wakelockService ?? wakelock,
             foregroundService:
                 foregroundService ?? StubWorkoutForegroundService(),
-            soundService: StubSoundService(),
+            soundService: soundService ?? StubSoundService(),
             checkpointLoader: () async => null,
             checkpointSaver: checkpointSaver ?? (_) async {},
             checkpointClearer: () async {},
@@ -602,6 +644,65 @@ void main() {
     expect(find.byType(TextFormField), findsWidgets);
   });
 
+  testWidgets('одиночная сессия: параметры из query применяются', (
+    tester,
+  ) async {
+    final exId = await insertExercise('Приседания');
+    await (db.update(db.exercises)..where((t) => t.id.equals(exId))).write(
+      const ExercisesCompanion(fixedWeight: Value(true)),
+    );
+    final router = GoRouter(
+      initialLocation:
+          '/workout/run?exerciseId=$exId&sets=4&reps=5&weightKg=60&restSeconds=45',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) {
+            final qp = state.uri.queryParameters;
+            return WorkoutRunScreen(
+              exerciseId: int.tryParse(qp['exerciseId'] ?? ''),
+              singleExerciseParams: SingleExerciseParams(
+                sets: int.tryParse(qp['sets'] ?? ''),
+                reps: int.tryParse(qp['reps'] ?? ''),
+                weightKg: double.tryParse(qp['weightKg'] ?? ''),
+                restSeconds: int.tryParse(qp['restSeconds'] ?? ''),
+              ),
+              programRepository: programRepo,
+              exerciseRepository: exerciseRepo,
+              workoutRepository: workoutRepo,
+              mediaCache: MediaCache(),
+              wakelockService: wakelock,
+              foregroundService: StubWorkoutForegroundService(),
+              soundService: StubSoundService(),
+              checkpointLoader: () async => null,
+              checkpointSaver: (_) async {},
+              checkpointClearer: () async {},
+            );
+          },
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Приседания'), findsWidgets);
+    expect(find.text('Упражнение 1 из 1 · Подход 1 из 4'), findsOneWidget);
+    final weightField = find.widgetWithText(TextFormField, 'Вес (кг)');
+    expect(tester.widget<TextFormField>(weightField).controller!.text, '60');
+  });
+
   testWidgets('одиночная сессия: завершение сохраняет сессию без программы', (
     tester,
   ) async {
@@ -914,4 +1015,182 @@ void main() {
       expect(fg.stopCalls, 1);
     },
   );
+
+  testWidgets('баннер предупреждения wakelock виден, когда wakelock выключен', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    await pumpRun(tester, dayId, wakelockService: _DisabledWakelock());
+
+    expect(
+      find.textContaining('Экран может выключаться во время тренировки'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('ОК'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Экран может выключаться во время тренировки'),
+      findsNothing,
+    );
+  });
+
+  testWidgets(
+    'плавающая кнопка остановки звука появляется при воспроизведении',
+    (tester) async {
+      final dayId = await createDay();
+      final sound = _ControllableSoundService();
+      await pumpRun(tester, dayId, soundService: sound);
+
+      FloatingActionButton fab() => tester.widget<FloatingActionButton>(
+        find.byType(FloatingActionButton),
+      );
+      expect(fab().onPressed, isNull);
+
+      sound.emit(true);
+      await tester.pumpAndSettle();
+      expect(fab().onPressed, isNotNull);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(sound.stopCalls, 1);
+
+      sound.emit(false);
+      await tester.pumpAndSettle();
+      expect(fab().onPressed, isNull);
+    },
+  );
+
+  testWidgets('диалог выхода на узком экране: кнопки с отступом 16px', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final dayId = await createDay();
+    await pumpRun(tester, dayId, initialLocation: '/');
+
+    final router = GoRouter.of(tester.element(find.text('home')));
+    router.push('/workout/run?programDayId=$dayId&variant=main');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Выйти из тренировки?'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    final spacers = tester
+        .widgetList<SizedBox>(find.byType(SizedBox))
+        .where((s) => s.height == 16)
+        .length;
+    expect(spacers, greaterThanOrEqualTo(2));
+  });
+
+  testWidgets('шрифт удержания планки уменьшается на узком экране', (
+    tester,
+  ) async {
+    final exId = await insertExercise('Планка', type: ExerciseType.plank);
+
+    Text holdText(WidgetTester t) {
+      final texts = t
+          .widgetList<Text>(find.textContaining('Удержание'))
+          .toList();
+      return texts.first;
+    }
+
+    // Обычная ширина: displayLarge (57).
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    final routerWide = GoRouter(
+      initialLocation: '/workout/run?exerciseId=$exId&durationSeconds=30',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) {
+            final qp = state.uri.queryParameters;
+            return WorkoutRunScreen(
+              exerciseId: int.tryParse(qp['exerciseId'] ?? ''),
+              singleExerciseParams: SingleExerciseParams(
+                durationSeconds: int.tryParse(qp['durationSeconds'] ?? ''),
+              ),
+              programRepository: programRepo,
+              exerciseRepository: exerciseRepo,
+              workoutRepository: workoutRepo,
+              mediaCache: MediaCache(),
+              wakelockService: wakelock,
+              foregroundService: StubWorkoutForegroundService(),
+              soundService: StubSoundService(),
+              checkpointLoader: () async => null,
+              checkpointSaver: (_) async {},
+              checkpointClearer: () async {},
+            );
+          },
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: routerWide,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(holdText(tester).style!.fontSize, 57);
+    addTearDown(tester.view.reset);
+
+    // Узкий экран: headlineLarge (40).
+    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    final routerNarrow = GoRouter(
+      initialLocation: '/workout/run?exerciseId=$exId&durationSeconds=30',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) {
+            final qp = state.uri.queryParameters;
+            return WorkoutRunScreen(
+              exerciseId: int.tryParse(qp['exerciseId'] ?? ''),
+              singleExerciseParams: SingleExerciseParams(
+                durationSeconds: int.tryParse(qp['durationSeconds'] ?? ''),
+              ),
+              programRepository: programRepo,
+              exerciseRepository: exerciseRepo,
+              workoutRepository: workoutRepo,
+              mediaCache: MediaCache(),
+              wakelockService: wakelock,
+              foregroundService: StubWorkoutForegroundService(),
+              soundService: StubSoundService(),
+              checkpointLoader: () async => null,
+              checkpointSaver: (_) async {},
+              checkpointClearer: () async {},
+            );
+          },
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: routerNarrow,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(holdText(tester).style!.fontSize, 32);
+  });
 }

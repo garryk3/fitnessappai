@@ -51,10 +51,14 @@ void main() {
     expect(await seeder.isSeeded(), isTrue);
 
     final exercises = await db.select(db.exercises).get();
-    expect(exercises.length, greaterThanOrEqualTo(15));
+    expect(exercises.length, greaterThanOrEqualTo(8));
     expect(
       exercises.map((e) => e.type).toSet(),
-      containsAll(ExerciseType.values),
+      containsAll([
+        ExerciseType.bodyweight,
+        ExerciseType.plank,
+        ExerciseType.running,
+      ]),
     );
 
     final mediaDir = Directory(p.join(tempDir.path, MediaStore.mediaSubDir));
@@ -85,26 +89,26 @@ void main() {
   test('сид сохраняет мышцы и противопоказания', () async {
     await seeder.seed();
 
-    final squat = await (db.select(
+    final pullUp = await (db.select(
       db.exercises,
-    )..where((t) => t.name.equals('Приседания со штангой'))).getSingle();
-    final squatMuscles = await (db.select(
+    )..where((t) => t.name.equals('Подтягивания'))).getSingle();
+    final pullUpMuscles = await (db.select(
       db.exerciseMuscles,
-    )..where((t) => t.exerciseId.equals(squat.id))).get();
-    expect(squatMuscles, isNotEmpty);
+    )..where((t) => t.exerciseId.equals(pullUp.id))).get();
+    expect(pullUpMuscles, isNotEmpty);
 
     final muscleKeys = <String>{};
-    for (final link in squatMuscles) {
+    for (final link in pullUpMuscles) {
       final muscle = await (db.select(
         db.muscleGroups,
       )..where((t) => t.id.equals(link.muscleGroupId))).getSingle();
       muscleKeys.add(muscle.key);
     }
-    expect(muscleKeys, contains('quads'));
+    expect(muscleKeys, contains('lats'));
 
     final contraLinks = await (db.select(
       db.exerciseContraindications,
-    )..where((t) => t.exerciseId.equals(squat.id))).get();
+    )..where((t) => t.exerciseId.equals(pullUp.id))).get();
     expect(contraLinks, hasLength(2));
   });
 }

@@ -432,7 +432,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     final exerciseId = await insertExercise('Приседания');
-    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 6)), [
       setResult(exerciseId: exerciseId),
     ]);
 
@@ -446,7 +446,7 @@ void main() {
 
     expect(find.byType(DayDetailScreen), findsOneWidget);
     expect(find.text('База'), findsOneWidget);
-    expect(find.text('10 августа 2026'), findsWidgets);
+    expect(find.text('6 августа 2026'), findsWidgets);
   });
 
   testWidgets('хвостовые нули графика обрезаются до последнего дня', (

@@ -6,6 +6,7 @@ import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/app/bootstrap.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
+import 'package:fitnessappai/features/exercises/ui/single_exercise_params_screen.dart';
 import 'package:fitnessappai/features/home/ui/home_screen.dart';
 import 'package:fitnessappai/features/profile/ui/contraindications_screen.dart';
 import 'package:fitnessappai/features/profile/ui/measurement_form_screen.dart';
@@ -24,6 +25,7 @@ import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
+import 'package:fitnessappai/core/domain/models/single_exercise_params.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 
 /// Конфигурация маршрутов приложения.
@@ -114,6 +116,12 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: '/exercises/:id/params',
+          builder: (context, state) => SingleExerciseParamsScreen(
+            exerciseId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
           path: '/programs/new',
           builder: (context, state) => const ProgramBuilderScreen(),
         ),
@@ -174,10 +182,19 @@ class AppRouter {
                 state.uri.queryParameters['variant'] == 'alternative'
                 ? WorkoutVariant.alternative
                 : WorkoutVariant.main;
+            final qp = state.uri.queryParameters;
             return WorkoutRunScreen(
               programDayId: dayId,
               variant: dayId != null ? variant : null,
               exerciseId: exerciseId,
+              singleExerciseParams: SingleExerciseParams(
+                sets: int.tryParse(qp['sets'] ?? ''),
+                reps: int.tryParse(qp['reps'] ?? ''),
+                weightKg: double.tryParse(qp['weightKg'] ?? ''),
+                durationSeconds: int.tryParse(qp['durationSeconds'] ?? ''),
+                distanceMeters: double.tryParse(qp['distanceMeters'] ?? ''),
+                restSeconds: int.tryParse(qp['restSeconds'] ?? ''),
+              ),
             );
           },
         ),

@@ -140,4 +140,79 @@ void main() {
       expect(activeCount(tester), 2);
     },
   );
+
+  testWidgets(
+    'родительская группа «грудь» подсвечивает все подгруппы (6 путей)',
+    (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          const MuscleDiagram(
+            view: MuscleView.front,
+            highlights: {'chest': 1.0},
+          ),
+        ),
+      );
+      // Верх/центр/низ × 2 стороны = 6 путей.
+      expect(activeCount(tester), 6);
+    },
+  );
+
+  testWidgets('подгруппа «верх груди» подсвечивает только свои пути', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        const MuscleDiagram(
+          view: MuscleView.front,
+          highlights: {'chest_upper': 1.0},
+        ),
+      ),
+    );
+    // Верх груди: 2 пути (левая и правая сторона).
+    expect(activeCount(tester), 2);
+  });
+
+  testWidgets('подгруппа «низ груди» подсвечивает только свои пути', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        const MuscleDiagram(
+          view: MuscleView.front,
+          highlights: {'chest_lower': 1.0},
+        ),
+      ),
+    );
+    expect(activeCount(tester), 2);
+  });
+
+  testWidgets('подгруппа «центр груди» подсвечивает только свои пути', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        const MuscleDiagram(
+          view: MuscleView.front,
+          highlights: {'chest_center': 1.0},
+        ),
+      ),
+    );
+    expect(activeCount(tester), 2);
+  });
+
+  testWidgets('подсветка одной подгруппы груди не активирует соседние', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        const MuscleDiagram(
+          view: MuscleView.front,
+          highlights: {'chest_center': 1.0},
+        ),
+      ),
+    );
+
+    // Активны только 2 пути центра груди, не 6 (соседние подгруппы).
+    expect(activeCount(tester), 2);
+  });
 }

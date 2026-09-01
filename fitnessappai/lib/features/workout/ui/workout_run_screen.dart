@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/single_exercise_params.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -49,6 +51,9 @@ class WakelockPlusService implements WakelockService {
       await WakelockPlus.enable();
       _enabled = true;
     } catch (e) {
+      if (Platform.isAndroid) {
+        _enabled = true;
+      }
       log('Не удалось включить wakelock', error: e);
     }
   }
@@ -71,6 +76,7 @@ class WorkoutRunScreen extends StatefulWidget {
     this.programDayId,
     this.variant,
     this.exerciseId,
+    this.singleExerciseParams,
     this.programRepository,
     this.exerciseRepository,
     this.workoutRepository,
@@ -88,6 +94,7 @@ class WorkoutRunScreen extends StatefulWidget {
   final int? programDayId;
   final WorkoutVariant? variant;
   final int? exerciseId;
+  final SingleExerciseParams? singleExerciseParams;
   final ProgramRepository? programRepository;
   final ExerciseRepository? exerciseRepository;
   final WorkoutRepository? workoutRepository;
@@ -127,6 +134,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       programDayId: widget.programDayId,
       variant: widget.variant,
       exerciseId: widget.exerciseId,
+      singleExerciseParams: widget.singleExerciseParams,
       programRepository:
           widget.programRepository ?? locator.get<ProgramRepository>(),
       exerciseRepository:
@@ -288,12 +296,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                       onPressed: () => Navigator.of(context).pop('cancel'),
                       child: Text(l10n.commonCancel),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop('save'),
                       child: Text(l10n.workoutRunFinishEarly),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop('exit'),
                       child: Text(l10n.workoutRunExit),
@@ -351,25 +359,55 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       },
       child: Scaffold(
         appBar: AppBar(title: Text(AppLocalizations.of(context).workoutRun)),
-        body: Column(
+        body: Stack(
           children: [
-            if (!_wakelock.isEnabled && !_wakelockBannerDismissed)
-              MaterialBanner(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                content: Text(
-                  AppLocalizations.of(context).workoutWakelockWarning,
-                ),
-                leading: const Icon(Icons.warning_amber_rounded),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      setState(() => _wakelockBannerDismissed = true);
-                    },
-                    child: Text(AppLocalizations.of(context).commonOk),
+            Column(
+              children: [
+                if (!_wakelock.isEnabled && !_wakelockBannerDismissed)
+                  MaterialBanner(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    content: Text(
+                      AppLocalizations.of(context).workoutWakelockWarning,
+                    ),
+                    leading: const Icon(Icons.warning_amber_rounded),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _wakelockBannerDismissed = true);
+                        },
+                        child: Text(AppLocalizations.of(context).commonOk),
+                      ),
+                    ],
                   ),
-                ],
+                Expanded(
+                  child: SignalBuilder(builder: (_) => _buildBody(context)),
+                ),
+              ],
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: StreamBuilder<bool>(
+                initialData: false,
+                stream: (widget.soundService ?? locator.get<SoundService>())
+                    .isPlayingStream,
+                builder: (context, snapshot) {
+                  final isPlaying = snapshot.data ?? false;
+                  return AnimatedScale(
+                    scale: isPlaying ? 1 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: FloatingActionButton(
+                      mini: true,
+                      heroTag: 'stop_sound',
+                      onPressed: isPlaying
+                          ? _controller.workout.stopSound
+                          : null,
+                      child: const Icon(Icons.stop_circle),
+                    ),
+                  );
+                },
               ),
-            Expanded(child: SignalBuilder(builder: (_) => _buildBody(context))),
+            ),
           ],
         ),
       ),
@@ -532,20 +570,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             ),
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FilledButton(
-                onPressed: _skipRest,
-                child: Text(l10n.workoutRunSkipRest),
-              ),
-              const SizedBox(width: 16),
-              IconButton(
-                tooltip: l10n.commonStop,
-                onPressed: _controller.workout.stopSound,
-                icon: const Icon(Icons.stop_circle_outlined),
-              ),
-            ],
+          FilledButton(
+            onPressed: _skipRest,
+            child: Text(l10n.workoutRunSkipRest),
           ),
         ],
       ),
@@ -758,6 +785,7 @@ class _PlankHoldPanel extends StatelessWidget {
     final counterColor = reached
         ? theme.colorScheme.tertiary
         : theme.colorScheme.primary;
+    final narrow = MediaQuery.sizeOf(context).width < 350;
 
     return Container(
       width: double.infinity,
@@ -772,10 +800,14 @@ class _PlankHoldPanel extends StatelessWidget {
         children: [
           Text(
             l10n.workoutRunHold(elapsed),
-            style: theme.textTheme.displayLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: counterColor,
-            ),
+            style:
+                (narrow
+                        ? theme.textTheme.headlineLarge
+                        : theme.textTheme.displayLarge)
+                    ?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: counterColor,
+                    ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),

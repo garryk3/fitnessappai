@@ -1,53 +1,12 @@
 {
   "exercises": [
     {
-      "name": "Приседания со штангой",
-      "type": "strength",
-      "description": "Базовое силовое упражнение для нижней части тела.",
-      "instructions": "Установите штангу на трапеции.\nСлегка отставьте таз назад и согните колени.\nОпускайтесь до параллели бёдер с полом.\nВернитесь в исходное положение, выпрямляя ноги.",
-      "commonMistakes": ["Колени заворачиваются внутрь", "Отрыв пяток от пола"],
-      "animation": "ex1.webp",
-      "muscles": [
-        {"key": "quads", "intensity": "primary"},
-        {"key": "glutes", "intensity": "secondary"}
-      ],
-      "contraindications": ["knees", "back"]
-    },
-    {
-      "name": "Жим штанги лёжа",
-      "type": "strength",
-      "description": "Базовое упражнение для мышц груди.",
-      "instructions": "Лягте на скамью, стопы на полу.\nСнимите штангу и опустите её к груди.\nВыжмите штангу вверх до выпрямления рук.",
-      "commonMistakes": ["Отрыв таза от скамьи", "Неполная амплитуда"],
-      "animation": "ex2.webp",
-      "muscles": [
-        {"key": "chest", "intensity": "primary"},
-        {"key": "triceps", "intensity": "secondary"},
-        {"key": "shoulders", "intensity": "secondary"}
-      ],
-      "contraindications": ["shoulders"]
-    },
-    {
-      "name": "Становая тяга",
-      "type": "strength",
-      "description": "Базовое упражнение для задней цепи мышц.",
-      "instructions": "Встаньте перед штангой, стопы на ширине плеч.\nНаклонитесь, держа спину прямой, возьмите гриф.\nПоднимитесь, выпрямляя таз и колени.\nОпустите штангу контролируемо.",
-      "commonMistakes": ["Круглая спина", "Рывок штанги с пола"],
-      "animation": "ex3.webp",
-      "muscles": [
-        {"key": "lower_back", "intensity": "primary"},
-        {"key": "hamstrings", "intensity": "secondary"},
-        {"key": "glutes", "intensity": "secondary"}
-      ],
-      "contraindications": ["back"]
-    },
-    {
       "name": "Подтягивания",
       "type": "bodyweight",
       "description": "Упражнение с собственным весом для мышц спины.",
       "instructions": "Возьмитесь за перекладину хватом на ширине плеч.\nПодтянитесь, пока подбородок не окажется над перекладиной.\nОпуститесь вниз контролируемо.",
       "commonMistakes": ["Раскачивание корпуса", "Неполное подтягивание"],
-      "animation": "ex4.webp",
+      "animation": "ex1.webp",
       "muscles": [
         {"key": "lats", "intensity": "primary"},
         {"key": "biceps", "intensity": "secondary"}
@@ -60,7 +19,7 @@
       "description": "Классическое упражнение с собственным весом.",
       "instructions": "Примите упор лёжа, кисти на ширине плеч.\nОпуститесь, сгибая локти, до угла 90 градусов.\nВернитесь в исходное положение.",
       "commonMistakes": ["Прогиб в пояснице", "Локти сильно в стороны"],
-      "animation": "ex5.webp",
+      "animation": "ex2.webp",
       "muscles": [
         {"key": "chest", "intensity": "primary"},
         {"key": "triceps", "intensity": "secondary"},
@@ -69,78 +28,12 @@
       "contraindications": ["wrists"]
     },
     {
-      "name": "Жим гантелей сидя",
-      "type": "strength",
-      "description": "Упражнение для дельтовидных мышц.",
-      "instructions": "Сядьте на скамью со спинкой.\nПоднимите гантели до уровня плеч.\nВыжмите гантели вверх, не сводя лопатки.",
-      "commonMistakes": ["Сведение лопаток", "Рывок ногами"],
-      "animation": "ex6.webp",
-      "muscles": [
-        {"key": "shoulders", "intensity": "primary"},
-        {"key": "triceps", "intensity": "secondary"}
-      ],
-      "contraindications": ["shoulders", "neck"]
-    },
-    {
-      "name": "Тяга штанги в наклоне",
-      "type": "strength",
-      "description": "Упражнение для широчайших мышц спины.",
-      "instructions": "Наклонитесь вперёд, держа спину прямой.\nТяните штангу к низу живота.\nОпустите штангу контролируемо.",
-      "commonMistakes": ["Округление спины", "Тяга плечами"],
-      "animation": "ex7.webp",
-      "muscles": [
-        {"key": "lats", "intensity": "primary"},
-        {"key": "traps", "intensity": "secondary"}
-      ],
-      "contraindications": ["back"]
-    },
-    {
-      "name": "Выпады с гантелями",
-      "type": "strength",
-      "description": "Упражнение для мышц ног и ягодиц.",
-      "instructions": "Сделайте шаг вперёд одной ногой.\nСогните обе ноги до прямого угла.\nВернитесь в исходное положение и повторите на другую ногу.",
-      "commonMistakes": ["Колено выходит за носок", "Потеря равновесия"],
-      "animation": "ex8.webp",
-      "muscles": [
-        {"key": "quads", "intensity": "primary"},
-        {"key": "glutes", "intensity": "secondary"},
-        {"key": "hamstrings", "intensity": "secondary"}
-      ],
-      "contraindications": ["knees"]
-    },
-    {
-      "name": "Сгибания рук со штангой",
-      "type": "strength",
-      "description": "Изолирующее упражнение для бицепса.",
-      "instructions": "Встаньте прямо, хват на ширине плеч.\nСогните руки, поднимая штангу к груди.\nОпустите штангу без рывков.",
-      "commonMistakes": ["Раскачивание корпуса", "Сгибание в запястьях"],
-      "animation": "ex9.webp",
-      "muscles": [
-        {"key": "biceps", "intensity": "primary"},
-        {"key": "forearms", "intensity": "secondary"}
-      ],
-      "contraindications": ["elbows"]
-    },
-    {
-      "name": "Разгибания рук на блоке",
-      "type": "strength",
-      "description": "Изолирующее упражнение для трицепса.",
-      "instructions": "Встаньте лицом к блоку, локти прижаты к корпусу.\nРазогните руки вниз.\nВернитесь в исходное положение контролируемо.",
-      "commonMistakes": ["Отведение локтей в стороны", "Рывок блока"],
-      "animation": "ex10.webp",
-      "muscles": [
-        {"key": "triceps", "intensity": "primary"},
-        {"key": "forearms", "intensity": "secondary"}
-      ],
-      "contraindications": ["elbows"]
-    },
-    {
       "name": "Планка",
       "type": "plank",
       "description": "Изометрическое упражнение для мышц кора.",
       "instructions": "Примите упор на предплечья.\nДержите тело прямой линией.\nУдерживайте положение заданное время.",
       "commonMistakes": ["Прогиб в пояснице", "Поднятый таз"],
-      "animation": "ex11.webp",
+      "animation": "ex3.webp",
       "muscles": [
         {"key": "abs", "intensity": "primary"},
         {"key": "obliques", "intensity": "secondary"}
@@ -153,7 +46,7 @@
       "description": "Изометрическое упражнение для косых мышц живота.",
       "instructions": "Обопритесь на предплечье боком.\nПоднимите таз, держа тело прямой линией.\nУдерживайте положение заданное время и смените сторону.",
       "commonMistakes": ["Опущенный таз", "Запрокидывание головы"],
-      "animation": "ex12.webp",
+      "animation": "ex4.webp",
       "muscles": [
         {"key": "obliques", "intensity": "primary"},
         {"key": "abs", "intensity": "secondary"}
@@ -166,7 +59,7 @@
       "description": "Усложнённый вариант планки с нагрузкой на ягодицы.",
       "instructions": "Примите упор на предплечья.\nПоднимите одну ногу вверх, не прогибая поясницу.\nОпустите ногу и повторите на другую.",
       "commonMistakes": ["Прогиб в пояснице", "Резкие движения ногой"],
-      "animation": "ex13.webp",
+      "animation": "ex5.webp",
       "muscles": [
         {"key": "abs", "intensity": "primary"},
         {"key": "glutes", "intensity": "secondary"}
@@ -179,7 +72,7 @@
       "description": "Умеренный бег для развития выносливости.",
       "instructions": "Начните с разминки на месте.\nБегите в удобном темпе, приземляясь на среднюю часть стопы.\nДержите корпус прямо, руки согнуты под 90 градусов.",
       "commonMistakes": ["Жёсткое приземление на пятку", "Наклон корпуса вперёд"],
-      "animation": "ex14.webp",
+      "animation": "ex6.webp",
       "muscles": [
         {"key": "calves", "intensity": "primary"},
         {"key": "quads", "intensity": "secondary"},
@@ -193,7 +86,7 @@
       "description": "Чередование быстрых и медленных отрезков.",
       "instructions": "Бегите в быстром темпе заданный интервал.\nСнизьте темп для восстановления.\nПовторяйте интервалы по плану.",
       "commonMistakes": ["Слишком быстрый старт", "Остановка вместо перехода на шаг"],
-      "animation": "ex15.webp",
+      "animation": "ex7.webp",
       "muscles": [
         {"key": "quads", "intensity": "primary"},
         {"key": "calves", "intensity": "secondary"}
@@ -206,7 +99,7 @@
       "description": "Интенсивное кардио-упражнение на месте.",
       "instructions": "Встаньте прямо, руки согнуты.\nПоочерёдно поднимайте колени к груди.\nРаботайте в быстром темпе.",
       "commonMistakes": ["Наклон корпуса назад", "Опущенные руки"],
-      "animation": "ex16.webp",
+      "animation": "ex8.webp",
       "muscles": [
         {"key": "quads", "intensity": "primary"},
         {"key": "calves", "intensity": "secondary"},

@@ -144,14 +144,8 @@ class AudioplayersSoundService implements SoundService {
   @override
   Future<void> stop() async {
     await _player.stop();
-    try {
-      final session = _session;
-      if (session != null) {
-        await session.setActive(false);
-      }
-    } catch (e) {
-      log('Не удалось освободить аудио-фокус', error: e, name: 'SoundService');
-    }
+    // Не вызываем setActive(false): при gainTransientMayDuck система
+    // автоматически восстанавливает громкость при потере фокуса.
   }
 
   @override

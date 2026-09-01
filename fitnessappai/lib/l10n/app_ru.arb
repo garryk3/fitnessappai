@@ -24,6 +24,9 @@
   "commonAll": "Все",
   "commonEdit": "Редактировать",
   "commonAdd": "Добавить",
+  "commonExit": "Выйти",
+  "programBuilderExitTitle": "Выйти из редактора?",
+  "programBuilderExitBody": "Изменения не сохранятся. Выйти?",
   "settings": "Настройки",
   "settingsSyncSection": "Синхронизация",
   "settingsSoundSection": "Звук",
@@ -77,10 +80,6 @@
   "exerciseListDeleteWarning": "Упражнение используется в программах:",
   "exerciseListDeleteBlockedHint": "Сначала удалите его из программы.",
   "exerciseListStartWorkout": "Начать тренировку",
-  "exerciseListStartWorkoutConfirm": "Начать тренировку с упражнением «{name}»?",
-  "@exerciseListStartWorkoutConfirm": {
-    "placeholders": {"name": {"type": "String"}}
-  },
   "schedulePerformed": "Выполнено",
   "scheduleRescheduled": "Перенесено",
   "scheduleSkipped": "Пропущено",
