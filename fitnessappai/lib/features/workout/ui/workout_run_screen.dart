@@ -132,7 +132,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     );
     _wakelock = widget.wakelockService ?? locator.get<WakelockService>();
     _wakelock.enable();
-    _restoreCheckpointIfNeeded();
+    _initLoad();
   }
 
   @override
@@ -179,18 +179,19 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     _saveCheckpointIfNeeded();
   }
 
-  Future<void> _restoreCheckpointIfNeeded() async {
+  /// Загружает чекпоинт, а затем передаёт его в [_controller.load].
+  /// Гарантирует единственное вызываание load() без гонки.
+  Future<void> _initLoad() async {
     final loader = widget.checkpointLoader ?? WorkoutCheckpoint.load;
     final checkpoint = await loader();
-    if (checkpoint == null || !mounted) {
+    if (!mounted) {
       return;
     }
-    if (_controller.workout.phase.value != WorkoutPhase.idle) {
-      return;
+    await _controller.load(checkpoint: checkpoint);
+    if (checkpoint != null) {
+      final clearer = widget.checkpointClearer ?? WorkoutCheckpoint.clear;
+      await clearer();
     }
-    await _controller.loadFromCheckpoint(checkpoint);
-    final clearer = widget.checkpointClearer ?? WorkoutCheckpoint.clear;
-    await clearer();
   }
 
   Future<void> _clearCheckpoint() async {
