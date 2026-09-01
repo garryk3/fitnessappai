@@ -345,7 +345,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   }
 
   bool get _canDeleteSelected =>
-      _selectedDayKeys.isNotEmpty && _days.length - _selectedDayKeys.length >= 1;
+      _selectedDayKeys.isNotEmpty &&
+      _days.length - _selectedDayKeys.length >= 1;
 
   void _deleteSelectedDays() {
     if (!_canDeleteSelected) return;
@@ -772,9 +773,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           if (isEditing && _days.length > 1)
             IconButton(
               tooltip: l10n.programBuilderDeleteDays,
-              icon: Icon(
-                _deleteMode ? Icons.close : Icons.delete_outline,
-              ),
+              icon: Icon(_deleteMode ? Icons.close : Icons.delete_outline),
               onPressed: _toggleDeleteMode,
             ),
           if (isEditing && nextDay == null)

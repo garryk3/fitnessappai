@@ -1696,8 +1696,11 @@ void main() {
       );
 
       final dayLabel = find.text('День 1');
-      await pumpUntilFound(tester, dayLabel);
-      await tester.ensureVisible(dayLabel);
+      await tester.scrollUntilVisible(
+        dayLabel,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       await tester.tap(dayLabel);
       await tester.pumpAndSettle();
