@@ -956,102 +956,94 @@ void main() {
     },
   );
 
-  testWidgets(
-    'режим удаления дней: кнопка в AppBar переключает режим',
-    (tester) async {
-      tester.view.physicalSize = const Size(800, 1200);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+  testWidgets('режим удаления дней: кнопка в AppBar переключает режим', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
-      final created = await repository.create(program('Сплит', daysCount: 3), [
-        ProgramDay(programId: 0, dayIndex: 0),
-        ProgramDay(programId: 0, dayIndex: 1),
-        ProgramDay(programId: 0, dayIndex: 2),
-      ]);
+    final created = await repository.create(program('Сплит', daysCount: 3), [
+      ProgramDay(programId: 0, dayIndex: 0),
+      ProgramDay(programId: 0, dayIndex: 1),
+      ProgramDay(programId: 0, dayIndex: 2),
+    ]);
 
-      await pumpBuilder(tester, programId: created.id);
+    await pumpBuilder(tester, programId: created.id);
 
-      // В обычном режиме кнопки удаления нет — она появляется только в AppBar.
-      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+    // В обычном режиме кнопки удаления нет — она появляется только в AppBar.
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
 
-      // Входим в режим удаления.
-      await tester.tap(find.byIcon(Icons.delete_outline));
-      await tester.pumpAndSettle();
+    // Входим в режим удаления.
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
 
-      // Появляются чекбоксы вместо drag-индикаторов.
-      expect(find.byType(Checkbox), findsNWidgets(3));
+    // Появляются чекбоксы вместо drag-индикаторов.
+    expect(find.byType(Checkbox), findsNWidgets(3));
 
-      // Кнопка «Удалить выбранное» внизу заблокирована (ничего не выбрано).
-      expect(
-        find.text('Удалить выбранное'),
-        findsOneWidget,
-      );
+    // Кнопка «Удалить выбранное» внизу заблокирована (ничего не выбрано).
+    expect(find.text('Удалить выбранное'), findsOneWidget);
 
-      // Выбираем два дня.
-      await tester.tap(find.byType(Checkbox).at(0));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(Checkbox).at(2));
-      await tester.pumpAndSettle();
+    // Выбираем два дня.
+    await tester.tap(find.byType(Checkbox).at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Checkbox).at(2));
+    await tester.pumpAndSettle();
 
-      // Удаляем.
-      await tester.tap(find.text('Удалить выбранное'));
-      await tester.pumpAndSettle();
+    // Удаляем.
+    await tester.tap(find.text('Удалить выбранное'));
+    await tester.pumpAndSettle();
 
-      // Остался 1 день.
-      expect(find.textContaining('День 1'), findsOneWidget);
-      expect(find.textContaining('День 2'), findsNothing);
-      expect(find.textContaining('День 3'), findsNothing);
-    },
-  );
+    // Остался 1 день.
+    expect(find.textContaining('День 1'), findsOneWidget);
+    expect(find.textContaining('День 2'), findsNothing);
+    expect(find.textContaining('День 3'), findsNothing);
+  });
 
-  testWidgets(
-    'режим удаления дней: нельзя удалить последний день',
-    (tester) async {
-      tester.view.physicalSize = const Size(800, 1200);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+  testWidgets('режим удаления дней: нельзя удалить последний день', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
-      final created = await repository.create(program('Однодневка'), [
-        ProgramDay(programId: 0, dayIndex: 0),
-      ]);
+    final created = await repository.create(program('Однодневка'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
 
-      await pumpBuilder(tester, programId: created.id);
+    await pumpBuilder(tester, programId: created.id);
 
-      // Кнопка удаления в AppBar не показывается, когда дней 1.
-      expect(find.byIcon(Icons.delete_outline), findsNothing);
-    },
-  );
+    // Кнопка удаления в AppBar не показывается, когда дней 1.
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
+  });
 
-  testWidgets(
-    'режим удаления дней: отмена выходит из режима',
-    (tester) async {
-      tester.view.physicalSize = const Size(800, 1200);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+  testWidgets('режим удаления дней: отмена выходит из режима', (tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
-      final created = await repository.create(program('Сплит', daysCount: 3), [
-        ProgramDay(programId: 0, dayIndex: 0),
-        ProgramDay(programId: 0, dayIndex: 1),
-        ProgramDay(programId: 0, dayIndex: 2),
-      ]);
+    final created = await repository.create(program('Сплит', daysCount: 3), [
+      ProgramDay(programId: 0, dayIndex: 0),
+      ProgramDay(programId: 0, dayIndex: 1),
+      ProgramDay(programId: 0, dayIndex: 2),
+    ]);
 
-      await pumpBuilder(tester, programId: created.id);
+    await pumpBuilder(tester, programId: created.id);
 
-      await tester.tap(find.byIcon(Icons.delete_outline));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
 
-      expect(find.byType(Checkbox), findsNWidgets(3));
+    expect(find.byType(Checkbox), findsNWidgets(3));
 
-      // Нажимаем крестик (отмена).
-      await tester.tap(find.byIcon(Icons.close));
-      await tester.pumpAndSettle();
+    // Нажимаем крестик (отмена).
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
 
-      // Чекбоксов больше нет — вышли из режима.
-      expect(find.byType(Checkbox), findsNothing);
-      // Три дня на месте.
-      expect(find.textContaining('День 1'), findsOneWidget);
-      expect(find.textContaining('День 2'), findsOneWidget);
-      expect(find.textContaining('День 3'), findsOneWidget);
-    },
-  );
+    // Чекбоксов больше нет — вышли из режима.
+    expect(find.byType(Checkbox), findsNothing);
+    // Три дня на месте.
+    expect(find.textContaining('День 1'), findsOneWidget);
+    expect(find.textContaining('День 2'), findsOneWidget);
+    expect(find.textContaining('День 3'), findsOneWidget);
+  });
 }

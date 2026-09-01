@@ -130,8 +130,7 @@ void main() {
       routes: [
         GoRoute(
           path: '/home',
-          builder: (context, state) =>
-              const Scaffold(body: Text('home-route')),
+          builder: (context, state) => const Scaffold(body: Text('home-route')),
         ),
         GoRoute(
           path: '/workout/prepare/:programDayId',
@@ -366,40 +365,35 @@ void main() {
     },
   );
 
-  testWidgets(
-    'выход из тренировки по «Выйти» ведёт на главный экран',
-    (tester) async {
-      final dayId = await createDay(
-        name: 'Приседания',
-        sets: 2,
-        restSeconds: 60,
-      );
-      await pumpFlow(tester, dayId);
-      await startWorkout(tester);
+  testWidgets('выход из тренировки по «Выйти» ведёт на главный экран', (
+    tester,
+  ) async {
+    final dayId = await createDay(name: 'Приседания', sets: 2, restSeconds: 60);
+    await pumpFlow(tester, dayId);
+    await startWorkout(tester);
 
-      await tester.enterText(find.byType(TextFormField).first, '10');
-      await tester.tap(find.text('Подход выполнен'));
-      await tester.pump();
+    await tester.enterText(find.byType(TextFormField).first, '10');
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pump();
 
-      await tester.tap(find.text('Пропустить отдых'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Пропустить отдых'));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.arrow_back));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Выйти из тренировки'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Выйти из тренировки'), findsOneWidget);
 
-      await tester.tap(find.text('Выйти'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Выйти'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('home-route'), findsOneWidget);
+    expect(find.text('home-route'), findsOneWidget);
 
-      final sessions = await workoutRepo.getSessionsBetween(
-        DateTime(2020),
-        DateTime(2030),
-      );
-      expect(sessions, isEmpty);
-    },
-  );
+    final sessions = await workoutRepo.getSessionsBetween(
+      DateTime(2020),
+      DateTime(2030),
+    );
+    expect(sessions, isEmpty);
+  });
 
   testWidgets(
     'выход из тренировки по «Завершить и сохранить» ведёт на главный экран',
