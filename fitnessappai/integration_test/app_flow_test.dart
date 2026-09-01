@@ -1696,6 +1696,7 @@ void main() {
       );
 
       final dayLabel = find.text('День 1');
+      await pumpUntilFound(tester, dayLabel);
       await tester.ensureVisible(dayLabel);
       await tester.pumpAndSettle();
       await tester.tap(dayLabel);
