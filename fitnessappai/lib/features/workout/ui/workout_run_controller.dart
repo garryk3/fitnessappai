@@ -34,9 +34,7 @@ class WorkoutRunController {
          clock: clock,
          timerFactory: timerFactory,
          soundService: soundService,
-       ) {
-    _load();
-  }
+       );
 
   /// Бизнес-логика сессии.
   final WorkoutController workout;
@@ -70,7 +68,10 @@ class WorkoutRunController {
     return duration.inMinutes.clamp(1, 1 << 31);
   }
 
-  Future<void> _load({WorkoutCheckpoint? checkpoint}) async {
+  /// Загружает данные тренировки. Вызывать ровно 1 раз после построения
+  /// экрана. Если передан [checkpoint], восстанавливает состояние из него
+  /// вместо запуска новой сессии.
+  Future<void> load({WorkoutCheckpoint? checkpoint}) async {
     isLoading.value = true;
     notFound.value = false;
     emptyDay.value = false;
@@ -163,11 +164,6 @@ class WorkoutRunController {
         ),
       );
     }
-  }
-
-  /// Восстанавливает сессию из чекпоинта (после убийства процесса ОС).
-  Future<void> loadFromCheckpoint(WorkoutCheckpoint checkpoint) async {
-    await _load(checkpoint: checkpoint);
   }
 
   /// Фиксирует введённые значения подхода.

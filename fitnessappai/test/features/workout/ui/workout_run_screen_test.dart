@@ -21,6 +21,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 class _FakeWakelock implements WakelockService {
@@ -666,4 +667,150 @@ void main() {
     expect(sessions.first.programId, isNull);
     expect(sessions.first.programDayId, isNull);
   });
+
+  testWidgets('чекпоинт восстанавливает startedAt и exerciseIndex', (
+    tester,
+  ) async {
+    final dayId = await createDay(sets: 3, restSeconds: 0);
+    final staleStartedAt = DateTime(2025, 1, 15, 8, 0);
+    final checkpoint = WorkoutCheckpoint(
+      programDayId: dayId,
+      exerciseIndex: 0,
+      currentSet: 1,
+      completedSets: 0,
+      resultsJson: '[]',
+      startedAt: staleStartedAt,
+      programName: 'База',
+      dayIndex: 0,
+    );
+
+    final router = GoRouter(
+      initialLocation: '/workout/run?programDayId=$dayId&variant=main',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const Scaffold(body: Text('home')),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) => WorkoutRunScreen(
+            programDayId:
+                int.tryParse(state.uri.queryParameters['programDayId'] ?? '') ??
+                -1,
+            variant: state.uri.queryParameters['variant'] == 'alternative'
+                ? WorkoutVariant.alternative
+                : WorkoutVariant.main,
+            programRepository: programRepo,
+            exerciseRepository: exerciseRepo,
+            workoutRepository: workoutRepo,
+            mediaCache: MediaCache(),
+            wakelockService: wakelock,
+            soundService: StubSoundService(),
+            clock: () => DateTime(2026, 8, 31, 12, 0),
+            checkpointLoader: () async => checkpoint,
+            checkpointSaver: (_) async {},
+            checkpointClearer: () async {},
+          ),
+        ),
+        GoRoute(
+          path: '/progress',
+          builder: (context, state) => const Scaffold(body: Text('progress')),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Экран загружается с restored startedAt из чекпоинта.
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('Упражнение 1 из 1 · Подход 1 из 3'), findsOneWidget);
+  });
+
+  testWidgets(
+    'без чекпоинта: startedAt берётся от clock(), exerciseIndex = 0',
+    (tester) async {
+      final dayId = await createDay(sets: 1, restSeconds: 0);
+
+      final router = GoRouter(
+        initialLocation: '/workout/run?programDayId=$dayId&variant=main',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const Scaffold(body: Text('home')),
+          ),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const Scaffold(body: Text('home')),
+          ),
+          GoRoute(
+            path: '/workout/run',
+            builder: (context, state) => WorkoutRunScreen(
+              programDayId:
+                  int.tryParse(
+                    state.uri.queryParameters['programDayId'] ?? '',
+                  ) ??
+                  -1,
+              variant: state.uri.queryParameters['variant'] == 'alternative'
+                  ? WorkoutVariant.alternative
+                  : WorkoutVariant.main,
+              programRepository: programRepo,
+              exerciseRepository: exerciseRepo,
+              workoutRepository: workoutRepo,
+              mediaCache: MediaCache(),
+              wakelockService: wakelock,
+              soundService: StubSoundService(),
+              clock: () => DateTime(2026, 8, 31, 12, 0),
+              checkpointLoader: () async => null,
+              checkpointSaver: (_) async {},
+              checkpointClearer: () async {},
+            ),
+          ),
+          GoRoute(
+            path: '/progress',
+            builder: (context, state) => const Scaffold(body: Text('progress')),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Завершить 1 подход (единственный) — тренировка должна завершиться.
+      await tester.enterText(find.byType(TextFormField).first, '10');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+      expect(find.text('Время: 1 мин'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+
+      // Сохранённая сессия имеет performedDate = сегодня (2026-08-31).
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      expect(sessions, hasLength(1));
+      expect(sessions.first.performedDate, DateTime(2026, 8, 31));
+    },
+  );
 }

@@ -1985,6 +1985,7 @@ fitnessappai/
 | 26.11 | Редактор программы: множественное удаление дней | [x] | task/26-plan-workout-schedule-fixes | 2026-08-31 |
 | 26.12 | Баг: «Завершить и выйти» → «Выйти» уводит на разминку | [x] | task/26-plan-workout-schedule-fixes | 2026-08-31 |
 | 26.13 | Таймер/звук: убрать лимит 5 сек + иконка остановки звука | [x] | task/26-plan-workout-schedule-fixes | 2026-08-31 |
+| 27.1 | Баг: гонка checkpoint при старте тренировки | [x] | task/27-checkpoint-race-fix | 2026-09-01 |
 
 ### План работы — Этап 26
 
@@ -2040,6 +2041,30 @@ fitnessappai/
 - Убрать `maxDuration`/автостоп в `AudioplayersSoundService.playCompletion`/`preview`; добавить иконку остановки воспроизведения звука (без продолжения) в UI отдыха.
 - Тесты: `sound_service_test.dart`, `workout_run_screen_test.dart`.
 
+## Этап 27: Исправление гонки checkpoint при старте тренировки
+
+### 27.1 Устранение race condition `_load()` ↔ `_restoreCheckpointIfNeeded()`
+
+**Статус:** [x]  
+**Дата:** 2026-09-01  
+**Ветка:** `task/27-checkpoint-race-fix`
+
+**Проблема:** В `WorkoutRunScreen.initState()` конструктор `WorkoutRunController` вызывает `_load()` (асинхронно), а параллельно `_restoreCheckpointIfNeeded()` читает чекпоинт и вызывает `loadFromCheckpoint()`. Оба метода запускают `_loadFromProgram()`, и тот из них, кто завершится последним, перезаписывает `_startedAt` и `currentExerciseIndex`. Если чекпоинт от старой прерванной тренировки, он устанавливает `_startedAt` на прошлое время (аномально большое время выполнения) и `exerciseIndex` на последнее упражнение (после 1 упражнения → завершение вместо перехода ко второму).
+
+**Решение:**
+- `WorkoutRunController`: убран `_load()` из конструктора; `_load()` переименован в `load()` (публичный); удалён `loadFromCheckpoint()` — он больше не нужен.
+- `WorkoutRunScreen`: `_restoreCheckpointIfNeeded()` заменён на `_initLoad()`, который последовательно: загружает чекпоинт → вызывает `_controller.load(checkpoint: checkpoint)`. Гарантирует единственное вызывание `load()` без гонки.
+
+**Файлы:**
+- `lib/features/workout/ui/workout_run_controller.dart` — конструктор без `_load()`, `load()` публичный.
+- `lib/features/workout/ui/workout_run_screen.dart` — `_initLoad()` вместо `_restoreCheckpointIfNeeded()`.
+
+**Тесты (2 новых):**
+- `workout_run_screen_test.dart`: «чекпоинт восстанавливает startedAt и exerciseIndex» — проверяет, что при наличии чекпоинта сессия загружается из него.
+- `workout_run_screen_test.dart`: «без чекпоинта: startedAt берётся от clock(), exerciseIndex = 0» — проверяет, что performedDate = сегодня.
+
+**Результат:** 697 unit/widget тестов ✅, format ✅, analyze ✅.
+
 ## Порядок выполнения
 
 1. **Критический путь:** 0.1 → 0.2 → 1.1 → 1.2 → 1.3 → 2.1 → 2.2 → 2.3–2.5 → 3.1–3.5 → 4.1–4.5 → 5.1–5.3 → 8 → **9.1** → **9.2–9.6** → **10.1–10.6** → **11.1–11.14** → **12.1–12.9** → **13.1–13.18** → **14.1–14.10**. Внутри этапа 11: 11.2 → 11.14 (схема v4→v5), 11.9 → 11.10, 11.13 → 11.14. Внутри этапа 13: 13.17 → 13.4/13.5/13.8, 13.12 → 13.16, 13.15 — в начале этапа. Внутри этапа 14: 14.1 → 14.3, 14.5 → 14.6/14.7, 14.2 — в начале этапа.
@@ -2057,3 +2082,4 @@ fitnessappai/
 12. **Этап 24:** задачи 24.1–24.2 независимы, выполняются по порядку.
 13. **Этап 25:** задачи 25.1–25.3 выполняются по порядку (общая ветка `task/25-exercise-delete-program-fixes`).
 14. **Этап 26:** задачи 26.1–26.13 выполняются по порядку (общая ветка `task/26-plan-workout-schedule-fixes`); 26.8 — анализ без изменений кода.
+15. **Этап 27:** задача 27.1 — баг-фикс гонки checkpoint (ветка `task/27-checkpoint-race-fix`).
