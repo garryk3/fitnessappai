@@ -60,6 +60,8 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_svg: ^2.0.17
   video_player: ^2.14.0
+  audio_session: ^0.2.4
+  flutter_foreground_task: ^11.0.1
 
 dev_dependencies:
   flutter_test:

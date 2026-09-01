@@ -16,6 +16,7 @@ import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dar
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
@@ -49,6 +50,9 @@ Future<void> pumpApp(
   locator.reset();
   registerCoreServices(locator, database: db);
   locator.registerLazySingleton<SoundService>(() => StubSoundService());
+  locator.registerLazySingleton<WorkoutForegroundService>(
+    () => StubWorkoutForegroundService(),
+  );
   locator.registerLazySingleton<WakelockService>(
     () => disableWakelock
         ? _StubWakelockDisabledService()

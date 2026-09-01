@@ -91,6 +91,11 @@ class WorkoutController {
   Timer? _restTimer;
   Timer? _holdTimer;
 
+  /// Поколение сессии: инкрементируется при каждом `start`/`restore`.
+  /// Таймеры, созданные в прошлом поколении, при срабатывании становятся
+  /// no-op (защита от stale-таймера после перезапуска/восстановления).
+  int _generation = 0;
+
   /// Идёт ли пауза отдыха между упражнениями (перед переходом к следующему).
   bool _restBetweenExercises = false;
 
@@ -128,6 +133,7 @@ class WorkoutController {
     if (exercises.isEmpty) {
       throw WorkoutStateException(const ['Нет упражнений для тренировки']);
     }
+    _generation++;
     _cancelTimers();
     _exercises
       ..clear()
@@ -178,6 +184,13 @@ class WorkoutController {
       programName: programName,
       dayIndex: dayIndex,
       currentSide: currentSide.value,
+      phase: phase.value.name,
+      restEndsAt: _restEndsAt,
+      restBetweenExercises: _restBetweenExercises,
+      sideRest: sideRest.value != null,
+      holdElapsedSeconds: holdElapsedSeconds.value,
+      holdTargetSeconds: holdTargetSeconds.value,
+      holdRunning: holdRunning.value,
     );
   }
 
@@ -186,19 +199,23 @@ class WorkoutController {
     WorkoutCheckpoint checkpoint,
     List<WorkoutExercise> exercises,
   ) {
+    _generation++;
     _cancelTimers();
     _exercises
       ..clear()
       ..addAll(exercises);
     _startedAt = checkpoint.startedAt;
-    phase.value = WorkoutPhase.exercise;
-    currentExerciseIndex.value = checkpoint.exerciseIndex;
+    final safeIndex = checkpoint.exerciseIndex.clamp(
+      0,
+      exercises.isEmpty ? 0 : exercises.length - 1,
+    );
+    currentExerciseIndex.value = safeIndex;
     currentSet.value = checkpoint.currentSet;
     completedSets.value = checkpoint.completedSets;
     currentSide.value = checkpoint.currentSide;
     restRemainingSeconds.value = null;
     sideRest.value = null;
-    _restBetweenExercises = false;
+    _restBetweenExercises = checkpoint.restBetweenExercises;
     final decoded = jsonDecode(checkpoint.resultsJson) as List;
     results.value = [
       for (final item in decoded)
@@ -217,7 +234,16 @@ class WorkoutController {
           completedAt: DateTime.parse(item['completedAt'] as String),
         ),
     ];
-    _prepareHoldTimer();
+    if (checkpoint.phase == 'rest' && checkpoint.restEndsAt != null) {
+      _resumeRest(
+        checkpoint.restEndsAt!,
+        between: checkpoint.restBetweenExercises,
+        side: checkpoint.sideRest,
+      );
+    } else {
+      phase.value = WorkoutPhase.exercise;
+      _restoreHold(checkpoint);
+    }
   }
 
   /// Сохраняет введённые значения текущего подхода.
@@ -429,20 +455,7 @@ class WorkoutController {
     _restEndsAt = _clock().add(Duration(seconds: restSeconds));
     remainingSignal.value = restSeconds;
     _restTimer?.cancel();
-    _restTimer = _timerFactory(const Duration(seconds: 1), (timer) {
-      final remaining = _restEndsAt!.difference(_clock()).inSeconds;
-      if (remaining <= 0) {
-        timer.cancel();
-        _restTimer = null;
-        _restEndsAt = null;
-        remainingSignal.value = null;
-        phase.value = WorkoutPhase.exercise;
-        _prepareHoldTimer();
-        _soundService?.playCompletion();
-      } else {
-        remainingSignal.value = remaining;
-      }
-    });
+    _restTimer = _makeRestTicker(remainingSignal, _completeNormalRest);
   }
 
   /// Начинает паузу отдыха между упражнениями. По завершении переходит
@@ -452,19 +465,107 @@ class WorkoutController {
     _restEndsAt = _clock().add(Duration(seconds: restSeconds));
     restRemainingSeconds.value = restSeconds;
     _restTimer?.cancel();
-    _restTimer = _timerFactory(const Duration(seconds: 1), (timer) {
-      final remaining = _restEndsAt!.difference(_clock()).inSeconds;
+    _restTimer = _makeRestTicker(restRemainingSeconds, _completeBetweenRest);
+  }
+
+  /// Возобновляет отдых из чекпоинта. [restEndsAt] — сохранённое время
+  /// окончания по wall-clock; если отдых уже истёк во время «сна», завершает
+  /// его немедленно.
+  void _resumeRest(
+    DateTime restEndsAt, {
+    required bool between,
+    required bool side,
+  }) {
+    final remaining = restEndsAt.difference(_clock()).inSeconds;
+    if (remaining <= 0) {
+      _restEndsAt = null;
+      _restTimer = null;
+      restRemainingSeconds.value = null;
+      sideRest.value = null;
+      if (between) {
+        _restBetweenExercises = false;
+        _advanceToNextExercise();
+      } else {
+        phase.value = WorkoutPhase.exercise;
+        _prepareHoldTimer();
+      }
+      return;
+    }
+    _restEndsAt = restEndsAt;
+    phase.value = WorkoutPhase.rest;
+    final remainingSignal = side ? sideRest : restRemainingSeconds;
+    remainingSignal.value = remaining;
+    _restTimer = _makeRestTicker(
+      remainingSignal,
+      between ? _completeBetweenRest : _completeNormalRest,
+    );
+  }
+
+  /// Создаёт тикер отдыха: пересчитывает остаток от [_restEndsAt] и по
+  /// достижении нуля вызывает [onComplete].
+  Timer _makeRestTicker(
+    Signal<int?> remainingSignal,
+    void Function() onComplete,
+  ) {
+    final generation = _generation;
+    return _timerFactory(const Duration(seconds: 1), (timer) {
+      if (generation != _generation) {
+        timer.cancel();
+        return;
+      }
+      final endsAt = _restEndsAt;
+      if (endsAt == null) {
+        timer.cancel();
+        return;
+      }
+      final remaining = endsAt.difference(_clock()).inSeconds;
       if (remaining <= 0) {
         timer.cancel();
         _restTimer = null;
         _restEndsAt = null;
-        restRemainingSeconds.value = null;
-        _restBetweenExercises = false;
-        _advanceToNextExercise();
-        _soundService?.playCompletion();
+        remainingSignal.value = null;
+        onComplete();
       } else {
-        restRemainingSeconds.value = remaining;
+        remainingSignal.value = remaining;
       }
+    });
+  }
+
+  /// Завершение обычного отдыха (между подходами или между сторонами).
+  void _completeNormalRest() {
+    phase.value = WorkoutPhase.exercise;
+    _prepareHoldTimer();
+    _soundService?.playCompletion();
+  }
+
+  /// Завершение отдыха между упражнениями: переход к следующему упражнению.
+  void _completeBetweenRest() {
+    _restBetweenExercises = false;
+    _advanceToNextExercise();
+    _soundService?.playCompletion();
+  }
+
+  /// Восстанавливает удержание планки из чекпоинта. [holdTargetSeconds]
+  /// пересчитывается из текущего упражнения; фактическое время и признак
+  /// запуска — из снимка.
+  void _restoreHold(WorkoutCheckpoint checkpoint) {
+    _prepareHoldTimer();
+    if (!checkpoint.holdRunning) {
+      return;
+    }
+    holdElapsedSeconds.value = checkpoint.holdElapsedSeconds;
+    holdRunning.value = true;
+    final startedAt = _clock().subtract(
+      Duration(seconds: checkpoint.holdElapsedSeconds),
+    );
+    final generation = _generation;
+    _holdTimer?.cancel();
+    _holdTimer = _timerFactory(const Duration(seconds: 1), (timer) {
+      if (generation != _generation) {
+        timer.cancel();
+        return;
+      }
+      holdElapsedSeconds.value = _clock().difference(startedAt).inSeconds;
     });
   }
 
@@ -500,7 +601,8 @@ class WorkoutController {
 
   /// Запускает отсчёт удержания планки (кнопка «Начать»). Считает вверх
   /// от нуля и продолжает после цели, чтобы фактическое время удержания
-  /// попало в результат.
+  /// попало в результат. Время берётся по wall-clock, поэтому при уходе в
+  /// сон и возврате счётчик не замирает.
   void startHoldTimer() {
     if (phase.value != WorkoutPhase.exercise ||
         holdTargetSeconds.value == null ||
@@ -509,9 +611,15 @@ class WorkoutController {
     }
     holdElapsedSeconds.value = 0;
     holdRunning.value = true;
+    final startedAt = _clock();
+    final generation = _generation;
     _holdTimer?.cancel();
     _holdTimer = _timerFactory(const Duration(seconds: 1), (timer) {
-      holdElapsedSeconds.value++;
+      if (generation != _generation) {
+        timer.cancel();
+        return;
+      }
+      holdElapsedSeconds.value = _clock().difference(startedAt).inSeconds;
     });
   }
 

@@ -6,7 +6,8 @@ import 'package:path_provider/path_provider.dart';
 /// Снимок состояния тренировки для восстановления после убийства процесса ОС.
 ///
 /// Содержит только serializers данные, необходимые для перезапуска сессии:
-/// ID дня программы, текущий индекс упражнения, завершённые подходы и т.д.
+/// ID дня программы, текущий индекс упражнения, завершённые подходы, фазу
+/// (включая отдых и удержание планки) и т.д.
 class WorkoutCheckpoint {
   const WorkoutCheckpoint({
     required this.programDayId,
@@ -19,6 +20,13 @@ class WorkoutCheckpoint {
     required this.programName,
     required this.dayIndex,
     this.currentSide,
+    this.phase = 'exercise',
+    this.restEndsAt,
+    this.restBetweenExercises = false,
+    this.sideRest = false,
+    this.holdElapsedSeconds = 0,
+    this.holdTargetSeconds,
+    this.holdRunning = false,
   });
 
   factory WorkoutCheckpoint.fromJson(Map<String, dynamic> json) =>
@@ -33,6 +41,15 @@ class WorkoutCheckpoint {
         programName: json['programName'] as String,
         dayIndex: json['dayIndex'] as int,
         currentSide: json['currentSide'] as String?,
+        phase: json['phase'] as String? ?? 'exercise',
+        restEndsAt: json['restEndsAt'] == null
+            ? null
+            : DateTime.parse(json['restEndsAt'] as String),
+        restBetweenExercises: json['restBetweenExercises'] as bool? ?? false,
+        sideRest: json['sideRest'] as bool? ?? false,
+        holdElapsedSeconds: json['holdElapsedSeconds'] as int? ?? 0,
+        holdTargetSeconds: json['holdTargetSeconds'] as int?,
+        holdRunning: json['holdRunning'] as bool? ?? false,
       );
 
   final int programDayId;
@@ -46,6 +63,22 @@ class WorkoutCheckpoint {
   final int dayIndex;
   final String? currentSide;
 
+  /// Название фазы (`WorkoutPhase.name`) на момент снимка.
+  final String phase;
+
+  /// Время окончания отдыха по wall-clock (null — отдых не идёт).
+  final DateTime? restEndsAt;
+
+  /// Идёт ли пауза отдыха между упражнениями.
+  final bool restBetweenExercises;
+
+  /// Идёт ли отдых между сторонами упражнения «по сторонам».
+  final bool sideRest;
+
+  final int holdElapsedSeconds;
+  final int? holdTargetSeconds;
+  final bool holdRunning;
+
   Map<String, dynamic> toJson() => {
     'programDayId': programDayId,
     'exerciseIndex': exerciseIndex,
@@ -57,6 +90,13 @@ class WorkoutCheckpoint {
     'programName': programName,
     'dayIndex': dayIndex,
     'currentSide': currentSide,
+    'phase': phase,
+    'restEndsAt': restEndsAt?.toIso8601String(),
+    'restBetweenExercises': restBetweenExercises,
+    'sideRest': sideRest,
+    'holdElapsedSeconds': holdElapsedSeconds,
+    'holdTargetSeconds': holdTargetSeconds,
+    'holdRunning': holdRunning,
   };
 
   static const _fileName = 'workout_checkpoint.json';

@@ -199,7 +199,9 @@ void main() {
     'plank: без «Начать» счётчик не запускается, после — растёт от нуля',
     () {
       fakeAsync((async) {
-        final controller = WorkoutController(clock: () => startTime);
+        final controller = WorkoutController(
+          clock: () => startTime.add(async.elapsed),
+        );
         controller.start([plankExercise(duration: 45)]);
 
         expect(controller.holdTargetSeconds.value, 45);
@@ -624,10 +626,43 @@ void main() {
     controller.dispose();
   });
 
-  test('инжектируемый timerFactory управляет удержанием планки', () {
+  test('stale-таймер после повторного start не срабатывает', () {
+    final sound = StubSoundService();
     final timers = <_FakeTimer>[];
     final controller = WorkoutController(
       clock: () => startTime,
+      soundService: sound,
+      timerFactory: (duration, callback) {
+        late final _FakeTimer timer;
+        timer = _FakeTimer(() => callback(timer));
+        timers.add(timer);
+        return timer;
+      },
+    );
+    controller.start([strengthExercise(sets: 2, rest: 60)]);
+    controller.setResult(const WorkoutSetInput(reps: 8));
+    controller.confirmSet();
+    expect(controller.phase.value, WorkoutPhase.rest);
+    expect(timers, hasLength(1));
+    final staleTimer = timers[0];
+
+    // Перезапуск сессии: старый тикер отменён, поколение сменено.
+    controller.start([strengthExercise(sets: 2, rest: 60)]);
+    expect(controller.phase.value, WorkoutPhase.exercise);
+
+    // Запоздалое срабатывание старого тикера должно быть no-op.
+    final completionCallsBefore = sound.completionCalls;
+    staleTimer.fire();
+    expect(controller.phase.value, WorkoutPhase.exercise);
+    expect(sound.completionCalls, completionCallsBefore);
+    controller.dispose();
+  });
+
+  test('инжектируемый timerFactory управляет удержанием планки', () {
+    var now = startTime;
+    final timers = <_FakeTimer>[];
+    final controller = WorkoutController(
+      clock: () => now,
       timerFactory: (duration, callback) {
         late final _FakeTimer timer;
         timer = _FakeTimer(() => callback(timer));
@@ -647,12 +682,33 @@ void main() {
     expect(timers, hasLength(1));
     expect(controller.holdRunning.value, isTrue);
 
-    for (var i = 0; i < 50; i++) {
-      timers[0].fire();
-    }
+    now = startTime.add(const Duration(seconds: 50));
+    timers[0].fire();
     expect(controller.holdElapsedSeconds.value, 50);
     controller.dispose();
   });
+
+  test(
+    'plank: удержание считается по wall-clock и не замирает после «сна»',
+    () {
+      fakeAsync((async) {
+        var now = startTime;
+        final controller = WorkoutController(clock: () => now);
+        controller.start([plankExercise(duration: 45)]);
+        controller.startHoldTimer();
+
+        now = startTime.add(const Duration(seconds: 10));
+        async.elapse(const Duration(seconds: 1));
+        expect(controller.holdElapsedSeconds.value, 10);
+
+        // Имитация сна: прошло ещё 2 минуты, тик не срабатывал.
+        now = startTime.add(const Duration(seconds: 130));
+        async.elapse(const Duration(seconds: 1));
+        expect(controller.holdElapsedSeconds.value, 130);
+        controller.dispose();
+      });
+    },
+  );
 
   test('по сторонам: левая → отдых между сторонами → правая', () {
     fakeAsync((async) {
@@ -849,6 +905,179 @@ void main() {
       expect(restored.currentSet.value, 2);
       expect(restored.completedSets.value, 1);
       expect(restored.results.value, hasLength(1));
+
+      controller.dispose();
+      restored.dispose();
+    });
+  });
+
+  test(
+    'checkpoint round-trip: отдых восстанавливается с остатком по wall-clock',
+    () {
+      fakeAsync((async) {
+        var now = startTime;
+        final controller = WorkoutController(clock: () => now);
+        controller.start(
+          [strengthExercise(sets: 2, rest: 60)],
+          context: const WorkoutSessionContext(
+            programName: 'База',
+            dayIndex: 0,
+          ),
+        );
+        controller.setResult(const WorkoutSetInput(reps: 8));
+        controller.confirmSet();
+        expect(controller.phase.value, WorkoutPhase.rest);
+        expect(controller.restRemainingSeconds.value, 60);
+
+        now = startTime.add(const Duration(seconds: 10));
+        final checkpoint = controller.toCheckpoint(
+          programDayId: 1,
+          programName: 'База',
+          dayIndex: 0,
+        );
+        expect(checkpoint.phase, 'rest');
+        expect(checkpoint.restEndsAt, isNotNull);
+        expect(checkpoint.restBetweenExercises, isFalse);
+
+        now = startTime.add(const Duration(seconds: 30));
+        final restored = WorkoutController(clock: () => now);
+        restored.restoreFromCheckpoint(checkpoint, [
+          strengthExercise(sets: 2, rest: 60),
+        ]);
+        expect(restored.phase.value, WorkoutPhase.rest);
+        expect(restored.restRemainingSeconds.value, 30);
+
+        now = startTime.add(const Duration(seconds: 60));
+        async.elapse(const Duration(seconds: 1));
+        expect(restored.phase.value, WorkoutPhase.exercise);
+        expect(restored.restRemainingSeconds.value, isNull);
+        expect(restored.currentSet.value, 2);
+
+        controller.dispose();
+        restored.dispose();
+      });
+    },
+  );
+
+  test('checkpoint round-trip: отдых между упражнениями восстанавливается', () {
+    fakeAsync((async) {
+      var now = startTime;
+      final controller = WorkoutController(clock: () => now);
+      controller.start(
+        [strengthExercise(sets: 1), runningExercise()],
+        context: const WorkoutSessionContext(
+          programId: 5,
+          programName: 'База',
+          programDayId: 7,
+          dayIndex: 2,
+          exerciseRestSeconds: 90,
+        ),
+      );
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+      expect(controller.phase.value, WorkoutPhase.rest);
+      expect(controller.restRemainingSeconds.value, 90);
+
+      now = startTime.add(const Duration(seconds: 20));
+      final checkpoint = controller.toCheckpoint(
+        programDayId: 7,
+        programId: 5,
+        programName: 'База',
+        dayIndex: 2,
+      );
+      expect(checkpoint.restBetweenExercises, isTrue);
+
+      now = startTime.add(const Duration(seconds: 50));
+      final restored = WorkoutController(clock: () => now);
+      restored.restoreFromCheckpoint(checkpoint, [
+        strengthExercise(sets: 1),
+        runningExercise(),
+      ]);
+      expect(restored.phase.value, WorkoutPhase.rest);
+      expect(restored.restRemainingSeconds.value, 40);
+
+      now = startTime.add(const Duration(seconds: 90));
+      async.elapse(const Duration(seconds: 1));
+      expect(restored.phase.value, WorkoutPhase.exercise);
+      expect(restored.currentExerciseIndex.value, 1);
+      expect(restored.currentExercise!.name, 'Бег');
+
+      controller.dispose();
+      restored.dispose();
+    });
+  });
+
+  test('checkpoint round-trip: отдых между сторонами восстанавливается', () {
+    fakeAsync((async) {
+      var now = startTime;
+      final controller = WorkoutController(clock: () => now);
+      controller.start([perSideExercise(sets: 1, rest: 60)]);
+      controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
+      controller.confirmSet();
+      expect(controller.phase.value, WorkoutPhase.rest);
+      expect(controller.sideRest.value, 60);
+      expect(controller.currentSide.value, 'right');
+
+      now = startTime.add(const Duration(seconds: 15));
+      final checkpoint = controller.toCheckpoint(
+        programDayId: 1,
+        programName: 'База',
+        dayIndex: 0,
+      );
+      expect(checkpoint.sideRest, isTrue);
+
+      now = startTime.add(const Duration(seconds: 40));
+      final restored = WorkoutController(clock: () => now);
+      restored.restoreFromCheckpoint(checkpoint, [
+        perSideExercise(sets: 1, rest: 60),
+      ]);
+      expect(restored.phase.value, WorkoutPhase.rest);
+      expect(restored.sideRest.value, 20);
+      expect(restored.currentSide.value, 'right');
+
+      now = startTime.add(const Duration(seconds: 60));
+      async.elapse(const Duration(seconds: 1));
+      expect(restored.phase.value, WorkoutPhase.exercise);
+      expect(restored.sideRest.value, isNull);
+      expect(restored.currentSide.value, 'right');
+
+      restored.setResult(const WorkoutSetInput(reps: 6));
+      restored.confirmSet();
+      expect(restored.phase.value, WorkoutPhase.finished);
+
+      controller.dispose();
+      restored.dispose();
+    });
+  });
+
+  test('checkpoint round-trip: удержание планки восстанавливается', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      controller.start([plankExercise(duration: 45)]);
+      controller.startHoldTimer();
+      async.elapse(const Duration(seconds: 12));
+      expect(controller.holdElapsedSeconds.value, 12);
+
+      final checkpoint = controller.toCheckpoint(
+        programDayId: 1,
+        programName: 'Планка',
+        dayIndex: 0,
+      );
+      expect(checkpoint.holdRunning, isTrue);
+      expect(checkpoint.holdElapsedSeconds, 12);
+
+      final restored = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+      );
+      restored.restoreFromCheckpoint(checkpoint, [plankExercise(duration: 45)]);
+      expect(restored.holdRunning.value, isTrue);
+      expect(restored.holdElapsedSeconds.value, 12);
+      expect(restored.holdTargetSeconds.value, 45);
+
+      async.elapse(const Duration(seconds: 5));
+      expect(restored.holdElapsedSeconds.value, 17);
 
       controller.dispose();
       restored.dispose();

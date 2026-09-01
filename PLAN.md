@@ -2065,6 +2065,54 @@ fitnessappai/
 
 **Результат:** 697 unit/widget тестов ✅, format ✅, analyze ✅.
 
+## Этап 28: Фоновый режим (сброс/замирание тренировки, аудио-фокус, foreground service)
+
+Устранение дефектов работы в фоне (Android 12+): сброс тренировки после блокировки, замирание таймера в свёрнутом приложении, «плавающий» выход на главный экран со сбросом программы. Полный объём: Dart-хардненинг + `audio_session` + нативный Foreground Service.
+
+| № | Задача | Статус | Ветка / PR | Дата |
+|---|--------|--------|-----------|------|
+| 28.1 | Полный снимок состояния в чекпоинте (фаза отдыха/удержания/сторона) | [x] | task/28.1-checkpoint-state | 2026-09-01 |
+| 28.2 | Сохранение чекпоинта на переходах + периодически | [x] | task/28.2-checkpoint-save | 2026-09-01 |
+| 28.3 | Wall-clock таймер удержания планки | [x] | task/28.3-hold-wallclock | 2026-09-01 |
+| 28.4 | Foreground Service (нативно, flutter_foreground_task) | [x] | task/28.4-foreground-service | 2026-09-01 |
+| 28.5 | Audio Focus: duck вместо gain (audio_session) | [x] | task/28.5-audio-duck | 2026-09-01 |
+| 28.6 | Защита от stale-таймера | [x] | task/28.6-stale-timer | 2026-09-01 |
+
+### 28.1 — Полный снимок состояния в чекпоинте
+- **Проблема:** `WorkoutCheckpoint` сохраняет только индекс упражнения/подход/результаты; `restoreFromCheckpoint` принудительно ставит `phase = exercise` и сбрасывает отдых/удержание/сторону. При восстановлении после блокировки отдых теряется — выглядит как «сброс».
+- **Решение:** расширить `WorkoutCheckpoint`: `phase` (name), `restEndsAt`, `restBetweenExercises`, `sideRest`, `holdElapsedSeconds`, `holdTargetSeconds`, `holdRunning`. `restoreFromCheckpoint` восстанавливает фазу отдыха (пересчёт остатка по wall-clock и перезапуск нужного тикера: обычный/между упражнениями/между сторонами) и удержание планки. Рефакторинг таймеров в `WorkoutController`: `_makeRestTicker` + `_completeNormalRest`/`_completeBetweenRest` + `_resumeRest` + `_restoreHold`.
+- **Тесты:** `workout_controller_test` — round-trip mid-rest (обычный, между упражнениями, между сторонами), восстановление удержания планки, `restRemainingSeconds` от `restEndsAt`.
+
+### 28.2 — Сохранение чекпоинта на переходах + периодически
+- **Проблема:** чекпоинт пишется только на `paused`/`detached`; при kill без lifecycle-колбэка состояние теряется.
+- **Решение:** в `WorkoutRunScreen` вызывать `_saveCheckpoint()` после `confirmSet`/`skipRest`/`nextExercise`/`startHoldTimer` + `Timer.periodic(5с)` при активной фазе; добавить `inactive` в lifecycle; не писать в `idle`/`finished`.
+- **Тесты:** `workout_run_screen_test` — saver вызывается после фиксации подхода и на lifecycle-pause; не вызывается в `idle`/`finished`.
+
+### 28.3 — Wall-clock таймер удержания планки
+- **Проблема:** `startHoldTimer` инкрементит `holdElapsedSeconds` по тикам `Timer.periodic` — в фоне/при блокировке замирает.
+- **Решение:** хранить `_holdStartedAt`; `holdElapsedSeconds` = `_clock().difference(_holdStartedAt).inSeconds` (по тику и при чтении).
+- **Тесты:** `workout_controller_test` — mutable clock + скачок времени («сон») даёт корректный elapsed и достижение цели.
+
+### 28.4 — Foreground Service (нативно)
+- **Проблема:** ОС убивает процесс при сворачивании/блокировке; Dart-таймеры останавливаются.
+- **Решение:** плагин `flutter_foreground_task`; абстракция `WorkoutForegroundService` (start/stop/update уведомления с таймером) + заглушка для тестов; старт на входе в `/workout/run`, стоп на завершении/выходе/dispose. Манифест: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, канал «Активная тренировка».
+- **Тесты:** widget с заглушкой (start/stop); `flutter build apk --debug` в CI; ручная проверка на устройстве.
+
+### 28.5 — Audio Focus: duck вместо gain
+- **Проблема:** `AndroidAudioFocus.gain` глушит музыку других приложений; нет корректного освобождения фокуса.
+- **Решение:** `AndroidAudioFocus.gainTransientMayDuck` + `audio_session` для явного `setActive(true/false)` вокруг сигнала.
+- **Тесты:** `sound_service_test` — конфигурация использует duck.
+
+### 28.6 — Защита от stale-таймера
+- **Проблема:** stale-таймер прошлой сессии срабатывает после старта новой (звук + переход фазы → навигация на `/home`).
+- **Решение:** гарантировать `_cancelTimers()` на любом перезапуске; completion-колбэк — no-op после `dispose`/повторного `start` (флаг поколения сессии).
+- **Тесты:** `workout_controller_test` — старый таймер после `start`/`restore` не срабатывает; `workout_run_screen_test` — старый колбэк не навигирует.
+
+**Зависимости:** 28.1 → 28.2 → 28.3 → 28.6 (Dart, без новых зависимостей) → 28.5 (`audio_session`) → 28.4 (нативный). Перед 28.4 сверить актуальный API `flutter_foreground_task` (Android 12+ `foregroundServiceType`).
+
+**Реализация (факт):** `WorkoutCheckpoint` расширен полями `phase`/`restEndsAt`/`restBetweenExercises`/`sideRest`/`hold*` (с обратной совместимостью чтения). `WorkoutController`: рефакторинг тикеров отдыха в `_makeRestTicker` + `_completeNormalRest`/`_completeBetweenRest`, добавлены `_resumeRest`/`_restoreHold`; удержание планки переведено на wall-clock (`_clock().difference(startedAt)`); введено поколение сессии `_generation` для no-op stale-таймеров. `WorkoutRunScreen`: чекпоинт сохраняется после `confirmSet`/`skipRest`/`startHold` + периодически (5 с) + на `inactive`/`paused`/`detached`; foreground service (`flutter_foreground_task`, `specialUse`) стартует при входе, обновляет уведомление по фазе, останавливается при завершении/выходе/dispose. `AudioplayersSoundService`: аудио-фокус переведён на `audio_session` (`gainTransientMayDuck`), `audioplayers` — `audioFocus: none`. `AndroidManifest.xml`: `FOREGROUND_SERVICE`/`FOREGROUND_SERVICE_SPECIAL_USE`/`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` + `<service … foregroundServiceType="specialUse">`. Добавлены зависимости `audio_session`, `flutter_foreground_task`.
+**Тесты (факт):** `workout_controller_test` +9 (round-trip mid-rest обычный/между упражнениями/между сторонами, удержание планки, wall-clock планка, stale-таймер), `workout_run_screen_test` +6 (сохранение после фиксации/на pause/периодически, не сохраняется после завершения, foreground service start/stop), `sound_service_test` +2 (audio context + duck-конфигурация), `workout_full_flow_test` обновлён (wall-clock планка с инъекцией clock). Всего 711 тестов зелёные; `flutter analyze --fatal-infos` — 0; `flutter build apk --debug` собирается.
+
 ## Порядок выполнения
 
 1. **Критический путь:** 0.1 → 0.2 → 1.1 → 1.2 → 1.3 → 2.1 → 2.2 → 2.3–2.5 → 3.1–3.5 → 4.1–4.5 → 5.1–5.3 → 8 → **9.1** → **9.2–9.6** → **10.1–10.6** → **11.1–11.14** → **12.1–12.9** → **13.1–13.18** → **14.1–14.10**. Внутри этапа 11: 11.2 → 11.14 (схема v4→v5), 11.9 → 11.10, 11.13 → 11.14. Внутри этапа 13: 13.17 → 13.4/13.5/13.8, 13.12 → 13.16, 13.15 — в начале этапа. Внутри этапа 14: 14.1 → 14.3, 14.5 → 14.6/14.7, 14.2 — в начале этапа.
@@ -2083,3 +2131,4 @@ fitnessappai/
 13. **Этап 25:** задачи 25.1–25.3 выполняются по порядку (общая ветка `task/25-exercise-delete-program-fixes`).
 14. **Этап 26:** задачи 26.1–26.13 выполняются по порядку (общая ветка `task/26-plan-workout-schedule-fixes`); 26.8 — анализ без изменений кода.
 15. **Этап 27:** задача 27.1 — баг-фикс гонки checkpoint (ветка `task/27-checkpoint-race-fix`).
+16. **Этап 28:** задачи 28.1–28.6 — фоновый режим (ветки `task/28.*`), порядок: 28.1 → 28.2 → 28.3 → 28.6 → 28.5 → 28.4.

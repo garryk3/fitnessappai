@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:audio_session/audio_session.dart' hide AndroidAudioFocus;
 import 'package:audioplayers/audioplayers.dart';
 
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
@@ -27,8 +28,12 @@ abstract class SoundService {
   Future<void> dispose();
 }
 
-/// Реализация [SoundService] на `audioplayers`: встроенный ассет
-/// (звук окончания таймера) или выбранный пользователем файл из настроек.
+/// Реализация [SoundService] на `audioplayers` + `audio_session`: встроенный
+/// ассет (звук окончания таймера) или выбранный пользователем файл из настроек.
+///
+/// Аудио-фокус управляется через [AudioSession] с типом `gainTransientMayDuck`
+/// (приглушение чужой музыки вместо полной остановки), поэтому `audioplayers`
+/// не запрашивает фокус сам (`audioFocus: none`).
 class AudioplayersSoundService implements SoundService {
   AudioplayersSoundService(this._repository) {
     _player.onPlayerStateChanged.listen((state) {
@@ -42,6 +47,7 @@ class AudioplayersSoundService implements SoundService {
 
   final SoundSettingsRepository _repository;
   final AudioPlayer _player = AudioPlayer();
+  AudioSession? _session;
   bool _isPlaying = false;
   final StreamController<bool> _isPlayingController =
       StreamController<bool>.broadcast();
@@ -52,15 +58,52 @@ class AudioplayersSoundService implements SoundService {
   @override
   Stream<bool> get isPlayingStream => _isPlayingController.stream;
 
+  /// Аудио-контекст `audioplayers`: фокус не запрашивается (`none`) — им
+  /// управляет [AudioSession].
+  static AudioContext audioContext() => AudioContext(
+    android: const AudioContextAndroid(
+      stayAwake: true,
+      usageType: AndroidUsageType.alarm,
+      audioFocus: AndroidAudioFocus.none,
+    ),
+  );
+
+  /// Конфигурация [AudioSession]: короткий сигнал приглушает (duck) чужую
+  /// музыку, а не останавливает её.
+  static AudioSessionConfiguration sessionConfiguration() =>
+      const AudioSessionConfiguration(
+        androidAudioFocusGainType:
+            AndroidAudioFocusGainType.gainTransientMayDuck,
+      );
+
   static Future<void> configureGlobalContext() async {
-    await AudioPlayer.global.setAudioContext(
-      AudioContext(
-        android: const AudioContextAndroid(
-          stayAwake: true,
-          usageType: AndroidUsageType.alarm,
-          audioFocus: AndroidAudioFocus.gain,
-        ),
-      ),
+    await AudioPlayer.global.setAudioContext(audioContext());
+    final session = await AudioSession.instance;
+    await session.configure(sessionConfiguration());
+  }
+
+  /// Лениво получает [AudioSession]; `null`, если плагин недоступен
+  /// (например, на десктопе без реализации).
+  Future<AudioSession?> _audioSessionOrNull() async {
+    if (_session != null) {
+      return _session;
+    }
+    try {
+      _session = await AudioSession.instance;
+    } catch (e) {
+      log('audio_session недоступен', error: e, name: 'SoundService');
+    }
+    return _session;
+  }
+
+  Future<void> _activateFocus() async {
+    final session = await _audioSessionOrNull();
+    if (session == null) {
+      return;
+    }
+    await session.setActive(
+      true,
+      androidAudioFocusGainType: AndroidAudioFocusGainType.gainTransientMayDuck,
     );
   }
 
@@ -71,6 +114,7 @@ class AudioplayersSoundService implements SoundService {
       return;
     }
     try {
+      await _activateFocus();
       final filePath = await repository.soundFilePath();
       if (filePath != null && filePath.isNotEmpty) {
         await _player.play(DeviceFileSource(filePath));
@@ -85,6 +129,7 @@ class AudioplayersSoundService implements SoundService {
   @override
   Future<void> preview() async {
     try {
+      await _activateFocus();
       final filePath = await _repository.soundFilePath();
       if (filePath != null && filePath.isNotEmpty) {
         await _player.play(DeviceFileSource(filePath));
@@ -99,6 +144,14 @@ class AudioplayersSoundService implements SoundService {
   @override
   Future<void> stop() async {
     await _player.stop();
+    try {
+      final session = _session;
+      if (session != null) {
+        await session.setActive(false);
+      }
+    } catch (e) {
+      log('Не удалось освободить аудио-фокус', error: e, name: 'SoundService');
+    }
   }
 
   @override
