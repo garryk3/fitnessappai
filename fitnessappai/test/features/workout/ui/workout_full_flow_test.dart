@@ -19,6 +19,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -124,7 +125,11 @@ void main() {
     return day.id!;
   }
 
-  Future<void> pumpFlow(WidgetTester tester, int dayId) async {
+  Future<void> pumpFlow(
+    WidgetTester tester,
+    int dayId, {
+    DateTime Function()? clock,
+  }) async {
     final router = GoRouter(
       initialLocation: '/workout/prepare/$dayId',
       routes: [
@@ -155,7 +160,9 @@ void main() {
             workoutRepository: workoutRepo,
             mediaCache: MediaCache(),
             wakelockService: wakelock,
+            foregroundService: StubWorkoutForegroundService(),
             soundService: StubSoundService(),
+            clock: clock,
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
@@ -274,7 +281,8 @@ void main() {
       type: ExerciseType.plank,
       durationSeconds: 45,
     );
-    await pumpFlow(tester, dayId);
+    var now = DateTime(2026, 8, 31, 12, 0);
+    await pumpFlow(tester, dayId, clock: () => now);
 
     await startWorkout(tester);
 
@@ -294,7 +302,8 @@ void main() {
     await tester.pump();
     expect(find.text('Начать'), findsNothing);
 
-    // Счётчик пошёл от нуля вверх.
+    // Счётчик пошёл от нуля вверх (wall-clock).
+    now = now.add(const Duration(seconds: 3));
     await tester.pump(const Duration(seconds: 3));
     expect(find.text('Удержание 3 с'), findsOneWidget);
 
@@ -329,7 +338,8 @@ void main() {
         type: ExerciseType.plank,
         durationSeconds: 45,
       );
-      await pumpFlow(tester, dayId);
+      var now = DateTime(2026, 8, 31, 12, 0);
+      await pumpFlow(tester, dayId, clock: () => now);
 
       await startWorkout(tester);
 
@@ -342,6 +352,7 @@ void main() {
       await tester.tap(find.text('Начать'));
       await tester.pump();
 
+      now = now.add(const Duration(seconds: 7));
       await tester.pump(const Duration(seconds: 7));
       expect(find.text('Удержание 7 с'), findsOneWidget);
 

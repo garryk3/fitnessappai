@@ -22,6 +22,7 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 class _FakeWakelock implements WakelockService {
@@ -139,6 +140,8 @@ void main() {
     int dayId, {
     WorkoutVariant variant = WorkoutVariant.main,
     String initialLocation = '',
+    Future<void> Function(WorkoutCheckpoint)? checkpointSaver,
+    WorkoutForegroundService? foregroundService,
   }) async {
     final location = initialLocation.isEmpty
         ? '/workout/run?programDayId=$dayId&variant=${variant.name}'
@@ -168,9 +171,11 @@ void main() {
             workoutRepository: workoutRepo,
             mediaCache: MediaCache(),
             wakelockService: wakelock,
+            foregroundService:
+                foregroundService ?? StubWorkoutForegroundService(),
             soundService: StubSoundService(),
             checkpointLoader: () async => null,
-            checkpointSaver: (_) async {},
+            checkpointSaver: checkpointSaver ?? (_) async {},
             checkpointClearer: () async {},
           ),
         ),
@@ -560,6 +565,7 @@ void main() {
             workoutRepository: workoutRepo,
             mediaCache: MediaCache(),
             wakelockService: wakelock,
+            foregroundService: StubWorkoutForegroundService(),
             soundService: StubSoundService(),
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
@@ -619,6 +625,7 @@ void main() {
             workoutRepository: workoutRepo,
             mediaCache: MediaCache(),
             wakelockService: wakelock,
+            foregroundService: StubWorkoutForegroundService(),
             soundService: StubSoundService(),
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
@@ -709,6 +716,7 @@ void main() {
             workoutRepository: workoutRepo,
             mediaCache: MediaCache(),
             wakelockService: wakelock,
+            foregroundService: StubWorkoutForegroundService(),
             soundService: StubSoundService(),
             clock: () => DateTime(2026, 8, 31, 12, 0),
             checkpointLoader: () async => checkpoint,
@@ -770,6 +778,7 @@ void main() {
               workoutRepository: workoutRepo,
               mediaCache: MediaCache(),
               wakelockService: wakelock,
+              foregroundService: StubWorkoutForegroundService(),
               soundService: StubSoundService(),
               clock: () => DateTime(2026, 8, 31, 12, 0),
               checkpointLoader: () async => null,
@@ -811,6 +820,98 @@ void main() {
       );
       expect(sessions, hasLength(1));
       expect(sessions.first.performedDate, DateTime(2026, 8, 31));
+    },
+  );
+
+  testWidgets('чекпоинт сохраняется после фиксации подхода', (tester) async {
+    final dayId = await createDay(sets: 2, restSeconds: 60);
+    var saveCalls = 0;
+    await pumpRun(tester, dayId, checkpointSaver: (_) async => saveCalls++);
+    expect(saveCalls, 0);
+
+    await tester.enterText(find.byType(TextFormField).first, '10');
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pump();
+
+    expect(saveCalls, 1);
+  });
+
+  testWidgets('чекпоинт сохраняется на lifecycle pause', (tester) async {
+    final dayId = await createDay();
+    var saveCalls = 0;
+    await pumpRun(tester, dayId, checkpointSaver: (_) async => saveCalls++);
+    expect(saveCalls, 0);
+
+    final state = tester.state(find.byType(WorkoutRunScreen));
+    (state as WidgetsBindingObserver).didChangeAppLifecycleState(
+      AppLifecycleState.paused,
+    );
+    await tester.pump();
+
+    expect(saveCalls, 1);
+  });
+
+  testWidgets('чекпоинт периодически сохраняется', (tester) async {
+    final dayId = await createDay();
+    var saveCalls = 0;
+    await pumpRun(tester, dayId, checkpointSaver: (_) async => saveCalls++);
+    final before = saveCalls;
+
+    await tester.pump(const Duration(seconds: 5));
+
+    expect(saveCalls, greaterThan(before));
+  });
+
+  testWidgets('чекпоинт не сохраняется после завершения тренировки', (
+    tester,
+  ) async {
+    final dayId = await createDay(sets: 1, restSeconds: 0);
+    var saveCalls = 0;
+    await pumpRun(tester, dayId, checkpointSaver: (_) async => saveCalls++);
+
+    await tester.enterText(find.byType(TextFormField).first, '10');
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
+    expect(find.text('Тренировка завершена'), findsOneWidget);
+
+    final callsAfterFinish = saveCalls;
+    final state = tester.state(find.byType(WorkoutRunScreen));
+    (state as WidgetsBindingObserver).didChangeAppLifecycleState(
+      AppLifecycleState.paused,
+    );
+    await tester.pump();
+
+    expect(saveCalls, callsAfterFinish);
+  });
+
+  testWidgets(
+    'foreground service стартует при тренировке и останавливается при выходе',
+    (tester) async {
+      final dayId = await createDay();
+      final fg = StubWorkoutForegroundService();
+      await pumpRun(tester, dayId, foregroundService: fg);
+
+      expect(fg.startCalls, 1);
+      expect(fg.stopCalls, 0);
+
+      await tester.pumpWidget(const SizedBox());
+      expect(fg.stopCalls, 1);
+    },
+  );
+
+  testWidgets(
+    'foreground service останавливается после завершения тренировки',
+    (tester) async {
+      final dayId = await createDay(sets: 1, restSeconds: 0);
+      final fg = StubWorkoutForegroundService();
+      await pumpRun(tester, dayId, foregroundService: fg);
+
+      await tester.enterText(find.byType(TextFormField).first, '10');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+      expect(fg.stopCalls, 1);
     },
   );
 }

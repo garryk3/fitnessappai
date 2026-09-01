@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
 import 'package:fitnessappai/features/workout/domain/workout_exercise.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -74,6 +76,7 @@ class WorkoutRunScreen extends StatefulWidget {
     this.workoutRepository,
     this.mediaCache,
     this.wakelockService,
+    this.foregroundService,
     this.clock,
     this.timerFactory,
     this.soundService,
@@ -90,6 +93,7 @@ class WorkoutRunScreen extends StatefulWidget {
   final WorkoutRepository? workoutRepository;
   final MediaCache? mediaCache;
   final WakelockService? wakelockService;
+  final WorkoutForegroundService? foregroundService;
   final DateTime Function()? clock;
   final TimerFactory? timerFactory;
   final SoundService? soundService;
@@ -107,7 +111,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   late final MediaCache _mediaCache;
   late final WorkoutRepository _workoutRepository;
   late final WakelockService _wakelock;
+  late final WorkoutForegroundService _foregroundService;
   bool _wakelockBannerDismissed = false;
+  Timer? _checkpointTimer;
+  void Function()? _disposeForegroundEffect;
 
   @override
   void initState() {
@@ -131,13 +138,35 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       timerFactory: widget.timerFactory,
     );
     _wakelock = widget.wakelockService ?? locator.get<WakelockService>();
+    _foregroundService =
+        widget.foregroundService ?? locator.get<WorkoutForegroundService>();
     _wakelock.enable();
+    _foregroundService.start(
+      title: 'Личный тренер',
+      text: 'Тренировка выполняется',
+    );
+    _disposeForegroundEffect = effect(_updateForeground);
     _initLoad();
+    _checkpointTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _saveCheckpoint(),
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _checkpointTimer?.cancel();
+    _checkpointTimer = null;
+    final phase = _controller.workout.phase.value;
+    if (phase == WorkoutPhase.finished || phase == WorkoutPhase.idle) {
+      _clearCheckpoint();
+    } else {
+      _saveCheckpoint();
+    }
+    _disposeForegroundEffect?.call();
+    _disposeForegroundEffect = null;
+    _foregroundService.stop();
     _controller.workout.dispose();
     _wakelock.disable();
     super.dispose();
@@ -145,9 +174,47 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       _saveCheckpoint();
+    }
+  }
+
+  /// Фиксирует подход и сохраняет чекпоинт (для восстановления после сбоя).
+  void _confirmSet(WorkoutSetInput input) {
+    _controller.confirmSet(input);
+    _saveCheckpoint();
+  }
+
+  /// Пропускает отдых и сохраняет чекпоинт.
+  void _skipRest() {
+    _controller.workout.skipRest();
+    _saveCheckpoint();
+  }
+
+  /// Запускает удержание планки и сохраняет чекпоинт.
+  void _startHold() {
+    _controller.workout.startHoldTimer();
+    _saveCheckpoint();
+  }
+
+  /// Обновляет уведомление foreground service под текущую фазу тренировки;
+  /// при завершении останавливает сервис.
+  void _updateForeground() {
+    final workout = _controller.workout;
+    switch (workout.phase.value) {
+      case WorkoutPhase.rest:
+        _foregroundService.update(title: 'Личный тренер', text: 'Отдых');
+      case WorkoutPhase.exercise:
+        _foregroundService.update(
+          title: 'Личный тренер',
+          text: workout.currentExercise?.name ?? 'Тренировка',
+        );
+      case WorkoutPhase.finished:
+        _foregroundService.stop();
+      case WorkoutPhase.idle:
+        break;
     }
   }
 
@@ -259,12 +326,14 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       _controller.workout.finishEarly();
       await _controller.completeAndSave();
       await _clearCheckpoint();
+      _foregroundService.stop();
       if (mounted) {
         context.go('/home');
       }
     } else if (action == 'exit') {
       _controller.workout.cancelWorkout();
       await _clearCheckpoint();
+      _foregroundService.stop();
       if (mounted) {
         context.go('/home');
       }
@@ -339,7 +408,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   Widget _buildExercise(BuildContext context, WorkoutController workout) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final exercise = workout.currentExercise!;
+    final exercise = workout.currentExercise;
+    if (exercise == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     final index = workout.currentExerciseIndex.value;
     final total = workout.exercises.length;
     final currentSet = workout.currentSet.value;
@@ -408,7 +480,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
               elapsed: holdElapsed,
               target: holdTarget,
               running: holdRunning,
-              onStart: workout.startHoldTimer,
+              onStart: _startHold,
             ),
           ],
           if (exercise.id != null) ...[
@@ -423,7 +495,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             key: ValueKey('input-$index-$currentSet-$effectiveSide'),
             exercise: exercise,
             side: effectiveSide,
-            onConfirm: _controller.confirmSet,
+            onConfirm: _confirmSet,
             holdElapsed: () => workout.holdElapsedSeconds.value,
           ),
         ],
@@ -464,7 +536,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               FilledButton(
-                onPressed: workout.skipRest,
+                onPressed: _skipRest,
                 child: Text(l10n.workoutRunSkipRest),
               ),
               const SizedBox(width: 16),

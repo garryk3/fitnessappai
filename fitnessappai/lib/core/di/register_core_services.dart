@@ -32,6 +32,7 @@ import 'package:fitnessappai/features/sync/data/local_file_sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 
 /// Регистрация сервисов core-слоя в контейнере.
@@ -55,6 +56,9 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
     () => AudioplayersSoundService(sl.get<SoundSettingsRepository>()),
   );
   sl.registerLazySingleton<WakelockService>(() => WakelockPlusService());
+  sl.registerLazySingleton<WorkoutForegroundService>(
+    () => FlutterForegroundTaskService(),
+  );
   sl.registerLazySingleton<ExerciseRepository>(
     () => ExerciseRepository(
       sl.get<AppDatabase>(),
