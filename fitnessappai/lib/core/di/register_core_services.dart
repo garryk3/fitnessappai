@@ -30,7 +30,9 @@ import 'package:fitnessappai/features/settings/data/github_update_service.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/data/local_file_sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
+import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
@@ -52,6 +54,9 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   sl.registerLazySingleton<PlanViewSettingsRepository>(
     () => PlanViewSettingsRepository(sl.get<AppDatabase>()),
   );
+  sl.registerLazySingleton<WakelockBannerRepository>(
+    () => WakelockBannerRepository(sl.get<AppDatabase>()),
+  );
   sl.registerLazySingleton<SoundService>(
     () => AudioplayersSoundService(sl.get<SoundSettingsRepository>()),
   );
@@ -71,6 +76,9 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   );
   sl.registerLazySingleton<WorkoutRepository>(
     () => WorkoutRepository(sl.get<AppDatabase>()),
+  );
+  sl.registerLazySingleton<PlanScheduleRepository>(
+    () => PlanScheduleRepository(sl.get<AppDatabase>()),
   );
   sl.registerLazySingleton<LlmExportService>(
     () => LlmExportService(

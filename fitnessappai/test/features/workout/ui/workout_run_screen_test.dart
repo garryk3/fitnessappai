@@ -21,6 +21,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
@@ -81,6 +82,18 @@ class _ControllableSoundService implements SoundService {
 
   @override
   Future<void> dispose() async {}
+}
+
+class _FakeWakelockBannerRepository implements WakelockBannerRepository {
+  bool dismissed = false;
+
+  @override
+  Future<bool> isDismissed() async => dismissed;
+
+  @override
+  Future<void> setDismissed() async {
+    dismissed = true;
+  }
 }
 
 void main() {
@@ -184,6 +197,7 @@ void main() {
     WorkoutForegroundService? foregroundService,
     WakelockService? wakelockService,
     SoundService? soundService,
+    WakelockBannerRepository? wakelockBannerRepository,
   }) async {
     final location = initialLocation.isEmpty
         ? '/workout/run?programDayId=$dayId&variant=${variant.name}'
@@ -219,6 +233,8 @@ void main() {
             checkpointLoader: () async => null,
             checkpointSaver: checkpointSaver ?? (_) async {},
             checkpointClearer: () async {},
+            wakelockBannerRepository:
+                wakelockBannerRepository ?? _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -612,6 +628,7 @@ void main() {
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
+            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -681,6 +698,7 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
+              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             );
           },
         ),
@@ -731,6 +749,7 @@ void main() {
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
+            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -823,6 +842,7 @@ void main() {
             checkpointLoader: () async => checkpoint,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
+            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -885,6 +905,7 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
+              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             ),
           ),
           GoRoute(
@@ -1035,6 +1056,39 @@ void main() {
     );
   });
 
+  testWidgets('баннер wakelock не повторяется после персистентного dismiss', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    final repo = _FakeWakelockBannerRepository();
+    // First visit: banner shown, tap OK → persisted.
+    await pumpRun(
+      tester,
+      dayId,
+      wakelockService: _DisabledWakelock(),
+      wakelockBannerRepository: repo,
+    );
+    expect(
+      find.textContaining('Экран может выключаться во время тренировки'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('ОК'));
+    await tester.pumpAndSettle();
+    expect(repo.dismissed, isTrue);
+
+    // Second visit: banner should not appear.
+    await pumpRun(
+      tester,
+      dayId,
+      wakelockService: _DisabledWakelock(),
+      wakelockBannerRepository: repo,
+    );
+    expect(
+      find.textContaining('Экран может выключаться во время тренировки'),
+      findsNothing,
+    );
+  });
+
   testWidgets(
     'плавающая кнопка остановки звука появляется при воспроизведении',
     (tester) async {
@@ -1088,7 +1142,7 @@ void main() {
     expect(spacers, greaterThanOrEqualTo(2));
   });
 
-  testWidgets('шрифт удержания планки уменьшается на узком экране', (
+  testWidgets('шрифт удержания планки headlineMedium на всех экранах', (
     tester,
   ) async {
     final exId = await insertExercise('Планка', type: ExerciseType.plank);
@@ -1100,7 +1154,7 @@ void main() {
       return texts.first;
     }
 
-    // Обычная ширина: displayLarge (57).
+    // Обычная ширина: headlineMedium (28).
     tester.view.physicalSize = const Size(800, 1200);
     tester.view.devicePixelRatio = 1.0;
     final routerWide = GoRouter(
@@ -1129,6 +1183,7 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
+              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             );
           },
         ),
@@ -1144,10 +1199,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(holdText(tester).style!.fontSize, 57);
+    expect(holdText(tester).style!.fontSize, 28);
     addTearDown(tester.view.reset);
 
-    // Узкий экран: headlineLarge (40).
+    // Узкий экран: headlineMedium (28).
     tester.view.physicalSize = const Size(320, 1200);
     tester.view.devicePixelRatio = 1.0;
     final routerNarrow = GoRouter(
@@ -1176,6 +1231,7 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
+              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             );
           },
         ),
@@ -1191,6 +1247,6 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(holdText(tester).style!.fontSize, 32);
+    expect(holdText(tester).style!.fontSize, 28);
   });
 }

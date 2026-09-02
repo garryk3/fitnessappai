@@ -2214,3 +2214,54 @@ fitnessappai/
 - **Тесты:** `single_exercise_params_screen_test` — поля по типу, валидация, query-параметры; `exercises_screen_test` — переход по play; e2e — полный флоу.
 
 **Зависимости:** 29.5 → 29.1; всё остальное независимо. Общая ветка `task/29-bugfixes`.
+
+---
+
+## Этап 30: План-календарь, назначение плана, напоминания, wakelock, шрифт, audio duck
+
+| Задача | Описание | Статус | Ветка | Дата |
+|--------|----------|--------|-------|------|
+| 30.1 | Экран истории — календарь вместо списка | [x] | task/30-improvements | 2026-09-02 |
+| 30.2 | Экран плана — назначение программы на день | [x] | task/30-improvements | 2026-09-02 |
+| 30.3 | Напоминания — исправление + секция в настройках | [x] | task/30-improvements | 2026-09-02 |
+| 30.4 | Баннер wakelock — персистентный dismiss | [x] | task/30-improvements | 2026-09-02 |
+| 30.5 | Шрифт «Удержание» — headlineMedium 28px | [x] | task/30-improvements | 2026-09-02 |
+| 30.6 | Audio duck — освобождение фокуса после воспроизведения | [x] | task/30-improvements | 2026-09-02 |
+| 30.7 | Главный экран — бейдж статуса тренировки на карточке программы | [x] | task/30-improvements | 2026-09-02 |
+
+### 30.1 — Экран истории: календарь
+- **Проблема:** текущий `HistoryScreen` — вертикальный `ListView` всех сессий; неудобно для просмотра по дням.
+- **Решение:** заменить на кастомную месячную сетку календаря (как `_MonthGrid` в `week_plan_screen`): заголовок месяца + стрелки, дни с тренировками подсвечены, клик по дню → `DayDetailScreen` (`/progress/day?start=..&end=..`). Кнопка «Скопировать JSON» в AppBar. `HistoryController` — сигнал `workoutDays` (Set<DateTime>).
+- **Тесты:** календарь рендерит, дни подсвечены, клик → DayDetailScreen, переключение месяца, реактивность, пустая история.
+
+### 30.2 — Экран плана: назначение программы на день
+- **Проблема:** расписание вычисляется на лету из `dayOfWeek` + периода активности; нет ручных назначений.
+- **Решение:** новая таблица `plan_schedule` (`programDayId`, `scheduledDate`, уникальность), миграция v10→v11 + schema dump + drift-код. Репозиторий `PlanScheduleRepository`. Клик по пустому дню → bottom sheet «Планирование»: выбор программы → день → «Запланировать». Кнопка «Запланировать тренировку» для дня с тренировкой. Удаление назначения из bottom sheet. `_loadRange` учитывает ручные назначения.
+- **Тесты:** репозиторий (create/get-range/cancel), контроллер (items с pending/выполнение), screen (клик по пустому → флоу, кнопка на дне с тренировкой), миграция v10→v11.
+
+### 30.3 — Напоминания: исправление + секция в настройках
+- **Проблема:** при отклонении POST_NOTIFICATIONS — повторного запроса нет; Android 14+ точный будильник молча падает в inexact; при удалении программы уведомление не отменяется; `rescheduleAll()` не вызывается при обычном старте.
+- **Решение:** `ReminderService` — статус разрешений, логирование; `ProgramRepository.delete` → `reminderService.cancel()`; `bootstrap()` → `rescheduleAll()`; новая секция «Уведомления» в `SettingsScreen` с кнопками запроса разрешений.
+- **Тесты:** `reminder_service_test` — отключение уведомлений → не планирует; `program_repository_test` — delete отменяет; `settings_screen_test` — секция и кнопки; e2e.
+
+### 30.4 — Баннер wakelock: персистентный dismiss
+- **Проблема:** `_wakelockBannerDismissed` сбрасывается при каждом State; баннер вылезает каждую тренировку.
+- **Решение:** сохранять флаг `wakelock_banner_dismissed` в `app_meta` через `WakelockBannerRepository` (паттерн `PlanViewSettingsRepository`). Читать при `initState`; если `true` — не показывать. Сделать `enable()` awaited, скрывать баннер при успешном включении.
+- **Тесты:** `workout_run_screen_test` — после «ОК» баннер не повторяется; `wakelock_banner_repository_test`.
+
+### 30.5 — Шрифт «Удержание»: headlineMedium 28px
+- **Проблема:** `displayLarge` (57sp) — слишком большой, переполнение.
+- **Решение:** всегда `headlineMedium` (28px) в `_PlankHoldPanel`, убрать ветку `narrow`/`displayLarge`.
+- **Тесты:** шрифт 28px на широком и узком экране.
+
+### 30.6 — Audio duck: освобождение фокуса
+- **Проблема:** `stop()` (29.5) не вызывает `setActive(false)`; `onPlayerComplete` не слушается → фокус удерживается бессрочно, музыка остаётся приглушённой.
+- **Решение:** слушать `_player.onPlayerComplete` → `session.setActive(false)`; также вызывать `setActive(false)` в `stop()`. Сохранить duck-конфигурацию `gainTransientMayDuck`.
+- **Тесты:** `sound_service_test` — после onPlayerComplete/stop() вызывается `setActive(false)`; duck-конфигурация не изменилась.
+
+### 30.7 — Главный экран: бейдж статуса тренировки
+- **Проблема:** на карточке активной программы показывается только «Ближайший день: Среда»; нет информации о выполнении.
+- **Решение:** `ActiveProgramInfo.todayStatus: WeekPlanStatus?` — вычисляется в `HomeController._load()`. Если день тренировки совпадает с сегодня → проверяем сессии за неделю. `_ActiveProgramCard` — при `todayStatus != null` показывает `StatusBadge` (вынесенный в `lib/core/ui/status_badge.dart`) вместо текста «Ближайший день».
+- **Тесты:** `home_controller_test` — todayStatus pending/performed/null; `home_screen_test` — бейдж «Запланировано»/«Выполнено»/текст «Ближайший день».
+
+**Зависимости:** все задачи независимы. Общая ветка `task/30-improvements`.

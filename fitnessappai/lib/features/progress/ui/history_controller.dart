@@ -34,24 +34,31 @@ class HistoryController {
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<List<HistoryItem>> items = Signal(const []);
+  final Signal<Set<DateTime>> workoutDates = Signal(const {});
 
   Future<void> _load() async {
     isLoading.value = true;
     try {
       final sessions = await workoutRepository.getAllSessions();
       final result = <HistoryItem>[];
+      final dates = <DateTime>{};
       for (final session in sessions) {
         final detail = await workoutRepository.getSession(session.id!);
         final count = detail == null
             ? 0
             : detail.results.map((r) => r.exerciseName).toSet().length;
         result.add(HistoryItem(session: session, exercisesCount: count));
+        dates.add(_dateOnly(session.performedDate));
       }
       items.value = result;
+      workoutDates.value = dates;
     } finally {
       isLoading.value = false;
     }
   }
+
+  static DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   void dispose() {
     _reloadSubscription.dispose();

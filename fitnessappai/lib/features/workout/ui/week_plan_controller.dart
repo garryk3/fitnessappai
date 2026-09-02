@@ -4,6 +4,7 @@ import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Режим отображения плана тренировок: сетка недели или календарь месяца.
@@ -46,6 +47,7 @@ class WeekPlanController {
   WeekPlanController({
     required this.programRepository,
     required this.workoutRepository,
+    this.planScheduleRepository,
     DateTime Function()? clock,
     DataChangeNotifier? changes,
   }) : _now = clock ?? DateTime.now {
@@ -62,6 +64,7 @@ class WeekPlanController {
 
   final ProgramRepository programRepository;
   final WorkoutRepository workoutRepository;
+  final PlanScheduleRepository? planScheduleRepository;
   final DateTime Function() _now;
   late final ChangeReloadSubscription _reloadSubscription;
 
@@ -151,6 +154,18 @@ class WeekPlanController {
     await _load();
   }
 
+  /// Назначает тренировочный день [programDayId] на [date].
+  Future<void> scheduleDay(int programDayId, DateTime date) async {
+    await planScheduleRepository?.schedule(programDayId, date);
+    await _load();
+  }
+
+  /// Отменяет ручное назначение тренировочного дня на дату.
+  Future<void> cancelSchedule(int programDayId, DateTime date) async {
+    await planScheduleRepository?.cancel(programDayId, date);
+    await _load();
+  }
+
   Future<void> _load() async {
     final mode = viewMode.value;
     if (mode == PlanViewMode.month) {
@@ -218,6 +233,41 @@ class WeekPlanController {
             }
           }
         }
+      }
+
+      // Добавляем ручные назначения из plan_schedule.
+      final manualSchedule =
+          await planScheduleRepository?.getForRange(rangeStart, rangeEnd) ??
+          const <dynamic>[];
+      final existingKeys = <String>{
+        for (final item in plannedItems)
+          '${item.programDayId}|${_dateOnly(item.scheduledDate).millisecondsSinceEpoch}',
+      };
+      for (final entry in manualSchedule) {
+        final key =
+            '${entry.programDayId}|${_dateOnly(entry.scheduledDate).millisecondsSinceEpoch}';
+        if (existingKeys.contains(key)) {
+          continue;
+        }
+        final day = await programRepository.getDay(entry.programDayId);
+        if (day == null) {
+          continue;
+        }
+        final programDetail = await programRepository.getProgram(day.programId);
+        if (programDetail == null) {
+          continue;
+        }
+        plannedItems.add(
+          WeekPlanItem(
+            programDayId: entry.programDayId,
+            dayIndex: day.dayIndex,
+            programName: programDetail.program.name,
+            dayOfWeek: null,
+            scheduledDate: entry.scheduledDate,
+            status: WeekPlanStatus.pending,
+          ),
+        );
+        existingKeys.add(key);
       }
 
       final sessionEnd = rangeEnd.add(const Duration(days: 1));

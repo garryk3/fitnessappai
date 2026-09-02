@@ -1156,6 +1156,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('К истории'));
     await tester.pumpAndSettle();
+    // История — календарь: нужно тапнуть по сегодняшнему дню.
+    await tester.tap(find.text('${DateTime.now().day}'));
+    await tester.pumpAndSettle();
     expect(find.text(_programName), findsOneWidget);
     await tester.tap(find.text(_programName));
     await tester.pumpAndSettle();
@@ -1240,7 +1243,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.widget<SwitchListTile>(soundSwitch).value, !initialSound);
 
-    await tester.tap(find.text('Проверить обновление'));
+    final updateBtn = find.text('Проверить обновление');
+    await tester.ensureVisible(updateBtn);
+    await tester.pumpAndSettle();
+    await tester.tap(updateBtn, warnIfMissed: false);
     await pumpUntilFound(tester, find.text('Релизы ещё не опубликованы'));
   });
 
@@ -1813,6 +1819,9 @@ void main() {
     await tester.tap(inkWell);
     await tester.pumpAndSettle();
 
+    // История — календарь: тапнуть по сегодняшнему дню.
+    await tester.tap(find.text('${DateTime.now().day}'));
+    await tester.pumpAndSettle();
     expect(find.text(_programName), findsOneWidget);
   });
 

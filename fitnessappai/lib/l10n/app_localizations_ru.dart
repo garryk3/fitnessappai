@@ -131,6 +131,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsUpdateDownload => 'Обновить';
 
   @override
+  String get settingsNotificationsSection => 'Уведомления';
+
+  @override
+  String get settingsNotificationsEnabled => 'Уведомления включены';
+
+  @override
+  String get settingsNotificationsDisabled => 'Уведомления отключены';
+
+  @override
+  String get settingsNotificationsExactEnabled => 'Точные будильники включены';
+
+  @override
+  String get settingsNotificationsExactDisabled =>
+      'Точные будильники отключены';
+
+  @override
+  String get settingsNotificationsRequest => 'Разрешить уведомления';
+
+  @override
+  String get settingsNotificationsExactRequest => 'Настроить точные будильники';
+
+  @override
   String get commonClose => 'Закрыть';
 
   @override
@@ -223,6 +245,24 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get weekPlanUnskip => 'Отменить пропуск';
+
+  @override
+  String get weekPlanRemove => 'Удалить назначение';
+
+  @override
+  String get weekPlanScheduleTitle => 'Запланировать тренировку';
+
+  @override
+  String get weekPlanScheduleSelectProgram => 'Выберите программу';
+
+  @override
+  String get weekPlanScheduleSelectDay => 'Выберите день программы';
+
+  @override
+  String get weekPlanScheduleConfirm => 'Запланировать';
+
+  @override
+  String get weekPlanScheduleNoPrograms => 'Нет программ для назначения';
 
   @override
   String get weekPlanEmpty => 'Нет запланированных тренировок';

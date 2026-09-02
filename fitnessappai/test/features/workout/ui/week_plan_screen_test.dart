@@ -9,6 +9,7 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
@@ -18,6 +19,7 @@ void main() {
   late AppDatabase db;
   late ProgramRepository programRepo;
   late WorkoutRepository workoutRepo;
+  late PlanScheduleRepository planScheduleRepo;
 
   /// Фиксированная «сегодня»-дата (понедельник) для детерминированных тестов.
   final DateTime fixedNow = DateTime(2026, 8, 10);
@@ -26,6 +28,7 @@ void main() {
     db = AppDatabase(executor: NativeDatabase.memory());
     programRepo = ProgramRepository(db);
     workoutRepo = WorkoutRepository(db);
+    planScheduleRepo = PlanScheduleRepository(db);
   });
 
   tearDown(() async {
@@ -42,6 +45,7 @@ void main() {
             programRepository: programRepo,
             workoutRepository: workoutRepo,
             planViewSettingsRepository: PlanViewSettingsRepository(db),
+            planScheduleRepository: planScheduleRepo,
             clock: () => fixedNow,
           ),
         ),
@@ -350,17 +354,19 @@ void main() {
       expect(title.overflow, TextOverflow.ellipsis);
     });
 
-    testWidgets('день без тренировки некликабелен', (tester) async {
+    testWidgets('день без тренировки открывает лист планирования', (
+      tester,
+    ) async {
       await pumpPlan(tester);
 
       await tester.tap(find.text('Месяц'));
       await tester.pumpAndSettle();
 
-      // «15» августа — выходной без тренировки: тап ничего не открывает.
+      // «15» августа — выходной без тренировки: тап открывает schedule sheet.
       await tester.tap(find.text('15'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.byType(BottomSheet), findsOneWidget);
     });
 
     testWidgets('выбор «Месяц» сохраняется между открытиями', (tester) async {

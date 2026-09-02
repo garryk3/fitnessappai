@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
+import 'package:fitnessappai/core/ui/status_badge.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/quick_start_bar.dart';
@@ -18,12 +20,14 @@ class WeekPlanScreen extends StatefulWidget {
     this.programRepository,
     this.workoutRepository,
     this.planViewSettingsRepository,
+    this.planScheduleRepository,
     this.clock,
   });
 
   final ProgramRepository? programRepository;
   final WorkoutRepository? workoutRepository;
   final PlanViewSettingsRepository? planViewSettingsRepository;
+  final PlanScheduleRepository? planScheduleRepository;
 
   /// Часы для детерминированных тестов: «сегодня» внутри экрана.
   final DateTime Function()? clock;
@@ -47,6 +51,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           widget.programRepository ?? locator.get<ProgramRepository>(),
       workoutRepository:
           widget.workoutRepository ?? locator.get<WorkoutRepository>(),
+      planScheduleRepository:
+          widget.planScheduleRepository ??
+          locator.get<PlanScheduleRepository>(),
       clock: widget.clock,
     );
     _restoreViewMode();
@@ -217,7 +224,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         .where((item) => _sameDay(item.scheduledDate, date))
         .toList();
     if (dayItems.isEmpty) {
-      return Future.value();
+      return _showScheduleSheet(context, controller, date, l10n);
     }
     return showModalBottomSheet<void>(
       context: context,
@@ -250,10 +257,29 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   Navigator.of(sheetContext).pop();
                   _unskip(item);
                 },
+                onCancel: () {
+                  Navigator.of(sheetContext).pop();
+                  controller.cancelSchedule(item.programDayId, date);
+                },
               ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showScheduleSheet(
+    BuildContext context,
+    WeekPlanController controller,
+    DateTime date,
+    AppLocalizations l10n,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) =>
+          _ScheduleSheet(date: date, controller: controller),
     );
   }
 }
@@ -608,7 +634,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                _StatusBadge(status: status),
+                StatusBadge(status: status),
               ],
             ),
             if (status == WeekPlanStatus.pending) ...[
@@ -647,59 +673,6 @@ class _PlannedWorkoutCard extends StatelessWidget {
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final WeekPlanStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final (label, color, foreground) = switch (status) {
-      WeekPlanStatus.pending => (
-        l10n.schedulePending,
-        colorScheme.surfaceContainerHighest,
-        colorScheme.onSurfaceVariant,
-      ),
-      WeekPlanStatus.performed => (
-        l10n.schedulePerformed,
-        colorScheme.primary,
-        colorScheme.onPrimary,
-      ),
-      WeekPlanStatus.rescheduled => (
-        l10n.scheduleRescheduled,
-        colorScheme.tertiary,
-        colorScheme.onTertiary,
-      ),
-      WeekPlanStatus.skipped => (
-        l10n.scheduleSkipped,
-        colorScheme.error,
-        colorScheme.onError,
-      ),
-      WeekPlanStatus.pastSkipped => (
-        l10n.scheduleSkipped,
-        colorScheme.error,
-        colorScheme.onError,
-      ),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: foreground,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -844,7 +817,7 @@ class _MonthGrid extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: dayItems.isEmpty ? null : () => onDayTap(date, dayItems),
+          onTap: () => onDayTap(date, dayItems),
           child: Container(
             height: 52,
             decoration: BoxDecoration(
@@ -931,6 +904,7 @@ class _MonthDayActionTile extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    this.onCancel,
   });
 
   final WeekPlanItem item;
@@ -938,6 +912,7 @@ class _MonthDayActionTile extends StatelessWidget {
   final VoidCallback onStart;
   final VoidCallback onSkip;
   final VoidCallback onUnskip;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -962,6 +937,14 @@ class _MonthDayActionTile extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             TextButton(onPressed: onSkip, child: Text(l10n.weekPlanSkip)),
+            if (onCancel != null) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                onPressed: onCancel,
+                tooltip: l10n.weekPlanRemove,
+                icon: const Icon(Icons.close, size: 18),
+              ),
+            ],
           ],
         ),
         WeekPlanStatus.skipped => TextButton.icon(
@@ -971,7 +954,7 @@ class _MonthDayActionTile extends StatelessWidget {
         ),
         WeekPlanStatus.performed ||
         WeekPlanStatus.rescheduled ||
-        WeekPlanStatus.pastSkipped => _StatusBadge(status: status),
+        WeekPlanStatus.pastSkipped => StatusBadge(status: status),
       },
     );
   }
@@ -1009,3 +992,168 @@ String _weekdayLabel(AppLocalizations l10n, int weekday) => switch (weekday) {
   7 => l10n.weekdaySun,
   _ => '',
 };
+
+class _ScheduleSheet extends StatefulWidget {
+  const _ScheduleSheet({required this.date, required this.controller});
+
+  final DateTime date;
+  final WeekPlanController controller;
+
+  @override
+  State<_ScheduleSheet> createState() => _ScheduleSheetState();
+}
+
+class _ScheduleSheetState extends State<_ScheduleSheet> {
+  ProgramSummary? _selectedProgram;
+  ProgramDetail? _programDetail;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrograms();
+  }
+
+  Future<void> _loadPrograms() async {
+    final programs = await widget.controller.programRepository.getPrograms();
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+    });
+    // Auto-select if only one program.
+    if (programs.length == 1) {
+      await _selectProgram(programs.first);
+    }
+  }
+
+  Future<void> _selectProgram(ProgramSummary summary) async {
+    final detail = await widget.controller.programRepository.getProgram(
+      summary.program.id!,
+    );
+    if (!mounted) return;
+    setState(() {
+      _selectedProgram = summary;
+      _programDetail = detail;
+    });
+  }
+
+  void _schedule(int programDayId) {
+    widget.controller.scheduleDay(programDayId, widget.date);
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.weekPlanScheduleTitle,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('d MMMM yyyy', 'ru').format(widget.date),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_loading)
+              const Center(child: CircularProgressIndicator())
+            else if (_selectedProgram == null)
+              _buildProgramList(l10n)
+            else
+              _buildDayList(l10n, theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgramList(AppLocalizations l10n) {
+    return FutureBuilder<List<ProgramSummary>>(
+      future: widget.controller.programRepository.getPrograms(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final programs = snapshot.data!;
+        if (programs.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: Text(l10n.weekPlanScheduleNoPrograms)),
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.weekPlanScheduleSelectProgram,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            for (final summary in programs)
+              ListTile(
+                title: Text(summary.program.name),
+                subtitle: Text('${summary.exercisesCount} упражнений'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _selectProgram(summary),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDayList(AppLocalizations l10n, ThemeData theme) {
+    final detail = _programDetail;
+    if (detail == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => setState(() {
+                _selectedProgram = null;
+                _programDetail = null;
+              }),
+              icon: const Icon(Icons.arrow_back),
+            ),
+            Expanded(
+              child: Text(
+                detail.program.name,
+                style: theme.textTheme.labelLarge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (final day in detail.days)
+          ListTile(
+            title: Text('День ${day.day.dayIndex + 1}'),
+            subtitle: Text(
+              day.day.dayOfWeek != null
+                  ? _weekdayLabel(l10n, day.day.dayOfWeek!)
+                  : 'Без привязки',
+            ),
+            trailing: const Icon(Icons.add_circle_outline),
+            onTap: () => _schedule(day.day.id!),
+          ),
+      ],
+    );
+  }
+}

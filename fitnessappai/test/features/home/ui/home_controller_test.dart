@@ -12,6 +12,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 
 void main() {
   late AppDatabase db;
@@ -283,4 +284,85 @@ void main() {
       expect(p1Info.upcomingDay?.dayOfWeek, 4);
     },
   );
+
+  test('todayStatus = pending если сегодня день тренировки', () async {
+    final program = await createProgram(name: 'Сила', dayOfWeeks: [1]);
+    await programRepository.setActive(program.id!);
+
+    // Aug 10 2026 — понедельник.
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    final info = controller.activePrograms.value.first;
+    expect(info.todayStatus, WeekPlanStatus.pending);
+  });
+
+  test('todayStatus = performed если тренировка выполнена', () async {
+    final program = await createProgram(name: 'Сила', dayOfWeeks: [1]);
+    await programRepository.setActive(program.id!);
+    final day = (await programRepository.getDays(program.id!)).single;
+
+    // Выполняем тренировку сегодня (Aug 10, понедельник).
+    final now = DateTime(2026, 8, 10, 10);
+    await workoutRepository.saveSession(
+      WorkoutSession(
+        programDayId: day.id!,
+        dayIndex: 0,
+        programName: 'Сила',
+        performedDate: DateTime(2026, 8, 10),
+        startedAt: now,
+        endedAt: now.add(const Duration(hours: 1)),
+        variant: WorkoutVariant.main,
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseName: 'Жим',
+          exerciseType: ExerciseType.strength,
+          setIndex: 0,
+          reps: 10,
+          completedAt: now,
+        ),
+      ],
+    );
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    final info = controller.activePrograms.value.first;
+    expect(info.todayStatus, WeekPlanStatus.performed);
+  });
+
+  test('todayStatus = null если сегодня не день тренировки', () async {
+    // Программа привязана к среде (3), а сегодня понедельник (1).
+    final program = await createProgram(name: 'Кардио', dayOfWeeks: [3]);
+    await programRepository.setActive(program.id!);
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10), // понедельник
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    final info = controller.activePrograms.value.first;
+    expect(info.todayStatus, isNull);
+  });
 }

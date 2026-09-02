@@ -2,6 +2,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/responsive/adaptive_navigation.dart';
 import 'package:fitnessappai/app/screens/not_found_screen.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/app/bootstrap.dart';
@@ -69,7 +71,13 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/programs',
-                  builder: (context, state) => const ProgramsScreen(),
+                  builder: (context, state) {
+                    ReminderService? reminderService;
+                    try {
+                      reminderService = locator.get<ReminderService>();
+                    } catch (_) {}
+                    return ProgramsScreen(reminderService: reminderService);
+                  },
                 ),
               ],
             ),

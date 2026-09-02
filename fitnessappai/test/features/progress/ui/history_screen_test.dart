@@ -90,6 +90,10 @@ void main() {
             workoutRepository: workoutRepo,
           ),
         ),
+        GoRoute(
+          path: '/progress/day',
+          builder: (context, state) => const Scaffold(body: Text('day detail')),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -104,98 +108,61 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('список сессий: свежие сверху, программа, дата, метрики', (
+  testWidgets('календарь показывает дни месяца и подсвечивает тренировки', (
     tester,
   ) async {
+    final now = DateTime.now();
     await workoutRepo.saveSession(
-      session(performedDate: DateTime(2026, 8, 10)),
-      [setResult(), setResult(name: 'Тяга', setIndex: 2)],
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
     );
-    await workoutRepo.saveSession(
-      session(
-        performedDate: DateTime(2026, 8, 12),
-        programName: 'Кардио',
-        variant: WorkoutVariant.alternative,
-      ),
-      [setResult(name: 'Бег')],
-    );
-
     await pumpHistory(tester);
 
-    final fmt = DateFormat('d MMMM yyyy', 'ru');
-    final firstDate = fmt.format(DateTime(2026, 8, 12));
-    final secondDate = fmt.format(DateTime(2026, 8, 10));
-
-    expect(find.text('Кардио'), findsOneWidget);
-    expect(find.text('База'), findsOneWidget);
-    expect(find.text(firstDate), findsOneWidget);
-    expect(find.text(secondDate), findsOneWidget);
-    expect(find.text('Альтернативный набор'), findsOneWidget);
-    expect(find.text('1 упражнение · 40 мин'), findsOneWidget);
-    expect(find.text('2 упражнения · 40 мин'), findsOneWidget);
-
-    final firstCenter = tester.getCenter(find.text(firstDate));
-    final secondCenter = tester.getCenter(find.text(secondDate));
-    expect(firstCenter.dy, lessThan(secondCenter.dy));
+    // Календарь отображает день 10 текущего месяца.
+    expect(find.text('10'), findsOneWidget);
+    // Навигация на /progress/day при тапе.
+    await tester.tap(find.text('10'));
+    await tester.pumpAndSettle();
+    expect(find.text('day detail'), findsOneWidget);
   });
 
-  testWidgets('тап по сессии открывает детали с подходами', (tester) async {
-    await workoutRepo
-        .saveSession(session(performedDate: DateTime(2026, 8, 10)), [
-          setResult(reps: 8, weightKg: 20),
-          setResult(setIndex: 2, reps: 6, weightKg: 25),
-          setResult(
-            name: 'Планка',
-            type: ExerciseType.plank,
-            reps: null,
-            weightKg: null,
-            durationSeconds: 45,
-          ),
-          setResult(
-            name: 'Бег',
-            type: ExerciseType.running,
-            reps: null,
-            weightKg: null,
-            durationSeconds: 900,
-            distanceMeters: 3000,
-          ),
-          setResult(
-            name: 'Отжимания',
-            type: ExerciseType.bodyweight,
-            reps: 15,
-            weightKg: null,
-            setIndex: 3,
-          ),
-        ]);
-
+  testWidgets('тап по дню без тренировки ничего не делает', (tester) async {
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
     await pumpHistory(tester);
-    await tester.tap(find.text('База'));
+
+    // День 5 текущего месяца — нет тренировки.
+    await tester.tap(find.text('5'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Детали тренировки'), findsOneWidget);
-    expect(find.text('Приседания'), findsOneWidget);
-    expect(find.text('1. 8 повт × 20 кг'), findsOneWidget);
-    expect(find.text('2. 6 повт × 25 кг'), findsOneWidget);
-    expect(find.text('1. 45 с'), findsOneWidget);
-    expect(find.text('1. 3 км × 15 мин'), findsOneWidget);
-    expect(find.text('3. 15 повт'), findsOneWidget);
-    expect(find.textContaining('40 мин'), findsOneWidget);
+    // Остались на экране истории.
+    expect(find.byType(HistoryScreen), findsOneWidget);
   });
 
-  testWidgets('результаты «по сторонам» помечаются л/п', (tester) async {
-    await workoutRepo
-        .saveSession(session(performedDate: DateTime(2026, 8, 10)), [
-          setResult(setIndex: 1, side: 'left', reps: 8, weightKg: 20),
-          setResult(setIndex: 1, side: 'right', reps: 6, weightKg: 20),
-          setResult(setIndex: 2, side: 'left', reps: 10, weightKg: 20),
-        ]);
+  testWidgets('переключение месяца', (tester) async {
+    final now = DateTime.now();
+    final monthName = DateFormat('LLLL', 'ru').format(now);
+    final prevMonthName = DateFormat(
+      'LLLL',
+      'ru',
+    ).format(DateTime(now.year, now.month - 1));
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month - 1, 15)),
+      [setResult()],
+    );
     await pumpHistory(tester);
-    await tester.tap(find.text('База'));
+
+    // Находим заголовок с текущим месяцем.
+    expect(find.textContaining(monthName), findsOneWidget);
+
+    // Переключаем на предыдущий месяц.
+    await tester.tap(find.byIcon(Icons.chevron_left));
     await tester.pumpAndSettle();
 
-    expect(find.text('1л. 8 повт × 20 кг'), findsOneWidget);
-    expect(find.text('1п. 6 повт × 20 кг'), findsOneWidget);
-    expect(find.text('2л. 10 повт × 20 кг'), findsOneWidget);
+    expect(find.textContaining(prevMonthName), findsOneWidget);
   });
 
   testWidgets('пустая история показывает сообщение', (tester) async {
@@ -210,20 +177,21 @@ void main() {
     expect(find.text('Тренировка не найдена'), findsOneWidget);
   });
 
-  testWidgets('новая сессия появляется без повторного открытия экрана', (
+  testWidgets('новая сессия подсвечивает день без переоткрытия', (
     tester,
   ) async {
     await pumpHistory(tester);
     expect(find.text('Пока нет тренировок'), findsOneWidget);
 
+    final now = DateTime.now();
     await workoutRepo.saveSession(
-      session(performedDate: DateTime(2026, 8, 10)),
+      session(performedDate: DateTime(now.year, now.month, 10)),
       [setResult()],
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Пока нет тренировок'), findsNothing);
-    expect(find.text('База'), findsOneWidget);
+    expect(find.text('10'), findsOneWidget);
   });
 
   testWidgets('«Скопировать JSON» копирует историю и показывает SnackBar', (

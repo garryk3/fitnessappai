@@ -41,6 +41,9 @@ class AudioplayersSoundService implements SoundService {
       _isPlaying = playing;
       _isPlayingController.add(playing);
     });
+    _player.onPlayerComplete.listen((_) {
+      _deactivateFocus();
+    });
   }
 
   static const String defaultAssetPath = 'sounds/timer.mp3';
@@ -107,6 +110,14 @@ class AudioplayersSoundService implements SoundService {
     );
   }
 
+  Future<void> _deactivateFocus() async {
+    final session = await _audioSessionOrNull();
+    if (session == null) {
+      return;
+    }
+    await session.setActive(false);
+  }
+
   @override
   Future<void> playCompletion() async {
     final repository = _repository;
@@ -144,8 +155,7 @@ class AudioplayersSoundService implements SoundService {
   @override
   Future<void> stop() async {
     await _player.stop();
-    // Не вызываем setActive(false): при gainTransientMayDuck система
-    // автоматически восстанавливает громкость при потере фокуса.
+    await _deactivateFocus();
   }
 
   @override

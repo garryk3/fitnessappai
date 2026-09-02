@@ -7,12 +7,14 @@ import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/settings/domain/notification_settings_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-/// Экран «Настройки»: синхронизация и настройки темы.
+/// Экран «Настройки»: синхронизация, звуки, уведомления и тема.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,
@@ -20,12 +22,14 @@ class SettingsScreen extends StatefulWidget {
     this.themeController,
     this.soundController,
     this.updateController,
+    this.notificationController,
   });
 
   final SyncController? syncController;
   final ThemeController? themeController;
   final SoundSettingsController? soundController;
   final UpdateCheckController? updateController;
+  final NotificationSettingsController? notificationController;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -36,6 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final ThemeController _themeController;
   late final SoundSettingsController _soundController;
   late final UpdateCheckController _updateController;
+  NotificationSettingsController? _notificationController;
 
   @override
   void initState() {
@@ -53,6 +58,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.updateController ??
         UpdateCheckController(service: locator.get<UpdateService>());
     _updateController.loadVersion();
+    _notificationController = widget.notificationController;
+    if (_notificationController == null) {
+      try {
+        _notificationController = NotificationSettingsController(
+          reminderService: locator.get<ReminderService>(),
+        );
+        _notificationController?.load();
+      } catch (_) {
+        // ReminderService не зарегистрирован (тесты) — секция не показывается.
+      }
+    } else {
+      _notificationController?.load();
+    }
   }
 
   @override
@@ -71,6 +89,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(l10n.settingsSoundSection, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           _SoundSection(controller: _soundController),
+          const SizedBox(height: 24),
+          Text(
+            l10n.settingsNotificationsSection,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          if (_notificationController != null)
+            _NotificationsSection(controller: _notificationController!),
           const SizedBox(height: 24),
           Text(l10n.settingsThemeSection, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -334,6 +360,116 @@ class _SyncSectionState extends State<_SyncSection> {
     if (restart == true && mounted) {
       restartApp();
     }
+  }
+}
+
+/// Секция «Уведомления»: статус разрешений и кнопки запроса.
+class _NotificationsSection extends StatefulWidget {
+  const _NotificationsSection({required this.controller});
+
+  final NotificationSettingsController controller;
+
+  @override
+  State<_NotificationsSection> createState() => _NotificationsSectionState();
+}
+
+class _NotificationsSectionState extends State<_NotificationsSection> {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return SignalBuilder(
+      builder: (_) {
+        final controller = widget.controller;
+        if (controller.isLoading.value) {
+          return const SizedBox.shrink();
+        }
+        final permissions = controller.status.value;
+        final error = controller.error.value;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (permissions != null) ...[
+              _PermissionTile(
+                title: permissions.notificationsEnabled
+                    ? l10n.settingsNotificationsEnabled
+                    : l10n.settingsNotificationsDisabled,
+                icon: permissions.notificationsEnabled
+                    ? Icons.notifications_active_outlined
+                    : Icons.notifications_off_outlined,
+                color: permissions.notificationsEnabled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.error,
+                onAction: permissions.notificationsEnabled
+                    ? null
+                    : () => controller.requestPermissions(),
+                actionLabel: permissions.notificationsEnabled
+                    ? null
+                    : l10n.settingsNotificationsRequest,
+              ),
+              const SizedBox(height: 8),
+              _PermissionTile(
+                title: permissions.exactAlarmsEnabled
+                    ? l10n.settingsNotificationsExactEnabled
+                    : l10n.settingsNotificationsExactDisabled,
+                icon: permissions.exactAlarmsEnabled
+                    ? Icons.alarm_on_outlined
+                    : Icons.alarm_off_outlined,
+                color: permissions.exactAlarmsEnabled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.error,
+                onAction: permissions.exactAlarmsEnabled
+                    ? null
+                    : () => controller.requestPermissions(),
+                actionLabel: permissions.exactAlarmsEnabled
+                    ? null
+                    : l10n.settingsNotificationsExactRequest,
+              ),
+            ],
+            if (error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                error,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PermissionTile extends StatelessWidget {
+  const _PermissionTile({
+    required this.title,
+    required this.icon,
+    required this.color,
+    this.onAction,
+    this.actionLabel,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onAction;
+  final String? actionLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(title, style: Theme.of(context).textTheme.bodyMedium),
+        ),
+        if (onAction != null && actionLabel != null)
+          FilledButton.tonal(onPressed: onAction, child: Text(actionLabel!)),
+      ],
+    );
   }
 }
 

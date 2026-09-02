@@ -18,6 +18,7 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
@@ -89,6 +90,7 @@ class WorkoutRunScreen extends StatefulWidget {
     this.checkpointLoader,
     this.checkpointSaver,
     this.checkpointClearer,
+    this.wakelockBannerRepository,
   });
 
   final int? programDayId;
@@ -107,6 +109,7 @@ class WorkoutRunScreen extends StatefulWidget {
   final Future<WorkoutCheckpoint?> Function()? checkpointLoader;
   final Future<void> Function(WorkoutCheckpoint checkpoint)? checkpointSaver;
   final Future<void> Function()? checkpointClearer;
+  final WakelockBannerRepository? wakelockBannerRepository;
 
   @override
   State<WorkoutRunScreen> createState() => _WorkoutRunScreenState();
@@ -119,6 +122,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   late final WorkoutRepository _workoutRepository;
   late final WakelockService _wakelock;
   late final WorkoutForegroundService _foregroundService;
+  late final WakelockBannerRepository _wakelockBannerRepo;
   bool _wakelockBannerDismissed = false;
   Timer? _checkpointTimer;
   void Function()? _disposeForegroundEffect;
@@ -148,6 +152,14 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     _wakelock = widget.wakelockService ?? locator.get<WakelockService>();
     _foregroundService =
         widget.foregroundService ?? locator.get<WorkoutForegroundService>();
+    _wakelockBannerRepo =
+        widget.wakelockBannerRepository ??
+        locator.get<WakelockBannerRepository>();
+    _wakelockBannerRepo.isDismissed().then((dismissed) {
+      if (dismissed && mounted) {
+        setState(() => _wakelockBannerDismissed = true);
+      }
+    });
     _wakelock.enable();
     _foregroundService.start(
       title: 'Личный тренер',
@@ -374,6 +386,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                       TextButton(
                         onPressed: () {
                           setState(() => _wakelockBannerDismissed = true);
+                          _wakelockBannerRepo.setDismissed();
                         },
                         child: Text(AppLocalizations.of(context).commonOk),
                       ),
@@ -785,8 +798,6 @@ class _PlankHoldPanel extends StatelessWidget {
     final counterColor = reached
         ? theme.colorScheme.tertiary
         : theme.colorScheme.primary;
-    final narrow = MediaQuery.sizeOf(context).width < 350;
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
@@ -800,14 +811,10 @@ class _PlankHoldPanel extends StatelessWidget {
         children: [
           Text(
             l10n.workoutRunHold(elapsed),
-            style:
-                (narrow
-                        ? theme.textTheme.headlineLarge
-                        : theme.textTheme.displayLarge)
-                    ?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: counterColor,
-                    ),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: counterColor,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),

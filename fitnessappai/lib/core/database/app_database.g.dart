@@ -7761,6 +7761,279 @@ class ProgramWarningDismissalsCompanion
   }
 }
 
+class $PlanScheduleTable extends PlanSchedule
+    with TableInfo<$PlanScheduleTable, PlanScheduleData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PlanScheduleTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _programDayIdMeta = const VerificationMeta(
+    'programDayId',
+  );
+  @override
+  late final GeneratedColumn<int> programDayId = GeneratedColumn<int>(
+    'program_day_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES program_days (id)',
+    ),
+  );
+  static const VerificationMeta _scheduledDateMeta = const VerificationMeta(
+    'scheduledDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> scheduledDate =
+      GeneratedColumn<DateTime>(
+        'scheduled_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [id, programDayId, scheduledDate];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'plan_schedule';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PlanScheduleData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('program_day_id')) {
+      context.handle(
+        _programDayIdMeta,
+        programDayId.isAcceptableOrUnknown(
+          data['program_day_id']!,
+          _programDayIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_programDayIdMeta);
+    }
+    if (data.containsKey('scheduled_date')) {
+      context.handle(
+        _scheduledDateMeta,
+        scheduledDate.isAcceptableOrUnknown(
+          data['scheduled_date']!,
+          _scheduledDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_scheduledDateMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {programDayId, scheduledDate},
+  ];
+  @override
+  PlanScheduleData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PlanScheduleData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      programDayId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}program_day_id'],
+      )!,
+      scheduledDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}scheduled_date'],
+      )!,
+    );
+  }
+
+  @override
+  $PlanScheduleTable createAlias(String alias) {
+    return $PlanScheduleTable(attachedDatabase, alias);
+  }
+}
+
+class PlanScheduleData extends DataClass
+    implements Insertable<PlanScheduleData> {
+  final int id;
+  final int programDayId;
+  final DateTime scheduledDate;
+  const PlanScheduleData({
+    required this.id,
+    required this.programDayId,
+    required this.scheduledDate,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['program_day_id'] = Variable<int>(programDayId);
+    map['scheduled_date'] = Variable<DateTime>(scheduledDate);
+    return map;
+  }
+
+  PlanScheduleCompanion toCompanion(bool nullToAbsent) {
+    return PlanScheduleCompanion(
+      id: Value(id),
+      programDayId: Value(programDayId),
+      scheduledDate: Value(scheduledDate),
+    );
+  }
+
+  factory PlanScheduleData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PlanScheduleData(
+      id: serializer.fromJson<int>(json['id']),
+      programDayId: serializer.fromJson<int>(json['programDayId']),
+      scheduledDate: serializer.fromJson<DateTime>(json['scheduledDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'programDayId': serializer.toJson<int>(programDayId),
+      'scheduledDate': serializer.toJson<DateTime>(scheduledDate),
+    };
+  }
+
+  PlanScheduleData copyWith({
+    int? id,
+    int? programDayId,
+    DateTime? scheduledDate,
+  }) => PlanScheduleData(
+    id: id ?? this.id,
+    programDayId: programDayId ?? this.programDayId,
+    scheduledDate: scheduledDate ?? this.scheduledDate,
+  );
+  PlanScheduleData copyWithCompanion(PlanScheduleCompanion data) {
+    return PlanScheduleData(
+      id: data.id.present ? data.id.value : this.id,
+      programDayId: data.programDayId.present
+          ? data.programDayId.value
+          : this.programDayId,
+      scheduledDate: data.scheduledDate.present
+          ? data.scheduledDate.value
+          : this.scheduledDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlanScheduleData(')
+          ..write('id: $id, ')
+          ..write('programDayId: $programDayId, ')
+          ..write('scheduledDate: $scheduledDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, programDayId, scheduledDate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PlanScheduleData &&
+          other.id == this.id &&
+          other.programDayId == this.programDayId &&
+          other.scheduledDate == this.scheduledDate);
+}
+
+class PlanScheduleCompanion extends UpdateCompanion<PlanScheduleData> {
+  final Value<int> id;
+  final Value<int> programDayId;
+  final Value<DateTime> scheduledDate;
+  const PlanScheduleCompanion({
+    this.id = const Value.absent(),
+    this.programDayId = const Value.absent(),
+    this.scheduledDate = const Value.absent(),
+  });
+  PlanScheduleCompanion.insert({
+    this.id = const Value.absent(),
+    required int programDayId,
+    required DateTime scheduledDate,
+  }) : programDayId = Value(programDayId),
+       scheduledDate = Value(scheduledDate);
+  static Insertable<PlanScheduleData> custom({
+    Expression<int>? id,
+    Expression<int>? programDayId,
+    Expression<DateTime>? scheduledDate,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (programDayId != null) 'program_day_id': programDayId,
+      if (scheduledDate != null) 'scheduled_date': scheduledDate,
+    });
+  }
+
+  PlanScheduleCompanion copyWith({
+    Value<int>? id,
+    Value<int>? programDayId,
+    Value<DateTime>? scheduledDate,
+  }) {
+    return PlanScheduleCompanion(
+      id: id ?? this.id,
+      programDayId: programDayId ?? this.programDayId,
+      scheduledDate: scheduledDate ?? this.scheduledDate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (programDayId.present) {
+      map['program_day_id'] = Variable<int>(programDayId.value);
+    }
+    if (scheduledDate.present) {
+      map['scheduled_date'] = Variable<DateTime>(scheduledDate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlanScheduleCompanion(')
+          ..write('id: $id, ')
+          ..write('programDayId: $programDayId, ')
+          ..write('scheduledDate: $scheduledDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7795,6 +8068,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $ProgramWarningDismissalsTable programWarningDismissals =
       $ProgramWarningDismissalsTable(this);
+  late final $PlanScheduleTable planSchedule = $PlanScheduleTable(this);
   late final Index exerciseMusclesMuscleGroupIdx = Index(
     'exercise_muscles_muscle_group_idx',
     'CREATE INDEX exercise_muscles_muscle_group_idx ON exercise_muscles (muscle_group_id)',
@@ -7865,6 +8139,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     scheduleMarks,
     bodyMeasurements,
     programWarningDismissals,
+    planSchedule,
     exerciseMusclesMuscleGroupIdx,
     exerciseContraindicationsTagIdx,
     userContraindicationsTagIdx,
@@ -11946,6 +12221,24 @@ final class $$ProgramDaysTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$PlanScheduleTable, List<PlanScheduleData>>
+  _planScheduleRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.planSchedule,
+    aliasName: 'program_days__id__plan_schedule__program_day_id',
+  );
+
+  $$PlanScheduleTableProcessedTableManager get planScheduleRefs {
+    final manager = $$PlanScheduleTableTableManager(
+      $_db,
+      $_db.planSchedule,
+    ).filter((f) => f.programDayId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_planScheduleRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ProgramDaysTableFilterComposer
@@ -12091,6 +12384,31 @@ class $$ProgramDaysTableFilterComposer
           }) => $$ScheduleMarksTableFilterComposer(
             $db: $db,
             $table: $db.scheduleMarks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> planScheduleRefs(
+    Expression<bool> Function($$PlanScheduleTableFilterComposer f) f,
+  ) {
+    final $$PlanScheduleTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.planSchedule,
+      getReferencedColumn: (t) => t.programDayId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PlanScheduleTableFilterComposer(
+            $db: $db,
+            $table: $db.planSchedule,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -12300,6 +12618,31 @@ class $$ProgramDaysTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> planScheduleRefs<T extends Object>(
+    Expression<T> Function($$PlanScheduleTableAnnotationComposer a) f,
+  ) {
+    final $$PlanScheduleTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.planSchedule,
+      getReferencedColumn: (t) => t.programDayId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PlanScheduleTableAnnotationComposer(
+            $db: $db,
+            $table: $db.planSchedule,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProgramDaysTableTableManager
@@ -12321,6 +12664,7 @@ class $$ProgramDaysTableTableManager
             bool workoutRemindersRefs,
             bool workoutSessionsRefs,
             bool scheduleMarksRefs,
+            bool planScheduleRefs,
           })
         > {
   $$ProgramDaysTableTableManager(_$AppDatabase db, $ProgramDaysTable table)
@@ -12377,6 +12721,7 @@ class $$ProgramDaysTableTableManager
                 workoutRemindersRefs = false,
                 workoutSessionsRefs = false,
                 scheduleMarksRefs = false,
+                planScheduleRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -12385,6 +12730,7 @@ class $$ProgramDaysTableTableManager
                     if (workoutRemindersRefs) db.workoutReminders,
                     if (workoutSessionsRefs) db.workoutSessions,
                     if (scheduleMarksRefs) db.scheduleMarks,
+                    if (planScheduleRefs) db.planSchedule,
                   ],
                   addJoins:
                       <
@@ -12506,6 +12852,27 @@ class $$ProgramDaysTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (planScheduleRefs)
+                        await $_getPrefetchedData<
+                          ProgramDayRow,
+                          $ProgramDaysTable,
+                          PlanScheduleData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProgramDaysTableReferences
+                              ._planScheduleRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProgramDaysTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).planScheduleRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.programDayId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -12532,6 +12899,7 @@ typedef $$ProgramDaysTableProcessedTableManager =
         bool workoutRemindersRefs,
         bool workoutSessionsRefs,
         bool scheduleMarksRefs,
+        bool planScheduleRefs,
       })
     >;
 typedef $$ProgramDayExercisesTableCreateCompanionBuilder =
@@ -15530,6 +15898,283 @@ typedef $$ProgramWarningDismissalsTableProcessedTableManager =
       ProgramWarningDismissalRow,
       PrefetchHooks Function({bool programId})
     >;
+typedef $$PlanScheduleTableCreateCompanionBuilder =
+    PlanScheduleCompanion Function({
+      Value<int> id,
+      required int programDayId,
+      required DateTime scheduledDate,
+    });
+typedef $$PlanScheduleTableUpdateCompanionBuilder =
+    PlanScheduleCompanion Function({
+      Value<int> id,
+      Value<int> programDayId,
+      Value<DateTime> scheduledDate,
+    });
+
+final class $$PlanScheduleTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $PlanScheduleTable, PlanScheduleData> {
+  $$PlanScheduleTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ProgramDaysTable _programDayIdTable(_$AppDatabase db) => db
+      .programDays
+      .createAlias('plan_schedule__program_day_id__program_days__id');
+
+  $$ProgramDaysTableProcessedTableManager get programDayId {
+    final $_column = $_itemColumn<int>('program_day_id')!;
+
+    final manager = $$ProgramDaysTableTableManager(
+      $_db,
+      $_db.programDays,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_programDayIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$PlanScheduleTableFilterComposer
+    extends Composer<_$AppDatabase, $PlanScheduleTable> {
+  $$PlanScheduleTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get scheduledDate => $composableBuilder(
+    column: $table.scheduledDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProgramDaysTableFilterComposer get programDayId {
+    final $$ProgramDaysTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programDayId,
+      referencedTable: $db.programDays,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProgramDaysTableFilterComposer(
+            $db: $db,
+            $table: $db.programDays,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PlanScheduleTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlanScheduleTable> {
+  $$PlanScheduleTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get scheduledDate => $composableBuilder(
+    column: $table.scheduledDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProgramDaysTableOrderingComposer get programDayId {
+    final $$ProgramDaysTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programDayId,
+      referencedTable: $db.programDays,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProgramDaysTableOrderingComposer(
+            $db: $db,
+            $table: $db.programDays,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PlanScheduleTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlanScheduleTable> {
+  $$PlanScheduleTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get scheduledDate => $composableBuilder(
+    column: $table.scheduledDate,
+    builder: (column) => column,
+  );
+
+  $$ProgramDaysTableAnnotationComposer get programDayId {
+    final $$ProgramDaysTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.programDayId,
+      referencedTable: $db.programDays,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProgramDaysTableAnnotationComposer(
+            $db: $db,
+            $table: $db.programDays,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PlanScheduleTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PlanScheduleTable,
+          PlanScheduleData,
+          $$PlanScheduleTableFilterComposer,
+          $$PlanScheduleTableOrderingComposer,
+          $$PlanScheduleTableAnnotationComposer,
+          $$PlanScheduleTableCreateCompanionBuilder,
+          $$PlanScheduleTableUpdateCompanionBuilder,
+          (PlanScheduleData, $$PlanScheduleTableReferences),
+          PlanScheduleData,
+          PrefetchHooks Function({bool programDayId})
+        > {
+  $$PlanScheduleTableTableManager(_$AppDatabase db, $PlanScheduleTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlanScheduleTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlanScheduleTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlanScheduleTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> programDayId = const Value.absent(),
+                Value<DateTime> scheduledDate = const Value.absent(),
+              }) => PlanScheduleCompanion(
+                id: id,
+                programDayId: programDayId,
+                scheduledDate: scheduledDate,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int programDayId,
+                required DateTime scheduledDate,
+              }) => PlanScheduleCompanion.insert(
+                id: id,
+                programDayId: programDayId,
+                scheduledDate: scheduledDate,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$PlanScheduleTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({programDayId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (programDayId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.programDayId,
+                                referencedTable: $$PlanScheduleTableReferences
+                                    ._programDayIdTable(db),
+                                referencedColumn: $$PlanScheduleTableReferences
+                                    ._programDayIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PlanScheduleTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PlanScheduleTable,
+      PlanScheduleData,
+      $$PlanScheduleTableFilterComposer,
+      $$PlanScheduleTableOrderingComposer,
+      $$PlanScheduleTableAnnotationComposer,
+      $$PlanScheduleTableCreateCompanionBuilder,
+      $$PlanScheduleTableUpdateCompanionBuilder,
+      (PlanScheduleData, $$PlanScheduleTableReferences),
+      PlanScheduleData,
+      PrefetchHooks Function({bool programDayId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15574,4 +16219,6 @@ class $AppDatabaseManager {
         _db,
         _db.programWarningDismissals,
       );
+  $$PlanScheduleTableTableManager get planSchedule =>
+      $$PlanScheduleTableTableManager(_db, _db.planSchedule);
 }

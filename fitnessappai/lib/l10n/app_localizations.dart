@@ -328,6 +328,48 @@ abstract class AppLocalizations {
   /// **'Обновить'**
   String get settingsUpdateDownload;
 
+  /// No description provided for @settingsNotificationsSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления'**
+  String get settingsNotificationsSection;
+
+  /// No description provided for @settingsNotificationsEnabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления включены'**
+  String get settingsNotificationsEnabled;
+
+  /// No description provided for @settingsNotificationsDisabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления отключены'**
+  String get settingsNotificationsDisabled;
+
+  /// No description provided for @settingsNotificationsExactEnabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Точные будильники включены'**
+  String get settingsNotificationsExactEnabled;
+
+  /// No description provided for @settingsNotificationsExactDisabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Точные будильники отключены'**
+  String get settingsNotificationsExactDisabled;
+
+  /// No description provided for @settingsNotificationsRequest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешить уведомления'**
+  String get settingsNotificationsRequest;
+
+  /// No description provided for @settingsNotificationsExactRequest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настроить точные будильники'**
+  String get settingsNotificationsExactRequest;
+
   /// No description provided for @commonClose.
   ///
   /// In ru, this message translates to:
@@ -489,6 +531,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Отменить пропуск'**
   String get weekPlanUnskip;
+
+  /// No description provided for @weekPlanRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить назначение'**
+  String get weekPlanRemove;
+
+  /// No description provided for @weekPlanScheduleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запланировать тренировку'**
+  String get weekPlanScheduleTitle;
+
+  /// No description provided for @weekPlanScheduleSelectProgram.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите программу'**
+  String get weekPlanScheduleSelectProgram;
+
+  /// No description provided for @weekPlanScheduleSelectDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите день программы'**
+  String get weekPlanScheduleSelectDay;
+
+  /// No description provided for @weekPlanScheduleConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запланировать'**
+  String get weekPlanScheduleConfirm;
+
+  /// No description provided for @weekPlanScheduleNoPrograms.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет программ для назначения'**
+  String get weekPlanScheduleNoPrograms;
 
   /// No description provided for @weekPlanEmpty.
   ///

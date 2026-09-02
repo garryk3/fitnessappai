@@ -5,6 +5,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
@@ -12,9 +13,10 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Экран списка программ: карточки с днями и упражнениями.
 class ProgramsScreen extends StatefulWidget {
-  const ProgramsScreen({super.key, this.repository});
+  const ProgramsScreen({super.key, this.repository, this.reminderService});
 
   final ProgramRepository? repository;
+  final ReminderService? reminderService;
 
   @override
   State<ProgramsScreen> createState() => _ProgramsScreenState();
@@ -28,6 +30,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     super.initState();
     _controller = ProgramListController(
       widget.repository ?? locator.get<ProgramRepository>(),
+      reminderService: widget.reminderService,
     );
   }
 

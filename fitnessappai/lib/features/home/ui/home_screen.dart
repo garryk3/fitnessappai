@@ -6,7 +6,9 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/core/ui/status_badge.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
+import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -146,6 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onStart: info.upcomingDay != null
                 ? () => context.push('/workout/prepare/${info.upcomingDay!.id}')
                 : null,
+            todayStatus: info.todayStatus,
           ),
           const SizedBox(height: 8),
         ],
@@ -195,6 +198,7 @@ class _ActiveProgramCard extends StatelessWidget {
     required this.exerciseNames,
     required this.onTap,
     this.onStart,
+    this.todayStatus,
   });
 
   final String programName;
@@ -202,6 +206,7 @@ class _ActiveProgramCard extends StatelessWidget {
   final List<String> exerciseNames;
   final VoidCallback onTap;
   final VoidCallback? onStart;
+  final WeekPlanStatus? todayStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -237,13 +242,16 @@ class _ActiveProgramCard extends StatelessWidget {
               ),
               if (day != null) ...[
                 const SizedBox(height: 8),
-                Text(
-                  '${l10n.homeUpcomingDay}: '
-                  '${_weekdayLabel(l10n, day!.dayOfWeek)}',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.primary,
+                if (todayStatus != null)
+                  StatusBadge(status: todayStatus!)
+                else
+                  Text(
+                    '${l10n.homeUpcomingDay}: '
+                    '${_weekdayLabel(l10n, day!.dayOfWeek)}',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
-                ),
               ],
               if (exerciseNames.isNotEmpty) ...[
                 const SizedBox(height: 8),
