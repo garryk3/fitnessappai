@@ -15,6 +15,7 @@ import 'package:fitnessappai/core/database/tables/muscle_groups.dart';
 import 'package:fitnessappai/core/database/tables/program_day_exercises.dart';
 import 'package:fitnessappai/core/database/tables/program_days.dart';
 import 'package:fitnessappai/core/database/tables/program_warning_dismissals.dart';
+import 'package:fitnessappai/core/database/tables/plan_schedule.dart';
 import 'package:fitnessappai/core/database/tables/programs.dart';
 import 'package:fitnessappai/core/database/tables/schedule_marks.dart';
 import 'package:fitnessappai/core/database/tables/user_contraindications.dart';
@@ -45,7 +46,9 @@ part 'app_database.g.dart';
 /// v9: колонки `programs.activatedAt` и `programs.deactivatedAt` — период
 /// активности программы (для плана). Старым программам активация проставляется
 /// по дате создания.
-const int appDatabaseSchemaVersion = 10;
+/// v10: колонка `programs.exerciseRestSeconds`.
+/// v11: таблица `plan_schedule` — ручное назначение программы на дату.
+const int appDatabaseSchemaVersion = 11;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -70,6 +73,7 @@ const int appDatabaseSchemaVersion = 10;
     ScheduleMarks,
     BodyMeasurements,
     ProgramWarningDismissals,
+    PlanSchedule,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -122,6 +126,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 10) {
         await m.addColumn(programs, programs.exerciseRestSeconds);
+      }
+      if (from < 11) {
+        await m.createTable(planSchedule);
       }
     },
     beforeOpen: (details) async {

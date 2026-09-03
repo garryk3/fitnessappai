@@ -18,6 +18,7 @@ import 'package:fitnessappai/features/profile/domain/user_profile_repository.dar
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
@@ -44,6 +45,9 @@ void registerTestServices() {
   );
   locator.registerLazySingleton<ProgramRepository>(() => ProgramRepository(db));
   locator.registerLazySingleton<WorkoutRepository>(() => WorkoutRepository(db));
+  locator.registerLazySingleton<PlanScheduleRepository>(
+    () => PlanScheduleRepository(db),
+  );
   locator.registerLazySingleton<PlanViewSettingsRepository>(
     () => PlanViewSettingsRepository(db),
   );

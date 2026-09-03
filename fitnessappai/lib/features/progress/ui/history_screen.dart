@@ -13,7 +13,7 @@ import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-/// Экран списка тренировок: сессии, свежие сверху.
+/// Экран истории: месячный календарь с подсветкой дней тренировок.
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key, this.workoutRepository});
 
@@ -25,10 +25,13 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   late final HistoryController _controller;
+  late DateTime _currentMonth;
 
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _currentMonth = DateTime(now.year, now.month);
     _controller = HistoryController(
       workoutRepository:
           widget.workoutRepository ?? locator.get<WorkoutRepository>(),
@@ -39,6 +42,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _previousMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+    });
   }
 
   @override
@@ -72,8 +87,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (_controller.isLoading.value) {
       return const Center(child: CircularProgressIndicator());
     }
-    final items = _controller.items.value;
-    if (items.isEmpty) {
+    final dates = _controller.workoutDates.value;
+    if (dates.isEmpty) {
       return Center(
         child: Text(
           l10n.historyEmpty,
@@ -81,76 +96,152 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       );
     }
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: items.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, index) => _HistoryCard(item: items[index]),
+    return Column(
+      children: [
+        _MonthSwitcher(
+          currentMonth: _currentMonth,
+          onPrevious: _previousMonth,
+          onNext: _nextMonth,
+        ),
+        Expanded(
+          child: _MonthGrid(
+            currentMonth: _currentMonth,
+            workoutDates: dates,
+            onDayTap: (date) => _openDay(context, date),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openDay(BuildContext context, DateTime date) {
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
+    context.push(
+      '/progress/day?start=${start.millisecondsSinceEpoch}&end=${end.millisecondsSinceEpoch}',
     );
   }
 }
 
-class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({required this.item});
+/// Переключатель месяцев: стрелки + заголовок.
+class _MonthSwitcher extends StatelessWidget {
+  const _MonthSwitcher({
+    required this.currentMonth,
+    required this.onPrevious,
+    required this.onNext,
+  });
 
-  final HistoryItem item;
+  final DateTime currentMonth;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final session = item.session;
-    final date = DateFormat('d MMMM yyyy', 'ru').format(session.performedDate);
-    final minutes = item.duration.inMinutes;
-    return Card(
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/history/${session.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      session.programName,
-                      style: theme.textTheme.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (session.variant == WorkoutVariant.alternative)
-                    Chip(
-                      visualDensity: VisualDensity.compact,
-                      label: Text(
-                        l10n.programBuilderAlternativeSet,
-                        style: theme.textTheme.labelSmall,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${l10n.historyExercisesCount(item.exercisesCount)}'
-                ' · ${l10n.historyDuration(minutes)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+    final monthName = DateFormat('LLLL yyyy', 'ru').format(currentMonth);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed: onPrevious,
+          ),
+          Expanded(
+            child: Text(
+              monthName,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          IconButton(icon: const Icon(Icons.chevron_right), onPressed: onNext),
+        ],
+      ),
+    );
+  }
+}
+
+/// Сетка месяца: 7 колонок (пн–вс), строки по неделям.
+class _MonthGrid extends StatelessWidget {
+  const _MonthGrid({
+    required this.currentMonth,
+    required this.workoutDates,
+    required this.onDayTap,
+  });
+
+  final DateTime currentMonth;
+  final Set<DateTime> workoutDates;
+  final void Function(DateTime date) onDayTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final year = currentMonth.year;
+    final month = currentMonth.month;
+    final firstDay = DateTime(year, month, 1);
+    final lastDay = DateTime(year, month + 1, 0);
+    final daysInMonth = lastDay.day;
+    // Понедельник = 0, воскресенье = 6.
+    final startWeekday = (firstDay.weekday - 1) % 7;
+
+    final cells = <Widget>[];
+    // Заголовки дней недели.
+    for (final label in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']) {
+      cells.add(
+        Center(
+          child: Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
-      ),
+      );
+    }
+    // Пустые ячейки до первого дня.
+    for (var i = 0; i < startWeekday; i++) {
+      cells.add(const SizedBox());
+    }
+    // Дни месяца.
+    for (var day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(year, month, day);
+      final hasWorkout = workoutDates.contains(date);
+      final today = DateTime.now();
+      final isToday =
+          date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day;
+      cells.add(
+        GestureDetector(
+          onTap: hasWorkout ? () => onDayTap(date) : null,
+          child: Container(
+            margin: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: hasWorkout ? theme.colorScheme.primaryContainer : null,
+              borderRadius: BorderRadius.circular(8),
+              border: isToday
+                  ? Border.all(color: theme.colorScheme.primary, width: 2)
+                  : null,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$day',
+              style: TextStyle(
+                color: hasWorkout
+                    ? theme.colorScheme.onPrimaryContainer
+                    : theme.colorScheme.onSurface,
+                fontWeight: hasWorkout ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return GridView.count(
+      crossAxisCount: 7,
+      childAspectRatio: 1 / 1.2,
+      physics: const NeverScrollableScrollPhysics(),
+      children: cells,
     );
   }
 }

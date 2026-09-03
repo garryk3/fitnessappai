@@ -9,6 +9,17 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 
+/// Статус разрешений на уведомления.
+class NotificationPermissionStatus {
+  const NotificationPermissionStatus({
+    required this.notificationsEnabled,
+    required this.exactAlarmsEnabled,
+  });
+
+  final bool notificationsEnabled;
+  final bool exactAlarmsEnabled;
+}
+
 /// Управление еженедельными уведомлениями о тренировочных днях.
 ///
 /// Планирование через [FlutterLocalNotificationsPlugin] с повторением
@@ -31,6 +42,50 @@ class ReminderService {
   static const String _iconName = 'ic_stat_launcher';
 
   bool _initialized = false;
+
+  /// Статус разрешений на уведомления.
+  Future<NotificationPermissionStatus> checkPermissions() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android == null) {
+      return const NotificationPermissionStatus(
+        notificationsEnabled: true,
+        exactAlarmsEnabled: true,
+      );
+    }
+    final notificationsEnabled =
+        await android.areNotificationsEnabled() ?? false;
+    final exactAlarmsEnabled =
+        await android.canScheduleExactNotifications() ?? false;
+    return NotificationPermissionStatus(
+      notificationsEnabled: notificationsEnabled,
+      exactAlarmsEnabled: exactAlarmsEnabled,
+    );
+  }
+
+  /// Запрашивает разрешения на уведомления.
+  Future<NotificationPermissionStatus> requestPermissions() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android == null) {
+      return const NotificationPermissionStatus(
+        notificationsEnabled: true,
+        exactAlarmsEnabled: true,
+      );
+    }
+    final notificationsResult =
+        await android.requestNotificationsPermission() ?? false;
+    final exactAlarmsResult =
+        await android.requestExactAlarmsPermission() ?? false;
+    return NotificationPermissionStatus(
+      notificationsEnabled: notificationsResult,
+      exactAlarmsEnabled: exactAlarmsResult,
+    );
+  }
 
   /// Инициализирует часовой пояс и плагин, запрашивает разрешения.
   Future<void> initialize() async {

@@ -48,6 +48,11 @@ Future<void> bootstrap({
     log('Ошибка инициализации напоминаний', error: e, name: 'bootstrap');
   }
   try {
+    await sl.get<ReminderService>().rescheduleAll();
+  } catch (e) {
+    log('Ошибка перепланирования напоминаний', error: e, name: 'bootstrap');
+  }
+  try {
     restoredCheckpoint = await WorkoutCheckpoint.load();
   } catch (e) {
     log('Не удалось загрузить checkpoint', error: e, name: 'bootstrap');

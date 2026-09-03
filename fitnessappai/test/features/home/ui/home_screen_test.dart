@@ -179,7 +179,8 @@ void main() {
 
     expect(find.text('Силовая'), findsOneWidget);
     expect(find.text('Жим штанги'), findsOneWidget);
-    expect(find.textContaining('Ближайший день'), findsOneWidget);
+    // Понедельник = день тренировки: показывается бейдж «Запланировано».
+    expect(find.textContaining('Запланировано'), findsOneWidget);
   });
 
   testWidgets(
@@ -278,5 +279,70 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('settings-route'), findsOneWidget);
+  });
+
+  testWidgets(
+    'бейдж «Запланировано» на карточке когда сегодня день тренировки',
+    (WidgetTester tester) async {
+      final exId = await insertExercise('Жим штанги');
+      final program = await createProgram(name: 'Сила', dayOfWeek: 1);
+      final day = (await programRepo.getDays(program.id!)).single;
+      await programRepo.addExerciseToDay(day.id!, exId);
+      await programRepo.setActive(program.id!);
+
+      // fixedNow = Aug 10 2026, понедельник = dayOfWeek 1.
+      await pumpHome(tester);
+
+      expect(find.text('Сила'), findsOneWidget);
+      expect(find.text('Запланировано'), findsOneWidget);
+    },
+  );
+
+  testWidgets('бейдж «Выполнено» на карточке когда тренировка завершена', (
+    WidgetTester tester,
+  ) async {
+    final program = await createProgram(name: 'Сила', dayOfWeek: 1);
+    final day = (await programRepo.getDays(program.id!)).single;
+    await programRepo.setActive(program.id!);
+
+    // Выполняем тренировку Aug 10 (сегодня).
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        programName: 'Сила',
+        programDayId: day.id!,
+        dayIndex: 0,
+        performedDate: DateTime(2026, 8, 10),
+        startedAt: DateTime(2026, 8, 10, 10),
+        endedAt: DateTime(2026, 8, 10, 11),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseName: 'Жим',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 10,
+          completedAt: DateTime(2026, 8, 10, 10),
+        ),
+      ],
+    );
+
+    await pumpHome(tester);
+
+    expect(find.text('Сила'), findsWidgets);
+    expect(find.text('Выполнено'), findsOneWidget);
+  });
+
+  testWidgets('текст «Ближайший день» когда сегодня не день тренировки', (
+    WidgetTester tester,
+  ) async {
+    // Программа привязана к среде (3), fixedNow = понедельник (1).
+    final program = await createProgram(name: 'Кардио', dayOfWeek: 3);
+    await programRepo.setActive(program.id!);
+
+    await pumpHome(tester);
+
+    expect(find.text('Кардио'), findsOneWidget);
+    expect(find.textContaining('Ближайший день'), findsOneWidget);
   });
 }

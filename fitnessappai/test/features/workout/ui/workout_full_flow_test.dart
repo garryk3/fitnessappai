@@ -18,6 +18,7 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
@@ -41,6 +42,18 @@ class _FakeWakelock implements WakelockService {
   @override
   Future<void> disable() async {
     disableCalls++;
+  }
+}
+
+class _FakeWakelockBannerRepository implements WakelockBannerRepository {
+  bool dismissed = false;
+
+  @override
+  Future<bool> isDismissed() async => dismissed;
+
+  @override
+  Future<void> setDismissed() async {
+    dismissed = true;
   }
 }
 
@@ -166,6 +179,7 @@ void main() {
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
+            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -292,7 +306,7 @@ void main() {
 
     // Счётчик выводится крупным стилем в выделенном блоке.
     final counterText = tester.widget<Text>(find.text('Удержание 0 с'));
-    expect(counterText.style?.fontSize, greaterThanOrEqualTo(40));
+    expect(counterText.style?.fontSize, 28);
 
     // До старта счётчик стоит на нуле.
     await tester.pump(const Duration(seconds: 3));

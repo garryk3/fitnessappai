@@ -7,6 +7,7 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 
 /// Последняя тренировка на домашнем экране.
 class HomeWorkoutItem {
@@ -26,11 +27,15 @@ class ActiveProgramInfo {
     required this.program,
     required this.upcomingDay,
     required this.exerciseNames,
+    this.todayStatus,
   });
 
   final Program program;
   final ProgramDay? upcomingDay;
   final List<String> exerciseNames;
+
+  /// Статус тренировки на сегодня, если ближайший день совпадает с сегодняшним.
+  final WeekPlanStatus? todayStatus;
 }
 
 /// Управляет домашним экраном: активные программы, ближайшие дни,
@@ -76,19 +81,43 @@ class HomeController {
           (await programRepository.getPrograms()).isNotEmpty;
 
       final infos = <ActiveProgramInfo>[];
-      final today = _dateOnly(_now()).weekday;
+      final today = _dateOnly(_now());
+      final todayWeekday = today.weekday;
+      final weekStart = today.subtract(Duration(days: today.weekday - 1));
       for (final program in allActive) {
         final detail = await programRepository.getProgram(program.id!);
         if (detail == null) {
           continue;
         }
-        final upcomingDay = _findUpcomingDay(detail.days, today);
+        final upcomingDay = _findUpcomingDay(detail.days, todayWeekday);
         final exerciseNames = await _exerciseNamesOf(detail, upcomingDay);
+
+        // Вычисляем статус тренировки на сегодня.
+        WeekPlanStatus? todayStatus;
+        if (upcomingDay != null &&
+            upcomingDay.dayOfWeek == todayWeekday &&
+            upcomingDay.id != null) {
+          final sessions = await workoutRepository.getSessions(
+            upcomingDay.id!,
+            weekStart,
+          );
+          if (sessions.isNotEmpty) {
+            final latest = sessions.first;
+            final sameDay = _sameDay(latest.performedDate, today);
+            todayStatus = sameDay
+                ? WeekPlanStatus.performed
+                : WeekPlanStatus.rescheduled;
+          } else {
+            todayStatus = WeekPlanStatus.pending;
+          }
+        }
+
         infos.add(
           ActiveProgramInfo(
             program: program,
             upcomingDay: upcomingDay,
             exerciseNames: exerciseNames,
+            todayStatus: todayStatus,
           ),
         );
       }
@@ -166,3 +195,6 @@ class HomeController {
 
 DateTime _dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
+
+bool _sameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
