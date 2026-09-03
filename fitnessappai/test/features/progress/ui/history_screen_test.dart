@@ -237,6 +237,23 @@ void main() {
     expect(copiedJson, isNotNull);
     expect(copiedJson, startsWith('{"type": "history"'));
   });
+
+  testWidgets('календарь не обрезается на квадратном экране', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    // Последний день месяца должен быть виден (не обрезан).
+    final lastDay = DateTime(now.year, now.month + 1, 0).day;
+    expect(find.text('$lastDay'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 /// Сервис экспорта, возвращающий фиксированный JSON без обращения к БД.

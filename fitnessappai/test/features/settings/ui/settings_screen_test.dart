@@ -9,10 +9,13 @@ import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/settings/domain/notification_settings_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/settings/ui/settings_screen.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
+import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -48,6 +51,29 @@ class _FakeSyncService implements SyncService {
   }
 }
 
+class _FakeReminderService extends ReminderService {
+  _FakeReminderService({
+    required super.repository,
+    required this._status,
+  });
+
+  NotificationPermissionStatus _status;
+  int requestCalls = 0;
+
+  @override
+  Future<NotificationPermissionStatus> checkPermissions() async => _status;
+
+  @override
+  Future<NotificationPermissionStatus> requestPermissions() async {
+    requestCalls++;
+    _status = const NotificationPermissionStatus(
+      notificationsEnabled: true,
+      exactAlarmsEnabled: true,
+    );
+    return _status;
+  }
+}
+
 void main() {
   late _FakeSyncService service;
   late String? pickedPath;
@@ -72,6 +98,7 @@ void main() {
     Future<bool> Function(String path)? saveFile,
     SoundSettingsController? soundController,
     UpdateCheckController? updateController,
+    NotificationSettingsController? notificationController,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1.0;
@@ -102,6 +129,7 @@ void main() {
                 service: _FakeUpdateService(),
                 loadVersion: () async => '1.0.0',
               ),
+          notificationController: notificationController,
         ),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -496,4 +524,36 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'уведомления: текст в одну строку и кнопка ниже на узком экране',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final reminder = _FakeReminderService(
+        repository: WorkoutReminderRepository(db),
+        status: const NotificationPermissionStatus(
+          notificationsEnabled: false,
+          exactAlarmsEnabled: false,
+        ),
+      );
+      final notificationController = NotificationSettingsController(
+        reminderService: reminder,
+      );
+      await pumpScreen(tester, notificationController: notificationController);
+
+      expect(find.text('Уведомления отключены'), findsOneWidget);
+      expect(find.text('Разрешить уведомления'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.ensureVisible(find.text('Разрешить уведомления'));
+      await tester.tap(find.text('Разрешить уведомления'));
+      await tester.pumpAndSettle();
+
+      expect(reminder.requestCalls, 1);
+      expect(find.text('Уведомления включены'), findsOneWidget);
+    },
+  );
 }
