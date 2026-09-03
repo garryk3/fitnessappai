@@ -85,6 +85,13 @@ void main() {
     return (await programRepo.getDays(created.id!)).first;
   }
 
+  Future<ProgramDay> createManualDay({String name = 'Ручная'}) async {
+    final created = await programRepo.create(program(name), [
+      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: null),
+    ]);
+    return (await programRepo.getDays(created.id!)).first;
+  }
+
   DateTime mondayOf(DateTime d) {
     final day = DateTime(d.year, d.month, d.day);
     return day.subtract(Duration(days: d.weekday - 1));
@@ -379,6 +386,58 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Август 2026'), findsOneWidget);
     });
+  });
+
+  testWidgets('текущий день в неделе выделен цветом', (tester) async {
+    // Нужна хотя бы одна запись, чтобы недельная сетка отобразилась.
+    await createDay(fixedNow.weekday, name: 'Постоянная');
+    await pumpPlan(tester);
+
+    // fixedNow = понедельник 10.08.2026 — это «сегодня» в текущей неделе.
+    final colorScheme = Theme.of(
+      tester.element(find.text('10').first),
+    ).colorScheme;
+    expect(colorScheme, isNotNull);
+
+    // Настоящий день имеет значение 10 с primary-цветом — выделен.
+    final todayText = tester.widget<Text>(find.text('10').first);
+    expect(todayText.style?.color, colorScheme.primary);
+  });
+
+  testWidgets('крестик отмены только для ручных назначений', (tester) async {
+    // Постоянная программа привязана к среде (не перекрывается с понедельником).
+    await createDay(DateTime.wednesday, name: 'Постоянная');
+    // Ручное назначение (dayOfWeek == null) — показывается на «сегодня».
+    await createManualDay(name: 'Ручная');
+    await pumpPlan(tester);
+
+    expect(
+      find.descendant(
+        of: find.widgetWithText(Card, 'Ручная'),
+        matching: find.byIcon(Icons.close),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.widgetWithText(Card, 'Постоянная'),
+        matching: find.byIcon(Icons.close),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('тап по пустому дню недели открывает планирование', (
+    tester,
+  ) async {
+    // Постоянная программа привязана к понедельнику — вторник 11 пуст.
+    await createDay(fixedNow.weekday, name: 'Постоянная');
+    await pumpPlan(tester);
+
+    await tester.tap(find.text('11'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsWidgets);
   });
 }
 

@@ -84,6 +84,18 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   Future<void> _start(WeekPlanItem item) =>
       startPlannedWorkout(context, _controller, item);
 
+  Future<void> _cancel(WeekPlanItem item) =>
+      _controller.cancelSchedule(item.programDayId, item.scheduledDate);
+
+  Future<void> _showScheduleSheetForWeek(
+    BuildContext context,
+    WeekPlanController controller,
+    DateTime date,
+    AppLocalizations l10n,
+  ) {
+    return _showScheduleSheet(context, controller, date, l10n);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -170,6 +182,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             onStart: _start,
             onSkip: _skip,
             onUnskip: _unskip,
+            onCancel: _cancel,
+            onEmptyDayTap: (date) =>
+                _showScheduleSheetForWeek(context, controller, date, l10n),
           );
         }
         return _WeekList(
@@ -179,6 +194,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           onStart: _start,
           onSkip: _skip,
           onUnskip: _unskip,
+          onCancel: _cancel,
+          onEmptyDayTap: (date) =>
+              _showScheduleSheetForWeek(context, controller, date, l10n),
         );
       },
     );
@@ -374,6 +392,8 @@ class _WeekGrid extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    required this.onCancel,
+    this.onEmptyDayTap,
   });
 
   final List<DateTime> days;
@@ -382,6 +402,10 @@ class _WeekGrid extends StatelessWidget {
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
+  final _WorkoutAction onCancel;
+
+  /// Тап по пустому дню — открыть планирование.
+  final void Function(DateTime date)? onEmptyDayTap;
 
   @override
   Widget build(BuildContext context) {
@@ -399,6 +423,8 @@ class _WeekGrid extends StatelessWidget {
                 onStart: onStart,
                 onSkip: onSkip,
                 onUnskip: onUnskip,
+                onCancel: onCancel,
+                onEmptyDayTap: onEmptyDayTap,
               ),
             ),
             if (i < days.length - 1) const SizedBox(width: 8),
@@ -417,6 +443,8 @@ class _WeekList extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    required this.onCancel,
+    this.onEmptyDayTap,
   });
 
   final List<DateTime> days;
@@ -425,6 +453,10 @@ class _WeekList extends StatelessWidget {
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
+  final _WorkoutAction onCancel;
+
+  /// Тап по пустому дню — открыть планирование.
+  final void Function(DateTime date)? onEmptyDayTap;
 
   @override
   Widget build(BuildContext context) {
@@ -442,6 +474,8 @@ class _WeekList extends StatelessWidget {
             onStart: onStart,
             onSkip: onSkip,
             onUnskip: onUnskip,
+            onCancel: onCancel,
+            onEmptyDayTap: onEmptyDayTap,
           ),
         );
       },
@@ -457,6 +491,8 @@ class _DayColumn extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    required this.onCancel,
+    this.onEmptyDayTap,
   });
 
   final DateTime date;
@@ -465,17 +501,19 @@ class _DayColumn extends StatelessWidget {
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
+  final _WorkoutAction onCancel;
+
+  /// Тап по пустому дню — открыть планирование.
+  final void Function(DateTime date)? onEmptyDayTap;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _DayHeader(date: date, isToday: isToday),
-        const SizedBox(height: 8),
-        if (items.isEmpty)
-          const SizedBox(height: 24)
-        else
+        if (items.isNotEmpty) ...[
+          _DayHeader(date: date, isToday: isToday),
+          const SizedBox(height: 8),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -488,7 +526,17 @@ class _DayColumn extends StatelessWidget {
                 onStart: onStart,
                 onSkip: onSkip,
                 onUnskip: onUnskip,
+                onCancel: onCancel,
               ),
+            ),
+          ),
+        ] else
+          GestureDetector(
+            onTap: onEmptyDayTap == null ? null : () => onEmptyDayTap!(date),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: _DayHeader(date: date, isToday: isToday),
             ),
           ),
       ],
@@ -504,6 +552,8 @@ class _DayCard extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    required this.onCancel,
+    this.onEmptyDayTap,
   });
 
   final DateTime date;
@@ -512,32 +562,43 @@ class _DayCard extends StatelessWidget {
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
+  final _WorkoutAction onCancel;
+
+  /// Тап по пустому дню — открыть планирование.
+  final void Function(DateTime date)? onEmptyDayTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _DayHeader(date: date, isToday: isToday),
-            if (items.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              for (final item in items)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _PlannedWorkoutCard(
-                    item: item,
-                    isToday: isToday,
-                    onStart: onStart,
-                    onSkip: onSkip,
-                    onUnskip: onUnskip,
+      child: InkWell(
+        onTap: items.isEmpty
+            ? (onEmptyDayTap == null ? null : () => onEmptyDayTap!(date))
+            : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DayHeader(date: date, isToday: isToday),
+              if (items.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                for (final item in items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _PlannedWorkoutCard(
+                      item: item,
+                      isToday: isToday,
+                      onStart: onStart,
+                      onSkip: onSkip,
+                      onUnskip: onUnskip,
+                      onCancel: onCancel,
+                    ),
                   ),
-                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -555,7 +616,7 @@ class _DayHeader extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Column(
+    final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -592,6 +653,19 @@ class _DayHeader extends StatelessWidget {
         ),
       ],
     );
+    if (!isToday) {
+      return header;
+    }
+    // Текущий день выделяем цветным блоком для наглядности.
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: header,
+    );
   }
 }
 
@@ -602,6 +676,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    this.onCancel,
   });
 
   final WeekPlanItem item;
@@ -609,12 +684,20 @@ class _PlannedWorkoutCard extends StatelessWidget {
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
+  final _WorkoutAction? onCancel;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final status = item.status;
+
+    // Крестик отмены показываем только для ручных назначений (dayOfWeek == null)
+    // в статусе ожидания — постоянные программы привязаны к дню недели.
+    final showCancel =
+        status == WeekPlanStatus.pending &&
+        item.dayOfWeek == null &&
+        onCancel != null;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -633,7 +716,14 @@ class _PlannedWorkoutCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
+                if (showCancel)
+                  IconButton(
+                    onPressed: () => onCancel!(item),
+                    tooltip: l10n.weekPlanRemove,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.close, size: 18),
+                  ),
+                if (showCancel) const SizedBox(width: 4),
                 StatusBadge(status: status),
               ],
             ),

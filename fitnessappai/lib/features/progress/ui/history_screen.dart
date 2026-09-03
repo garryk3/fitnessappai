@@ -237,11 +237,25 @@ class _MonthGrid extends StatelessWidget {
         ),
       );
     }
-    return GridView.count(
-      crossAxisCount: 7,
-      childAspectRatio: 1 / 1.2,
-      physics: const NeverScrollableScrollPhysics(),
-      children: cells,
+    // Дополняем пустыми ячейками до кратного 7 количества (для заполнения сетки).
+    while (cells.length % 7 != 0) {
+      cells.add(const SizedBox());
+    }
+    // Каждая из строк (заголовок + недели) занимает равную долю высоты,
+    // каждая ячейка в строке — равную долю ширины. Сетка подстраивается
+    // под доступную высоту и не обрезается на квадратных экранах.
+    return Column(
+      children: [
+        for (var row = 0; row < cells.length ~/ 7; row++)
+          Expanded(
+            child: Row(
+              children: [
+                for (var col = 0; col < 7; col++)
+                  Expanded(child: cells[row * 7 + col]),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
