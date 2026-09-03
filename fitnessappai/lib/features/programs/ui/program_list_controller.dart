@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_initializing_formals
 import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
