@@ -23,4 +23,7 @@ class Programs extends Table {
 
   /// Пауза в секундах между упражнениями (null — не задана).
   IntColumn get exerciseRestSeconds => integer().nullable()();
+
+  /// Путь к файлу изображения программы (null — изображения нет).
+  TextColumn get imagePath => text().nullable()();
 }

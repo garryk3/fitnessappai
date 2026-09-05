@@ -48,7 +48,8 @@ part 'app_database.g.dart';
 /// по дате создания.
 /// v10: колонка `programs.exerciseRestSeconds`.
 /// v11: таблица `plan_schedule` — ручное назначение программы на дату.
-const int appDatabaseSchemaVersion = 11;
+/// v12: колонка `programs.imagePath` — изображение программы.
+const int appDatabaseSchemaVersion = 12;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -129,6 +130,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11) {
         await m.createTable(planSchedule);
+      }
+      if (from < 12) {
+        await m.addColumn(programs, programs.imagePath);
       }
     },
     beforeOpen: (details) async {

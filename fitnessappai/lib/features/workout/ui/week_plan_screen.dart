@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
+import 'package:fitnessappai/core/ui/program_thumbnail.dart';
 import 'package:fitnessappai/core/ui/status_badge.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -140,8 +141,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     return _WeekSwitcher(
       label: _weekRangeLabel(days.first, days.last, l10n),
-      onPrev: () => controller.shiftWeek(-1),
-      onNext: () => controller.shiftWeek(1),
+      onPrev: controller.canGoPrevWeek ? () => controller.shiftWeek(-1) : null,
+      onNext: controller.canGoNextWeek ? () => controller.shiftWeek(1) : null,
     );
   }
 
@@ -191,8 +192,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   ) {
     return _MonthSwitcher(
       label: _monthLabel(controller.monthStart.value),
-      onPrev: () => controller.shiftMonth(-1),
-      onNext: () => controller.shiftMonth(1),
+      onPrev: controller.canGoPrevMonth
+          ? () => controller.shiftMonth(-1)
+          : null,
+      onNext: controller.canGoNextMonth ? () => controller.shiftMonth(1) : null,
     );
   }
 
@@ -292,8 +295,8 @@ class _WeekSwitcher extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
+  final VoidCallback? onPrev;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -332,8 +335,8 @@ class _MonthSwitcher extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
+  final VoidCallback? onPrev;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -625,6 +628,8 @@ class _PlannedWorkoutCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                ProgramThumbnail(imagePath: item.imagePath, size: 40),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     item.programName,
@@ -634,7 +639,12 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                StatusBadge(status: status),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: StatusBadge(status: status),
+                  ),
+                ),
               ],
             ),
             if (status == WeekPlanStatus.pending) ...[

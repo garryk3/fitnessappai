@@ -3217,6 +3217,17 @@ class $ProgramsTable extends Programs
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3229,6 +3240,7 @@ class $ProgramsTable extends Programs
     activatedAt,
     deactivatedAt,
     exerciseRestSeconds,
+    imagePath,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3281,6 +3293,12 @@ class $ProgramsTable extends Programs
           data['exercise_rest_seconds']!,
           _exerciseRestSecondsMeta,
         ),
+      );
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
       );
     }
     return context;
@@ -3340,6 +3358,10 @@ class $ProgramsTable extends Programs
         DriftSqlType.int,
         data['${effectivePrefix}exercise_rest_seconds'],
       ),
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      ),
     );
   }
 
@@ -3379,6 +3401,9 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
 
   /// Пауза в секундах между упражнениями (null — не задана).
   final int? exerciseRestSeconds;
+
+  /// Путь к файлу изображения программы (null — изображения нет).
+  final String? imagePath;
   const ProgramRow({
     required this.id,
     required this.name,
@@ -3390,6 +3415,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     this.activatedAt,
     this.deactivatedAt,
     this.exerciseRestSeconds,
+    this.imagePath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3422,6 +3448,9 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     if (!nullToAbsent || exerciseRestSeconds != null) {
       map['exercise_rest_seconds'] = Variable<int>(exerciseRestSeconds);
     }
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
     return map;
   }
 
@@ -3443,6 +3472,9 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       exerciseRestSeconds: exerciseRestSeconds == null && nullToAbsent
           ? const Value.absent()
           : Value(exerciseRestSeconds),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
     );
   }
 
@@ -3464,6 +3496,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       exerciseRestSeconds: serializer.fromJson<int?>(
         json['exerciseRestSeconds'],
       ),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
     );
   }
   @override
@@ -3480,6 +3513,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       'activatedAt': serializer.toJson<DateTime?>(activatedAt),
       'deactivatedAt': serializer.toJson<DateTime?>(deactivatedAt),
       'exerciseRestSeconds': serializer.toJson<int?>(exerciseRestSeconds),
+      'imagePath': serializer.toJson<String?>(imagePath),
     };
   }
 
@@ -3494,6 +3528,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     Value<DateTime?> activatedAt = const Value.absent(),
     Value<DateTime?> deactivatedAt = const Value.absent(),
     Value<int?> exerciseRestSeconds = const Value.absent(),
+    Value<String?> imagePath = const Value.absent(),
   }) => ProgramRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -3509,6 +3544,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     exerciseRestSeconds: exerciseRestSeconds.present
         ? exerciseRestSeconds.value
         : this.exerciseRestSeconds,
+    imagePath: imagePath.present ? imagePath.value : this.imagePath,
   );
   ProgramRow copyWithCompanion(ProgramsCompanion data) {
     return ProgramRow(
@@ -3530,6 +3566,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
       exerciseRestSeconds: data.exerciseRestSeconds.present
           ? data.exerciseRestSeconds.value
           : this.exerciseRestSeconds,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
     );
   }
 
@@ -3545,7 +3582,8 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
           ..write('isActive: $isActive, ')
           ..write('activatedAt: $activatedAt, ')
           ..write('deactivatedAt: $deactivatedAt, ')
-          ..write('exerciseRestSeconds: $exerciseRestSeconds')
+          ..write('exerciseRestSeconds: $exerciseRestSeconds, ')
+          ..write('imagePath: $imagePath')
           ..write(')'))
         .toString();
   }
@@ -3562,6 +3600,7 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
     activatedAt,
     deactivatedAt,
     exerciseRestSeconds,
+    imagePath,
   );
   @override
   bool operator ==(Object other) =>
@@ -3576,7 +3615,8 @@ class ProgramRow extends DataClass implements Insertable<ProgramRow> {
           other.isActive == this.isActive &&
           other.activatedAt == this.activatedAt &&
           other.deactivatedAt == this.deactivatedAt &&
-          other.exerciseRestSeconds == this.exerciseRestSeconds);
+          other.exerciseRestSeconds == this.exerciseRestSeconds &&
+          other.imagePath == this.imagePath);
 }
 
 class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
@@ -3590,6 +3630,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
   final Value<DateTime?> activatedAt;
   final Value<DateTime?> deactivatedAt;
   final Value<int?> exerciseRestSeconds;
+  final Value<String?> imagePath;
   const ProgramsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -3601,6 +3642,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     this.activatedAt = const Value.absent(),
     this.deactivatedAt = const Value.absent(),
     this.exerciseRestSeconds = const Value.absent(),
+    this.imagePath = const Value.absent(),
   });
   ProgramsCompanion.insert({
     this.id = const Value.absent(),
@@ -3613,6 +3655,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     this.activatedAt = const Value.absent(),
     this.deactivatedAt = const Value.absent(),
     this.exerciseRestSeconds = const Value.absent(),
+    this.imagePath = const Value.absent(),
   }) : name = Value(name),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
@@ -3627,6 +3670,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     Expression<int>? activatedAt,
     Expression<int>? deactivatedAt,
     Expression<int>? exerciseRestSeconds,
+    Expression<String>? imagePath,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3640,6 +3684,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
       if (deactivatedAt != null) 'deactivated_at': deactivatedAt,
       if (exerciseRestSeconds != null)
         'exercise_rest_seconds': exerciseRestSeconds,
+      if (imagePath != null) 'image_path': imagePath,
     });
   }
 
@@ -3654,6 +3699,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     Value<DateTime?>? activatedAt,
     Value<DateTime?>? deactivatedAt,
     Value<int?>? exerciseRestSeconds,
+    Value<String?>? imagePath,
   }) {
     return ProgramsCompanion(
       id: id ?? this.id,
@@ -3666,6 +3712,7 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
       activatedAt: activatedAt ?? this.activatedAt,
       deactivatedAt: deactivatedAt ?? this.deactivatedAt,
       exerciseRestSeconds: exerciseRestSeconds ?? this.exerciseRestSeconds,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 
@@ -3710,6 +3757,9 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
     if (exerciseRestSeconds.present) {
       map['exercise_rest_seconds'] = Variable<int>(exerciseRestSeconds.value);
     }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
     return map;
   }
 
@@ -3725,7 +3775,8 @@ class ProgramsCompanion extends UpdateCompanion<ProgramRow> {
           ..write('isActive: $isActive, ')
           ..write('activatedAt: $activatedAt, ')
           ..write('deactivatedAt: $deactivatedAt, ')
-          ..write('exerciseRestSeconds: $exerciseRestSeconds')
+          ..write('exerciseRestSeconds: $exerciseRestSeconds, ')
+          ..write('imagePath: $imagePath')
           ..write(')'))
         .toString();
   }
@@ -11499,6 +11550,7 @@ typedef $$ProgramsTableCreateCompanionBuilder =
       Value<DateTime?> activatedAt,
       Value<DateTime?> deactivatedAt,
       Value<int?> exerciseRestSeconds,
+      Value<String?> imagePath,
     });
 typedef $$ProgramsTableUpdateCompanionBuilder =
     ProgramsCompanion Function({
@@ -11512,6 +11564,7 @@ typedef $$ProgramsTableUpdateCompanionBuilder =
       Value<DateTime?> activatedAt,
       Value<DateTime?> deactivatedAt,
       Value<int?> exerciseRestSeconds,
+      Value<String?> imagePath,
     });
 
 final class $$ProgramsTableReferences
@@ -11642,6 +11695,11 @@ class $$ProgramsTableFilterComposer
 
   ColumnFilters<int> get exerciseRestSeconds => $composableBuilder(
     column: $table.exerciseRestSeconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11781,6 +11839,11 @@ class $$ProgramsTableOrderingComposer
     column: $table.exerciseRestSeconds,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProgramsTableAnnotationComposer
@@ -11831,6 +11894,9 @@ class $$ProgramsTableAnnotationComposer
     column: $table.exerciseRestSeconds,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
   Expression<T> programDaysRefs<T extends Object>(
     Expression<T> Function($$ProgramDaysTableAnnotationComposer a) f,
@@ -11952,6 +12018,7 @@ class $$ProgramsTableTableManager
                 Value<DateTime?> activatedAt = const Value.absent(),
                 Value<DateTime?> deactivatedAt = const Value.absent(),
                 Value<int?> exerciseRestSeconds = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
               }) => ProgramsCompanion(
                 id: id,
                 name: name,
@@ -11963,6 +12030,7 @@ class $$ProgramsTableTableManager
                 activatedAt: activatedAt,
                 deactivatedAt: deactivatedAt,
                 exerciseRestSeconds: exerciseRestSeconds,
+                imagePath: imagePath,
               ),
           createCompanionCallback:
               ({
@@ -11976,6 +12044,7 @@ class $$ProgramsTableTableManager
                 Value<DateTime?> activatedAt = const Value.absent(),
                 Value<DateTime?> deactivatedAt = const Value.absent(),
                 Value<int?> exerciseRestSeconds = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
               }) => ProgramsCompanion.insert(
                 id: id,
                 name: name,
@@ -11987,6 +12056,7 @@ class $$ProgramsTableTableManager
                 activatedAt: activatedAt,
                 deactivatedAt: deactivatedAt,
                 exerciseRestSeconds: exerciseRestSeconds,
+                imagePath: imagePath,
               ),
           withReferenceMapper: (p0) => p0
               .map(
