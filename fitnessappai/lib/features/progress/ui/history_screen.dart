@@ -5,10 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
+import 'package:fitnessappai/core/ui/program_thumbnail.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -32,9 +37,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     super.initState();
     final now = DateTime.now();
     _currentMonth = DateTime(now.year, now.month);
+    ProgramRepository? programRepository;
+    try {
+      programRepository = locator.get<ProgramRepository>();
+    } catch (_) {
+      programRepository = null;
+    }
     _controller = HistoryController(
       workoutRepository:
           widget.workoutRepository ?? locator.get<WorkoutRepository>(),
+      programRepository: programRepository,
     );
   }
 
@@ -50,7 +62,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
   }
 
+  bool get _canGoNextMonth {
+    final now = DateTime.now();
+    final current = DateTime(now.year, now.month);
+    return !_currentMonth.isAtSameMomentAs(current) &&
+        _currentMonth.isBefore(current);
+  }
+
   void _nextMonth() {
+    if (!_canGoNextMonth) {
+      return;
+    }
     setState(() {
       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
     });
@@ -101,7 +123,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         _MonthSwitcher(
           currentMonth: _currentMonth,
           onPrevious: _previousMonth,
-          onNext: _nextMonth,
+          onNext: _canGoNextMonth ? _nextMonth : null,
         ),
         Expanded(
           child: _MonthGrid(
@@ -133,7 +155,7 @@ class _MonthSwitcher extends StatelessWidget {
 
   final DateTime currentMonth;
   final VoidCallback onPrevious;
-  final VoidCallback onNext;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -252,10 +274,14 @@ class HistoryDetailScreen extends StatefulWidget {
     super.key,
     required this.sessionId,
     this.workoutRepository,
+    this.programRepository,
+    this.exerciseRepository,
   });
 
   final int sessionId;
   final WorkoutRepository? workoutRepository;
+  final ProgramRepository? programRepository;
+  final ExerciseRepository? exerciseRepository;
 
   @override
   State<HistoryDetailScreen> createState() => _HistoryDetailScreenState();
@@ -263,23 +289,65 @@ class HistoryDetailScreen extends StatefulWidget {
 
 class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
   late final WorkoutRepository _repository;
+  ProgramRepository? _programRepository;
+  ExerciseRepository? _exerciseRepository;
+  MediaCache? _mediaCache;
+  final Map<int, Exercise> _exercisesById = {};
   WorkoutSessionDetail? _detail;
+  String? _imagePath;
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
     _repository = widget.workoutRepository ?? locator.get<WorkoutRepository>();
+    try {
+      _programRepository =
+          widget.programRepository ?? locator.get<ProgramRepository>();
+    } catch (_) {
+      _programRepository = widget.programRepository;
+    }
+    try {
+      _exerciseRepository =
+          widget.exerciseRepository ?? locator.get<ExerciseRepository>();
+    } catch (_) {
+      _exerciseRepository = widget.exerciseRepository;
+    }
+    try {
+      _mediaCache = locator.get<MediaCache>();
+    } catch (_) {
+      _mediaCache = null;
+    }
     _load();
   }
 
   Future<void> _load() async {
     final detail = await _repository.getSession(widget.sessionId);
+    String? imagePath;
+    if (detail != null) {
+      final programId = detail.session.programId;
+      final repository = _programRepository;
+      if (programId != null && repository != null) {
+        final program = await repository.getProgram(programId);
+        imagePath = program?.program.imagePath;
+      }
+      final exerciseIds = detail.results
+          .map((r) => r.exerciseId)
+          .whereType<int>()
+          .toSet();
+      for (final id in exerciseIds) {
+        final exercise = await _exerciseRepository?.getById(id);
+        if (exercise != null) {
+          _exercisesById[id] = exercise;
+        }
+      }
+    }
     if (!mounted) {
       return;
     }
     setState(() {
       _detail = detail;
+      _imagePath = imagePath;
       _loading = false;
     });
   }
@@ -312,18 +380,32 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(session.programName, style: theme.textTheme.titleLarge),
-        const SizedBox(height: 4),
-        Text(
-          [
-            date,
-            if (session.variant == WorkoutVariant.alternative)
-              l10n.programBuilderAlternativeSet,
-            l10n.historyDuration(minutes),
-          ].join(' · '),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ProgramThumbnail(imagePath: _imagePath, size: 56),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(session.programName, style: theme.textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  Text(
+                    [
+                      date,
+                      if (session.variant == WorkoutVariant.alternative)
+                        l10n.programBuilderAlternativeSet,
+                      l10n.historyDuration(minutes),
+                    ].join(' · '),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         for (final entry in groups.entries) ...[
@@ -334,7 +416,22 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.key, style: theme.textTheme.titleSmall),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _ExerciseThumbnail(
+                        exercise: _exerciseOf(entry.value.first),
+                        mediaCache: _mediaCache,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          entry.key,
+                          style: theme.textTheme.titleSmall,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   for (final result in entry.value)
                     Padding(
@@ -362,6 +459,14 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
       groups.putIfAbsent(result.exerciseName, () => []).add(result);
     }
     return groups;
+  }
+
+  Exercise? _exerciseOf(WorkoutSetResult result) {
+    final id = result.exerciseId;
+    if (id == null) {
+      return null;
+    }
+    return _exercisesById[id];
   }
 
   String _formatSet(AppLocalizations l10n, WorkoutSetResult result) {
@@ -400,3 +505,55 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
 String _fmt(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toStringAsFixed(1);
+
+/// Миниатюра упражнения в деталях истории: заглушка с иконкой, если нет.
+class _ExerciseThumbnail extends StatelessWidget {
+  const _ExerciseThumbnail({this.exercise, this.mediaCache});
+
+  final Exercise? exercise;
+  final MediaCache? mediaCache;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const size = 32.0;
+    final exercise = this.exercise;
+    final mediaCache = this.mediaCache;
+    final provider = (exercise == null || mediaCache == null)
+        ? null
+        : mediaCache.imageFor(
+            exercise.thumbnailPath ?? exercise.animationPath,
+            blob: exercise.thumbnailBlob ?? exercise.animationBlob,
+            cacheWidth: 64,
+          );
+    if (provider == null) {
+      return _placeholder(theme, size);
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image(
+        image: provider,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _placeholder(theme, size),
+      ),
+    );
+  }
+
+  Widget _placeholder(ThemeData theme, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.fitness_center,
+        size: 18,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}

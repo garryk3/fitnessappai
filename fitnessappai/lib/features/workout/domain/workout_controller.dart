@@ -613,13 +613,20 @@ class WorkoutController {
     holdRunning.value = true;
     final startedAt = _clock();
     final generation = _generation;
+    final target = holdTargetSeconds.value!;
+    var completionNotified = false;
     _holdTimer?.cancel();
     _holdTimer = _timerFactory(const Duration(seconds: 1), (timer) {
       if (generation != _generation) {
         timer.cancel();
         return;
       }
-      holdElapsedSeconds.value = _clock().difference(startedAt).inSeconds;
+      final elapsed = _clock().difference(startedAt).inSeconds;
+      holdElapsedSeconds.value = elapsed;
+      if (!completionNotified && target > 0 && elapsed >= target) {
+        completionNotified = true;
+        _soundService?.playCompletion();
+      }
     });
   }
 

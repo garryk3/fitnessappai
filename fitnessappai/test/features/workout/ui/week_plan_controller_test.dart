@@ -146,4 +146,31 @@ void main() {
     );
     expect(items, hasLength(1));
   });
+
+  test('навигация плана ограничена ±1 неделей и ±1 месяцем', () async {
+    await controller.refresh();
+    // Текущий период — неделя с 10.08.2026, месяц август 2026.
+    expect(controller.canGoPrevWeek, isTrue);
+    expect(controller.canGoNextWeek, isTrue);
+    expect(controller.canGoPrevMonth, isTrue);
+    expect(controller.canGoNextMonth, isTrue);
+
+    controller.weekStart.value = DateTime(2026, 8, 17);
+    controller.monthStart.value = DateTime(2026, 9, 1);
+    expect(controller.canGoNextWeek, isFalse);
+    expect(controller.canGoPrevWeek, isTrue);
+    expect(controller.canGoNextMonth, isFalse);
+    expect(controller.canGoPrevMonth, isTrue);
+
+    controller.weekStart.value = DateTime(2026, 8, 3);
+    controller.monthStart.value = DateTime(2026, 7, 1);
+    expect(controller.canGoPrevWeek, isFalse);
+    expect(controller.canGoNextWeek, isTrue);
+    expect(controller.canGoPrevMonth, isFalse);
+    expect(controller.canGoNextMonth, isTrue);
+
+    // Дальше границы нельзя: флаги остаются заблокированными.
+    controller.weekStart.value = DateTime(2026, 8, 24);
+    expect(controller.canGoNextWeek, isFalse);
+  });
 }

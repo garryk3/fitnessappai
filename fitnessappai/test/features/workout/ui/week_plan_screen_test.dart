@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,9 +8,11 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
@@ -15,24 +20,103 @@ import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
+// 1×1 PNG (валидные байты для декодирования в тестах).
+final Uint8List _validPng = Uint8List.fromList(const [
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0xDA,
+  0x63,
+  0xFC,
+  0xCF,
+  0xC0,
+  0x50,
+  0x0F,
+  0x00,
+  0x04,
+  0x85,
+  0x01,
+  0x80,
+  0x84,
+  0xA9,
+  0x8C,
+  0x21,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
+]);
+
 void main() {
   late AppDatabase db;
   late ProgramRepository programRepo;
   late WorkoutRepository workoutRepo;
   late PlanScheduleRepository planScheduleRepo;
+  late Directory tempDir;
 
   /// Фиксированная «сегодня»-дата (понедельник) для детерминированных тестов.
   final DateTime fixedNow = DateTime(2026, 8, 10);
 
-  setUp(() {
+  setUp(() async {
     db = AppDatabase(executor: NativeDatabase.memory());
     programRepo = ProgramRepository(db);
     workoutRepo = WorkoutRepository(db);
     planScheduleRepo = PlanScheduleRepository(db);
+    tempDir = await Directory.systemTemp.createTemp('week_plan_screen_test');
+    locator.reset();
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
   });
 
   tearDown(() async {
     await db.close();
+    await tempDir.delete(recursive: true);
   });
 
   Future<void> pumpPlan(WidgetTester tester, {ThemeData? theme}) async {
@@ -69,19 +153,25 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Program program(String name) => Program(
+  Program program(String name, {String? imagePath}) => Program(
     name: name,
     daysCount: 1,
+    imagePath: imagePath,
     createdAt: DateTime(2024, 1, 1),
     updatedAt: DateTime(2024, 1, 1),
     isActive: true,
     activatedAt: DateTime(2024, 1, 1),
   );
 
-  Future<ProgramDay> createDay(int dayOfWeek, {String name = 'База'}) async {
-    final created = await programRepo.create(program(name), [
-      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: dayOfWeek),
-    ]);
+  Future<ProgramDay> createDay(
+    int dayOfWeek, {
+    String name = 'База',
+    String? imagePath,
+  }) async {
+    final created = await programRepo.create(
+      program(name, imagePath: imagePath),
+      [ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: dayOfWeek)],
+    );
     return (await programRepo.getDays(created.id!)).first;
   }
 
@@ -113,6 +203,46 @@ void main() {
     expect(find.text('Запланировано'), findsOneWidget);
     expect(find.text('Начать'), findsOneWidget);
     expect(find.text('Пропустить'), findsOneWidget);
+  });
+
+  testWidgets(
+    'изображение программы показывается на запланированной карточке',
+    (tester) async {
+      await tester.runAsync(() async {
+        await File('${tempDir.path}/plan.png').writeAsBytes(_validPng);
+      });
+      await createDay(
+        fixedNow.weekday,
+        name: 'Сплит',
+        imagePath: '${tempDir.path}/plan.png',
+      );
+      await pumpPlan(tester);
+
+      final card = find.ancestor(
+        of: find.text('Сплит'),
+        matching: find.byType(Card),
+      );
+      expect(
+        find.descendant(of: card, matching: find.byType(Image)),
+        findsWidgets,
+      );
+    },
+  );
+
+  testWidgets('без изображения на запланированной карточке — заглушка', (
+    tester,
+  ) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    final card = find.ancestor(
+      of: find.text('Сплит'),
+      matching: find.byType(Card),
+    );
+    expect(
+      find.descendant(of: card, matching: find.byIcon(Icons.fitness_center)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('после удаления программы айтем исчезает из плана', (
@@ -378,6 +508,24 @@ void main() {
       await pumpPlan(tester);
       await tester.pumpAndSettle();
       expect(find.text('Август 2026'), findsOneWidget);
+    });
+
+    testWidgets('после +1 недели стрелка вперёд отключается', (tester) async {
+      await pumpPlan(tester);
+
+      IconButton arrow(String tooltip) => tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byTooltip(tooltip),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(arrow('Следующая неделя').onPressed, isNotNull);
+
+      await tester.tap(find.byTooltip('Следующая неделя'));
+      await tester.pumpAndSettle();
+
+      expect(arrow('Следующая неделя').onPressed, isNull);
+      expect(find.byTooltip('Предыдущая неделя'), findsOneWidget);
     });
   });
 }

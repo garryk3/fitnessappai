@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:cross_file/cross_file.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +14,7 @@ import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -20,14 +25,99 @@ import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dar
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
+// 1×1 PNG (валидные байты для декодирования в тестах изображений).
+final Uint8List _validPng = Uint8List.fromList(const [
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0xDA,
+  0x63,
+  0xFC,
+  0xCF,
+  0xC0,
+  0x50,
+  0x0F,
+  0x00,
+  0x04,
+  0x85,
+  0x01,
+  0x80,
+  0x84,
+  0xA9,
+  0x8C,
+  0x21,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
+]);
+
 void main() {
   late AppDatabase db;
   late ProgramRepository repository;
   late ExerciseRepository exerciseRepository;
+  late MediaStore mediaStore;
+  late MediaCache mediaCache;
+  late Directory tempDir;
+  XFile? lastPicked;
 
-  setUp(() {
+  setUp(() async {
     db = AppDatabase(executor: NativeDatabase.memory());
     repository = ProgramRepository(db);
+    tempDir = await Directory.systemTemp.createTemp('program_builder_test');
+    mediaStore = MediaStore(
+      directoryProvider: () async => tempDir,
+      assetLoader: (path) async => Uint8List.fromList([1, 2, 3]),
+      filePicker: (fileType) async => lastPicked,
+    );
+    mediaCache = MediaCache();
     exerciseRepository = ExerciseRepository(db, MediaStore());
     locator.reset();
     locator.registerLazySingleton<WorkoutReminderRepository>(
@@ -37,7 +127,12 @@ void main() {
       () =>
           ReminderService(repository: locator.get<WorkoutReminderRepository>()),
     );
-    addTearDown(() => db.close());
+    locator.registerLazySingleton<MediaStore>(() => mediaStore);
+    locator.registerLazySingleton<MediaCache>(() => mediaCache);
+    addTearDown(() async {
+      await db.close();
+      await tempDir.delete(recursive: true);
+    });
   });
 
   Future<Exercise> createExercise(String name, ExerciseType type) {
@@ -52,7 +147,12 @@ void main() {
     );
   }
 
-  Future<void> pumpBuilder(WidgetTester tester, {int? programId}) async {
+  Future<void> pumpBuilder(
+    WidgetTester tester, {
+    int? programId,
+    MediaFilePicker? picker,
+    MediaStore? store,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
@@ -63,6 +163,8 @@ void main() {
           repository: repository,
           exerciseRepository: exerciseRepository,
           programId: programId,
+          mediaStore: store ?? mediaStore,
+          mediaCache: mediaCache,
         ),
       ),
     );
@@ -250,7 +352,7 @@ void main() {
   testWidgets('редактирование: загружает и сохраняет изменения', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.physicalSize = const Size(800, 1500);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
@@ -525,6 +627,9 @@ void main() {
   testWidgets(
     'реордер дней не ломает статус заполненности: кнопка ведёт к пустому дню',
     (tester) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       final exercise = await createExercise(
         'Жим штанги',
         ExerciseType.strength,
@@ -659,6 +764,9 @@ void main() {
   testWidgets(
     'заполненный день: кнопка ведёт к следующему незаполненному дню',
     (tester) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       await createExercise('Жим штанги', ExerciseType.strength);
       final router = GoRouter(
         initialLocation: '/home/programs/new',
@@ -826,6 +934,9 @@ void main() {
   testWidgets(
     'копирование дня дублирует упражнения и увеличивает количество дней',
     (tester) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       final exercise = await createExercise(
         'Жим штанги',
         ExerciseType.strength,
@@ -901,6 +1012,9 @@ void main() {
   testWidgets(
     'новая пустая программа удаляется при выходе без заполнения дней',
     (tester) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       final router = GoRouter(
         initialLocation: '/home/programs/new',
         routes: [
@@ -1010,6 +1124,87 @@ void main() {
     expect(find.text('Программы'), findsOneWidget);
   });
 
+  testWidgets('выход без изменений не показывает диалог', (tester) async {
+    final router = GoRouter(
+      initialLocation: '/home/programs/new',
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, state) =>
+              const Scaffold(body: Center(child: Text('Программы'))),
+          routes: [
+            GoRoute(
+              path: 'programs/new',
+              builder: (context, state) =>
+                  ProgramBuilderScreen(repository: repository),
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Ничего не меняем — выходим сразу.
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Выйти из редактора?'), findsNothing);
+    expect(find.text('Программы'), findsOneWidget);
+  });
+
+  testWidgets('редактирование без изменений не показывает диалог', (
+    tester,
+  ) async {
+    final created = await repository.create(program('Существующая'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final router = GoRouter(
+      initialLocation: '/home/programs/edit',
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, state) =>
+              const Scaffold(body: Center(child: Text('Программы'))),
+          routes: [
+            GoRoute(
+              path: 'programs/edit',
+              builder: (context, state) => ProgramBuilderScreen(
+                repository: repository,
+                programId: created.id,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Ничего не меняем — выходим сразу, диалог не показывается.
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Выйти из редактора?'), findsNothing);
+    expect(find.text('Программы'), findsOneWidget);
+  });
+
   testWidgets('режим удаления дней: кнопка в AppBar переключает режим', (
     tester,
   ) async {
@@ -1099,5 +1294,88 @@ void main() {
     expect(find.textContaining('День 1'), findsOneWidget);
     expect(find.textContaining('День 2'), findsOneWidget);
     expect(find.textContaining('День 3'), findsOneWidget);
+  });
+
+  testWidgets('выбор изображения программы сохраняет imagePath', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    lastPicked = XFile('${tempDir.path}/program.webp');
+    await tester.runAsync(
+      () => File('${tempDir.path}/program.webp').writeAsBytes(_validPng),
+    );
+
+    // Программа с заполненным днём, чтобы кнопка «Сохранить» была доступна.
+    final exercise = await createExercise('Жим', ExerciseType.strength);
+    final created = await repository.create(program('С изображением'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    final day = (await repository.getDays(created.id!)).first;
+    await repository.addExerciseToDay(day.id!, exercise.id!);
+
+    await pumpBuilder(tester, programId: created.id);
+
+    // Секция изображения отображается, картинки ещё нет.
+    expect(find.text('Изображение программы'), findsOneWidget);
+    expect(find.byTooltip('Удалить изображение'), findsNothing);
+
+    // Выбираем изображение.
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Выбрать изображение'));
+      for (var i = 0; i < 200; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        if (find.byTooltip('Удалить изображение').evaluate().isNotEmpty) {
+          return;
+        }
+      }
+    });
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byTooltip('Удалить изображение'), findsOneWidget);
+
+    // Сохраняем.
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final updated = await repository.getById(created.id!);
+    expect(updated!.imagePath, isNotNull);
+  });
+
+  testWidgets('удаление изображения программы обнуляет imagePath', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final imgPath = '${tempDir.path}/existing.webp';
+    await tester.runAsync(() => File(imgPath).writeAsBytes(_validPng));
+    final imageDesc = await createExercise('Тяга', ExerciseType.strength);
+    final created = await repository.create(
+      program('С изображением').copyWith(imagePath: imgPath),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
+    final day = (await repository.getDays(created.id!)).first;
+    await repository.addExerciseToDay(day.id!, imageDesc.id!);
+
+    await pumpBuilder(tester, programId: created.id);
+
+    // Изображение загружено, кнопка удаления есть.
+    expect(find.byTooltip('Удалить изображение'), findsOneWidget);
+
+    // Удаляем изображение.
+    await tester.tap(find.byTooltip('Удалить изображение'));
+    await tester.pump();
+    expect(find.byTooltip('Удалить изображение'), findsNothing);
+
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final updated = await repository.getById(created.id!);
+    expect(updated!.imagePath, isNull);
   });
 }

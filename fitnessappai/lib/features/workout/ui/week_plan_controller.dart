@@ -28,11 +28,15 @@ class WeekPlanItem {
     required this.dayOfWeek,
     required this.scheduledDate,
     required this.status,
+    this.imagePath,
   });
 
   final int programDayId;
   final int dayIndex;
   final String programName;
+
+  /// Путь к изображению программы (может отсутствовать).
+  final String? imagePath;
 
   /// День недели по расписанию: 1 = Пн … 7 = Вс, null — не привязан.
   final int? dayOfWeek;
@@ -115,6 +119,37 @@ class WeekPlanController {
     final month = monthStart.value;
     monthStart.value = DateTime(month.year, month.month + delta, 1);
     _load();
+  }
+
+  /// Можно ли сдвинуться ещё на неделю назад (ограничение навигации ±1).
+  bool get canGoPrevWeek => weekStart.value.isAfter(
+    _mondayOf(_dateOnly(_now())).subtract(const Duration(days: 7)),
+  );
+
+  /// Можно ли сдвинуться ещё на неделю вперёд (ограничение навигации ±1).
+  bool get canGoNextWeek => weekStart.value.isBefore(
+    _mondayOf(_dateOnly(_now())).add(const Duration(days: 7)),
+  );
+
+  /// Можно ли сдвинуться ещё на месяц назад (ограничение навигации ±1).
+  bool get canGoPrevMonth {
+    final refMonth = _currentMonthStart();
+    return monthStart.value.isAfter(
+      DateTime(refMonth.year, refMonth.month - 1, 1),
+    );
+  }
+
+  /// Можно ли сдвинуться ещё на месяц вперёд (ограничение навигации ±1).
+  bool get canGoNextMonth {
+    final refMonth = _currentMonthStart();
+    return monthStart.value.isBefore(
+      DateTime(refMonth.year, refMonth.month + 1, 1),
+    );
+  }
+
+  DateTime _currentMonthStart() {
+    final today = _dateOnly(_now());
+    return DateTime(today.year, today.month, 1);
   }
 
   /// Переключает режим отображения [mode] и перезагружает план.
@@ -204,6 +239,7 @@ class WeekPlanController {
                   programDayId: day.day.id!,
                   dayIndex: day.day.dayIndex,
                   programName: detail.program.name,
+                  imagePath: detail.program.imagePath,
                   dayOfWeek: null,
                   scheduledDate: now,
                   status: WeekPlanStatus.pending,
@@ -225,6 +261,7 @@ class WeekPlanController {
                   programDayId: day.day.id!,
                   dayIndex: day.day.dayIndex,
                   programName: detail.program.name,
+                  imagePath: detail.program.imagePath,
                   dayOfWeek: dayOfWeek,
                   scheduledDate: date,
                   status: WeekPlanStatus.pending,
@@ -262,6 +299,7 @@ class WeekPlanController {
             programDayId: entry.programDayId,
             dayIndex: day.dayIndex,
             programName: programDetail.program.name,
+            imagePath: programDetail.program.imagePath,
             dayOfWeek: null,
             scheduledDate: entry.scheduledDate,
             status: WeekPlanStatus.pending,
@@ -297,6 +335,7 @@ class WeekPlanController {
             programDayId: item.programDayId,
             dayIndex: item.dayIndex,
             programName: item.programName,
+            imagePath: item.imagePath,
             dayOfWeek: item.dayOfWeek,
             scheduledDate: item.scheduledDate,
             status: _statusOf(

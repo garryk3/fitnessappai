@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/ui/program_thumbnail.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -18,11 +20,13 @@ class DayDetailScreen extends StatefulWidget {
     required this.start,
     required this.end,
     this.workoutRepository,
+    this.programRepository,
   });
 
   final DateTime start;
   final DateTime end;
   final WorkoutRepository? workoutRepository;
+  final ProgramRepository? programRepository;
 
   @override
   State<DayDetailScreen> createState() => _DayDetailScreenState();
@@ -30,6 +34,7 @@ class DayDetailScreen extends StatefulWidget {
 
 class _DayDetailScreenState extends State<DayDetailScreen> {
   late final WorkoutRepository _repository;
+  late final ProgramRepository? _programRepository;
   List<HistoryItem> _items = const [];
   bool _loading = true;
 
@@ -37,6 +42,12 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   void initState() {
     super.initState();
     _repository = widget.workoutRepository ?? locator.get<WorkoutRepository>();
+    try {
+      _programRepository =
+          widget.programRepository ?? locator.get<ProgramRepository>();
+    } catch (_) {
+      _programRepository = widget.programRepository;
+    }
     _load();
   }
 
@@ -51,7 +62,13 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       final count = detail == null
           ? 0
           : detail.results.map((r) => r.exerciseName).toSet().length;
-      result.add(HistoryItem(session: session, exercisesCount: count));
+      result.add(
+        HistoryItem(
+          session: session,
+          exercisesCount: count,
+          imagePath: await _imagePathOf(session),
+        ),
+      );
     }
     if (!mounted) {
       return;
@@ -60,6 +77,16 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       _items = result;
       _loading = false;
     });
+  }
+
+  Future<String?> _imagePathOf(WorkoutSession session) async {
+    final programId = session.programId;
+    final repository = _programRepository;
+    if (programId == null || repository == null) {
+      return null;
+    }
+    final program = await repository.getProgram(programId);
+    return program?.program.imagePath;
   }
 
   String get _title {
@@ -120,12 +147,34 @@ class _SessionCard extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  ProgramThumbnail(imagePath: item.imagePath, size: 40),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      session.programName,
-                      style: theme.textTheme.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          session.programName,
+                          style: theme.textTheme.titleSmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          date,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${l10n.historyExercisesCount(item.exercisesCount)}'
+                          ' · ${l10n.historyDuration(minutes)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   if (session.variant == WorkoutVariant.alternative)
@@ -137,21 +186,6 @@ class _SessionCard extends StatelessWidget {
                       ),
                     ),
                 ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${l10n.historyExercisesCount(item.exercisesCount)}'
-                ' · ${l10n.historyDuration(minutes)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
               ),
             ],
           ),
