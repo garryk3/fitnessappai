@@ -459,15 +459,34 @@ class _PermissionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: color),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.bodyMedium),
+        Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.bodyMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
-        if (onAction != null && actionLabel != null)
-          FilledButton.tonal(onPressed: onAction, child: Text(actionLabel!)),
+        if (onAction != null && actionLabel != null) ...[
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.tonal(
+              onPressed: onAction,
+              child: Text(actionLabel!),
+            ),
+          ),
+        ],
       ],
     );
   }
