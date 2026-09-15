@@ -52,10 +52,7 @@ class _FakeSyncService implements SyncService {
 }
 
 class _FakeReminderService extends ReminderService {
-  _FakeReminderService({
-    required super.repository,
-    required this._status,
-  });
+  _FakeReminderService({required super.repository, required this._status});
 
   NotificationPermissionStatus _status;
   int requestCalls = 0;
