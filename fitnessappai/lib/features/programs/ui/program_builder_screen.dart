@@ -13,6 +13,8 @@ import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/domain/validators/program_validator.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
+import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
@@ -32,12 +34,16 @@ class ProgramBuilderScreen extends StatefulWidget {
     this.programId,
     this.repository,
     this.exerciseRepository,
+    this.mediaStore,
+    this.mediaCache,
     @visibleForTesting this.forceInitiallyNew = false,
   });
 
   final int? programId;
   final ProgramRepository? repository;
   final ExerciseRepository? exerciseRepository;
+  final MediaStore? mediaStore;
+  final MediaCache? mediaCache;
   final bool forceInitiallyNew;
 
   @override
@@ -69,6 +75,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   late final ProgramRepository _repository;
   late final WorkoutReminderRepository _reminderRepository;
   late final ReminderService _reminderService;
+  late final MediaStore _mediaStore;
+  late final MediaCache _mediaCache;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -84,8 +92,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   bool _isActive = false;
   late final bool _initiallyNew;
   bool _programFinalized = false;
+  bool _dirty = false;
   bool _deleteMode = false;
   final Set<int> _selectedDayKeys = {};
+  String? _imagePath;
 
   List<MuscleGroup> _allMuscleGroups = [];
   Map<int, List<ExerciseMuscle>> _musclesByExercise = {};
@@ -108,6 +118,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     _repository = widget.repository ?? locator.get<ProgramRepository>();
     _reminderRepository = locator.get<WorkoutReminderRepository>();
     _reminderService = locator.get<ReminderService>();
+    _mediaStore = widget.mediaStore ?? locator.get<MediaStore>();
+    _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
     _programId = widget.programId;
     _initiallyNew = widget.forceInitiallyNew || widget.programId == null;
     _load();
@@ -138,6 +150,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         _descriptionController.text = detail.program.description;
         _createdAt = detail.program.createdAt;
         _isActive = detail.program.isActive;
+        _imagePath = detail.program.imagePath;
         final firstWarmup = detail.days.firstOrNull?.day.warmupMinutes;
         if (firstWarmup != null) {
           _warmupController.text = '$firstWarmup';
@@ -166,8 +179,20 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       _addDay();
     }
     _loadMuscleData();
+    _nameController.addListener(_onTextChanged);
+    _descriptionController.addListener(_onTextChanged);
+    _warmupController.addListener(_onTextChanged);
+    _exerciseRestController.addListener(_onTextChanged);
+    _dirty = false;
     if (mounted) {
       setState(() => _loading = false);
+    }
+  }
+
+  void _onTextChanged() {
+    if (mounted) {
+      setState(() {});
+      _dirty = true;
     }
   }
 
@@ -322,6 +347,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   void _addDay() {
     _days.add(_DayDraft(_nextDayKey--));
+    _dirty = true;
   }
 
   void _toggleDeleteMode() {
@@ -352,6 +378,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       _days.removeWhere((d) => _selectedDayKeys.contains(d.key));
       _selectedDayKeys.clear();
       _deleteMode = false;
+      _dirty = true;
     });
   }
 
@@ -365,6 +392,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     if (_days.length > count) {
       _days.removeRange(count, _days.length);
     }
+    _dirty = true;
     setState(() {});
   }
 
@@ -372,6 +400,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     setState(() {
       final day = _days.removeAt(oldIndex);
       _days.insert(newIndex, day);
+      _dirty = true;
       final a = _days[oldIndex];
       final b = _days[newIndex];
       if (a.dayOfWeek != null && b.dayOfWeek != null) {
@@ -402,6 +431,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       setState(() {
         day.dayOfWeek = selected.dayOfWeek;
         day.reminder = selected.reminder;
+        _dirty = true;
       });
     }
   }
@@ -487,6 +517,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       await context.push('/programs/$programId/day/$dayIndex');
       if (mounted) {
         await _refreshFilledDays();
+        _dirty = true;
       }
     }
   }
@@ -514,6 +545,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               filled: day.mainExercises.any((e) => !e.isAlternative),
             ),
         ]);
+      _dirty = true;
     });
   }
 
@@ -578,6 +610,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       updatedAt: now,
       isActive: _isActive,
       exerciseRestSeconds: _exerciseRestSeconds,
+      imagePath: _imagePath,
     );
     final days = [
       for (var i = 0; i < _days.length; i++)
@@ -765,7 +798,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (_programFinalized) {
+        if (_programFinalized || !_dirty) {
           if (mounted) Navigator.of(context).pop();
           return;
         }
@@ -823,6 +856,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                       _nameField(l10n),
                       const SizedBox(height: 16),
                       _descriptionField(l10n),
+                      const SizedBox(height: 16),
+                      _imageEditor(l10n),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _warmupController,
@@ -920,6 +955,96 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         labelText: l10n.programBuilderDescription,
         border: const OutlineInputBorder(),
       ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final result = await _mediaStore.importFromPicker(
+        fileType: MediaFileType.image,
+      );
+      if (result != null && mounted) {
+        setState(() {
+          _imagePath = result.path;
+          _dirty = true;
+        });
+      }
+    } on MediaImportException {
+      if (!mounted) {
+        return;
+      }
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.programBuilderImageError)));
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _imagePath = null;
+      _dirty = true;
+    });
+  }
+
+  Widget _imageEditor(AppLocalizations l10n) {
+    final provider = _mediaCache.imageFor(_imagePath);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.programBuilderImage,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        if (provider != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image(
+              image: provider,
+              width: double.infinity,
+              height: 120,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Container(
+                height: 120,
+                width: double.infinity,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                child: const Center(child: Icon(Icons.broken_image_outlined)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.image_outlined),
+                label: Text(
+                  l10n.programBuilderImagePick,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            if (_imagePath != null) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: l10n.programBuilderImageRemove,
+                icon: const Icon(Icons.delete_outline),
+                onPressed: _removeImage,
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.exerciseFormMediaInfo,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 

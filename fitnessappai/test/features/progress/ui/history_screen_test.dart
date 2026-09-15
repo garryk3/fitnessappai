@@ -165,6 +165,46 @@ void main() {
     expect(find.textContaining(prevMonthName), findsOneWidget);
   });
 
+  testWidgets('на текущем месяце переход вперёд заблокирован', (tester) async {
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    final nextButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.chevron_right),
+    );
+    expect(nextButton.onPressed, isNull);
+  });
+
+  testWidgets('на прошлом месяце переход вперёд разрешён', (tester) async {
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month - 1, 15)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    // Переходим на прошлый месяц.
+    await tester.tap(find.byIcon(Icons.chevron_left));
+    await tester.pumpAndSettle();
+
+    final nextButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.chevron_right),
+    );
+    expect(nextButton.onPressed, isNotNull);
+
+    // Переход вперёд возвращает на текущий месяц.
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining(DateFormat('LLLL', 'ru').format(now)),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('пустая история показывает сообщение', (tester) async {
     await pumpHistory(tester);
 

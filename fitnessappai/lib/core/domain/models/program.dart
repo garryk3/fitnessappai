@@ -11,6 +11,7 @@ class Program {
     this.activatedAt,
     this.deactivatedAt,
     this.exerciseRestSeconds,
+    this.imagePath,
   });
 
   final int? id;
@@ -22,6 +23,9 @@ class Program {
 
   /// Пауза в секундах между упражнениями (null — не задана).
   final int? exerciseRestSeconds;
+
+  /// Путь к файлу изображения программы (null — изображения нет).
+  final String? imagePath;
 
   /// Является ли программа активной (для домашнего экрана).
   final bool isActive;
@@ -46,6 +50,8 @@ class Program {
     bool clearDeactivatedAt = false,
     bool clearId = false,
     int? exerciseRestSeconds,
+    String? imagePath,
+    bool clearImagePath = false,
   }) {
     return Program(
       id: clearId ? null : id ?? this.id,
@@ -60,6 +66,7 @@ class Program {
           ? null
           : deactivatedAt ?? this.deactivatedAt,
       exerciseRestSeconds: exerciseRestSeconds ?? this.exerciseRestSeconds,
+      imagePath: clearImagePath ? null : imagePath ?? this.imagePath,
     );
   }
 
@@ -76,7 +83,8 @@ class Program {
             other.isActive == isActive &&
             other.activatedAt == activatedAt &&
             other.deactivatedAt == deactivatedAt &&
-            other.exerciseRestSeconds == exerciseRestSeconds;
+            other.exerciseRestSeconds == exerciseRestSeconds &&
+            other.imagePath == imagePath;
   }
 
   @override
@@ -91,6 +99,7 @@ class Program {
     activatedAt,
     deactivatedAt,
     exerciseRestSeconds,
+    imagePath,
   );
 
   @override

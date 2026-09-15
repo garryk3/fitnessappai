@@ -234,6 +234,28 @@ void main() {
     },
   );
 
+  test('plank: по достижении цели звук завершения играет один раз', () {
+    fakeAsync((async) {
+      final sound = StubSoundService();
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+        soundService: sound,
+      );
+      controller.start([plankExercise(duration: 45)]);
+      controller.startHoldTimer();
+
+      async.elapse(const Duration(seconds: 44));
+      expect(sound.completionCalls, 0);
+
+      async.elapse(const Duration(seconds: 1));
+      expect(sound.completionCalls, 1);
+
+      async.elapse(const Duration(seconds: 30));
+      expect(sound.completionCalls, 1);
+      controller.dispose();
+    });
+  });
+
   test('plank: фиксация подхода останавливает счётчик удержания', () {
     fakeAsync((async) {
       final controller = WorkoutController(clock: () => startTime);

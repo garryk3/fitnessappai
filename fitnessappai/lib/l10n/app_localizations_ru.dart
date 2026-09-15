@@ -567,6 +567,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderDescription => 'Описание';
 
   @override
+  String get programBuilderImage => 'Изображение программы';
+
+  @override
+  String get programBuilderImagePick => 'Выбрать изображение';
+
+  @override
+  String get programBuilderImageRemove => 'Удалить изображение';
+
+  @override
+  String get programBuilderImageError => 'Не удалось выбрать изображение';
+
+  @override
   String get programBuilderDaysCount => 'Количество дней';
 
   @override

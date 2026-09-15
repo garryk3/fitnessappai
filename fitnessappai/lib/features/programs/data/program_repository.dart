@@ -729,6 +729,7 @@ class ProgramRepository {
     activatedAt: Value(p.activatedAt),
     deactivatedAt: Value(p.deactivatedAt),
     exerciseRestSeconds: Value(p.exerciseRestSeconds),
+    imagePath: Value(p.imagePath),
   );
 
   ProgramDayExercisesCompanion _toDayExerciseCompanion(ProgramDayExercise e) =>
@@ -757,6 +758,7 @@ class ProgramRepository {
     activatedAt: row.activatedAt,
     deactivatedAt: row.deactivatedAt,
     exerciseRestSeconds: row.exerciseRestSeconds,
+    imagePath: row.imagePath,
   );
 
   ProgramDay _toDay(ProgramDayRow row) => ProgramDay(

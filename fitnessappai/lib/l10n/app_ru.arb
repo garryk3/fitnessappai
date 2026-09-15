@@ -235,6 +235,10 @@
   "programBuilderName": "Название",
   "programBuilderNameRequired": "Введите название",
   "programBuilderDescription": "Описание",
+  "programBuilderImage": "Изображение программы",
+  "programBuilderImagePick": "Выбрать изображение",
+  "programBuilderImageRemove": "Удалить изображение",
+  "programBuilderImageError": "Не удалось выбрать изображение",
   "programBuilderDaysCount": "Количество дней",
   "programBuilderDay": "День {index}",
   "@programBuilderDay": {

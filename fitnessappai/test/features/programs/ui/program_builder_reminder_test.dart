@@ -13,6 +13,7 @@ import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -68,6 +69,8 @@ void main() {
       () => reminderRepository,
     );
     locator.registerLazySingleton<ReminderService>(() => reminderService);
+    locator.registerLazySingleton<MediaStore>(() => MediaStore());
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
     addTearDown(() => db.close());
   });
 

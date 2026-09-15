@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -98,6 +99,56 @@ void main() {
     expect(find.text('Пн'), findsOneWidget);
     expect(find.text('Чт'), findsOneWidget);
     expect(find.text('1 упражнение'), findsOneWidget);
+  });
+
+  testWidgets('кнопка «Начать» ведёт к подготовке тренировки', (tester) async {
+    Uri opened = Uri();
+    final created = await repository.create(program('Сплит', daysCount: 2), [
+      ProgramDay(programId: 0, dayIndex: 0),
+      ProgramDay(programId: 0, dayIndex: 1),
+    ]);
+    final days = await repository.getDays(created.id!);
+    final firstDay = days.first.id!;
+
+    final router = GoRouter(
+      initialLocation: '/programs',
+      routes: [
+        GoRoute(
+          path: '/programs',
+          builder: (context, state) => ProgramsScreen(repository: repository),
+        ),
+        GoRoute(
+          path: '/workout/prepare/:programDayId',
+          builder: (context, state) {
+            opened = state.uri;
+            return const Scaffold(body: Text('prepare'));
+          },
+        ),
+      ],
+    );
+    await tester.runAsync(() async {
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          routerConfig: router,
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('Сплит'), findsOneWidget);
+    final startLabel = AppLocalizations.of(
+      router.routerDelegate.navigatorKey.currentContext!,
+    ).weekPlanStart;
+    expect(find.text(startLabel), findsOneWidget);
+    await tester.tap(find.text(startLabel));
+    await tester.pumpAndSettle();
+
+    expect(opened.path, '/workout/prepare/$firstDay');
   });
 
   testWidgets('удаление с подтверждением убирает программу', (tester) async {

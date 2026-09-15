@@ -5,6 +5,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/core/ui/status_badge.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
@@ -142,6 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
         for (final info in programs) ...[
           _ActiveProgramCard(
             programName: info.program.name,
+            imagePath: info.program.imagePath,
             day: info.upcomingDay,
             exerciseNames: info.exerciseNames,
             onTap: () => context.push('/programs/${info.program.id}/edit'),
@@ -197,6 +199,7 @@ class _ActiveProgramCard extends StatelessWidget {
     required this.day,
     required this.exerciseNames,
     required this.onTap,
+    this.imagePath,
     this.onStart,
     this.todayStatus,
   });
@@ -205,6 +208,7 @@ class _ActiveProgramCard extends StatelessWidget {
   final ProgramDay? day;
   final List<String> exerciseNames;
   final VoidCallback onTap;
+  final String? imagePath;
   final VoidCallback? onStart;
   final WeekPlanStatus? todayStatus;
 
@@ -224,6 +228,8 @@ class _ActiveProgramCard extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  ProgramThumbnail(imagePath: imagePath),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       programName,

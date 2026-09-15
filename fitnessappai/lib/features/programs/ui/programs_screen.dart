@@ -90,6 +90,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: _ProgramCard(
               item: item,
+              onStart: item.days.isEmpty
+                  ? null
+                  : () =>
+                        context.push('/workout/prepare/${item.days.first.id}'),
               onEdit: () => context.push('/programs/${item.program.id}/edit'),
               onDelete: () => _confirmDelete(context, item.program),
               onCopyJson: () => _copyProgramJson(context, item.program),
@@ -153,6 +157,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
 class _ProgramCard extends StatelessWidget {
   const _ProgramCard({
     required this.item,
+    required this.onStart,
     required this.onEdit,
     required this.onDelete,
     required this.onCopyJson,
@@ -161,6 +166,7 @@ class _ProgramCard extends StatelessWidget {
   });
 
   final ProgramListItem item;
+  final VoidCallback? onStart;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onCopyJson;
@@ -177,93 +183,113 @@ class _ProgramCard extends StatelessWidget {
       child: InkWell(
         onTap: onEdit,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
-                          child: Text(
-                            program.name,
-                            style: theme.textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                program.name,
+                                style: theme.textTheme.titleMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (program.isActive) ...[
+                              const SizedBox(width: 8),
+                              _ActiveBadge(label: l10n.programActive),
+                            ],
+                          ],
                         ),
-                        if (program.isActive) ...[
-                          const SizedBox(width: 8),
-                          _ActiveBadge(label: l10n.programActive),
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.programDaysCount(program.daysCount),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (item.days.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: [
+                              for (final day in item.days)
+                                _DayBadge(
+                                  label: _weekdayLabel(l10n, day.dayOfWeek),
+                                ),
+                            ],
+                          ),
+                        ],
+                        if (item.exercisesCount > 0) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            l10n.programExercisesCount(item.exercisesCount),
+                            style: theme.textTheme.bodySmall,
+                          ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.programDaysCount(program.daysCount),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    if (item.days.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: [
-                          for (final day in item.days)
-                            _DayBadge(
-                              label: _weekdayLabel(l10n, day.dayOfWeek),
-                            ),
-                        ],
-                      ),
-                    ],
-                    if (item.exercisesCount > 0) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        l10n.programExercisesCount(item.exercisesCount),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    onEdit();
-                  } else if (value == 'delete') {
-                    onDelete();
-                  } else if (value == 'copy-json') {
-                    onCopyJson();
-                  } else if (value == 'set-active') {
-                    onSetActive();
-                  } else if (value == 'deactivate') {
-                    onDeactivate();
-                  }
-                },
-                itemBuilder: (context) => [
-                  if (program.isActive)
-                    PopupMenuItem(
-                      value: 'deactivate',
-                      child: Text(l10n.programDeactivate),
-                    )
-                  else
-                    PopupMenuItem(
-                      value: 'set-active',
-                      child: Text(l10n.programMakeActive),
-                    ),
-                  PopupMenuItem(value: 'edit', child: Text(l10n.commonEdit)),
-                  PopupMenuItem(
-                    value: 'copy-json',
-                    child: Text(l10n.programCopyJson),
                   ),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Text(l10n.commonDelete),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        onEdit();
+                      } else if (value == 'delete') {
+                        onDelete();
+                      } else if (value == 'copy-json') {
+                        onCopyJson();
+                      } else if (value == 'set-active') {
+                        onSetActive();
+                      } else if (value == 'deactivate') {
+                        onDeactivate();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (program.isActive)
+                        PopupMenuItem(
+                          value: 'deactivate',
+                          child: Text(l10n.programDeactivate),
+                        )
+                      else
+                        PopupMenuItem(
+                          value: 'set-active',
+                          child: Text(l10n.programMakeActive),
+                        ),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(l10n.commonEdit),
+                      ),
+                      PopupMenuItem(
+                        value: 'copy-json',
+                        child: Text(l10n.programCopyJson),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(l10n.commonDelete),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              if (onStart != null) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: onStart,
+                    icon: const Icon(Icons.play_arrow),
+                    label: Text(l10n.weekPlanStart),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

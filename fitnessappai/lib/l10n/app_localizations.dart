@@ -1108,6 +1108,30 @@ abstract class AppLocalizations {
   /// **'Описание'**
   String get programBuilderDescription;
 
+  /// No description provided for @programBuilderImage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изображение программы'**
+  String get programBuilderImage;
+
+  /// No description provided for @programBuilderImagePick.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать изображение'**
+  String get programBuilderImagePick;
+
+  /// No description provided for @programBuilderImageRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить изображение'**
+  String get programBuilderImageRemove;
+
+  /// No description provided for @programBuilderImageError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось выбрать изображение'**
+  String get programBuilderImageError;
+
   /// No description provided for @programBuilderDaysCount.
   ///
   /// In ru, this message translates to:
