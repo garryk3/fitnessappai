@@ -118,6 +118,58 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
   List<_ItemDraft> get _currentItems => _isAlternative ? _altItems : _mainItems;
 
+  Future<void> _renameDay() async {
+    final day = _currentDay?.day;
+    if (day?.id == null) {
+      return;
+    }
+    final controller = TextEditingController(text: day?.title ?? '');
+    final updated = await showDialog<String?>(
+      context: context,
+      builder: (dialogContext) {
+        final dialogL10n = AppLocalizations.of(dialogContext);
+        return AlertDialog(
+          title: Text(dialogL10n.programBuilderRenameDayTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 32,
+            decoration: InputDecoration(
+              labelText: dialogL10n.programBuilderRenameDayLabel,
+              hintText: dialogL10n.programBuilderRenameDayHint,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(dialogL10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(controller.text.trim()),
+              child: Text(dialogL10n.programBuilderRenameDaySave),
+            ),
+          ],
+        );
+      },
+    );
+    if (updated == null || !mounted || day?.id == null) {
+      return;
+    }
+    final title = updated.isEmpty ? null : updated;
+    final saved = await _repository.updateDayTitle(day!.id!, title);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _currentDay = ProgramDayDetail(
+        day: saved,
+        mainExercises: _currentDay?.mainExercises ?? const [],
+        alternativeExercises: _currentDay?.alternativeExercises ?? const [],
+      );
+    });
+  }
+
   Future<void> _addExercise() async {
     final musclesByExercise = await _exerciseRepository
         .muscleGroupsByExercise();
@@ -284,8 +336,18 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dayTitle = _currentDay?.day.title;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.programBuilderDay(widget.dayIndex + 1))),
+      appBar: AppBar(
+        title: Text(dayTitle ?? l10n.programBuilderDay(widget.dayIndex + 1)),
+        actions: [
+          IconButton(
+            tooltip: l10n.programBuilderRenameDay,
+            onPressed: _currentDay == null ? null : _renameDay,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+        ],
+      ),
       floatingActionButton: _loading
           ? null
           : FloatingActionButton(

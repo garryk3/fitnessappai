@@ -741,7 +741,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${l10n.programBuilderDay(item.dayIndex + 1)} · '
+                        '${item.dayTitle ?? l10n.programBuilderDay(item.dayIndex + 1)} · '
                         '${DateFormat('d MMMM yyyy', 'ru').format(item.scheduledDate)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -1062,7 +1062,7 @@ class _MonthDayActionTile extends StatelessWidget {
     final status = item.status;
     final title = Text(
       '${item.programName} → '
-      '${l10n.programBuilderDay(item.dayIndex + 1)}',
+      '${item.dayTitle ?? l10n.programBuilderDay(item.dayIndex + 1)}',
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );
@@ -1291,7 +1291,9 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
         const SizedBox(height: 8),
         for (final day in detail.days)
           ListTile(
-            title: Text('День ${day.day.dayIndex + 1}'),
+            title: Text(
+              day.day.title ?? l10n.programBuilderDay(day.day.dayIndex + 1),
+            ),
             subtitle: Text(
               day.day.dayOfWeek != null
                   ? _weekdayLabel(l10n, day.day.dayOfWeek!)

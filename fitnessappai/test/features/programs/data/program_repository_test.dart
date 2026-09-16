@@ -43,12 +43,14 @@ void main() {
     int dayIndex = 0,
     int? dayOfWeek,
     int? warmupMinutes,
+    String? title,
   }) => ProgramDay(
     id: id,
     programId: programId,
     dayIndex: dayIndex,
     dayOfWeek: dayOfWeek,
     warmupMinutes: warmupMinutes,
+    title: title,
   );
 
   ProgramDayExercise item({
@@ -243,6 +245,40 @@ void main() {
       );
       expect(updated.warmupMinutes, 10);
       expect((await repo.getDays(created.id!)).single.warmupMinutes, 10);
+    });
+
+    test('updateDayTitle задаёт и сбрасывает название дня', () async {
+      final created = await repo.create(program(daysCount: 1), [
+        day(dayIndex: 0),
+      ]);
+      final original = (await repo.getDays(created.id!)).single;
+      expect(original.title, isNull);
+
+      final renamed = await repo.updateDayTitle(original.id!, 'Грудь+бицепс');
+      expect(renamed.title, 'Грудь+бицепс');
+      expect((await repo.getDays(created.id!)).single.title, 'Грудь+бицепс');
+
+      final cleared = await repo.updateDayTitle(original.id!, null);
+      expect(cleared.title, isNull);
+      expect((await repo.getDays(created.id!)).single.title, isNull);
+    });
+
+    test('create/update сохраняют название дня', () async {
+      final created = await repo.create(program(daysCount: 1), [
+        day(dayIndex: 0, title: 'Ноги'),
+      ]);
+      expect((await repo.getDays(created.id!)).single.title, 'Ноги');
+
+      await repo.update(
+        created.copyWith(daysCount: 2),
+        days: [
+          day(dayIndex: 0, title: 'Ноги'),
+          day(dayIndex: 1, title: 'Спина'),
+        ],
+      );
+      final days = await repo.getDays(created.id!);
+      expect(days[0].title, 'Ноги');
+      expect(days[1].title, 'Спина');
     });
 
     test('update с днями вставляет новые и удаляет отсутствующие', () async {

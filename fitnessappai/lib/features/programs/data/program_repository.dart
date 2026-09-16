@@ -207,6 +207,7 @@ class ProgramRepository {
               dayIndex: day.dayIndex,
               dayOfWeek: Value(day.dayOfWeek),
               warmupMinutes: Value(day.warmupMinutes),
+              title: Value(day.title),
             ),
         ]);
       });
@@ -256,6 +257,7 @@ class ProgramRepository {
     required int dayIndex,
     int? dayOfWeek,
     int? warmupMinutes,
+    String? title,
   }) async {
     final day = await _db.transaction(() async {
       final rows =
@@ -277,6 +279,7 @@ class ProgramRepository {
               dayIndex: dayIndex,
               dayOfWeek: Value(dayOfWeek),
               warmupMinutes: Value(warmupMinutes),
+              title: Value(title),
             ),
           );
       await _syncDaysCount(programId);
@@ -295,10 +298,20 @@ class ProgramRepository {
         dayIndex: Value(day.dayIndex),
         dayOfWeek: Value(day.dayOfWeek),
         warmupMinutes: Value(day.warmupMinutes),
+        title: Value(day.title),
       ),
     );
     _notify();
     return _toDay((await _dayById(day.id!))!);
+  }
+
+  /// Задаёт название дня тренировки (null — вернуть «День N»).
+  Future<ProgramDay> updateDayTitle(int dayId, String? title) async {
+    await (_db.update(_db.programDays)..where((t) => t.id.equals(dayId))).write(
+      ProgramDaysCompanion(title: Value(title)),
+    );
+    _notify();
+    return _toDay((await _dayById(dayId))!);
   }
 
   /// Удаляет день и переиндексирует оставшиеся дни программы.
@@ -590,6 +603,7 @@ class ProgramRepository {
             dayIndex: Value(day.dayIndex),
             dayOfWeek: Value(day.dayOfWeek),
             warmupMinutes: Value(day.warmupMinutes),
+            title: Value(day.title),
           ),
         );
       } else {
@@ -601,6 +615,7 @@ class ProgramRepository {
                 dayIndex: day.dayIndex,
                 dayOfWeek: Value(day.dayOfWeek),
                 warmupMinutes: Value(day.warmupMinutes),
+                title: Value(day.title),
               ),
             );
         requestedIds.add(newId);
@@ -767,6 +782,7 @@ class ProgramRepository {
     dayIndex: row.dayIndex,
     dayOfWeek: row.dayOfWeek,
     warmupMinutes: row.warmupMinutes,
+    title: row.title,
   );
 
   ProgramDayExercise _toDayExercise(ProgramDayExerciseRow row) =>

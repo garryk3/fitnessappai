@@ -117,7 +117,8 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                l10n.programBuilderDay(controller.dayIndex.value + 1),
+                controller.dayTitle.value ??
+                    l10n.programBuilderDay(controller.dayIndex.value + 1),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

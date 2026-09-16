@@ -29,11 +29,15 @@ class WeekPlanItem {
     required this.scheduledDate,
     required this.status,
     this.imagePath,
+    this.dayTitle,
   });
 
   final int programDayId;
   final int dayIndex;
   final String programName;
+
+  /// Кастомное название дня тренировки, null — «День N».
+  final String? dayTitle;
 
   /// Путь к изображению программы (может отсутствовать).
   final String? imagePath;
@@ -240,6 +244,7 @@ class WeekPlanController {
                   dayIndex: day.day.dayIndex,
                   programName: detail.program.name,
                   imagePath: detail.program.imagePath,
+                  dayTitle: day.day.title,
                   dayOfWeek: null,
                   scheduledDate: now,
                   status: WeekPlanStatus.pending,
@@ -262,6 +267,7 @@ class WeekPlanController {
                   dayIndex: day.day.dayIndex,
                   programName: detail.program.name,
                   imagePath: detail.program.imagePath,
+                  dayTitle: day.day.title,
                   dayOfWeek: dayOfWeek,
                   scheduledDate: date,
                   status: WeekPlanStatus.pending,
@@ -300,6 +306,7 @@ class WeekPlanController {
             dayIndex: day.dayIndex,
             programName: programDetail.program.name,
             imagePath: programDetail.program.imagePath,
+            dayTitle: day.title,
             dayOfWeek: null,
             scheduledDate: entry.scheduledDate,
             status: WeekPlanStatus.pending,

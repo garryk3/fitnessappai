@@ -1150,6 +1150,36 @@ abstract class AppLocalizations {
   /// **'День {index}'**
   String programBuilderDay(int index);
 
+  /// No description provided for @programBuilderRenameDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переименовать день'**
+  String get programBuilderRenameDay;
+
+  /// No description provided for @programBuilderRenameDayTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название дня'**
+  String get programBuilderRenameDayTitle;
+
+  /// No description provided for @programBuilderRenameDayLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название'**
+  String get programBuilderRenameDayLabel;
+
+  /// No description provided for @programBuilderRenameDayHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пусто — вернуть «День N»'**
+  String get programBuilderRenameDayHint;
+
+  /// No description provided for @programBuilderRenameDaySave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
+  String get programBuilderRenameDaySave;
+
   /// No description provided for @programBuilderDayNoWeekday.
   ///
   /// In ru, this message translates to:

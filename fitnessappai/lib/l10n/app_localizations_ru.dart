@@ -591,6 +591,21 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get programBuilderRenameDay => 'Переименовать день';
+
+  @override
+  String get programBuilderRenameDayTitle => 'Название дня';
+
+  @override
+  String get programBuilderRenameDayLabel => 'Название';
+
+  @override
+  String get programBuilderRenameDayHint => 'Пусто — вернуть «День N»';
+
+  @override
+  String get programBuilderRenameDaySave => 'Сохранить';
+
+  @override
   String get programBuilderDayNoWeekday => 'Без привязки';
 
   @override
