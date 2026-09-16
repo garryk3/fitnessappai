@@ -6,6 +6,10 @@ analyzer:
     - "**/*.freezed.dart"
     - "**/*.mocks.dart"
     - "**/l10n/*.dart"
+    - build/**
+    - android/**
+    - web/**
+    - linux/**
 
 linter:
   rules:
