@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -755,7 +757,7 @@ double niceInterval(double maxValue, {int targetTicks = 6}) {
   if (rough <= 0) {
     return 1;
   }
-  final magnitude = _pow10(rough.floor());
+  final magnitude = _pow10((math.log(rough) / math.ln10).floor());
   final residual = rough / magnitude;
   if (residual <= 1.5) {
     return magnitude;

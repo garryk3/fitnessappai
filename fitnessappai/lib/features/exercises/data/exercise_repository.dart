@@ -130,9 +130,9 @@ class ExerciseRepository {
     _notify();
   }
 
-  /// Возвращает отсортированные названия программ, в которых используется
-  /// упражнение [exerciseId].
-  Future<List<String>> referencedPrograms(int exerciseId) async {
+  /// Группирует программы, в которых используется [exerciseId], по имени
+  /// программы. Значение — отсортированные 0-based индексы дней.
+  Future<Map<String, List<int>>> referencedPrograms(int exerciseId) async {
     final query =
         (_db.select(_db.programs).join([
             innerJoin(
@@ -145,9 +145,18 @@ class ExerciseRepository {
             ),
           ])
           ..where(_db.programDayExercises.exerciseId.equals(exerciseId))
-          ..orderBy([OrderingTerm.asc(_db.programs.name)]));
+          ..orderBy([
+            OrderingTerm.asc(_db.programs.name),
+            OrderingTerm.asc(_db.programDays.dayIndex),
+          ]));
     final rows = await query.get();
-    return rows.map((row) => row.readTable(_db.programs).name).toList();
+    final result = <String, List<int>>{};
+    for (final row in rows) {
+      final name = row.readTable(_db.programs).name;
+      final dayIndex = row.readTable(_db.programDays).dayIndex;
+      result.putIfAbsent(name, () => []).add(dayIndex);
+    }
+    return result;
   }
 
   /// Возвращает привязки мышц упражнения.

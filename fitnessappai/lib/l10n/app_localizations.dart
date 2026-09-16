@@ -568,6 +568,12 @@ abstract class AppLocalizations {
   /// **'Нет программ для назначения'**
   String get weekPlanScheduleNoPrograms;
 
+  /// No description provided for @weekPlanPastDateGuard.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нельзя запланировать тренировку на прошедший день'**
+  String get weekPlanPastDateGuard;
+
   /// No description provided for @weekPlanEmpty.
   ///
   /// In ru, this message translates to:
@@ -2092,17 +2098,11 @@ abstract class AppLocalizations {
   /// **'История замеров'**
   String get profileMeasurementsHistory;
 
-  /// No description provided for @profileYearFilter.
+  /// No description provided for @profileLoadMore.
   ///
   /// In ru, this message translates to:
-  /// **'Год'**
-  String get profileYearFilter;
-
-  /// No description provided for @profileYearAll.
-  ///
-  /// In ru, this message translates to:
-  /// **'Все годы'**
-  String get profileYearAll;
+  /// **'Загрузить ещё'**
+  String get profileLoadMore;
 
   /// No description provided for @profileEmpty.
   ///

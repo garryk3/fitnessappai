@@ -9,6 +9,8 @@ import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/validators/program_day_exercise_validator.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
+import 'package:fitnessappai/core/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -24,6 +26,7 @@ class ProgramDayBuilderScreen extends StatefulWidget {
     required this.dayIndex,
     this.repository,
     this.exerciseRepository,
+    this.mediaCache,
   });
 
   final int programId;
@@ -32,6 +35,7 @@ class ProgramDayBuilderScreen extends StatefulWidget {
   final int dayIndex;
   final ProgramRepository? repository;
   final ExerciseRepository? exerciseRepository;
+  final MediaCache? mediaCache;
 
   @override
   State<ProgramDayBuilderScreen> createState() =>
@@ -49,6 +53,7 @@ class _ItemDraft {
 class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
   late final ProgramRepository _repository;
   late final ExerciseRepository _exerciseRepository;
+  late final MediaCache _mediaCache;
 
   ProgramDetail? _detail;
   ProgramDayDetail? _currentDay;
@@ -67,6 +72,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     _repository = widget.repository ?? locator.get<ProgramRepository>();
     _exerciseRepository =
         widget.exerciseRepository ?? locator.get<ExerciseRepository>();
+    _mediaCache = widget.mediaCache ?? locator.get<MediaCache>();
     _load();
   }
 
@@ -464,7 +470,18 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
             index: index,
             child: const Icon(Icons.drag_indicator),
           ),
-          title: Text(exercise?.name ?? ''),
+          title: Row(
+            children: [
+              ExerciseThumbnail(exercise: exercise, mediaCache: _mediaCache),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  exercise?.name ?? '',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
           subtitle: Text(
             _metricsSummary(item, type),
             style: type == null ? Theme.of(context).textTheme.bodySmall : null,

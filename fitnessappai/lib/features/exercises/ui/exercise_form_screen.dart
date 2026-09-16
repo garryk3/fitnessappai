@@ -281,7 +281,6 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
@@ -334,6 +333,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   Widget _nameField(AppLocalizations l10n) {
     return TextFormField(
       controller: _nameController,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         label: Text.rich(
           TextSpan(

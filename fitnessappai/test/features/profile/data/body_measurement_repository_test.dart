@@ -99,6 +99,55 @@ void main() {
     });
   });
 
+  group('count и getPage', () {
+    test('count возвращает количество замеров', () async {
+      await repo.add(measurement(date: DateTime(2026, 8, 1), weightKg: 82));
+      await repo.add(measurement(date: DateTime(2026, 8, 5), weightKg: 83));
+
+      expect(await repo.count(), 2);
+    });
+
+    test('getPage возвращает замеры DESC по дате', () async {
+      await repo.add(measurement(date: DateTime(2026, 8, 10), weightKg: 81));
+      await repo.add(measurement(date: DateTime(2026, 8, 1), weightKg: 82));
+      await repo.add(measurement(date: DateTime(2026, 8, 5), weightKg: 83));
+
+      final page = await repo.getPage(offset: 0, limit: 10);
+      expect(page.map((m) => m.weightKg), [81, 83, 82]);
+    });
+
+    test('getPage учитывает offset и limit', () async {
+      for (var day = 1; day <= 25; day++) {
+        await repo.add(
+          measurement(date: DateTime(2026, 8, day), weightKg: 100.0 - day),
+        );
+      }
+
+      final first = await repo.getPage(offset: 0, limit: 10);
+      expect(first, hasLength(10));
+      expect(first.first.weightKg, 75);
+      expect(first.last.weightKg, 84);
+
+      final second = await repo.getPage(offset: 10, limit: 10);
+      expect(second, hasLength(10));
+      expect(second.first.weightKg, 85);
+      expect(second.last.weightKg, 94);
+
+      final third = await repo.getPage(offset: 20, limit: 10);
+      expect(third, hasLength(5));
+      expect(third.first.weightKg, 95);
+      expect(third.last.weightKg, 99);
+    });
+
+    test('getPage со смещением пропускает предыдущие страницы', () async {
+      await repo.add(measurement(date: DateTime(2026, 8, 1), weightKg: 82));
+      await repo.add(measurement(date: DateTime(2026, 8, 2), weightKg: 81));
+
+      final page = await repo.getPage(offset: 1, limit: 10);
+      expect(page.map((m) => m.weightKg), [82]);
+    });
+  });
+
   group('delete', () {
     test('удаляет замер по id', () async {
       final created = await repo.add(measurement(weightKg: 80));

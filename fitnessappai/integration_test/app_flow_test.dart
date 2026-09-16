@@ -1368,7 +1368,7 @@ void main() {
         find.text('Упражнение используется в программах:'),
         findsOneWidget,
       );
-      expect(find.text('• $_programName'), findsOneWidget);
+      expect(find.text('• $_programName → День 1'), findsOneWidget);
       await tester.tap(find.widgetWithText(FilledButton, 'ОК'));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(BackButton));

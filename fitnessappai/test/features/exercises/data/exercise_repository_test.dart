@@ -325,7 +325,50 @@ void main() {
         await programRepo.addExerciseToDay(day.id!, created.id!);
 
         final names = await repo.referencedPrograms(created.id!);
-        expect(names, ['База']);
+        expect(names, {
+          'База': [0],
+        });
+      },
+    );
+
+    test(
+      'referencedPrograms группирует дни одной программы без дублей',
+      () async {
+        final created = await repo.create(exercise(), const []);
+        final programRepo = ProgramRepository(db);
+        final program = await programRepo.create(
+          Program(
+            name: 'Сплит',
+            daysCount: 3,
+            createdAt: DateTime(2026, 1, 1),
+            updatedAt: DateTime(2026, 1, 1),
+          ),
+          [
+            ProgramDay(programId: 0, dayIndex: 0),
+            ProgramDay(programId: 0, dayIndex: 1),
+            ProgramDay(programId: 0, dayIndex: 2),
+          ],
+        );
+        final days = await programRepo.getDays(program.id!);
+        await programRepo.addExerciseToDay(days[0].id!, created.id!);
+        await programRepo.addExerciseToDay(days[2].id!, created.id!);
+        final other = await programRepo.create(
+          Program(
+            name: 'База',
+            daysCount: 1,
+            createdAt: DateTime(2026, 1, 1),
+            updatedAt: DateTime(2026, 1, 1),
+          ),
+          [ProgramDay(programId: 0, dayIndex: 0)],
+        );
+        final otherDay = (await programRepo.getDays(other.id!)).first;
+        await programRepo.addExerciseToDay(otherDay.id!, created.id!);
+
+        final names = await repo.referencedPrograms(created.id!);
+        expect(names, {
+          'Сплит': [0, 2],
+          'База': [0],
+        });
       },
     );
 

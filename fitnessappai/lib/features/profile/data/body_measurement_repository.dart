@@ -40,6 +40,25 @@ class BodyMeasurementRepository {
     return rows.map(_toModel).toList();
   }
 
+  /// Количество всех замеров.
+  Future<int> count() => _db.bodyMeasurements.count().getSingle();
+
+  /// Страница замеров: DESC по дате (затем id), с [offset] и [limit].
+  Future<List<BodyMeasurement>> getPage({
+    required int offset,
+    required int limit,
+  }) async {
+    final rows =
+        await (_db.select(_db.bodyMeasurements)
+              ..orderBy([
+                (t) => OrderingTerm.desc(t.date),
+                (t) => OrderingTerm.desc(t.id),
+              ])
+              ..limit(limit, offset: offset))
+            .get();
+    return rows.map(_toModel).toList();
+  }
+
   /// Самый свежий замер по дате или `null`, если замеров нет.
   Future<BodyMeasurement?> latest() async {
     final row =

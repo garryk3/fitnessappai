@@ -85,7 +85,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     final selected = List<int>.from(_selectedIds);
 
     // Собираем ссылки упражнений в программы.
-    final refsByName = <String, List<String>>{};
+    final refsByName = <String, Map<String, List<int>>>{};
     for (final id in selected) {
       final programs = await repo.referencedPrograms(id);
       if (programs.isNotEmpty) {
@@ -102,7 +102,12 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     if (refsByName.isNotEmpty) {
       final buffer = StringBuffer();
       for (final entry in refsByName.entries) {
-        buffer.writeln('• ${entry.key} → ${entry.value.join(', ')}');
+        final programList = entry.value.entries
+            .map(
+              (p) => '${p.key} (Дни ${p.value.map((d) => d + 1).join(', ')})',
+            )
+            .join(', ');
+        buffer.writeln('• ${entry.key} → $programList');
       }
       warning =
           '${l10n.exerciseListDeleteWarning}\n\n${buffer.toString().trim()}';

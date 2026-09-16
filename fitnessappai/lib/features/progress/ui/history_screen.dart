@@ -10,6 +10,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
+import 'package:fitnessappai/core/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/core/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
@@ -246,13 +247,16 @@ class _MonthGrid extends StatelessWidget {
                   : null,
             ),
             alignment: Alignment.center,
-            child: Text(
-              '$day',
-              style: TextStyle(
-                color: hasWorkout
-                    ? theme.colorScheme.onPrimaryContainer
-                    : theme.colorScheme.onSurface,
-                fontWeight: hasWorkout ? FontWeight.bold : FontWeight.normal,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '$day',
+                style: TextStyle(
+                  color: hasWorkout
+                      ? theme.colorScheme.onPrimaryContainer
+                      : theme.colorScheme.onSurface,
+                  fontWeight: hasWorkout ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
           ),
@@ -433,7 +437,7 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _ExerciseThumbnail(
+                      ExerciseThumbnail(
                         exercise: _exerciseOf(entry.value.first),
                         mediaCache: _mediaCache,
                       ),
@@ -519,55 +523,3 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
 String _fmt(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toStringAsFixed(1);
-
-/// Миниатюра упражнения в деталях истории: заглушка с иконкой, если нет.
-class _ExerciseThumbnail extends StatelessWidget {
-  const _ExerciseThumbnail({this.exercise, this.mediaCache});
-
-  final Exercise? exercise;
-  final MediaCache? mediaCache;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    const size = 32.0;
-    final exercise = this.exercise;
-    final mediaCache = this.mediaCache;
-    final provider = (exercise == null || mediaCache == null)
-        ? null
-        : mediaCache.imageFor(
-            exercise.thumbnailPath ?? exercise.animationPath,
-            blob: exercise.thumbnailBlob ?? exercise.animationBlob,
-            cacheWidth: 64,
-          );
-    if (provider == null) {
-      return _placeholder(theme, size);
-    }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image(
-        image: provider,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _placeholder(theme, size),
-      ),
-    );
-  }
-
-  Widget _placeholder(ThemeData theme, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(
-        Icons.fitness_center,
-        size: 18,
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
-    );
-  }
-}

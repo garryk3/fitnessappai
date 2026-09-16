@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:drift/native.dart';
@@ -17,6 +18,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/progress/ui/exercise_progression_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -136,5 +138,85 @@ void main() {
     await pumpProgression(tester, 999);
 
     expect(find.text('Упражнение не найдено'), findsOneWidget);
+  });
+
+  testWidgets('диаграмма бега с дистанцией >1854 м не падает', (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exercise = await exerciseRepo.create(
+      Exercise(
+        name: 'Бег',
+        type: ExerciseType.running,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      const [],
+    );
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        programName: 'База',
+        dayIndex: 0,
+        performedDate: DateTime(2026, 8, 10),
+        startedAt: DateTime(2026, 8, 10, 18),
+        endedAt: DateTime(2026, 8, 10, 18, 40),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: exercise.id,
+          exerciseName: 'Бег',
+          exerciseType: ExerciseType.running,
+          setIndex: 1,
+          distanceMeters: 5000,
+          completedAt: DateTime(2026, 8, 10, 18),
+        ),
+      ],
+    );
+
+    await pumpProgression(tester, exercise.id!);
+
+    expect(find.byType(LineChart), findsOneWidget);
+    expect(find.text('Бег'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  group('niceInterval', () {
+    test('для малых значений возвращает интервал из ряда 1/2/5', () {
+      expect(niceInterval(50), 10);
+      expect(niceInterval(100), 20);
+    });
+
+    test('не переполняется для больших дистанций бега (>1854 м)', () {
+      expect(niceInterval(5000).isFinite, isTrue);
+      expect(niceInterval(10000.0).isFinite, isTrue);
+      expect(niceInterval(42195.0).isFinite, isTrue);
+    });
+
+    test('возвращает «красивое» число из ряда 1/2/5·10^k', () {
+      for (final max in [
+        6.0,
+        50.0,
+        120.0,
+        250.0,
+        1500.0,
+        1854.0,
+        5000.0,
+        42195.0,
+      ]) {
+        final interval = niceInterval(max);
+        // Интервал — из ряда 1, 2, 5, 10, 20, 50, ...
+        final magnitude = math.pow(10, (math.log(max / 6) / math.ln10).floor());
+        expect(
+          interval,
+          anyOf(magnitude, 2 * magnitude, 5 * magnitude, 10 * magnitude),
+          reason: 'max=$max',
+        );
+        final ticks = max / interval;
+        expect(ticks, greaterThanOrEqualTo(3), reason: 'max=$max');
+        expect(ticks, lessThanOrEqualTo(9), reason: 'max=$max');
+      }
+    });
   });
 }

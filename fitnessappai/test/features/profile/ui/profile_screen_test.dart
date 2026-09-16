@@ -222,45 +222,71 @@ void main() {
     expect(find.text('80 кг'), findsWidgets);
   });
 
-  testWidgets('фильтр по году: по умолчанию выбран текущий год', (
+  testWidgets('история: до 10 замеров кнопка «Загрузить ещё» не показывается', (
     tester,
   ) async {
-    final currentYear = DateTime.now().year;
-    await repo.add(
-      measurement(date: DateTime(currentYear - 1, 6, 1), weightKg: 80),
-    );
-    await repo.add(
-      measurement(date: DateTime(currentYear, 8, 1), weightKg: 82),
-    );
+    for (var day = 1; day <= 10; day++) {
+      await repo.add(
+        measurement(date: DateTime(2026, 8, day), weightKg: 100.0 - day),
+      );
+    }
 
     await pumpProfile(tester);
 
-    final dropdown = tester.widget<DropdownButton<int>>(
-      find.byType(DropdownButton<int>),
-    );
-    expect(dropdown.value, currentYear);
-    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsNWidgets(10));
+    expect(find.text('Загрузить ещё'), findsNothing);
   });
 
-  testWidgets('фильтр «Все годы» показывает замеры обоих годов', (
+  testWidgets(
+    'история: после 10 замеров кнопка «Загрузить ещё» загружает остаток',
+    (tester) async {
+      for (var day = 1; day <= 13; day++) {
+        await repo.add(
+          measurement(date: DateTime(2026, 8, day), weightKg: 100.0 - day),
+        );
+      }
+
+      await pumpProfile(tester);
+
+      expect(find.byIcon(Icons.delete_outline), findsNWidgets(10));
+      expect(find.text('Загрузить ещё'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Загрузить ещё'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Загрузить ещё'));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.delete_outline), findsNWidgets(13));
+      expect(find.text('Загрузить ещё'), findsNothing);
+    },
+  );
+
+  testWidgets('история: свежий замер показывается первым (DESC)', (
     tester,
   ) async {
-    final currentYear = DateTime.now().year;
     await repo.add(
-      measurement(date: DateTime(currentYear - 1, 6, 1), weightKg: 80),
+      measurement(date: DateTime(2026, 8, 1), weightKg: 82, heightCm: 180),
     );
     await repo.add(
-      measurement(date: DateTime(currentYear, 8, 1), weightKg: 82),
+      measurement(date: DateTime(2026, 8, 10), weightKg: 81, heightCm: 180),
     );
 
     await pumpProfile(tester);
 
-    await tester.tap(find.byType(DropdownButton<int>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Все годы').last);
-    await tester.pumpAndSettle();
-
-    expect(find.byIcon(Icons.delete_outline), findsNWidgets(2));
+    final latestDate = DateFormat(
+      'd MMMM yyyy',
+      'ru',
+    ).format(DateTime(2026, 8, 10));
+    final olderDate = DateFormat(
+      'd MMMM yyyy',
+      'ru',
+    ).format(DateTime(2026, 8, 1));
+    final latestY = tester.getTopLeft(find.text(latestDate)).dy;
+    final olderY = tester.getTopLeft(find.text(olderDate)).dy;
+    expect(latestY, lessThan(olderY));
   });
 }
 
