@@ -33,6 +33,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   late final HistoryController _controller;
   late DateTime _currentMonth;
 
+  /// Порог горизонтального свайпа для переключения месяца (логические px).
+  static const double _swipeThreshold = 100;
+
+  /// Накопленное смещение горизонтального свайпа для переключения месяца.
+  double _dragOffset = 0;
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +83,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() {
       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
     });
+  }
+
+  void _onHorizontalDragStart(DragStartDetails details) {
+    _dragOffset = 0;
+  }
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    _dragOffset += details.delta.dx;
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (_dragOffset <= -_swipeThreshold) {
+      _nextMonth();
+    } else if (_dragOffset >= _swipeThreshold) {
+      _previousMonth();
+    }
+    _dragOffset = 0;
   }
 
   @override
@@ -127,10 +150,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
           onNext: _canGoNextMonth ? _nextMonth : null,
         ),
         Expanded(
-          child: _MonthGrid(
-            currentMonth: _currentMonth,
-            workoutDates: dates,
-            onDayTap: (date) => _openDay(context, date),
+          child: GestureDetector(
+            onHorizontalDragStart: _onHorizontalDragStart,
+            onHorizontalDragUpdate: _onHorizontalDragUpdate,
+            onHorizontalDragEnd: _onHorizontalDragEnd,
+            child: _MonthGrid(
+              currentMonth: _currentMonth,
+              workoutDates: dates,
+              onDayTap: (date) => _openDay(context, date),
+            ),
           ),
         ),
       ],

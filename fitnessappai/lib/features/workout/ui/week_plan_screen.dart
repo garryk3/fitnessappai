@@ -41,6 +41,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   late final WeekPlanController _controller;
   late final PlanViewSettingsRepository _viewSettings;
 
+  /// Порог горизонтального свайпа для переключения месяца (логические px).
+  static const double _swipeThreshold = 100;
+
+  /// Накопленное смещение горизонтального свайпа для переключения месяца.
+  double _dragOffset = 0;
+
   @override
   void initState() {
     super.initState();
@@ -238,12 +244,34 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     if (controller.isLoading.value && items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    return _MonthGrid(
-      monthStart: controller.monthStart.value,
-      items: items,
-      today: today,
-      onDayTap: (date, _) => _showDayActions(context, controller, date, l10n),
+    return GestureDetector(
+      onHorizontalDragStart: _onMonthSwipeStart,
+      onHorizontalDragUpdate: _onMonthSwipeUpdate,
+      onHorizontalDragEnd: (_) => _onMonthSwipeEnd(controller),
+      child: _MonthGrid(
+        monthStart: controller.monthStart.value,
+        items: items,
+        today: today,
+        onDayTap: (date, _) => _showDayActions(context, controller, date, l10n),
+      ),
     );
+  }
+
+  void _onMonthSwipeStart(DragStartDetails details) {
+    _dragOffset = 0;
+  }
+
+  void _onMonthSwipeUpdate(DragUpdateDetails details) {
+    _dragOffset += details.delta.dx;
+  }
+
+  void _onMonthSwipeEnd(WeekPlanController controller) {
+    if (_dragOffset <= -_swipeThreshold && controller.canGoNextMonth) {
+      controller.shiftMonth(1);
+    } else if (_dragOffset >= _swipeThreshold && controller.canGoPrevMonth) {
+      controller.shiftMonth(-1);
+    }
+    _dragOffset = 0;
   }
 
   Future<void> _showDayActions(

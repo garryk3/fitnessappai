@@ -36,6 +36,9 @@ class _SplashGateState extends State<SplashGate>
   late final Animation<double> _fade;
   bool _ready = false;
 
+  /// Минимальное время показа заставки до начала исчезновения.
+  static const Duration _minVisible = Duration(seconds: 2);
+
   @override
   void initState() {
     super.initState();
@@ -49,7 +52,13 @@ class _SplashGateState extends State<SplashGate>
   }
 
   Future<void> _runBootstrap() async {
+    final started = DateTime.now();
     await (widget.bootstrap ?? bootstrap)();
+    final elapsed = DateTime.now().difference(started);
+    final remaining = _minVisible - elapsed;
+    if (remaining > Duration.zero) {
+      await Future<void>.delayed(remaining);
+    }
     if (!mounted) {
       return;
     }
