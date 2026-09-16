@@ -25,6 +25,7 @@ void main() {
     expect(find.text('Главный экран'), findsNothing);
 
     completer.complete();
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
 
     expect(find.text('Главный экран'), findsOneWidget);
@@ -52,9 +53,39 @@ void main() {
     expect(find.text('Заставка'), findsOneWidget);
 
     completer.complete();
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
 
     expect(find.text('Заставка'), findsNothing);
     expect(find.text('Главный экран'), findsOneWidget);
+  });
+
+  testWidgets('сплэш держится минимум 2 секунды до исчезновения', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      SplashGate(
+        bootstrap: () async {},
+        homeBuilder: () =>
+            const MaterialApp(home: Scaffold(body: Text('Главный экран'))),
+        splashBody: const ColoredBox(
+          color: Colors.black,
+          child: Center(child: Text('Заставка')),
+        ),
+      ),
+    );
+
+    // Быстрая инициализация уже завершилась; через 1 секунду заставка ещё
+    // должна быть видна.
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Заставка'), findsOneWidget);
+    expect(find.text('Главный экран'), findsNothing);
+
+    // После полных 2 секунд начинается плавный переход к главному экрану.
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Главный экран'), findsOneWidget);
+    expect(find.text('Заставка'), findsNothing);
   });
 }

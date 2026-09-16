@@ -534,6 +534,52 @@ void main() {
       expect(arrow('Следующая неделя').onPressed, isNull);
       expect(find.byTooltip('Предыдущая неделя'), findsOneWidget);
     });
+
+    testWidgets('свайп вправо открывает предыдущий месяц', (tester) async {
+      await pumpPlan(tester);
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+      expect(find.text('Август 2026'), findsOneWidget);
+
+      await tester.drag(find.text('10'), const Offset(150, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Июль 2026'), findsOneWidget);
+    });
+
+    testWidgets('свайп влево открывает следующий месяц', (tester) async {
+      await pumpPlan(tester);
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.text('10'), const Offset(-150, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Сентябрь 2026'), findsOneWidget);
+    });
+
+    testWidgets('свайп за предел ±1 месяц не срабатывает', (tester) async {
+      await pumpPlan(tester);
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+
+      // Вперёд до предела (сентябрь).
+      await tester.drag(find.text('10'), const Offset(-150, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Сентябрь 2026'), findsOneWidget);
+
+      // Дальше вперёд нельзя: свайп влево ничего не меняет.
+      await tester.drag(find.text('1'), const Offset(-150, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Сентябрь 2026'), findsOneWidget);
+
+      // Назад до предела (июль).
+      await tester.drag(find.text('1'), const Offset(150, 0));
+      await tester.pumpAndSettle();
+      await tester.drag(find.text('1'), const Offset(150, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Июль 2026'), findsOneWidget);
+    });
   });
 
   testWidgets('текущий день в неделе выделен цветом', (tester) async {

@@ -205,6 +205,79 @@ void main() {
     );
   });
 
+  testWidgets('свайп вправо открывает предыдущий месяц', (tester) async {
+    final now = DateTime.now();
+    final monthName = DateFormat('LLLL', 'ru').format(now);
+    final prevMonthName = DateFormat(
+      'LLLL',
+      'ru',
+    ).format(DateTime(now.year, now.month - 1));
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month - 1, 15)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+    expect(find.textContaining(monthName), findsOneWidget);
+
+    await tester.drag(find.text('10'), const Offset(150, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(prevMonthName), findsOneWidget);
+  });
+
+  testWidgets('свайп влево с прошлого месяца возвращает на текущий', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final monthName = DateFormat('LLLL', 'ru').format(now);
+    final prevMonthName = DateFormat(
+      'LLLL',
+      'ru',
+    ).format(DateTime(now.year, now.month - 1));
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month - 1, 15)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    await tester.drag(find.text('10'), const Offset(150, 0));
+    await tester.pumpAndSettle();
+    expect(find.textContaining(prevMonthName), findsOneWidget);
+
+    await tester.drag(find.text('15'), const Offset(-150, 0));
+    await tester.pumpAndSettle();
+    expect(find.textContaining(monthName), findsOneWidget);
+  });
+
+  testWidgets('свайп влево на текущем месяце не уходит вперёд', (tester) async {
+    final now = DateTime.now();
+    final monthName = DateFormat('LLLL', 'ru').format(now);
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    await tester.drag(find.text('10'), const Offset(-150, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(monthName), findsOneWidget);
+    expect(
+      find.textContaining(
+        DateFormat('LLLL', 'ru').format(DateTime(now.year, now.month + 1)),
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('пустая история показывает сообщение', (tester) async {
     await pumpHistory(tester);
 
