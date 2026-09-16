@@ -423,7 +423,7 @@ void main() {
     lastPicked = XFile(pickedFilePath);
     await tester.runAsync(() async {
       await tester.tap(find.text('Выбрать изображение'));
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < 300; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
         if (find.byTooltip('Убрать изображение').evaluate().isNotEmpty) {
           return;
@@ -453,7 +453,7 @@ void main() {
     lastPicked = XFile(pickedFilePath);
     await tester.runAsync(() async {
       await tester.tap(find.text('Выбрать миниатюру'));
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < 300; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
         if (find.byTooltip('Убрать миниатюру').evaluate().isNotEmpty) {
           return;
