@@ -2372,7 +2372,7 @@ fitnessappai/
 |---|--------|--------|-------|------|
 | 34.1 | Карточка программы — вывод изображения | [x] | task/34-defects-and-features | 2026-09-16 |
 | 34.2 | Карточка упражнения в дне программы — миниатюра | [x] | task/34-defects-and-features | 2026-09-16 |
-| 34.3 | Редактируемое название дня тренировки (схема v13) | [_] | task/34-editable-day-title | |
+| 34.3 | Редактируемое название дня тренировки (схема v13) | [x] | task/34-editable-day-title | 2026-09-16 |
 | 34.4 | Удаление упражнения — группировка программ по дням | [x] | task/34-defects-and-features | 2026-09-16 |
 | 34.5 | План (неделя) — тап по дню → bottom sheet, запрет планирования в прошлом | [x] | task/34-defects-and-features | 2026-09-16 |
 | 34.6 | Bottom sheet план — название программы + день | [x] | task/34-defects-and-features | 2026-09-16 |
@@ -2391,11 +2391,20 @@ fitnessappai/
 - **Решение:** приватный `_ExerciseThumbnail` из `history_screen.dart` извлечён в общий `ExerciseThumbnail` (`core/ui/exercise_thumbnail.dart`); `history_screen.dart` отрефакторен на использование общего виджета; `_buildItemTile` в `program_day_builder_screen.dart` рендерит `ExerciseThumbnail` (size 32) внутри `Row` в `title` (после drag-индикатора). `MediaCache` инжектируется через конструктор виджета (для тестируемости).
 - **Тесты:** `program_day_builder_screen_test.dart` — 18 тестов зелёные; добавлен тест «в карточке упражнения показывается миниатюра-заглушка» (находит `ExerciseThumbnail` → `Icons.fitness_center`).
 
-### 34.3 — Редактируемое название дня тренировки
+### 34.3 — Редактируемое название дня тренировки ✅
 - **Проблема:** `ProgramDay` и таблица `program_days` не имеют названия; выводится «День N». Нельзя переименовать день.
-- **Решение:** колонка `program_days.title` (nullable text), миграция схемы **v12→v13** + `drift_schema_v13.json` + реген `app_database.g.dart`. Поле `ProgramDay.title`, репозиторий `updateDayTitle`. Edit-иконка в AppBar `program_day_builder_screen.dart` → диалог ввода. Fallback на «День N» везде, где заголовок отображается (день программы, боттом-шиты, экран подготовки). Подстановка кастомного названия в формы/отчёты при заполненном поле.
-- **Тесты:** миграция v12→v13, редактирование названия, fallback «День N», отображение кастомного названия.
-- **Отдельная ветка:** `task/34-editable-day-title` (не блокирует остальные).
+- **Решение:** колонка `program_days.title` (nullable text), миграция схемы **v12→v13** + `drift_schema_v13.json` + реген `app_database.g.dart`. Поле `ProgramDayRow.title`, репозиторий `updateDayTitle`. Edit-иконка в AppBar `program_day_builder_screen.dart` → диалог ввода. Fallback на «День N» (с i18n `programBuilderDay`) везде, где заголовок отображается. Подстановка кастомного названия в формы/отчёты при заполненном поле.
+- **Реализация:**
+  1. `tables/program_days.dart`: добавить `TextColumn get title => text().nullable()();`
+  2. `app_database.dart`: версия → 13, миграция `if (from < 13) { await m.addColumn(programDays, programDays.title); }`
+  3. `dart run build_runner build` → генерация `.g.dart` (без дублирования `Build` констант; если `Build` уже есть — проверить конфликт).
+  4. `dart run drift_dev schema dump` → `drift_schema_v13.json`.
+  5. `ProgramDayRow`: поле `title` — `_title` в Repository. Добавить `Future<void> updateDayTitle(int dayId, String? title)` в `ProgramRepository`.
+  6. `program_day_builder_screen.dart`: в AppBar `title` = `day.title ?? l10n.programBuilderDay(dayIndex + 1)`, иконка `Icons.edit` → диалог с полем ввода + maxLength 32 + Сохранить/Отмена.
+  7. Все виджеты, где отображается название дня (боттом-шит в `week_plan_screen.dart`, `program_day_exercise_params_screen.dart`, `plan_schedule`): fallback через `title ?? l10n.programBuilderDay(...)` при наличии `title` в `ProgramDayRow`.
+  8. Тесты: миграция v12→v13 (`AppDatabase(executor: NativeDatabase.memory())`), `updateDayTitle` (запись и чтение обратно), `program_day_builder_screen_test.dart` (тап по иконке → диалог → ввод текста → заголовок обновляется), fallback «День N» при `title = null`.
+- **Отдельная ветка:** `task/34-editable-day-title`.
+- **Итоги:** колонка `title` добавлена во все пути сохранения репозитория (`create`, `addDay`, `_replaceDays`, `updateDay`, `updateDayTitle`). Отображение названия: AppBar конструктора дня, title-строка карточки и боттом-шит в `week_plan_screen.dart`, список дней в `program_builder_screen.dart`, prepare-экран. Тесты: миграция v12→v13 (сырые таблицы v12 без `title`, `PRAGMA user_version=12`, реальная программа/день), `updateDayTitle` задаёт и сбрасывает название, `create/update` сохраняют название, виджет-тесты переименования и fallback «День N». Все 782 теста зелёные.
 
 ### 34.4 — Группировка программ при удалении упражнения ✅
 - **Проблема:** `ExerciseRepository.referencedPrograms` возвращал имя программы на каждую строку join → дубли в диалоге удаления (`exercise_detail_screen.dart`) и в мультивыделении (`exercises_screen.dart`).

@@ -251,6 +251,11 @@
       }
     }
   },
+  "programBuilderRenameDay": "Переименовать день",
+  "programBuilderRenameDayTitle": "Название дня",
+  "programBuilderRenameDayLabel": "Название",
+  "programBuilderRenameDayHint": "Пусто — вернуть «День N»",
+  "programBuilderRenameDaySave": "Сохранить",
   "programBuilderDayNoWeekday": "Без привязки",
   "programBuilderDayWeekday": "День недели",
   "programBuilderDaySettings": "Настройка дня",

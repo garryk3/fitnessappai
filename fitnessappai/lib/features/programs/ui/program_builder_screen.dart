@@ -60,12 +60,21 @@ class DaySettings {
 
 /// Черновик дня с уникальным стабильным ключом для реордера.
 class _DayDraft {
-  _DayDraft(this.key, {this.dayOfWeek, this.reminder, this.filled = false});
+  _DayDraft(
+    this.key, {
+    this.dayOfWeek,
+    this.reminder,
+    this.filled = false,
+    this.title,
+  });
 
   /// Идентификатор дня в БД (или отрицательный временный ключ для новых дней).
   final int key;
   int? dayOfWeek;
   WorkoutReminder? reminder;
+
+  /// Кастомное название дня, null — «День N».
+  String? title;
 
   /// Имеет ли день хотя бы одно основное упражнение.
   bool filled;
@@ -167,6 +176,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                 day.day.id ?? _nextDayKey--,
                 dayOfWeek: day.day.dayOfWeek,
                 filled: day.mainExercises.any((e) => !e.isAlternative),
+                title: day.day.title,
               ),
           ]);
         await _loadReminders();
@@ -543,6 +553,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               day.day.id ?? _nextDayKey--,
               dayOfWeek: day.day.dayOfWeek,
               filled: day.mainExercises.any((e) => !e.isAlternative),
+              title: day.day.title,
             ),
         ]);
       _dirty = true;
@@ -620,6 +631,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           dayIndex: i,
           dayOfWeek: _days[i].dayOfWeek,
           warmupMinutes: _warmupMinutes,
+          title: _days[i].title,
         ),
     ];
     final saved = _programId == null
@@ -648,6 +660,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           dayOfWeek: _days[i].dayOfWeek,
           reminder: _days[i].reminder,
           filled: _days[i].filled,
+          title: savedDays[i].title,
         );
       }
     });
@@ -676,6 +689,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           dayIndex: i,
           dayOfWeek: _days[i].dayOfWeek,
           warmupMinutes: _warmupMinutes,
+          title: _days[i].title,
         ),
     ];
     final exercisesByDayIndex = await _loadExercisesByDayIndex();
@@ -1090,7 +1104,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                   index: index,
                   child: const Icon(Icons.drag_indicator),
                 ),
-          title: Text(l10n.programBuilderDay(index + 1)),
+          title: Text(day.title ?? l10n.programBuilderDay(index + 1)),
           subtitle: Text(
             _weekdayLabel(l10n, day.dayOfWeek) +
                 (_warmupMinutes != null

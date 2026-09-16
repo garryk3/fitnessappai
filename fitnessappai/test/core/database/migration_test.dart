@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -458,5 +459,57 @@ void main() {
     final version =
         sqlite.select('PRAGMA user_version;').single.columnAt(0) as int;
     expect(version, appDatabaseSchemaVersion);
+  });
+
+  test('миграция 12→13 добавляет program_days.title', () async {
+    final sqlite = sqlite3.openInMemory();
+
+    // Имитируем схему v12 (без title) с реальной программой и днём.
+    sqlite.execute(
+      'CREATE TABLE programs ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'name TEXT NOT NULL, '
+      'description TEXT NOT NULL DEFAULT \'\', '
+      'days_count INTEGER NOT NULL DEFAULT 0, '
+      'created_at INTEGER NOT NULL, '
+      'updated_at INTEGER NOT NULL, '
+      'is_active INTEGER NOT NULL DEFAULT 0, '
+      'activated_at INTEGER NULL, '
+      'deactivated_at INTEGER NULL, '
+      'exercise_rest_seconds INTEGER NULL, '
+      'image_path TEXT NULL);',
+    );
+    sqlite.execute(
+      'CREATE TABLE program_days ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'program_id INTEGER NOT NULL REFERENCES programs (id) ON DELETE CASCADE, '
+      'day_index INTEGER NOT NULL CHECK (day_index BETWEEN 0 AND 6), '
+      'day_of_week INTEGER NULL CHECK (day_of_week BETWEEN 1 AND 7), '
+      'warmup_minutes INTEGER NULL);',
+    );
+    sqlite.execute(
+      'INSERT INTO programs (name, description, days_count, created_at, '
+      'updated_at) VALUES (\'База\', \'\', 1, 0, 0);',
+    );
+    sqlite.execute(
+      'INSERT INTO program_days (program_id, day_index) VALUES (1, 0);',
+    );
+    sqlite.execute('PRAGMA user_version = 12;');
+
+    final database = AppDatabase(executor: NativeDatabase.opened(sqlite));
+    addTearDown(database.close);
+
+    final day = await database.select(database.programDays).getSingle();
+    expect(day.title, isNull);
+
+    final version =
+        sqlite.select('PRAGMA user_version;').single.columnAt(0) as int;
+    expect(version, appDatabaseSchemaVersion);
+
+    await (database.update(database.programDays)
+          ..where((t) => t.id.equals(day.id)))
+        .write(ProgramDaysCompanion(title: Value('Грудь+бицепс')));
+    final renamed = await database.select(database.programDays).getSingle();
+    expect(renamed.title, 'Грудь+бицепс');
   });
 }

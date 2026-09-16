@@ -49,7 +49,8 @@ part 'app_database.g.dart';
 /// v10: колонка `programs.exerciseRestSeconds`.
 /// v11: таблица `plan_schedule` — ручное назначение программы на дату.
 /// v12: колонка `programs.imagePath` — изображение программы.
-const int appDatabaseSchemaVersion = 12;
+/// v13: колонка `program_days.title` — название дня тренировки.
+const int appDatabaseSchemaVersion = 13;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -133,6 +134,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 12) {
         await m.addColumn(programs, programs.imagePath);
+      }
+      if (from < 13) {
+        await m.addColumn(programDays, programDays.title);
       }
     },
     beforeOpen: (details) async {

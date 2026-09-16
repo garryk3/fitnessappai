@@ -48,6 +48,7 @@ class WorkoutPrepareController {
   final Signal<String> programName = Signal('');
   final Signal<int?> programId = Signal(null);
   final Signal<int> dayIndex = Signal(0);
+  final Signal<String?> dayTitle = Signal(null);
   final Signal<int?> warmupMinutes = Signal(null);
   final Signal<WorkoutVariant> variant = Signal(WorkoutVariant.main);
 
@@ -86,6 +87,7 @@ class WorkoutPrepareController {
       final program = await programRepository.getById(day.programId);
       programName.value = program?.name ?? '';
       dayIndex.value = day.dayIndex;
+      dayTitle.value = day.title;
       warmupMinutes.value = day.warmupMinutes;
       _tagsByExercise = await exerciseRepository.contraindicationsByExercise();
       _userKeys = {

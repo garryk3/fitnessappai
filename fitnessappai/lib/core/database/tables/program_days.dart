@@ -15,4 +15,5 @@ class ProgramDays extends Table {
     'CHECK (day_of_week BETWEEN 1 AND 7)',
   )();
   IntColumn get warmupMinutes => integer().nullable()();
+  TextColumn get title => text().nullable()();
 }

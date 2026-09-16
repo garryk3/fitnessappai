@@ -63,7 +63,11 @@ void main() {
     );
   }
 
-  Future<Program> createProgram(String name, int daysCount) {
+  Future<Program> createProgram(
+    String name,
+    int daysCount, {
+    List<String?>? dayTitles,
+  }) {
     return programRepository.create(
       Program(
         name: name,
@@ -73,7 +77,13 @@ void main() {
       ),
       [
         for (var i = 0; i < daysCount; i++)
-          ProgramDay(programId: 0, dayIndex: i),
+          ProgramDay(
+            programId: 0,
+            dayIndex: i,
+            title: dayTitles != null && dayTitles.length > i
+                ? dayTitles[i]
+                : null,
+          ),
       ],
     );
   }
@@ -212,6 +222,76 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('отображает кастомное название дня, если оно задано', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1, dayTitles: ['Грудь']);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    expect(find.text('Грудь'), findsOneWidget);
+    expect(find.text('День 1'), findsNothing);
+  });
+
+  testWidgets('переименование дня через иконку в AppBar сохраняет название', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    expect(find.text('День 1'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Переименовать день'));
+    await tester.pumpAndSettle();
+    expect(find.text('Название дня'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Грудь+бицепс');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Грудь+бицепс'), findsOneWidget);
+    expect(find.text('День 1'), findsNothing);
+    expect(
+      (await programRepository.getDays(program.id!)).single.title,
+      'Грудь+бицепс',
+    );
+  });
+
+  testWidgets('пустое название сбрасывает день к «День N»', (tester) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1, dayTitles: ['Грудь']);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+    expect(find.text('Грудь'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Переименовать день'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('День 1'), findsOneWidget);
+    expect((await programRepository.getDays(program.id!)).single.title, isNull);
   });
 
   testWidgets('сводка bodyweight без веса', (tester) async {
