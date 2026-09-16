@@ -306,7 +306,7 @@ void main() {
 
     expect(find.text('Нельзя удалить «Приседания»'), findsOneWidget);
     expect(find.text('Упражнение используется в программах:'), findsOneWidget);
-    expect(find.text('• База ног'), findsOneWidget);
+    expect(find.text('• База ног → День 1'), findsOneWidget);
     expect(await repository.getById(created.id!), isNotNull);
 
     await tester.tap(find.text('ОК'));

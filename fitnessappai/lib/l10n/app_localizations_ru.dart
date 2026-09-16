@@ -265,6 +265,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanScheduleNoPrograms => 'Нет программ для назначения';
 
   @override
+  String get weekPlanPastDateGuard =>
+      'Нельзя запланировать тренировку на прошедший день';
+
+  @override
   String get weekPlanEmpty => 'Нет запланированных тренировок';
 
   @override
@@ -1121,10 +1125,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileMeasurementsHistory => 'История замеров';
 
   @override
-  String get profileYearFilter => 'Год';
-
-  @override
-  String get profileYearAll => 'Все годы';
+  String get profileLoadMore => 'Загрузить ещё';
 
   @override
   String get profileEmpty => 'Пока нет замеров тела';

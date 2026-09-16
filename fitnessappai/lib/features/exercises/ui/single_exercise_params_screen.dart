@@ -168,7 +168,6 @@ class _SingleExerciseParamsScreenState
     }
     return Form(
       key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -248,6 +247,7 @@ class _SingleExerciseParamsScreenState
           helperText: helperText,
           border: const OutlineInputBorder(),
         ),
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: validator,
       ),
     );

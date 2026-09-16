@@ -846,7 +846,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
             ? const Center(child: CircularProgressIndicator())
             : Form(
                 key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: ReorderableListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   buildDefaultDragHandles: false,
@@ -937,6 +936,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   Widget _nameField(AppLocalizations l10n) {
     return TextFormField(
       controller: _nameController,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: l10n.programBuilderName,
         border: const OutlineInputBorder(),

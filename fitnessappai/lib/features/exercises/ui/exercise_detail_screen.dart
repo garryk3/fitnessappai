@@ -116,7 +116,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
   Future<void> _showReferencedDialog(
     String exerciseName,
-    List<String> programNames,
+    Map<String, List<int>> referencedByProgram,
   ) async {
     final l10n = AppLocalizations.of(context);
     await showDialog<void>(
@@ -129,7 +129,11 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           children: [
             Text(l10n.exerciseDetailDeleteBlockedHint),
             const SizedBox(height: 8),
-            for (final name in programNames) Text('• $name'),
+            for (final entry in referencedByProgram.entries)
+              Text(
+                '• ${entry.key} → '
+                '${entry.value.map((d) => l10n.programBuilderDay(d + 1)).join(', ')}',
+              ),
           ],
         ),
         actions: [

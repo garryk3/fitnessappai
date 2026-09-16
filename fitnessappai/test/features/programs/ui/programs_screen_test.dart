@@ -10,7 +10,9 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/core/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -25,6 +27,8 @@ void main() {
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
     repository = ProgramRepository(db);
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
+    addTearDown(locator.reset);
     addTearDown(() => db.close());
   });
 
@@ -312,22 +316,22 @@ void main() {
     expect(programs.single.program.isActive, isTrue);
   });
 
-  testWidgets('при новой активной бейдж переходит к другой программе', (
+  testWidgets('карточка показывает миниатюру-заглушку без изображения', (
     tester,
   ) async {
-    final first = await repository.create(program('Первая'), [
+    await repository.create(program('Сплит'), [
       ProgramDay(programId: 0, dayIndex: 0),
     ]);
-    await repository.create(program('Вторая'), [
-      ProgramDay(programId: 0, dayIndex: 0),
-    ]);
-    await repository.setActive(first.id!);
     await pumpPrograms(tester);
 
-    expect(find.text('Активная'), findsOneWidget);
-
-    final cards = tester.widgetList(find.byType(Card));
-    expect(cards, hasLength(2));
+    expect(find.byType(ProgramThumbnail), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ProgramThumbnail),
+        matching: find.byIcon(Icons.fitness_center),
+      ),
+      findsOneWidget,
+    );
   });
 }
 

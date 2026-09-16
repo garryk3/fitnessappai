@@ -5,13 +5,16 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/core/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
@@ -27,6 +30,8 @@ void main() {
     db = AppDatabase(executor: NativeDatabase.memory());
     programRepository = ProgramRepository(db);
     exerciseRepository = ExerciseRepository(db, MediaStore());
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
+    addTearDown(locator.reset);
     addTearDown(() => db.close());
   });
 
@@ -156,10 +161,21 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  List<String> tileTitles(WidgetTester tester) => tester
-      .widgetList<ListTile>(find.byType(ListTile))
-      .map((tile) => (tile.title as Text).data!)
-      .toList();
+  List<String> tileTitles(WidgetTester tester) {
+    final tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+    return [
+      for (final tile in tiles)
+        tester
+            .widgetList<Text>(
+              find.descendant(
+                of: find.byWidget(tile),
+                matching: find.byType(Text),
+              ),
+            )
+            .firstWhere((text) => (text.data ?? '').isNotEmpty)
+            .data!,
+    ];
+  }
 
   testWidgets('отображает упражнения сохранённого дня и прогресс', (
     tester,
@@ -175,6 +191,27 @@ void main() {
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(find.text('Заполнено 1 из 1 дней'), findsOneWidget);
     expect(find.text('3 × 10 · 20 кг · отдых 60 с'), findsOneWidget);
+  });
+
+  testWidgets('в карточке упражнения показывается миниатюра-заглушка', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+    final program = await createProgram('Сплит', 1);
+    final days = await programRepository.getDays(program.id!);
+    await addValidExercise(days[0].id!, exercise.id!);
+
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    expect(find.text('Жим штанги'), findsOneWidget);
+    expect(find.byType(ExerciseThumbnail), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ExerciseThumbnail),
+        matching: find.byIcon(Icons.fitness_center),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('сводка bodyweight без веса', (tester) async {

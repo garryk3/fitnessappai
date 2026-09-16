@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -25,6 +27,7 @@ void main() {
     db = AppDatabase(executor: NativeDatabase.memory());
     programRepository = ProgramRepository(db);
     exerciseRepository = ExerciseRepository(db, MediaStore());
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
     addTearDown(() => db.close());
   });
 
@@ -186,6 +189,25 @@ void main() {
     expect(find.text('Заполните поле'), findsNWidgets(2));
 
     await enterField(tester, 'Подходы', '3');
+    await tester.pumpAndSettle();
+    expect(find.text('Заполните поле'), findsOneWidget);
+  });
+
+  testWidgets('ввод в одно поле не подсвечивает ошибки других полей', (
+    tester,
+  ) async {
+    final positionId = await addPosition('Жим штанги', ExerciseType.strength);
+
+    await pumpParams(tester, positionId);
+
+    // До сабмита ввод в «Подходы» не должен валидировать «Повторения».
+    await enterField(tester, 'Подходы', '3');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Заполните поле'), findsNothing);
+
+    // Ошибки появляются только после сабмита.
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
     expect(find.text('Заполните поле'), findsOneWidget);
   });

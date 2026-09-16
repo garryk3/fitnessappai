@@ -294,6 +294,47 @@ void main() {
     expect(find.text('$lastDay'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('календарь не обрезается и тапабелен на фолд-экране (~585×632)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(585, 632));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    final lastDay = DateTime(now.year, now.month + 1, 0).day;
+    expect(find.text('$lastDay'), findsWidgets);
+    expect(tester.takeException(), isNull);
+
+    // Тап по тренировочному дню работает.
+    await tester.tap(find.text('10'));
+    await tester.pumpAndSettle();
+    expect(find.text('day detail'), findsOneWidget);
+  });
+
+  testWidgets('календарь не обрезается на низком фолд-экране (~585×520)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(585, 520));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    final lastDay = DateTime(now.year, now.month + 1, 0).day;
+    expect(find.text('$lastDay'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 /// Сервис экспорта, возвращающий фиксированный JSON без обращения к БД.

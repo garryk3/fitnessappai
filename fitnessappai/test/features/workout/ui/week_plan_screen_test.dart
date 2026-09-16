@@ -464,7 +464,7 @@ void main() {
       await tester.tap(find.text('10'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Сплит'), findsOneWidget);
+      expect(find.textContaining('Сплит'), findsWidgets);
       expect(find.text('Начать'), findsOneWidget);
     });
 
@@ -586,6 +586,125 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(BottomSheet), findsWidgets);
+  });
+
+  testWidgets('тап по занятому дню недели открывает действия дня', (
+    tester,
+  ) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    // «10» — понедельник с тренировкой: тап по карточке открывает попап.
+    await tester.tap(find.text('10').last);
+    await tester.pumpAndSettle();
+
+    final sheet = find.byType(BottomSheet);
+    expect(sheet, findsOneWidget);
+    expect(
+      find.descendant(of: sheet, matching: find.text('10 августа 2026')),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.text('Сплит'), findsWidgets);
+    expect(find.text('Начать'), findsWidgets);
+  });
+
+  testWidgets('карточка планирования показывает программу, день и дату', (
+    tester,
+  ) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    final dayCard = tester.widget<Text>(find.textContaining('День 1').first);
+    expect(dayCard.data, 'День 1 · 10 августа 2026');
+  });
+
+  testWidgets('попап месяца показывает программу, день и дату', (tester) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    await tester.tap(find.text('Месяц'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('10'));
+    await tester.pumpAndSettle();
+
+    final sheet = find.byType(BottomSheet);
+    expect(sheet, findsOneWidget);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Сплит → День 1')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('10 августа 2026')),
+      findsAtLeastNWidgets(1),
+    );
+  });
+
+  testWidgets(
+    'пустая неделя: тап по пустому состоянию открывает планирование',
+    (tester) async {
+      await pumpPlan(tester);
+
+      expect(find.text('Нет запланированных тренировок'), findsOneWidget);
+      await tester.tap(find.text('Нет запланированных тренировок'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.text('Запланировать тренировку'), findsOneWidget);
+    },
+  );
+
+  testWidgets('запрет планирования на прошедшие даты (неделя)', (tester) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    // Переходим на предыдущую неделю (3–9 августа — прошлые дни).
+    await tester.tap(find.byTooltip('Предыдущая неделя'));
+    await tester.pumpAndSettle();
+
+    // Прошедший пустой день — планирование не открывается, показывается SnackBar.
+    await tester.tap(find.text('5'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(
+      find.text('Нельзя запланировать тренировку на прошедший день'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('запрет планирования на прошедшие даты (месяц)', (tester) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    await tester.tap(find.text('Месяц'));
+    await tester.pumpAndSettle();
+
+    // «1» августа — прошедший день при fixedNow = 10.08.2026.
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(
+      find.text('Нельзя запланировать тренировку на прошедший день'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('занятый день на прошедшей дате всё же открывает действия дня', (
+    tester,
+  ) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    // Прошедшая неделя: понедельник 3 августа с тренировкой.
+    await tester.tap(find.byTooltip('Предыдущая неделя'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('3').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsOneWidget);
   });
 }
 
