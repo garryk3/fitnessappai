@@ -1047,12 +1047,14 @@ class _MonthGrid extends StatelessWidget {
         null,
       );
     }
-    if (_isPast(date)) {
-      // Прошедший день без выполнения — «неуспешный» окрас.
-      return (colorScheme.errorContainer, colorScheme.onErrorContainer, null);
-    }
-    if (anySkipped) {
-      return (colorScheme.errorContainer, colorScheme.onErrorContainer, null);
+    if (_isPast(date) || anySkipped) {
+      // Прошедший день без выполнения или пропуск — нейтральная отмена
+      // (НЕ error; красный зарезервирован под ошибки, см. DESIGN.md).
+      return (
+        colorScheme.surfaceContainerHighest,
+        colorScheme.onSurfaceVariant,
+        Border.all(color: colorScheme.outline, width: 1),
+      );
     }
     return (
       colorScheme.secondaryContainer,

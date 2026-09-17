@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness App — Референс палитры (Status + Chart)</title>
+<style>
+  :root{
+    --bg:#FEF7FF; --surface:#FEF7FF; --surface-lo:#F8F1FA; --surface-mid:#F2ECF4;
+    --surface-hi:#EDE6EE; --surface-max:#E7E0E8;
+    --fg:#1D1B20; --muted:#49454E; --outline:#7A757F; --outline-v:#CBC4CF;
+    --primary:#69548D; --on-primary:#FFFFFF; --primary-ct:#EBDCFF; --on-primary-ct:#503C74;
+    --tertiary:#7F525D; --on-tertiary:#FFFFFF; --error:#BA1A1A; --on-error:#FFFFFF;
+    --grid:#878787; --axis:#49454E;
+  }
+  body[data-theme="dark"]{
+    --bg:#151218; --surface:#151218; --surface-lo:#1D1B20; --surface-mid:#211F24;
+    --surface-hi:#2C292F; --surface-max:#37343A;
+    --fg:#E7E0E8; --muted:#CBC4CF; --outline:#948E99; --outline-v:#49454E;
+    --primary:#D4BBFC; --on-primary:#39255C; --primary-ct:#503C74; --on-primary-ct:#EBDCFF;
+    --tertiary:#F1B7C4; --on-tertiary:#4A252F; --error:#FFB4AB; --on-error:#690005;
+    --grid:#696969; --axis:#CBC4CF;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--fg);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 24px 72px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    border-bottom:1px solid var(--outline-v);padding-bottom:20px}
+  h1{font-size:26px;line-height:1.15;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin-top:4px;font-size:14px}
+  .btn{border:1px solid var(--outline);background:var(--surface-hi);color:var(--fg);
+    padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+  section{margin-top:36px}
+  h2{font-size:17px;margin:0 0 4px}
+  .lead{color:var(--muted);font-size:13px;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .sw{border:1px solid var(--outline-v);border-radius:12px;overflow:hidden;background:var(--surface-hi)}
+  .chiprow{display:flex;gap:10px;flex-wrap:wrap}
+  .badge{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+    font-size:13px;font-weight:600;height:34px}
+  .badge.outlined{border:1.5px solid var(--outline);background:var(--surface-lo);color:var(--muted)}
+  .badge svg{flex:none}
+  .swatch{height:64px;display:flex;align-items:flex-end;padding:8px;font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+  .sw .meta{padding:8px 10px;font-size:11px;color:var(--muted)}
+  .sw .meta b{color:var(--fg);font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface-lo);border-radius:12px;overflow:hidden}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--outline-v)}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-hi)}
+  td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  .ok{color:var(--tertiary);font-weight:700}
+  .pass{color:var(--primary);font-weight:600}
+  .plot{border:1px solid var(--outline-v);border-radius:12px;padding:18px 18px 8px;background:var(--surface)}
+  .chart{position:relative;height:190px;border-bottom:1.5px solid var(--grid);border-left:1.5px solid var(--outline-v)}
+  .h-grid{position:absolute;inset:0}
+  .h-grid i{position:absolute;left:0;right:0;border-top:1px solid var(--grid);display:block}
+  .y{position:absolute;right:6px;font:600 10px ui-monospace,Menlo,monospace;color:var(--axis);transform:translateY(-50%)}
+  .y.top{top:6%}.y.mid{top:50%}.y.bot{top:96%}
+  .lines{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+  .lines span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--outline-v);color:var(--muted);font-size:12px}
+</style>
+</head>
+<body data-theme="light">
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Fitness App — палитра Status &amp; Chart</h1>
+    <div class="sub">Material 3 from seed <code>#7E57C2</code> · WCAG 2.2 · полная спецификация — в DESIGN.md</div>
+  </div>
+  <button class="btn" id="toggle" type="button" data-od-id="theme-toggle">Переключить тему (dark/light)</button>
+</header>
+
+<section data-od-id="section-status">
+  <h2>Статусы тренировок</h2>
+  <p class="lead">«Пропущено» — нейтральная отмена (outlined-чип), красный остаётся только у error.</p>
+  <div class="chiprow">
+    <span class="badge" style="background:var(--surface-max);color:var(--muted)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Ожидает</span>
+    <span class="badge" style="background:var(--primary);color:var(--on-primary)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Выполнено</span>
+    <span class="badge" style="background:var(--tertiary);color:var(--on-tertiary)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 8a7 7 0 0 1 12-4M19 16a7 7 0 0 1-12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 4v4h-4M6 20v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Перенесено</span>
+    <span class="badge outlined">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Пропущено</span>
+    <span class="badge" style="background:var(--error);color:var(--on-error)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>
+      Ошибка</span>
+  </div>
+</section>
+
+<section data-od-id="section-chart-series">
+  <h2>Серии графиков (categorical, 6)</h2>
+  <p class="lead">Каждая серия ≥4.5:1 к surface; попарная ΔE2000 ≥15 (light) / ≥22 (dark); бумажный порядок индексов одинаков в обеих темах.</p>
+  <div class="grid" data-od-id="series-grid"></div>
+</section>
+
+<section data-od-id="section-grid">
+  <h2>Сетка и оси</h2>
+  <p class="lead">Сетка <code>chartGrid</code> ≥3:1 к surface (сплошной нейтральный токен). Подписи осей — <code>onSurfaceVariant</code> (≥4.5:1).</p>
+  <div class="plot">
+    <div class="chart">
+      <div class="h-grid"><i style="top:6%"></i><i style="top:37%"></i><i style="top:68%"></i><i style="top:96%"></i></div>
+      <span class="y top">90</span><span class="y mid">75</span><span class="y bot">0</span>
+      <svg width="100%" height="190" viewBox="0 0 1000 190" preserveAspectRatio="none">
+        <polyline id="l0" points="0,150 90,140 180,120 270,130 360,95 450,105 540,78 630,88 720,60 810,70 900,42" fill="none"/>
+        <polyline id="l1" points="0,170 90,155 180,160 270,135 360,140 450,118 540,125 630,100 720,108 810,88 900,97" fill="none"/>
+      </svg>
+    </div>
+    <div class="lines" data-od-id="series-legend"></div>
+  </div>
+</section>
+
+<section data-od-id="section-contrast">
+  <h2>Проверка контраста (WCAG 2.2)</h2>
+  <p class="lead">Текст: 4.5:1 (AA) / 7:1 (AAA). Графика и UI-элементы: 3:1 (AA, 1.4.11). Значения — для текущей темы.</p>
+  <table data-od-id="contrast-table">
+    <thead><tr><th>Пара</th><th>Токен</th><th>Контраст</th><th>Оценка</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<div class="foot">Источник значений: генерация M3 tonal spot из seed <code>#7E57C2</code> и расчёт относительной светимости WCAG. Отклонения от DESIGN.md недопустимы.</div>
+</div>
+
+<script>
+  const LIGHT = {
+    surface:'#FEF7FF', surfaceLo:'#F8F1FA', surfaceMax:'#E7E0E8',
+    primary:'#69548D', primaryCt:'#EBDCFF', tertiary:'#7F525D', error:'#BA1A1A',
+    outline:'#7A757F', onSV:'#49454E', onError:'#FFFFFF', onPrimary:'#FFFFFF', onTertiary:'#FFFFFF',
+    series:[
+      {c:'#0051A0',n:'chartSeries0',d:'indigo',cr:7.44},
+      {c:'#00432E',n:'chartSeries1',d:'teal',cr:10.84},
+      {c:'#9A5500',n:'chartSeries2',d:'amber',cr:5.43},
+      {c:'#710085',n:'chartSeries3',d:'magenta',cr:9.78},
+      {c:'#566600',n:'chartSeries4',d:'green',cr:6.06},
+      {c:'#004C56',n:'chartSeries5',d:'azure',cr:9.21},
+    ],
+    grid:'#878787', gridCr:3.41, axis:'#49454E', axisCr:8.89, primaryCr:6.14,
+  };
+  const DARK = {
+    surface:'#151218', surfaceLo:'#1D1B20', surfaceMax:'#37343A',
+    primary:'#D4BBFC', primaryCt:'#503C74', tertiary:'#F1B7C4', error:'#FFB4AB',
+    outline:'#948E99', onSV:'#CBC4CF', onError:'#690005', onPrimary:'#39255C', onTertiary:'#4A252F',
+    series:[
+      {c:'#67AAFF',n:'chartSeries0',d:'indigo',cr:7.75},
+      {c:'#00AC7D',n:'chartSeries1',d:'teal',cr:6.36},
+      {c:'#FFC392',n:'chartSeries2',d:'amber',cr:11.91},
+      {c:'#E365FF',n:'chartSeries3',d:'magenta',cr:6.69},
+      {c:'#B5D500',n:'chartSeries4',d:'green',cr:11.03},
+      {c:'#00D2EB',n:'chartSeries5',d:'azure',cr:10.09},
+    ],
+    grid:'#696969', gridCr:3.38, axis:'#CBC4CF', axisCr:10.90, primaryCr:10.88,
+  };
+
+  let theme = 'light';
+  const $ = s => document.querySelector(s);
+  const hex = (c1,c2)=>`#${[c1,c2].map(h=>h.trim().slice(1)).join('/')}`;
+  const wcag = r => r>=7 ? 'AAA (текст)' : r>=4.5 ? 'AA (текст)' : r>=3 ? 'AA — графика (1.4.11)' : 'FAIL';
+
+  function seriesGrid(T){
+    const g = $('#series-grid'); g.innerHTML='';
+    T.series.forEach(s=>{
+      const el=document.createElement('div'); el.className='sw';
+      el.innerHTML = `<div class="swatch" style="background:${s.c};color:#fff">
+          ${s.n}<br>${s.c}</div>
+        <div class="meta"><b>${s.d}</b> · <span style="color:#c03333">контраст&nbsp;${s.cr}:1</span></div>`;
+      g.appendChild(el);
+    });
+  }
+  function legend(T){
+    const l=$('#series-legend'); l.innerHTML='';
+    T.series.forEach((s,i)=> {
+      const span=document.createElement('span');
+      span.innerHTML=`<span class="dot" style="background:${s.c}"></span>Серия ${i+1}`;
+      l.appendChild(span);
+    });
+  }
+  function table(T){
+    const b=$('#contrast-table tbody'); b.innerHTML='';
+    const add=(label,tok,f,bg)=>{
+      const tr=document.createElement('tr');
+      const r=contrast(f,bg);
+      tr.innerHTML=`<td>${label}</td><td class="mono">${tok}</td>
+        <td class="mono">${r.toFixed(2)}:1</td><td class="${r>=4.5?'pass':'ok'}">${wcag(r)}</td>`;
+      b.appendChild(tr);
+    };
+    add('Статус «Пропущено» — текст','statusSkippedOnContainer',T.onSV,T.surfaceLo);
+    add('Статус «Пропущено» — бордер','statusSkippedOutline',T.outline,T.surfaceLo);
+    add('Статус «Ожидает»','statusPending',T.onSV,T.surfaceMax);
+    add('Статус «Выполнено»','statusPerformed',T.onPrimary,T.primary);
+    add('Статус «Перенесено»','statusRescheduled',T.onTertiary,T.tertiary);
+    add('Статус «Ошибка»','statusError',T.onError,T.error);
+    add('Сетка графика','chartGrid',T.surface,T.grid);
+    add('Подписи осей','chartAxisLabel',T.surface,T.axis);
+    add('Столбцы BarChart','primary / surface',T.primary,T.surface);
+  }
+  function contrast(f,bg){
+    const lum=h=>{h=h.replace('#','');const c=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255)
+      .map(v=>v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4));
+      return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];};
+    const a=lum(f),bb=lum(bg);const [hi,lo]=a>=bb?[a,bb]:[bb,a];
+    return (hi+0.05)/(lo+0.05);
+  }
+  function apply(){
+    document.body.dataset.theme=theme;
+    const T=theme==='dark'?DARK:LIGHT;
+    $('#toggle').textContent = theme==='dark'?'Переключить тему (light/dark)':'Переключить тему (dark/light)';
+    seriesGrid(T); legend(T); table(T);
+    // recolor demo lines
+    $('#l0').setAttribute('stroke',T.series[0].c);
+    $('#l1').setAttribute('stroke',T.series[2].c);
+    $('#l0').setAttribute('stroke-width', 2.5);
+    $('#l1').setAttribute('stroke-width', 2);
+  }
+  $('#toggle').addEventListener('click',()=>{theme=theme==='dark'?'light':'dark';apply();});
+  apply();
+</script>
+</body>
+</html>

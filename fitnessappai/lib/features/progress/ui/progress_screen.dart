@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/theme/status_colors.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
@@ -310,9 +311,7 @@ class _WorkoutsChart extends StatelessWidget {
                     drawVerticalLine: false,
                     horizontalInterval: niceInterval(maxY),
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outlineVariant.withValues(alpha: 0.3),
+                      color: theme.colorScheme.chartGrid,
                       strokeWidth: 0.5,
                     ),
                   ),
@@ -480,9 +479,7 @@ class _MetricChart extends StatelessWidget {
                     drawVerticalLine: false,
                     horizontalInterval: yInterval,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outlineVariant.withValues(alpha: 0.3),
+                      color: theme.colorScheme.chartGrid,
                       strokeWidth: 0.5,
                     ),
                   ),
@@ -537,7 +534,7 @@ class _MetricChart extends StatelessWidget {
                       ],
                       isCurved: false,
                       barWidth: 2,
-                      color: theme.colorScheme.primary,
+                      color: ChartSeriesColors.of(theme.brightness, 0),
                       dotData: FlDotData(show: true),
                       belowBarData: BarAreaData(show: false),
                     ),

@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:fitnessappai/app/theme/status_colors.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
@@ -181,12 +182,8 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
         show: true,
         drawVerticalLine: false,
         horizontalInterval: niceInterval(maxY),
-        getDrawingHorizontalLine: (value) => FlLine(
-          color: Theme.of(
-            context,
-          ).colorScheme.outlineVariant.withValues(alpha: 0.3),
-          strokeWidth: 0.5,
-        ),
+        getDrawingHorizontalLine: (value) =>
+            FlLine(color: theme.colorScheme.chartGrid, strokeWidth: 0.5),
       ),
       titlesData: FlTitlesData(
         leftTitles: AxisTitles(
@@ -238,11 +235,14 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
           ],
           isCurved: false,
           barWidth: 2,
-          color: theme.colorScheme.primary,
+          color: ChartSeriesColors.of(theme.brightness, 0),
           dotData: FlDotData(show: true),
           belowBarData: BarAreaData(
             show: true,
-            color: theme.colorScheme.primary.withValues(alpha: 0.15),
+            color: ChartSeriesColors.of(
+              theme.brightness,
+              0,
+            ).withValues(alpha: 0.15),
           ),
         ),
       ],
