@@ -2468,3 +2468,17 @@ fitnessappai/
 - **Проблема:** `SplashGate._runBootstrap()` ждал только `bootstrap()` (быстрая инициализация ~0.1–0.5 с) и сразу запускал fade-out 900 мс — сплэш был виден меньше 2 секунд.
 - **Решение:** в `_runBootstrap` замеряется время от старта bootstrap; если прошло меньше 2 сек — дополнительный `Future.delayed(2с − elapsed)`. После этого стартует существующий fade-out. Итог: сплэш держится минимум 2 сек до начала исчезновения.
 - **Тесты:** `splash_gate_test.dart` обновлён на pump 2 сек; добавлен тест «сплэш держится минимум 2 секунды» (быстрый bootstrap — через 1 сек сплэш ещё виден, после 2 сек — уходит).
+
+## Этап 36: Дизайн-система (внедрение DESIGN.md)
+
+OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал дизайн-систему поверх M3-палитры из seed `#7E57C2`: документ `DESIGN.md` (корень репо) + визуальный справочник `docs/palette-reference.html`. Ключевые решения: «Пропущено» — нейтральная отмена (НЕ `error`); сетка графиков — сплошной токен `chartGrid` ≥3:1 (старая `outlineVariant` alpha 0.3 — нарушение WCAG 1.4.11); серии линий — палитра `ChartSeriesColors` (6 серий, light/dark, попарный ΔE≥15); красный зарезервирован только под ошибки. Задача 36.1 (исключения анализатора) выпущена ранее в составе релиза v1.0.19-beta.
+
+| № | Задача | Статус | Ветка | Дата |
+|---|--------|--------|-------|------|
+| 36.2 | Дизайн-токены: статусы, сетка и серии графиков | [x] | task/36.2-design-tokens | 2026-09-17 |
+
+### 36.2 — Дизайн-токены: статусы «Пропущено», сетка и серии графиков ✅
+- **Проблема:** «Пропущено» в бейджах и календаре плана отображались красным (`error`/`errorContainer`) — нарушение принципа «красный только для ошибок»; сетка графиков `outlineVariant` alpha 0.3 давала контраст <3:1 (WCAG 1.4.11); линии прогресса использовали `primary`, тогда как дизайн-система предписывает базовую серию `chartSeries0`.
+- **Решение:** добавлен `lib/app/theme/status_colors.dart` — extension `StatusColorsX` на `ColorScheme` (токены статусов из `DESIGN.md`, `chartGrid` = light `#878787` / dark `#696969`, `chartAxisLabel`=`onSurfaceVariant`) и `ChartSeriesColors` (6 серий, light/dark, `of(brightness, index)`). `StatusBadge`: `skipped`/`pastSkipped` — outlined-чип (`surfaceContainerLow`/`outline`/`onSurfaceVariant` + иконка прочерка `Icons.remove`). Сетка BarChart и LineChart (`progress_screen.dart`), а также графика экрана динамики (`exercise_progression_screen.dart`) — `chartGrid` вместо alpha; линии — `ChartSeriesColors.of(brightness, 0)` (заливка под линией — alpha 0.15 от той же серии). Календарь плана (`week_plan_screen.dart` `_cellStyle`): прошедшие без выполнения и пропущенные дни — нейтральный outlined-стиль (`surfaceContainerHighest`/`onSurfaceVariant` + бордер `outline`) вместо `errorContainer`. `ThemeData`/`ColorScheme.fromSeed` не менялись.
+- **Документы:** `DESIGN.md` (корень), `docs/palette-reference.html`, `docs/design_audit_report.md` — входные данные и справочники дизайн-системы, коммитятся с задачей.
+- **Тесты:** `week_plan_screen_test.dart` — «бейдж «Пропущено» контрастен» теперь проверяет `onSurfaceVariant` и наличие бордера `outline`. Все 789 тестов зелёные; `dart format` и `flutter analyze --fatal-infos` без замечаний.

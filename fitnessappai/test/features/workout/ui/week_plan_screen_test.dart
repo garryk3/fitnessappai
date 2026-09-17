@@ -436,7 +436,19 @@ void main() {
       await tester.pumpAndSettle();
 
       final cs = Theme.of(tester.element(find.text('Пропущено'))).colorScheme;
-      expect(badgeColor(tester, 'Пропущено'), cs.onError);
+      expect(badgeColor(tester, 'Пропущено'), cs.onSurfaceVariant);
+      // Пропуск — нейтральная отмена: outlined-чип с бордером outline (не error).
+      final badge = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.text('Пропущено'),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final border = (badge.decoration! as BoxDecoration).border;
+      expect(border, isA<Border>());
+      expect((border! as Border).top.color, cs.outline);
     });
   }
 
