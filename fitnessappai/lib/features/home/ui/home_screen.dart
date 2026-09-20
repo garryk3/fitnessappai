@@ -6,6 +6,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/ui/program_thumbnail.dart';
+import 'package:fitnessappai/core/ui/uikit.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/core/ui/status_badge.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
@@ -122,24 +123,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                programs.length == 1
-                    ? l10n.homeActiveProgram
-                    : '${l10n.homeActiveProgram} (${programs.length})',
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () => context.push('/programs'),
-              icon: const Icon(Icons.list_alt, size: 18),
-              label: Text(l10n.homeGoToPrograms),
-            ),
-          ],
+        AppSectionHeader(
+          title: programs.length == 1
+              ? l10n.homeActiveProgram
+              : '${l10n.homeActiveProgram} (${programs.length})',
+          actionLabel: l10n.homeGoToPrograms,
+          onAction: () => context.push('/programs'),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         for (final info in programs) ...[
           _ActiveProgramCard(
             programName: info.program.name,
@@ -152,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : null,
             todayStatus: info.todayStatus,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
         ],
       ],
     );
@@ -160,15 +151,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWorkoutsSection(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final controller = _controller;
     final workouts = controller.recentWorkouts.value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.homeRecentWorkouts, style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
+        AppSectionHeader(
+          title: l10n.homeRecentWorkouts,
+          actionLabel: workouts.isNotEmpty ? l10n.homeGoToHistory : null,
+          onAction: () => context.push('/history'),
+        ),
+        const SizedBox(height: 12),
         if (workouts.isEmpty)
           _EmptyHint(
             icon: Icons.history_outlined,
@@ -178,15 +172,8 @@ class _HomeScreenState extends State<HomeScreen> {
         else ...[
           for (final item in workouts) ...[
             _RecentWorkoutCard(item: item),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
           ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: () => context.push('/history'),
-              child: Text(l10n.homeGoToHistory),
-            ),
-          ),
         ],
       ],
     );
@@ -216,72 +203,72 @@ class _ActiveProgramCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AppCard(
+      gradient: LinearGradient(
+        colors: [
+          theme.colorScheme.surfaceContainerLow,
+          theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  ProgramThumbnail(imagePath: imagePath),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      programName,
-                      style: theme.textTheme.titleLarge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+              ProgramThumbnail(imagePath: imagePath),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  programName,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  if (onStart != null)
-                    IconButton(
-                      icon: const Icon(Icons.play_circle_outline),
-                      tooltip: l10n.weekPlanStart,
-                      onPressed: onStart,
-                    ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              if (day != null) ...[
-                const SizedBox(height: 8),
-                if (todayStatus != null)
-                  StatusBadge(status: todayStatus!)
-                else
-                  Text(
-                    '${l10n.homeUpcomingDay}: '
-                    '${_weekdayLabel(l10n, day!.dayOfWeek)}',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-              ],
-              if (exerciseNames.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                for (final name in exerciseNames)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.fitness_center,
-                          size: 16,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(name, style: theme.textTheme.bodyMedium),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+              if (onStart != null)
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.play_arrow),
+                  tooltip: l10n.weekPlanStart,
+                  onPressed: onStart,
+                ),
             ],
           ),
-        ),
+          if (day != null) ...[
+            const SizedBox(height: 12),
+            if (todayStatus != null)
+              StatusBadge(status: todayStatus!)
+            else
+              Text(
+                '${l10n.homeUpcomingDay}: '
+                '${_weekdayLabel(l10n, day!.dayOfWeek)}',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+          if (exerciseNames.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final name in exerciseNames)
+                  Chip(
+                    avatar: const Icon(Icons.fitness_center, size: 14),
+                    label: Text(name, style: theme.textTheme.bodySmall),
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: theme.colorScheme.surfaceContainerHigh,
+                  ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -299,40 +286,59 @@ class _RecentWorkoutCard extends StatelessWidget {
     final session = item.session;
     final date = DateFormat('d MMMM yyyy', 'ru').format(session.performedDate);
     final minutes = item.duration.inMinutes;
-    return Card(
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/history/${session.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                session.programName,
-                style: theme.textTheme.titleSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${l10n.historyExercisesCount(item.exercisesCount)}'
-                ' · ${l10n.historyDuration(minutes)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+    return AppCard(
+      onTap: () => context.push('/history/${session.id}'),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.check_circle_outline,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
           ),
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  session.programName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  date,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${l10n.historyExercisesCount(item.exercisesCount)}'
+                  ' · ${l10n.historyDuration(minutes)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }
