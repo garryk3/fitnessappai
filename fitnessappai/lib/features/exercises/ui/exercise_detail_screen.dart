@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/domain/models/contraindication_tag.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
+import 'package:fitnessappai/core/ui/muscle_group_icon.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_controller.dart';
@@ -495,7 +496,11 @@ class _MusclesSection extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              for (final muscle in muscles) Chip(label: Text(muscle.labelRu)),
+              for (final muscle in muscles)
+                Chip(
+                  avatar: MuscleGroupIcon(muscleKey: muscle.key, size: 18),
+                  label: Text(muscle.labelRu),
+                ),
             ],
           ),
         ],
