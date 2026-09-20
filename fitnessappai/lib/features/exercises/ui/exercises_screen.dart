@@ -9,6 +9,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_list_controller.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_list_item.dart';
+import 'package:fitnessappai/core/ui/muscle_group_icon.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -381,11 +382,22 @@ class _ExerciseCard extends StatelessWidget {
                     ),
                     if (item.muscles.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      Text(
-                        item.muscles.map((m) => m.labelRu).join(', '),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          MuscleGroupIcon(
+                            muscleKey: item.muscles.first.key,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              item.muscles.map((m) => m.labelRu).join(', '),
+                              style: Theme.of(context).textTheme.bodySmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
