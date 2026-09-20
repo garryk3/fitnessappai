@@ -17,6 +17,8 @@ import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/core/ui/program_thumbnail.dart';
+import 'package:fitnessappai/core/ui/uikit.dart';
 import 'package:fitnessappai/features/home/ui/home_screen.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -224,7 +226,7 @@ void main() {
 
     final card = find.ancestor(
       of: find.text('С изображением'),
-      matching: find.byType(Card),
+      matching: find.byType(AppCard),
     );
     expect(card, findsOneWidget);
     expect(
@@ -243,10 +245,10 @@ void main() {
 
     final card = find.ancestor(
       of: find.text('Без изображения'),
-      matching: find.byType(Card),
+      matching: find.byType(AppCard),
     );
     expect(
-      find.descendant(of: card, matching: find.byIcon(Icons.fitness_center)),
+      find.descendant(of: card, matching: find.byType(ProgramThumbnail)),
       findsOneWidget,
     );
   });
@@ -374,9 +376,9 @@ void main() {
 
     await pumpHome(tester);
 
-    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.play_circle_outline));
+    await tester.tap(find.byIcon(Icons.play_arrow));
     await tester.pumpAndSettle();
 
     final day = (await programRepo.getDays(program.id!)).single;
