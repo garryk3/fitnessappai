@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:signals_flutter/signals_flutter.dart';
-import 'package:fitnessappai/core/di/service_locator.dart';
-import 'package:fitnessappai/features/home/ui/home_controller.dart';
-import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Базовый элемент UI-кита: Улучшенная карточка с радиусом 20 и мягкой тенью.
 class AppCard extends StatelessWidget {
