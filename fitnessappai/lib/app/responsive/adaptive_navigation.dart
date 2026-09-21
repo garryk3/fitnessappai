@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-/// Адаптивная оболочка: на широких экранах — NavigationRail,
-/// на узких — NavigationBar. Порядок вкладок и набор иконок одинаковые
-/// для всех размеров экрана.
+/// Адаптивная оболочка навигации по плану 40.2:
+///
+/// * **>600dp** — всегда развёрнутый `NavigationRail` (все 6 пунктов) без
+///   подписей и без иконки открытия;
+/// * **<=600dp** — нижний `NavigationBar` из 4 пунктов (Главные,
+///   Упражнения, Программы, План) с подписями плюс выезжающее слева
+///   выезжающее слева меню со всеми пунктами.
+///
+/// Порядок вкладок единый для всех размеров экрана: нижний бар показывает
+/// первые 4 пункта из того же набора, что и rail, в том же порядке.
 class AdaptiveNavigation extends StatelessWidget {
   const AdaptiveNavigation({super.key, required this.navigationShell});
 
@@ -19,12 +25,18 @@ class AdaptiveNavigation extends StatelessWidget {
     );
   }
 
-  static const int _programsBranchIndex = 2;
+  void _onBarDestinationSelected(int branchIndex) {
+    _onDestinationSelected(branchIndex);
+  }
 
+  static const int _programsBranchIndex = 2;
+  static const int _planBranchIndex = 3;
+
+  /// 6 направлений rail-навигации в едином порядке.
   List<
     ({
-      NavigationDestination bar,
       NavigationRailDestination rail,
+      NavigationDestination bar,
       int branchIndex,
     })
   >
@@ -71,7 +83,7 @@ class AdaptiveNavigation extends StatelessWidget {
         ),
       ),
       (
-        branchIndex: 3,
+        branchIndex: _planBranchIndex,
         bar: NavigationDestination(
           icon: const Icon(Icons.event_note_outlined),
           selectedIcon: const Icon(Icons.event_note),
@@ -116,17 +128,19 @@ class AdaptiveNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool expanded = AppBreakpoints.isExpanded(constraints.maxWidth);
+        final bool useRail = constraints.maxWidth > 600;
         final allDestinations = _destinations(context);
 
-        if (expanded) {
+        if (useRail) {
           return Scaffold(
             body: Row(
               children: [
                 NavigationRail(
                   selectedIndex: navigationShell.currentIndex,
                   onDestinationSelected: _onDestinationSelected,
-                  destinations: allDestinations.map((d) => d.rail).toList(),
+                  destinations: [
+                    for (final d in allDestinations) d.rail,
+                  ],
                 ),
                 const VerticalDivider(width: 1, thickness: 1),
                 Expanded(child: navigationShell),
@@ -136,16 +150,55 @@ class AdaptiveNavigation extends StatelessWidget {
         }
         return Scaffold(
           body: navigationShell,
+          drawer: _buildDrawer(context, allDestinations),
           bottomNavigationBar: NavigationBar(
             selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: (uiIndex) {
-              _onDestinationSelected(allDestinations[uiIndex].branchIndex);
-            },
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-            destinations: [for (final d in allDestinations) d.bar],
+            onDestinationSelected: _onBarDestinationSelected,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: [
+              for (final d in allDestinations.take(4)) d.bar,
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDrawer(
+    BuildContext context,
+    List<
+      ({
+        NavigationRailDestination rail,
+        NavigationDestination bar,
+        int branchIndex,
+      })
+    >
+    destinations,
+  ) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final d in destinations)
+                    ListTile(
+                      leading: d.rail.icon,
+                      selected: d.branchIndex == navigationShell.currentIndex,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _onDestinationSelected(d.branchIndex);
+                      },
+                      title: d.rail.label,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
