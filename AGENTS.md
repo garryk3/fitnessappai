@@ -14,14 +14,16 @@
 - `.agents/` is the shared, version-controlled location for cross-tool agent assets:
   - `.agents/rules/FLUTTER.md` — style/state-mgmt rules (loaded via `opencode.json` `instructions`). Follow it: native-first state (signals, `ChangeNotifier`, `ValueNotifier`), no Riverpod/Bloc/GetX, MVVM, manual DI.
   - `.agents/skills/<name>/SKILL.md` — reusable agent skills (opencode + other tools).
-  - `.agents/agents/*.md` — reusable subagent definitions (`plan-review`, `release-manager`), consumable by other agent solutions.
+  - `.agents/agents/*.md` — reusable subagent definitions (`plan-review`, `release-manager`, `android-tester`), consumable by other agent solutions.
 - `opencode` loads its markdown agents only from `.opencode/agents/` (gitignored). Symlink them to `.agents/agents/` so opencode stays in sync with the committed definitions:
   ```sh
   # from repo root, if .opencode/agents is missing:
   mkdir -p .opencode/agents
   ln -sf ../../.agents/agents/plan-review.md   .opencode/agents/plan-review.md
   ln -sf ../../.agents/agents/release-manager.md .opencode/agents/release-manager.md
+  ln -sf ../../.agents/agents/android-tester.md  .opencode/agents/android-tester.md
   ```
+- `TEST_PLAN.md` (repo root): накопительный ручной тест-план. Ведётся агентом `android-tester` (см. `.agents/agents/android-tester.md`, а также раздел «Как запустить тестировщика» в этом файле).
 
 ## Commands (CI in `.github/workflows/ci.yml` is the source of truth)
 
@@ -57,3 +59,9 @@ flutter build apk --debug
 
 - Unit/widget tests mirror `lib/` under `test/`. DB-dependent tests construct `AppDatabase(executor: NativeDatabase.memory())`.
 - Tests assert on `AppLocalizations` Russian strings (`app_ru.arb`).
+
+## Как запустить тестировщика (`android-tester`)
+
+- Попросить агента протестировать приложение: «запусти android-tester: проверь все экраны» (или конкретную область). Агент сам поднимет эмулятор, соберёт/установит debug-сборку, обойдёт экраны, придумает stress-сценарии и запишет каждый сценарий в `TEST_PLAN.md`.
+- Эмулятор: AVD `Pixel_10_Pro` (x86_64, Android 16). adb: `~/Android/Sdk/platform-tools/adb`. Учётная запись на эмуляторе — google_apis_playstore.
+- Ручной запуск вне агента: см. `.agents/agents/android-tester.md` (окружение, команды UI-взаимодействия, протокол `TEST_PLAN.md`).
