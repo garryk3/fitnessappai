@@ -92,9 +92,11 @@ class _SingleExerciseParamsScreenState
     final durationSeconds = switch (type) {
       ExerciseType.strength || ExerciseType.bodyweight => null,
       ExerciseType.plank => _parseInt(_durationController.text),
-      ExerciseType.running => _parseInt(_durationController.text)! * 60,
+      ExerciseType.running ||
+      ExerciseType.bike => _parseInt(_durationController.text)! * 60,
     };
-    final distanceMeters = type == ExerciseType.running
+    final distanceMeters =
+        type == ExerciseType.running || type == ExerciseType.bike
         ? _kmToMeters(_distanceController.text)
         : null;
     final restSeconds = _parseInt(_restController.text);

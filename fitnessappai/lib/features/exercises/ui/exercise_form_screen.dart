@@ -752,6 +752,7 @@ String _typeLabel(AppLocalizations l10n, ExerciseType type) => switch (type) {
   ExerciseType.bodyweight => l10n.exerciseTypeBodyweight,
   ExerciseType.plank => l10n.exerciseTypePlank,
   ExerciseType.running => l10n.exerciseTypeRunning,
+  ExerciseType.bike => l10n.exerciseTypeBike,
 };
 
 class _Section extends StatelessWidget {

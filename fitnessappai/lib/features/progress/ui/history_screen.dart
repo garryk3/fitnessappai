@@ -544,6 +544,14 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
               '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}';
         }
         return label;
+      case ExerciseType.bike:
+        final distance = result.distanceMeters;
+        final duration = result.durationSeconds;
+        if (distance != null && duration != null) {
+          return '$label ${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
+              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}';
+        }
+        return label;
     }
   }
 }

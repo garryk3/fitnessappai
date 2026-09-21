@@ -412,6 +412,12 @@ abstract class AppLocalizations {
   /// **'Бег'**
   String get exerciseTypeRunning;
 
+  /// No description provided for @exerciseTypeBike.
+  ///
+  /// In ru, this message translates to:
+  /// **'Велосипед'**
+  String get exerciseTypeBike;
+
   /// No description provided for @exerciseListHint.
   ///
   /// In ru, this message translates to:
