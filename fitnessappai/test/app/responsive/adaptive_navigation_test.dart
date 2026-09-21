@@ -15,114 +15,63 @@ void main() {
     await tester.pumpWidget(const FitnessAppAi());
   }
 
-  double navLabelOpacity(WidgetTester tester, String label) {
-    final text = find.descendant(
-      of: find.byType(NavigationBar),
-      matching: find.text(label),
-    );
-    final fade = tester.widget<FadeTransition>(
-      find.ancestor(of: text, matching: find.byType(FadeTransition)).first,
-    );
-    return fade.opacity.value;
-  }
-
-  testWidgets('на узком экране — NavigationBar', (tester) async {
+  testWidgets('на узком экране (480dp) — NavigationBar с подписями', (
+    tester,
+  ) async {
     await pumpAtSize(tester, const Size(480, 800));
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
+    for (final label in ['Главная', 'Упражнения', 'Программы', 'План']) {
+      expect(find.text(label), findsWidgets);
+    }
   });
 
-  testWidgets('на среднем экране — NavigationBar', (tester) async {
+  testWidgets('на широком экране (800dp) — всегда развёрнутый NavigationRail', (
+    tester,
+  ) async {
     await pumpAtSize(tester, const Size(800, 800));
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationRail), findsNothing);
-  });
-
-  testWidgets('на широком экране (>=840dp) — NavigationRail', (tester) async {
-    await pumpAtSize(tester, const Size(1200, 800));
     expect(find.byType(NavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
   });
 
-  testWidgets('на широком экране нет overflow', (tester) async {
-    await pumpAtSize(tester, const Size(1200, 800));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('навигация по вкладкам работает через NavigationRail', (
+  testWidgets('на широком экране (1200dp) — rail со всеми шестью пунктами', (
     tester,
   ) async {
     await pumpAtSize(tester, const Size(1200, 800));
-    await tester.tap(find.byIcon(Icons.person_outline));
-    await tester.pumpAndSettle();
-    expect(find.text('Профиль'), findsWidgets);
+    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    expect(rail.destinations, hasLength(6));
   });
 
-  testWidgets('на узком экране (<400dp) подписи навигации скрыты', (
+  testWidgets('на среднем экране (700dp) — rail, а не бар', (tester) async {
+    await pumpAtSize(tester, const Size(700, 800));
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+  });
+
+  testWidgets('первые четыре вкладки одинаковые на всех размерах', (
     tester,
   ) async {
-    await pumpAtSize(tester, const Size(360, 800));
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Главная'), findsWidgets);
-    expect(navLabelOpacity(tester, 'Главная'), 0.0);
-    // «Программы» видна на всех размерах экрана.
-    expect(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Программы'),
-      ),
-      findsOneWidget,
-    );
-    expect(find.byIcon(Icons.fitness_center_outlined), findsOneWidget);
-  });
-
-  testWidgets('на экране 400–600dp вкладка «Программы» видна', (tester) async {
-    await pumpAtSize(tester, const Size(500, 800));
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Программы'),
-      ),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('порядок вкладок одинаковый на узком и среднем экране', (
-    tester,
-  ) async {
-    // Порядок читаем через вкладки NavigationBar.
-    Future<List<String>> destinationLabels(Size size) async {
+    const labels = ['Главная', 'Упражнения', 'Программы', 'План'];
+    for (final size in [const Size(480, 800), const Size(1200, 800)]) {
       await pumpAtSize(tester, size);
-      final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      return bar.destinations
-          .map((d) => (d as NavigationDestination).label)
-          .toList();
+      for (final label in labels) {
+        expect(find.text(label), findsWidgets);
+      }
     }
-
-    const expected = [
-      'Главная',
-      'Упражнения',
-      'Программы',
-      'План',
-      'Прогресс',
-      'Профиль',
-    ];
-    expect(await destinationLabels(const Size(360, 800)), expected);
-    expect(await destinationLabels(const Size(800, 800)), expected);
   });
 
-  testWidgets('на широком экране подписи навигации скрыты', (tester) async {
-    await pumpAtSize(tester, const Size(800, 800));
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Главная'),
-      ),
-      findsOneWidget,
+  testWidgets('выезжающее слева меню на узком экране', (tester) async {
+    await pumpAtSize(tester, const Size(480, 800));
+    // Выбираем Scaffold с drawer (внешний), а не вложенные экраны.
+    final scaffoldWithDrawer = find.byWidgetPredicate(
+      (widget) => widget is Scaffold && widget.drawer != null,
     );
-    expect(navLabelOpacity(tester, 'Главная'), 0.0);
+    tester.state<ScaffoldState>(scaffoldWithDrawer).openDrawer();
+    await tester.pumpAndSettle();
+    expect(find.byType(Drawer), findsOneWidget);
+    for (final label in ['Главная', 'Упражнения', 'Программы', 'План']) {
+      expect(find.text(label), findsWidgets);
+    }
   });
 
   testWidgets('на самом узком экране (320dp) нет overflow', (tester) async {

@@ -56,6 +56,9 @@ void main() {
     testWidgets('приложение использует тёмную тему', (
       WidgetTester tester,
     ) async {
+      tester.view.physicalSize = const Size(480, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       await tester.pumpWidget(const FitnessAppAi());
 
       final BuildContext context = tester.element(find.byType(NavigationBar));
@@ -69,6 +72,10 @@ void main() {
       addTearDown(db.close);
       final controller = ThemeController(ThemeSettingsRepository(db));
 
+      // Бар навигации рендерится только на узких экранах (<600 lsV); иначе — rail.
+      tester.view.physicalSize = const Size(480, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       await tester.pumpWidget(FitnessAppAi(themeController: controller));
 
       controller.setMode(ThemeMode.light);
@@ -85,6 +92,10 @@ void main() {
       addTearDown(db.close);
       final controller = ThemeController(ThemeSettingsRepository(db));
 
+      // Бар навигации рендерится только на узких экранах (<600 lsV); иначе — rail.
+      tester.view.physicalSize = const Size(480, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       await tester.pumpWidget(FitnessAppAi(themeController: controller));
       await tester.pumpAndSettle();
 

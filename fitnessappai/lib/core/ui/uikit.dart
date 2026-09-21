@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:signals_flutter/signals_flutter.dart';
-import 'package:fitnessappai/core/di/service_locator.dart';
-import 'package:fitnessappai/features/home/ui/home_controller.dart';
-import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Базовый элемент UI-кита: Улучшенная карточка с радиусом 20 и мягкой тенью.
 class AppCard extends StatelessWidget {
@@ -32,7 +27,9 @@ class AppCard extends StatelessWidget {
         gradient: gradient,
         color: gradient == null ? theme.colorScheme.surfaceContainerLow : null,
         borderRadius: borderRadius,
-        border: borderColor != null ? Border.all(color: borderColor!, width: 1.5) : null,
+        border: borderColor != null
+            ? Border.all(color: borderColor!, width: 1.5)
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -47,10 +44,7 @@ class AppCard extends StatelessWidget {
         child: InkWell(
           borderRadius: borderRadius,
           onTap: onTap,
-          child: Padding(
-            padding: padding,
-            child: child,
-          ),
+          child: Padding(padding: padding, child: child),
         ),
       ),
     );
@@ -75,11 +69,13 @@ class AppGradientButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveGradient = gradient ?? LinearGradient(
-      colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
+    final effectiveGradient =
+        gradient ??
+        LinearGradient(
+          colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -99,7 +95,9 @@ class AppGradientButton extends StatelessWidget {
           backgroundColor: Colors.transparent,
           foregroundColor: theme.colorScheme.onPrimary,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
@@ -138,10 +136,7 @@ class AppSectionHeader extends StatelessWidget {
           ),
         ),
         if (actionLabel != null && onAction != null)
-          TextButton(
-            onPressed: onAction,
-            child: Text(actionLabel!),
-          ),
+          TextButton(onPressed: onAction, child: Text(actionLabel!)),
       ],
     );
   }

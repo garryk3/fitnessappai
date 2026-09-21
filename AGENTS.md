@@ -1,9 +1,15 @@
 # AGENTS.md
 
-## Repo layout
+## Repo layout (explicit paths — don't guess, paths matter)
 
-- Git repo root hosts the Flutter app in `fitnessappai/`. All `flutter`/`dart` commands must run with `workdir: fitnessappai/` (CI sets `working-directory: fitnessappai`).
-- `PLAN.md` (root): task tracking with `[x]` statuses + progress table. Update it whenever a task is done. Russian language.
+- **Git repo root** (all `git` operations, `PLAN.md`, `AGENTS.md`, `DESIGN.md` live here):
+  `/home/igor/agent_workspace/projects/fitnessappai`
+  This is `git rev-parse --show-toplevel`. Do NOT assume a subdirectory is the root.
+- **Flutter package** (the actual Dart/Flutter project — `pubspec.yaml`, `lib/`, `test/`, `integration_test/`):
+  `/home/igor/agent_workspace/projects/fitnessappai/fitnessappai`
+  All `flutter`/`dart` commands must run with `workdir: fitnessappai/fitnessappai` (CI sets `working-directory: fitnessappai`).
+  - `git` commands work from anywhere under the repo root; `../PLAN.md` relative to the package is the SAME file.
+- **`PLAN.md`** (at repo root, path `PLAN.md` in git): task tracking with `[x]` statuses + progress table. Update it whenever a task is done. Russian language. It lives at the repo root, NOT inside the Flutter package.
 - `docs/llm_contract.md`: contract for the LLM content-generation interface (future tasks 6.2–6.6).
 - `.agents/` is the shared, version-controlled location for cross-tool agent assets:
   - `.agents/rules/FLUTTER.md` — style/state-mgmt rules (loaded via `opencode.json` `instructions`). Follow it: native-first state (signals, `ChangeNotifier`, `ValueNotifier`), no Riverpod/Bloc/GetX, MVVM, manual DI.
@@ -41,6 +47,7 @@ flutter build apk --debug
 - Repo language is Russian: PLAN.md, commit messages, UI strings. Write commit messages as `task/NN.NN: <краткое описание на русском> (#PR)`.
 - **Before every commit, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`, ~2 min, not in CI). The user may opt out; never run them silently or skip the question.
 - Each task = branch `task/<NN>-<slug>` from `main` → PR → green CI → squash merge, in dependency order.
+- **Update task branches with `git merge`, NOT `git rebase`.** Rebase rewrites history and has in this repo repeatedly dropped `PLAN.md` rows, broken `dart format`/l10n sync, and left the branch out of sync with `origin/main` — all invisible until CI/e2e failed. `git merge origin/main` keeps the shared `main` story intact and makes PR review (`git diff origin/main..HEAD`) deterministic. Remember: your real diff vs `main` is only the few files you actually changed (`git diff --name-status origin/main..HEAD`), the rest that differ are rebase fallout and must be reconciled, not committed.
 - **Before every commit, run the `plan-review` agent** to verify: (1) the task is recorded in `PLAN.md` with correct status `[x]` and completion date; (2) if a work plan was drafted for this task, it was written into `PLAN.md`. Block the commit if either check fails.
 - **After composing a work plan for a task, always write it into `PLAN.md`** before implementation begins — plan must exist in the file before code changes start.
 - Keep the `@DriftDatabase` annotation on the database class, NOT on a top-level `const` — drift_dev 2.34 fails to detect the DB otherwise.

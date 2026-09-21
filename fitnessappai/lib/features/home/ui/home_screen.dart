@@ -96,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildProgramSection(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final controller = _controller;
 
     if (!controller.hasPrograms.value) {
@@ -334,10 +333,7 @@ class _RecentWorkoutCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          Icon(Icons.chevron_right, color: theme.colorScheme.onSurfaceVariant),
         ],
       ),
     );
