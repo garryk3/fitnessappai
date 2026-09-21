@@ -138,9 +138,7 @@ class AdaptiveNavigation extends StatelessWidget {
                 NavigationRail(
                   selectedIndex: navigationShell.currentIndex,
                   onDestinationSelected: _onDestinationSelected,
-                  destinations: [
-                    for (final d in allDestinations) d.rail,
-                  ],
+                  destinations: [for (final d in allDestinations) d.rail],
                 ),
                 const VerticalDivider(width: 1, thickness: 1),
                 Expanded(child: navigationShell),
@@ -155,9 +153,7 @@ class AdaptiveNavigation extends StatelessWidget {
             selectedIndex: navigationShell.currentIndex,
             onDestinationSelected: _onBarDestinationSelected,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: [
-              for (final d in allDestinations.take(4)) d.bar,
-            ],
+            destinations: [for (final d in allDestinations.take(4)) d.bar],
           ),
         );
       },

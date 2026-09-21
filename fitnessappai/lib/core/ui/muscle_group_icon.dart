@@ -17,19 +17,31 @@ class MuscleGroupIcon extends StatelessWidget {
   String _assetPath(String key) {
     // Маппинг ключей на добавленные файлы в assets/images/groups/
     final normalized = key.toLowerCase();
-    if (normalized.contains('arm') || normalized.contains('biceps') || normalized.contains('triceps') || normalized.contains('forearm')) {
+    if (normalized.contains('arm') ||
+        normalized.contains('biceps') ||
+        normalized.contains('triceps') ||
+        normalized.contains('forearm')) {
       return 'assets/images/groups/arm.jpg';
     }
-    if (normalized.contains('back') || normalized.contains('lats') || normalized.contains('trap') || normalized.contains('lower_back')) {
+    if (normalized.contains('back') ||
+        normalized.contains('lats') ||
+        normalized.contains('trap') ||
+        normalized.contains('lower_back')) {
       return 'assets/images/groups/back.jpg';
     }
-    if (normalized.contains('leg') || normalized.contains('quad') || normalized.contains('hamstring') || normalized.contains('calf') || normalized.contains('glute')) {
+    if (normalized.contains('leg') ||
+        normalized.contains('quad') ||
+        normalized.contains('hamstring') ||
+        normalized.contains('calf') ||
+        normalized.contains('glute')) {
       return 'assets/images/groups/legs.jpg';
     }
     if (normalized.contains('shoulder') || normalized.contains('deltoid')) {
       return 'assets/images/groups/shoulder.jpg';
     }
-    if (normalized.contains('chest') || normalized.contains('abs') || normalized.contains('oblique')) {
+    if (normalized.contains('chest') ||
+        normalized.contains('abs') ||
+        normalized.contains('oblique')) {
       return 'assets/images/groups/press.jpg';
     }
     if (normalized.contains('neck')) {
