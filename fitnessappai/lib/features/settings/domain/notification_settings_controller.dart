@@ -31,14 +31,25 @@ class NotificationSettingsController extends ChangeNotifier {
     }
   }
 
-  /// Запрашивает разрешения и обновляет статус.
-  Future<void> requestPermissions() async {
+  /// Запрашивает разрешение на уведомления и обновляет статус.
+  Future<void> requestNotifications() async {
+    await _request(() => _reminderService.requestNotificationsPermission());
+  }
+
+  /// Запрашивает разрешение на точные будильники и обновляет статус.
+  Future<void> requestExactAlarms() async {
+    await _request(() => _reminderService.requestExactAlarmsPermission());
+  }
+
+  Future<void> _request(
+    Future<NotificationPermissionStatus> Function() action,
+  ) async {
     isLoading.value = true;
     error.value = null;
     try {
-      status.value = await _reminderService.requestPermissions();
+      status.value = await action();
     } catch (e) {
-      error.value = 'Не удалось запросить разрешения';
+      error.value = 'Не удалось запросить разрешение';
     } finally {
       isLoading.value = false;
     }

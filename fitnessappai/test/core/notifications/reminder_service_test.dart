@@ -163,6 +163,121 @@ void main() {
     verify(() => plugin.cancel(id: 42)).called(1);
   });
 
+  group('requestNotificationsPermission', () {
+    setUp(() {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => repository.allScheduled(),
+      ).thenAnswer((_) async => <ReminderSchedule>[]);
+    });
+
+    test('запрашивает только уведомления и возвращает свежий статус', () async {
+      when(
+        () => android.requestNotificationsPermission(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => false);
+
+      final status = await service.requestNotificationsPermission();
+
+      expect(status.notificationsEnabled, true);
+      expect(status.exactAlarmsEnabled, false);
+      verify(() => android.requestNotificationsPermission()).called(1);
+      verifyNever(() => android.requestExactAlarmsPermission());
+      verify(
+        () => repository.allScheduled(),
+      ).called(1); // перепланирование после выдачи
+    });
+
+    test(
+      'если уведомления отключены — открывает системные настройки',
+      () async {
+        when(
+          () => android.requestNotificationsPermission(),
+        ).thenAnswer((_) async => false);
+        when(
+          () => android.areNotificationsEnabled(),
+        ).thenAnswer((_) async => false);
+        when(
+          () => android.canScheduleExactNotifications(),
+        ).thenAnswer((_) async => false);
+        when(
+          () => android.openAppNotificationSettings(),
+        ).thenAnswer((_) async => true);
+
+        final status = await service.requestNotificationsPermission();
+
+        expect(status.notificationsEnabled, false);
+        verify(() => android.openAppNotificationSettings()).called(1);
+        verifyNever(() => android.requestExactAlarmsPermission());
+      },
+    );
+  });
+
+  group('requestExactAlarmsPermission', () {
+    setUp(() {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => repository.allScheduled(),
+      ).thenAnswer((_) async => <ReminderSchedule>[]);
+    });
+
+    test(
+      'запрашивает только точные будильники и возвращает свежий статус',
+      () async {
+        var canExact = false;
+        when(
+          () => android.canScheduleExactNotifications(),
+        ).thenAnswer((_) async => canExact);
+        when(() => android.requestExactAlarmsPermission()).thenAnswer((
+          _,
+        ) async {
+          canExact = true;
+          return true;
+        });
+        when(
+          () => android.areNotificationsEnabled(),
+        ).thenAnswer((_) async => true);
+
+        final status = await service.requestExactAlarmsPermission();
+
+        expect(status.notificationsEnabled, true);
+        expect(status.exactAlarmsEnabled, true);
+        verify(() => android.requestExactAlarmsPermission()).called(1);
+        verifyNever(() => android.requestNotificationsPermission());
+        verify(() => repository.allScheduled()).called(1);
+      },
+    );
+
+    test('не открывает экран, если разрешение уже выдано', () async {
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+
+      final status = await service.requestExactAlarmsPermission();
+
+      expect(status.exactAlarmsEnabled, true);
+      verifyNever(() => android.requestExactAlarmsPermission());
+    });
+  });
+
   test('rescheduleAll планирует включённые и отменяет остальные', () async {
     final enabled = ReminderSchedule(
       reminder: const WorkoutReminder(

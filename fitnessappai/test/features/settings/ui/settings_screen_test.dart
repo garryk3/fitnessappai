@@ -55,16 +55,27 @@ class _FakeReminderService extends ReminderService {
   _FakeReminderService({required super.repository, required this._status});
 
   NotificationPermissionStatus _status;
-  int requestCalls = 0;
+  int notificationsCalls = 0;
+  int exactAlarmsCalls = 0;
 
   @override
   Future<NotificationPermissionStatus> checkPermissions() async => _status;
 
   @override
-  Future<NotificationPermissionStatus> requestPermissions() async {
-    requestCalls++;
+  Future<NotificationPermissionStatus> requestNotificationsPermission() async {
+    notificationsCalls++;
     _status = const NotificationPermissionStatus(
       notificationsEnabled: true,
+      exactAlarmsEnabled: false,
+    );
+    return _status;
+  }
+
+  @override
+  Future<NotificationPermissionStatus> requestExactAlarmsPermission() async {
+    exactAlarmsCalls++;
+    _status = const NotificationPermissionStatus(
+      notificationsEnabled: false,
       exactAlarmsEnabled: true,
     );
     return _status;
@@ -549,8 +560,37 @@ void main() {
       await tester.tap(find.text('Разрешить уведомления'));
       await tester.pumpAndSettle();
 
-      expect(reminder.requestCalls, 1);
+      expect(reminder.notificationsCalls, 1);
+      expect(reminder.exactAlarmsCalls, 0);
       expect(find.text('Уведомления включены'), findsOneWidget);
+      expect(find.text('Разрешить уведомления'), findsNothing);
     },
   );
+
+  testWidgets('точные будильники: кнопка запрашивает только это разрешение', (
+    tester,
+  ) async {
+    final reminder = _FakeReminderService(
+      repository: WorkoutReminderRepository(db),
+      status: const NotificationPermissionStatus(
+        notificationsEnabled: true,
+        exactAlarmsEnabled: false,
+      ),
+    );
+    final notificationController = NotificationSettingsController(
+      reminderService: reminder,
+    );
+    await pumpScreen(tester, notificationController: notificationController);
+
+    expect(find.text('Точные будильники отключены'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Настроить точные будильники'));
+    await tester.tap(find.text('Настроить точные будильники'));
+    await tester.pumpAndSettle();
+
+    expect(reminder.exactAlarmsCalls, 1);
+    expect(reminder.notificationsCalls, 0);
+    expect(find.text('Точные будильники включены'), findsOneWidget);
+    expect(find.text('Настроить точные будильники'), findsNothing);
+  });
 }
