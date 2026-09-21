@@ -402,7 +402,7 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
                     : theme.colorScheme.error,
                 onAction: permissions.notificationsEnabled
                     ? null
-                    : () => controller.requestPermissions(),
+                    : () => controller.requestNotifications(),
                 actionLabel: permissions.notificationsEnabled
                     ? null
                     : l10n.settingsNotificationsRequest,
@@ -420,7 +420,7 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
                     : theme.colorScheme.error,
                 onAction: permissions.exactAlarmsEnabled
                     ? null
-                    : () => controller.requestPermissions(),
+                    : () => controller.requestExactAlarms(),
                 actionLabel: permissions.exactAlarmsEnabled
                     ? null
                     : l10n.settingsNotificationsExactRequest,

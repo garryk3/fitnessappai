@@ -65,29 +65,70 @@ class ReminderService {
     );
   }
 
-  /// Запрашивает разрешения на уведомления.
-  Future<NotificationPermissionStatus> requestPermissions() async {
+  /// Запрашивает только разрешение на уведомления и возвращает свежий статус.
+  ///
+  /// Системный диалог Android 13+ показывается лишь один раз; если после
+  /// запроса уведомления всё ещё отключены, открывает системные настройки
+  /// уведомлений приложения. При выдаче разрешения перепланирует напоминания,
+  /// которые могли быть пропущены, пока уведомления были отключены.
+  Future<NotificationPermissionStatus> requestNotificationsPermission() async {
+    await _requestNotifications();
+    final status = await checkPermissions();
+    if (status.notificationsEnabled) {
+      await rescheduleAll();
+    }
+    return status;
+  }
+
+  /// Запрашивает только разрешение на точные будильники и возвращает свежий
+  /// статус.
+  ///
+  /// На Android 12+ открывает системный экран «Будильники и напоминания».
+  /// При выдаче разрешения перепланирует напоминания в точном режиме.
+  Future<NotificationPermissionStatus> requestExactAlarmsPermission() async {
+    await _requestExactAlarms();
+    final status = await checkPermissions();
+    if (status.exactAlarmsEnabled) {
+      await rescheduleAll();
+    }
+    return status;
+  }
+
+  Future<void> _requestNotifications() async {
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android == null) {
-      return const NotificationPermissionStatus(
-        notificationsEnabled: true,
-        exactAlarmsEnabled: true,
-      );
+      return;
     }
-    final notificationsResult =
-        await android.requestNotificationsPermission() ?? false;
-    final exactAlarmsResult =
-        await android.requestExactAlarmsPermission() ?? false;
-    return NotificationPermissionStatus(
-      notificationsEnabled: notificationsResult,
-      exactAlarmsEnabled: exactAlarmsResult,
-    );
+    await android.requestNotificationsPermission();
+    final enabled = await android.areNotificationsEnabled() ?? false;
+    if (!enabled) {
+      await android.openAppNotificationSettings();
+    }
   }
 
-  /// Инициализирует часовой пояс и плагин, запрашивает разрешения.
+  Future<void> _requestExactAlarms() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android == null) {
+      return;
+    }
+    final canExact = await android.canScheduleExactNotifications() ?? false;
+    if (canExact) {
+      return;
+    }
+    await android.requestExactAlarmsPermission();
+  }
+
+  /// Инициализирует часовой пояс, плагин и канал уведомлений.
+  ///
+  /// Разрешения (уведомления, точные будильники) при старте не запрашивает —
+  /// это делается явно из экрана «Настройки», чтобы не открывать системные
+  /// диалоги/экраны помимо воли пользователя.
   Future<void> initialize() async {
     if (_initialized) {
       return;
@@ -109,8 +150,6 @@ class ReminderService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android != null) {
-      await android.requestNotificationsPermission();
-      await android.requestExactAlarmsPermission();
       final channel = AndroidNotificationChannel(
         _channelId,
         _channelName,
