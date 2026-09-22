@@ -150,7 +150,13 @@ class AdaptiveNavigation extends StatelessWidget {
           body: navigationShell,
           drawer: _buildDrawer(context, allDestinations),
           bottomNavigationBar: NavigationBar(
-            selectedIndex: navigationShell.currentIndex,
+            // Бар из 4 вкладок: пункты «Прогресс»/«Профиль» (индексы 4/5)
+            // доступны только через меню — им временно подставляется последняя
+            // доступная вкладка «План», чтобы selectedIndex не выходил за
+            // пределы destinations (иначе NavigationBar бросает assertion).
+            selectedIndex: navigationShell.currentIndex > 3
+                ? 3
+                : navigationShell.currentIndex,
             onDestinationSelected: _onBarDestinationSelected,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: [for (final d in allDestinations.take(4)) d.bar],
