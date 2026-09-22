@@ -679,6 +679,8 @@ class WorkoutController {
           setIndex: currentSet.value,
           durationSeconds: input.durationSeconds,
           distanceMeters: input.distanceMeters,
+          avgPace: input.avgPace,
+          steps: input.steps,
           side: input.side,
           completedAt: now,
         );
@@ -691,6 +693,11 @@ class WorkoutController {
           setIndex: currentSet.value,
           durationSeconds: input.durationSeconds,
           distanceMeters: input.distanceMeters,
+          avgSpeed: input.avgSpeed,
+          avgCadence: input.avgCadence,
+          avgPulse: input.avgPulse,
+          ascentMeters: input.ascentMeters,
+          descentMeters: input.descentMeters,
           side: input.side,
           completedAt: now,
         );

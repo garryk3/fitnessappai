@@ -1516,6 +1516,60 @@ abstract class AppLocalizations {
   /// **'км'**
   String get workoutUnitKm;
 
+  /// No description provided for @exerciseParamsAvgSpeed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ср. скорость (км/ч)'**
+  String get exerciseParamsAvgSpeed;
+
+  /// No description provided for @exerciseParamsAvgCadence.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ср. каденс (об/мин)'**
+  String get exerciseParamsAvgCadence;
+
+  /// No description provided for @exerciseParamsAvgPulse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ср. пульс (уд/мин)'**
+  String get exerciseParamsAvgPulse;
+
+  /// No description provided for @exerciseParamsAscent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подъём (м)'**
+  String get exerciseParamsAscent;
+
+  /// No description provided for @exerciseParamsDescent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спуск (м)'**
+  String get exerciseParamsDescent;
+
+  /// No description provided for @exerciseParamsAvgPace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ср. темп (мин/км)'**
+  String get exerciseParamsAvgPace;
+
+  /// No description provided for @exerciseParamsSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шаги'**
+  String get exerciseParamsSteps;
+
+  /// No description provided for @workoutUnitKmh.
+  ///
+  /// In ru, this message translates to:
+  /// **'км/ч'**
+  String get workoutUnitKmh;
+
+  /// No description provided for @workoutUnitSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'шагов'**
+  String get workoutUnitSteps;
+
   /// No description provided for @workoutRunLastWorkout.
   ///
   /// In ru, this message translates to:

@@ -2571,7 +2571,28 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
 - **Решение:** вместо слития ветки (в ней `integration_test` в старой версии, конфликты с 40.2/40.7) извлечены файлы `ProfileAvatar` + ассет + unit-тест, интеграция с актуальным `adaptive_navigation.dart` сделана вручную.
 - **Тест:** TC-025 (аватар в меню сверху + тап по аватару открывает Профиль) на узком и широком экранах.
 
-### 40.9 — Задача 40.3 смёржена частично: метрики bike/бега и мышцы «ядро» отсутствуют (дефект) [ ]
+### 40.9 — Задача 40.3 смёржена частично: метрики bike/бега и мышцы «ядро» отсутствуют (дефект) ✅
+- **Сделано (2026-09-22):**
+  - `WorkoutSetResult` + `WorkoutSetInput`: `avgSpeed`, `avgCadence`, `avgPulse`, `ascentMeters`, `descentMeters`, `avgPace`, `steps` (+copyWith/==/hashCode).
+  - ДБ: 7 колонок в `workout_set_results`, schemaVersion 13→14, миграция `<14` (addColumn + сед справочников), дамп `drift_schemas/drift_schema_v14.json`, регенерирован `app_database.g.dart`.
+  - Маппинг `_toResultCompanion`/`_toResult`, `_buildResult` (running→avgPace/steps, bike→avgSpeed/cadence/pulse/ascent/descent).
+  - Форма тренировки разделена: **bike** — дистанция/время/ср.скорость (обяз) + каденс/пульс/подъём/спуск (опц); **running** — дистанция/время (обяз) + темп (мин/км)/шаги (опц). Требуется прокрутка к кнопке (форма стала выше).
+  - История: bike-карточка показывает «· N км/ч»; running — «· N мин/км» и «· N шагов».
+  - Справочник мышц: группа-родитель `core` с labelRu **«Кора»** (не «ядро»), подгруппы `abs`/`obliques` → parentKey `core` (25 групп).
+  - l10n: новые ключи (Ср. скорость/каденс/пульс/подъём/спуск/темп/шаги, км/ч).
+  - Тесты: миграция 13→14 (колонки + сед «Кора» в существующей БД), seeder (25 групп, core parentKey, label «Кора»), widget-флоу bike (полный + без скорости блок), обновлены stats_aggregator (abs теперь подгруппа). `flutter analyze` чисто, `flutter test` 801 зелёные, формат чист.
+  - Ручной прогон TC-030/031/032/033 — в QA после мержа.
+- **Рабочий план (2026-09-22)**:
+  1. **Модель/БД:** расширить `WorkoutSetResult` метриками `avgSpeed` (км/ч), `avgCadence` (об/мин), `avgPulse` (уд/мин), `ascentMeters`, `descentMeters`, `avgPace` (мин/км), `steps` + `copyWith`/`==`/`hashCode`; `WorkoutSetInput` — те же поля.
+  2. **Drift/миграция:** колонки в `workout_set_results` (nullable), schemaVersion 13→14, `onUpgrade from < 14` (7×addColumn + `ReferenceSeeder(this).seed()`), регенерация `app_database.g.dart` и дампа `drift_schemas/drift_schema_v14.json`.
+  3. **Слой данных:** `workout_repository.dart` `_toResultCompanion`/`_toResult` — маппинг новых полей.
+  4. **Контроллер:** `workout_controller.dart` `_buildResult` — running → `avgPace`/`steps`, bike → `avgSpeed`/`avgCadence`/`avgPulse`/`ascentMeters`/`descentMeters`.
+  5. **Форма** `workout_run_screen.dart`: разделить блок running|bike: bike — Дистанция/Время (обяз) + Ср. скорость (обяз), каденс/пульс/подъём/спуск (опц); running — Дистанция/Время (обяз) + Ср. темп (мин/км, опц), Шаги (опц). Валидация как в 40.3 «16:40».
+  6. **Отображение:** `history_screen.dart` карточка результата — bike «Ср. скорость км/ч», running «Ср. темп мин/км, шаги» (через новые l10n-ключи).
+  7. **Мышечные группы:** `reference_seeder.dart` — добавить группу-родителя `core` с `labelRu: 'Кора'` (мышцы кора, НЕ «ядро» — указание пользователя 2026-09-22), подгруппы `abs`/`obliques` с `parentKey: 'core'`.
+  8. **Тесты:** seeder (группа `core` + parentKey), миграция 13→14 (колонки + seed в существующей БД), widget-тест формы bike с метриками; обновить существующие (24→25 групп).
+  9. **Проверка:** `flutter analyze --fatal-infos` чисто, `flutter test` зелёные, `dart format --set-exit-if-changed`.
+- **Замечание пользователя (2026-09-22):** label группы `core` — «Кора» (мышцы кора), не «ядро».
 - **Проблема (QA, TEST_PLAN TC-030/031/032, 2026-09-22):** в origin/main (v1.0.21) реализованы только `ExerciseType.bike` (enum + label/иконка) и bike-кейсы «как бег» (время/дистанция) в тренировке/подготовке/истории. НЕ реализовано:
   - поля формы для bike: Длительность/Ср. скорость/Ср. каденс/Ср. пульс/Подъём/Спуск;
   - поля формы для бега: Ср. темп, Шаги;

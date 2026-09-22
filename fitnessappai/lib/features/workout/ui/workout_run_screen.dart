@@ -870,6 +870,13 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
   late final _weight = TextEditingController();
   late final _duration = TextEditingController();
   late final _distance = TextEditingController();
+  late final _avgSpeed = TextEditingController();
+  late final _avgCadence = TextEditingController();
+  late final _avgPulse = TextEditingController();
+  late final _ascent = TextEditingController();
+  late final _descent = TextEditingController();
+  late final _avgPace = TextEditingController();
+  late final _steps = TextEditingController();
 
   @override
   void initState() {
@@ -886,6 +893,13 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
     _weight.dispose();
     _duration.dispose();
     _distance.dispose();
+    _avgSpeed.dispose();
+    _avgCadence.dispose();
+    _avgPulse.dispose();
+    _ascent.dispose();
+    _descent.dispose();
+    _avgPace.dispose();
+    _steps.dispose();
     super.dispose();
   }
 
@@ -904,7 +918,8 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
       ExerciseType.plank => WorkoutSetInput(
         durationSeconds: _parsePlankDuration(),
       ),
-      ExerciseType.running || ExerciseType.bike => _buildRunningInput(),
+      ExerciseType.running => _buildRunningInput(),
+      ExerciseType.bike => _buildBikeInput(),
     };
     widget.onConfirm(input);
   }
@@ -924,6 +939,26 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
     return WorkoutSetInput(
       durationSeconds: minutes * 60,
       distanceMeters: distanceKm * 1000,
+      avgPace: _parseDouble(_avgPace.text),
+      steps: int.tryParse(_steps.text.trim()),
+    );
+  }
+
+  WorkoutSetInput _buildBikeInput() {
+    final distanceKm = _parseDouble(_distance.text);
+    final minutes = int.tryParse(_minutes.text.trim());
+    final speed = _parseDouble(_avgSpeed.text);
+    if (distanceKm == null || minutes == null || speed == null) {
+      throw StateError('Валидатор пропустил пустую дистанцию/время/скорость');
+    }
+    return WorkoutSetInput(
+      durationSeconds: minutes * 60,
+      distanceMeters: distanceKm * 1000,
+      avgSpeed: speed,
+      avgCadence: _parseDouble(_avgCadence.text),
+      avgPulse: int.tryParse(_avgPulse.text.trim()),
+      ascentMeters: _parseDouble(_ascent.text),
+      descentMeters: _parseDouble(_descent.text),
     );
   }
 
@@ -1033,7 +1068,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 },
               ),
             ],
-            ExerciseType.running || ExerciseType.bike => [
+            ExerciseType.running => [
               TextFormField(
                 controller: _distance,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -1071,6 +1106,181 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                   }
                   if (minutes < 1) {
                     return l10n.exerciseParamsPositive;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _avgPace,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [DoubleTextInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsAvgPace,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final pace = _parseDouble(value ?? '');
+                  if (pace != null && pace < 0) {
+                    return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _steps,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsSteps,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final steps = int.tryParse(value?.trim() ?? '');
+                  if (steps != null && steps < 0) {
+                    return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+            ],
+            ExerciseType.bike => [
+              TextFormField(
+                controller: _distance,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [DoubleTextInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsDistanceKm,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final km = _parseDouble(value ?? '');
+                  if (km == null) {
+                    return l10n.exerciseParamsRequired;
+                  }
+                  if (km < 0) {
+                    return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _duration,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsDurationMinutes,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final minutes = int.tryParse(value?.trim() ?? '');
+                  if (minutes == null) {
+                    return l10n.exerciseParamsRequired;
+                  }
+                  if (minutes < 1) {
+                    return l10n.exerciseParamsPositive;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _avgSpeed,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [DoubleTextInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsAvgSpeed,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final speed = _parseDouble(value ?? '');
+                  if (speed == null) {
+                    return l10n.exerciseParamsRequired;
+                  }
+                  if (speed < 0) {
+                    return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _avgCadence,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [DoubleTextInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsAvgCadence,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final cadence = _parseDouble(value ?? '');
+                  if (cadence != null && cadence < 0) {
+                    return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _avgPulse,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsAvgPulse,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final pulse = int.tryParse(value?.trim() ?? '');
+                  if (pulse != null && pulse < 0) {
+                    return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _ascent,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [DoubleTextInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsAscent,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final ascent = _parseDouble(value ?? '');
+                  if (ascent != null && ascent < 0) {
+                    return l10n.exerciseParamsNotNegative;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _descent,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [DoubleTextInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseParamsDescent,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final descent = _parseDouble(value ?? '');
+                  if (descent != null && descent < 0) {
+                    return l10n.exerciseParamsNotNegative;
                   }
                   return null;
                 },

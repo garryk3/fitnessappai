@@ -269,6 +269,8 @@ void main() {
       find.widgetWithText(TextFormField, 'Время (мин)'),
       '30',
     );
+    await tester.ensureVisible(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Подход выполнен'));
     await tester.pumpAndSettle();
 
@@ -451,6 +453,102 @@ void main() {
         DateTime(2030),
       );
       expect(sessions, hasLength(1));
+    },
+  );
+
+  testWidgets('полный флоу bike: метрики велосипеда сохраняются в результат', (
+    tester,
+  ) async {
+    final dayId = await createDay(
+      name: 'Велосипед',
+      type: ExerciseType.bike,
+      durationSeconds: 2400,
+      distanceMeters: 20000,
+    );
+    await pumpFlow(tester, dayId);
+
+    await startWorkout(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Дистанция (км)'),
+      '20',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Время (мин)'),
+      '40',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ср. скорость (км/ч)'),
+      '30',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ср. каденс (об/мин)'),
+      '90',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ср. пульс (уд/мин)'),
+      '145',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Подъём (м)'),
+      '120',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Спуск (м)'),
+      '95',
+    );
+    await tester.ensureVisible(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Тренировка завершена'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Тренировка сохранена'), findsOneWidget);
+
+    final sessions = await workoutRepo.getSessionsBetween(
+      DateTime(2020),
+      DateTime(2030),
+    );
+    final detail = await workoutRepo.getSession(sessions.first.id!);
+    final result = detail!.results.single;
+    expect(result.distanceMeters, 20000);
+    expect(result.durationSeconds, 2400);
+    expect(result.avgSpeed, 30);
+    expect(result.avgCadence, 90);
+    expect(result.avgPulse, 145);
+    expect(result.ascentMeters, 120);
+    expect(result.descentMeters, 95);
+  });
+
+  testWidgets(
+    'bike без скорости не запускается: обязательное поле подсвечено',
+    (tester) async {
+      final dayId = await createDay(
+        name: 'Велосипед',
+        type: ExerciseType.bike,
+        durationSeconds: 2400,
+        distanceMeters: 20000,
+      );
+      await pumpFlow(tester, dayId);
+
+      await startWorkout(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Дистанция (км)'),
+        '20',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Время (мин)'),
+        '40',
+      );
+      await tester.ensureVisible(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pump();
+
+      expect(find.text('Заполните поле'), findsOneWidget);
+      expect(find.text('Тренировка завершена'), findsNothing);
     },
   );
 }

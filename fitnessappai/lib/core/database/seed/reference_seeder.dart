@@ -28,6 +28,12 @@ class ReferenceSeeder {
           regionKey: 'obliques',
         ),
         (
+          key: 'core',
+          labelRu: 'Кора',
+          view: MuscleView.front,
+          regionKey: 'core',
+        ),
+        (
           key: 'chest',
           labelRu: 'Грудь',
           view: MuscleView.front,
@@ -175,6 +181,8 @@ class ReferenceSeeder {
 
   /// Родительская группа для подгрупп (например, дельт).
   static const Map<String, String> muscleParentKeys = {
+    'abs': 'core',
+    'obliques': 'core',
     'shoulders_front': 'shoulders',
     'shoulders_middle': 'shoulders',
     'shoulders_rear': 'shoulders',

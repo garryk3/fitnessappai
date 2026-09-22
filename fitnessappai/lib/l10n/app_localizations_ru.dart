@@ -788,6 +788,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutUnitKm => 'км';
 
   @override
+  String get exerciseParamsAvgSpeed => 'Ср. скорость (км/ч)';
+
+  @override
+  String get exerciseParamsAvgCadence => 'Ср. каденс (об/мин)';
+
+  @override
+  String get exerciseParamsAvgPulse => 'Ср. пульс (уд/мин)';
+
+  @override
+  String get exerciseParamsAscent => 'Подъём (м)';
+
+  @override
+  String get exerciseParamsDescent => 'Спуск (м)';
+
+  @override
+  String get exerciseParamsAvgPace => 'Ср. темп (мин/км)';
+
+  @override
+  String get exerciseParamsSteps => 'Шаги';
+
+  @override
+  String get workoutUnitKmh => 'км/ч';
+
+  @override
+  String get workoutUnitSteps => 'шагов';
+
+  @override
   String get workoutRunLastWorkout => 'Последняя тренировка';
 
   @override
