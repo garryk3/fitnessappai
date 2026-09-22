@@ -55,6 +55,7 @@ flutter build apk --debug
 - **After composing a work plan for a task, always write it into `PLAN.md`** before implementation begins — plan must exist in the file before code changes start.
 - Keep the `@DriftDatabase` annotation on the database class, NOT on a top-level `const` — drift_dev 2.34 fails to detect the DB otherwise.
 - If `build_runner` reports stale/skipped outputs after a schema change, `rm -rf .dart_tool/build` and rebuild.
+- **After finishing a task with new functionality, run the `android-tester` subagent to APPEND test cases to `TEST_PLAN.md`** (короткий прогон: только добавить сценарии для нового функционала по протоколу — TC-<NNN>, шаги, ожидание). **Не запускать полный прогон всех сценариев** — полный QA-прогон стартует только по требованию пользователя или обязательно перед публикацией релиза.
 
 ## Testing quirks
 
@@ -63,6 +64,8 @@ flutter build apk --debug
 
 ## Как запустить тестировщика (`android-tester`)
 
-- Попросить агента протестировать приложение: «запусти android-tester: проверь все экраны» (или конкретную область). Агент сам поднимет эмулятор, соберёт/установит debug-сборку, обойдёт экраны, придумает stress-сценарии и запишет каждый сценарий в `TEST_PLAN.md`.
+- **Короткий прогон (append сценариев):** после задачи с новым функционалом — «запусти android-tester: добавь тест-кейсы для <фича>». Агент только допишет новые сценарии в `TEST_PLAN.md` (TC-<NNN>, шаги, ожидаемый результат), полный прогон НЕ выполняет.
+- **Полный QA-прогон:** «запусти android-tester: проверь все экраны» (или конкретную область). Стартует только по требованию пользователя или обязательно перед публикацией релиза. Агент сам поднимет эмулятор, соберёт/установит debug-сборку, обойдёт экраны, придумает stress-сценарии и запишет каждый сценарий в `TEST_PLAN.md`.
+- **Задачи на фикс:** после прогона каждый найденный дефект (`FAIL`/`BLOCKED`) агент заводит как новую задачу в `PLAN.md` (продолжая нумерацию, без `✅`) — краткое описание, причина, ссылка на TC. Код не чинит.
 - Эмулятор: AVD `Pixel_10_Pro` (x86_64, Android 16). adb: `~/Android/Sdk/platform-tools/adb`. Учётная запись на эмуляторе — google_apis_playstore.
 - Ручной запуск вне агента: см. `.agents/agents/android-tester.md` (окружение, команды UI-взаимодействия, протокол `TEST_PLAN.md`).
