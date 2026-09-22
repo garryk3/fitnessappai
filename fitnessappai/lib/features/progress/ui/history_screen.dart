@@ -540,16 +540,27 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
         final distance = result.distanceMeters;
         final duration = result.durationSeconds;
         if (distance != null && duration != null) {
+          final avgPace = result.avgPace;
+          final pacePart = avgPace != null ? ' · ${_fmt(avgPace)} мин/км' : '';
+          final steps = result.steps;
+          final stepsPart = steps != null
+              ? ' · $steps ${l10n.workoutUnitSteps}'
+              : '';
           return '$label ${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
-              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}';
+              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}'
+              '$pacePart$stepsPart';
         }
         return label;
       case ExerciseType.bike:
         final distance = result.distanceMeters;
         final duration = result.durationSeconds;
+        final speed = result.avgSpeed;
         if (distance != null && duration != null) {
+          final speedPart = speed != null
+              ? ' · ${_fmt(speed)} ${l10n.workoutUnitKmh}'
+              : '';
           return '$label ${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
-              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}';
+              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}$speedPart';
         }
         return label;
     }

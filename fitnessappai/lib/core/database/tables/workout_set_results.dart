@@ -25,6 +25,16 @@ class WorkoutSetResults extends Table {
   RealColumn get weightKg => real().nullable()();
   IntColumn get durationSeconds => integer().nullable()();
   RealColumn get distanceMeters => real().nullable()();
+
+  /// Метрики бега/велосипеда.
+  RealColumn get avgSpeed => real().nullable()();
+  RealColumn get avgCadence => real().nullable()();
+  IntColumn get avgPulse => integer().nullable()();
+  RealColumn get ascentMeters => real().nullable()();
+  RealColumn get descentMeters => real().nullable()();
+  RealColumn get avgPace => real().nullable()();
+  IntColumn get steps => integer().nullable()();
+
   TextColumn get side => text().nullable()();
   IntColumn get completedAt => integer().map(const DateTimeConverter())();
 }

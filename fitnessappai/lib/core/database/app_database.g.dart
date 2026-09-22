@@ -5971,6 +5971,81 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _avgSpeedMeta = const VerificationMeta(
+    'avgSpeed',
+  );
+  @override
+  late final GeneratedColumn<double> avgSpeed = GeneratedColumn<double>(
+    'avg_speed',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avgCadenceMeta = const VerificationMeta(
+    'avgCadence',
+  );
+  @override
+  late final GeneratedColumn<double> avgCadence = GeneratedColumn<double>(
+    'avg_cadence',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avgPulseMeta = const VerificationMeta(
+    'avgPulse',
+  );
+  @override
+  late final GeneratedColumn<int> avgPulse = GeneratedColumn<int>(
+    'avg_pulse',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ascentMetersMeta = const VerificationMeta(
+    'ascentMeters',
+  );
+  @override
+  late final GeneratedColumn<double> ascentMeters = GeneratedColumn<double>(
+    'ascent_meters',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _descentMetersMeta = const VerificationMeta(
+    'descentMeters',
+  );
+  @override
+  late final GeneratedColumn<double> descentMeters = GeneratedColumn<double>(
+    'descent_meters',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avgPaceMeta = const VerificationMeta(
+    'avgPace',
+  );
+  @override
+  late final GeneratedColumn<double> avgPace = GeneratedColumn<double>(
+    'avg_pace',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stepsMeta = const VerificationMeta('steps');
+  @override
+  late final GeneratedColumn<int> steps = GeneratedColumn<int>(
+    'steps',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sideMeta = const VerificationMeta('side');
   @override
   late final GeneratedColumn<String> side = GeneratedColumn<String>(
@@ -6001,6 +6076,13 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
     weightKg,
     durationSeconds,
     distanceMeters,
+    avgSpeed,
+    avgCadence,
+    avgPulse,
+    ascentMeters,
+    descentMeters,
+    avgPace,
+    steps,
     side,
     completedAt,
   ];
@@ -6082,6 +6164,54 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
         ),
       );
     }
+    if (data.containsKey('avg_speed')) {
+      context.handle(
+        _avgSpeedMeta,
+        avgSpeed.isAcceptableOrUnknown(data['avg_speed']!, _avgSpeedMeta),
+      );
+    }
+    if (data.containsKey('avg_cadence')) {
+      context.handle(
+        _avgCadenceMeta,
+        avgCadence.isAcceptableOrUnknown(data['avg_cadence']!, _avgCadenceMeta),
+      );
+    }
+    if (data.containsKey('avg_pulse')) {
+      context.handle(
+        _avgPulseMeta,
+        avgPulse.isAcceptableOrUnknown(data['avg_pulse']!, _avgPulseMeta),
+      );
+    }
+    if (data.containsKey('ascent_meters')) {
+      context.handle(
+        _ascentMetersMeta,
+        ascentMeters.isAcceptableOrUnknown(
+          data['ascent_meters']!,
+          _ascentMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('descent_meters')) {
+      context.handle(
+        _descentMetersMeta,
+        descentMeters.isAcceptableOrUnknown(
+          data['descent_meters']!,
+          _descentMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('avg_pace')) {
+      context.handle(
+        _avgPaceMeta,
+        avgPace.isAcceptableOrUnknown(data['avg_pace']!, _avgPaceMeta),
+      );
+    }
+    if (data.containsKey('steps')) {
+      context.handle(
+        _stepsMeta,
+        steps.isAcceptableOrUnknown(data['steps']!, _stepsMeta),
+      );
+    }
     if (data.containsKey('side')) {
       context.handle(
         _sideMeta,
@@ -6139,6 +6269,34 @@ class $WorkoutSetResultsTable extends WorkoutSetResults
         DriftSqlType.double,
         data['${effectivePrefix}distance_meters'],
       ),
+      avgSpeed: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}avg_speed'],
+      ),
+      avgCadence: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}avg_cadence'],
+      ),
+      avgPulse: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}avg_pulse'],
+      ),
+      ascentMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}ascent_meters'],
+      ),
+      descentMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}descent_meters'],
+      ),
+      avgPace: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}avg_pace'],
+      ),
+      steps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}steps'],
+      ),
       side: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}side'],
@@ -6175,6 +6333,15 @@ class WorkoutSetResultRow extends DataClass
   final double? weightKg;
   final int? durationSeconds;
   final double? distanceMeters;
+
+  /// Метрики бега/велосипеда.
+  final double? avgSpeed;
+  final double? avgCadence;
+  final int? avgPulse;
+  final double? ascentMeters;
+  final double? descentMeters;
+  final double? avgPace;
+  final int? steps;
   final String? side;
   final DateTime completedAt;
   const WorkoutSetResultRow({
@@ -6188,6 +6355,13 @@ class WorkoutSetResultRow extends DataClass
     this.weightKg,
     this.durationSeconds,
     this.distanceMeters,
+    this.avgSpeed,
+    this.avgCadence,
+    this.avgPulse,
+    this.ascentMeters,
+    this.descentMeters,
+    this.avgPace,
+    this.steps,
     this.side,
     required this.completedAt,
   });
@@ -6217,6 +6391,27 @@ class WorkoutSetResultRow extends DataClass
     }
     if (!nullToAbsent || distanceMeters != null) {
       map['distance_meters'] = Variable<double>(distanceMeters);
+    }
+    if (!nullToAbsent || avgSpeed != null) {
+      map['avg_speed'] = Variable<double>(avgSpeed);
+    }
+    if (!nullToAbsent || avgCadence != null) {
+      map['avg_cadence'] = Variable<double>(avgCadence);
+    }
+    if (!nullToAbsent || avgPulse != null) {
+      map['avg_pulse'] = Variable<int>(avgPulse);
+    }
+    if (!nullToAbsent || ascentMeters != null) {
+      map['ascent_meters'] = Variable<double>(ascentMeters);
+    }
+    if (!nullToAbsent || descentMeters != null) {
+      map['descent_meters'] = Variable<double>(descentMeters);
+    }
+    if (!nullToAbsent || avgPace != null) {
+      map['avg_pace'] = Variable<double>(avgPace);
+    }
+    if (!nullToAbsent || steps != null) {
+      map['steps'] = Variable<int>(steps);
     }
     if (!nullToAbsent || side != null) {
       map['side'] = Variable<String>(side);
@@ -6249,6 +6444,27 @@ class WorkoutSetResultRow extends DataClass
       distanceMeters: distanceMeters == null && nullToAbsent
           ? const Value.absent()
           : Value(distanceMeters),
+      avgSpeed: avgSpeed == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avgSpeed),
+      avgCadence: avgCadence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avgCadence),
+      avgPulse: avgPulse == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avgPulse),
+      ascentMeters: ascentMeters == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ascentMeters),
+      descentMeters: descentMeters == null && nullToAbsent
+          ? const Value.absent()
+          : Value(descentMeters),
+      avgPace: avgPace == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avgPace),
+      steps: steps == null && nullToAbsent
+          ? const Value.absent()
+          : Value(steps),
       side: side == null && nullToAbsent ? const Value.absent() : Value(side),
       completedAt: Value(completedAt),
     );
@@ -6270,6 +6486,13 @@ class WorkoutSetResultRow extends DataClass
       weightKg: serializer.fromJson<double?>(json['weightKg']),
       durationSeconds: serializer.fromJson<int?>(json['durationSeconds']),
       distanceMeters: serializer.fromJson<double?>(json['distanceMeters']),
+      avgSpeed: serializer.fromJson<double?>(json['avgSpeed']),
+      avgCadence: serializer.fromJson<double?>(json['avgCadence']),
+      avgPulse: serializer.fromJson<int?>(json['avgPulse']),
+      ascentMeters: serializer.fromJson<double?>(json['ascentMeters']),
+      descentMeters: serializer.fromJson<double?>(json['descentMeters']),
+      avgPace: serializer.fromJson<double?>(json['avgPace']),
+      steps: serializer.fromJson<int?>(json['steps']),
       side: serializer.fromJson<String?>(json['side']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
     );
@@ -6288,6 +6511,13 @@ class WorkoutSetResultRow extends DataClass
       'weightKg': serializer.toJson<double?>(weightKg),
       'durationSeconds': serializer.toJson<int?>(durationSeconds),
       'distanceMeters': serializer.toJson<double?>(distanceMeters),
+      'avgSpeed': serializer.toJson<double?>(avgSpeed),
+      'avgCadence': serializer.toJson<double?>(avgCadence),
+      'avgPulse': serializer.toJson<int?>(avgPulse),
+      'ascentMeters': serializer.toJson<double?>(ascentMeters),
+      'descentMeters': serializer.toJson<double?>(descentMeters),
+      'avgPace': serializer.toJson<double?>(avgPace),
+      'steps': serializer.toJson<int?>(steps),
       'side': serializer.toJson<String?>(side),
       'completedAt': serializer.toJson<DateTime>(completedAt),
     };
@@ -6304,6 +6534,13 @@ class WorkoutSetResultRow extends DataClass
     Value<double?> weightKg = const Value.absent(),
     Value<int?> durationSeconds = const Value.absent(),
     Value<double?> distanceMeters = const Value.absent(),
+    Value<double?> avgSpeed = const Value.absent(),
+    Value<double?> avgCadence = const Value.absent(),
+    Value<int?> avgPulse = const Value.absent(),
+    Value<double?> ascentMeters = const Value.absent(),
+    Value<double?> descentMeters = const Value.absent(),
+    Value<double?> avgPace = const Value.absent(),
+    Value<int?> steps = const Value.absent(),
     Value<String?> side = const Value.absent(),
     DateTime? completedAt,
   }) => WorkoutSetResultRow(
@@ -6321,6 +6558,15 @@ class WorkoutSetResultRow extends DataClass
     distanceMeters: distanceMeters.present
         ? distanceMeters.value
         : this.distanceMeters,
+    avgSpeed: avgSpeed.present ? avgSpeed.value : this.avgSpeed,
+    avgCadence: avgCadence.present ? avgCadence.value : this.avgCadence,
+    avgPulse: avgPulse.present ? avgPulse.value : this.avgPulse,
+    ascentMeters: ascentMeters.present ? ascentMeters.value : this.ascentMeters,
+    descentMeters: descentMeters.present
+        ? descentMeters.value
+        : this.descentMeters,
+    avgPace: avgPace.present ? avgPace.value : this.avgPace,
+    steps: steps.present ? steps.value : this.steps,
     side: side.present ? side.value : this.side,
     completedAt: completedAt ?? this.completedAt,
   );
@@ -6346,6 +6592,19 @@ class WorkoutSetResultRow extends DataClass
       distanceMeters: data.distanceMeters.present
           ? data.distanceMeters.value
           : this.distanceMeters,
+      avgSpeed: data.avgSpeed.present ? data.avgSpeed.value : this.avgSpeed,
+      avgCadence: data.avgCadence.present
+          ? data.avgCadence.value
+          : this.avgCadence,
+      avgPulse: data.avgPulse.present ? data.avgPulse.value : this.avgPulse,
+      ascentMeters: data.ascentMeters.present
+          ? data.ascentMeters.value
+          : this.ascentMeters,
+      descentMeters: data.descentMeters.present
+          ? data.descentMeters.value
+          : this.descentMeters,
+      avgPace: data.avgPace.present ? data.avgPace.value : this.avgPace,
+      steps: data.steps.present ? data.steps.value : this.steps,
       side: data.side.present ? data.side.value : this.side,
       completedAt: data.completedAt.present
           ? data.completedAt.value
@@ -6366,6 +6625,13 @@ class WorkoutSetResultRow extends DataClass
           ..write('weightKg: $weightKg, ')
           ..write('durationSeconds: $durationSeconds, ')
           ..write('distanceMeters: $distanceMeters, ')
+          ..write('avgSpeed: $avgSpeed, ')
+          ..write('avgCadence: $avgCadence, ')
+          ..write('avgPulse: $avgPulse, ')
+          ..write('ascentMeters: $ascentMeters, ')
+          ..write('descentMeters: $descentMeters, ')
+          ..write('avgPace: $avgPace, ')
+          ..write('steps: $steps, ')
           ..write('side: $side, ')
           ..write('completedAt: $completedAt')
           ..write(')'))
@@ -6384,6 +6650,13 @@ class WorkoutSetResultRow extends DataClass
     weightKg,
     durationSeconds,
     distanceMeters,
+    avgSpeed,
+    avgCadence,
+    avgPulse,
+    ascentMeters,
+    descentMeters,
+    avgPace,
+    steps,
     side,
     completedAt,
   );
@@ -6401,6 +6674,13 @@ class WorkoutSetResultRow extends DataClass
           other.weightKg == this.weightKg &&
           other.durationSeconds == this.durationSeconds &&
           other.distanceMeters == this.distanceMeters &&
+          other.avgSpeed == this.avgSpeed &&
+          other.avgCadence == this.avgCadence &&
+          other.avgPulse == this.avgPulse &&
+          other.ascentMeters == this.ascentMeters &&
+          other.descentMeters == this.descentMeters &&
+          other.avgPace == this.avgPace &&
+          other.steps == this.steps &&
           other.side == this.side &&
           other.completedAt == this.completedAt);
 }
@@ -6416,6 +6696,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
   final Value<double?> weightKg;
   final Value<int?> durationSeconds;
   final Value<double?> distanceMeters;
+  final Value<double?> avgSpeed;
+  final Value<double?> avgCadence;
+  final Value<int?> avgPulse;
+  final Value<double?> ascentMeters;
+  final Value<double?> descentMeters;
+  final Value<double?> avgPace;
+  final Value<int?> steps;
   final Value<String?> side;
   final Value<DateTime> completedAt;
   const WorkoutSetResultsCompanion({
@@ -6429,6 +6716,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     this.weightKg = const Value.absent(),
     this.durationSeconds = const Value.absent(),
     this.distanceMeters = const Value.absent(),
+    this.avgSpeed = const Value.absent(),
+    this.avgCadence = const Value.absent(),
+    this.avgPulse = const Value.absent(),
+    this.ascentMeters = const Value.absent(),
+    this.descentMeters = const Value.absent(),
+    this.avgPace = const Value.absent(),
+    this.steps = const Value.absent(),
     this.side = const Value.absent(),
     this.completedAt = const Value.absent(),
   });
@@ -6443,6 +6737,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     this.weightKg = const Value.absent(),
     this.durationSeconds = const Value.absent(),
     this.distanceMeters = const Value.absent(),
+    this.avgSpeed = const Value.absent(),
+    this.avgCadence = const Value.absent(),
+    this.avgPulse = const Value.absent(),
+    this.ascentMeters = const Value.absent(),
+    this.descentMeters = const Value.absent(),
+    this.avgPace = const Value.absent(),
+    this.steps = const Value.absent(),
     this.side = const Value.absent(),
     required DateTime completedAt,
   }) : sessionId = Value(sessionId),
@@ -6461,6 +6762,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     Expression<double>? weightKg,
     Expression<int>? durationSeconds,
     Expression<double>? distanceMeters,
+    Expression<double>? avgSpeed,
+    Expression<double>? avgCadence,
+    Expression<int>? avgPulse,
+    Expression<double>? ascentMeters,
+    Expression<double>? descentMeters,
+    Expression<double>? avgPace,
+    Expression<int>? steps,
     Expression<String>? side,
     Expression<int>? completedAt,
   }) {
@@ -6475,6 +6783,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
       if (weightKg != null) 'weight_kg': weightKg,
       if (durationSeconds != null) 'duration_seconds': durationSeconds,
       if (distanceMeters != null) 'distance_meters': distanceMeters,
+      if (avgSpeed != null) 'avg_speed': avgSpeed,
+      if (avgCadence != null) 'avg_cadence': avgCadence,
+      if (avgPulse != null) 'avg_pulse': avgPulse,
+      if (ascentMeters != null) 'ascent_meters': ascentMeters,
+      if (descentMeters != null) 'descent_meters': descentMeters,
+      if (avgPace != null) 'avg_pace': avgPace,
+      if (steps != null) 'steps': steps,
       if (side != null) 'side': side,
       if (completedAt != null) 'completed_at': completedAt,
     });
@@ -6491,6 +6806,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     Value<double?>? weightKg,
     Value<int?>? durationSeconds,
     Value<double?>? distanceMeters,
+    Value<double?>? avgSpeed,
+    Value<double?>? avgCadence,
+    Value<int?>? avgPulse,
+    Value<double?>? ascentMeters,
+    Value<double?>? descentMeters,
+    Value<double?>? avgPace,
+    Value<int?>? steps,
     Value<String?>? side,
     Value<DateTime>? completedAt,
   }) {
@@ -6505,6 +6827,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
       weightKg: weightKg ?? this.weightKg,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       distanceMeters: distanceMeters ?? this.distanceMeters,
+      avgSpeed: avgSpeed ?? this.avgSpeed,
+      avgCadence: avgCadence ?? this.avgCadence,
+      avgPulse: avgPulse ?? this.avgPulse,
+      ascentMeters: ascentMeters ?? this.ascentMeters,
+      descentMeters: descentMeters ?? this.descentMeters,
+      avgPace: avgPace ?? this.avgPace,
+      steps: steps ?? this.steps,
       side: side ?? this.side,
       completedAt: completedAt ?? this.completedAt,
     );
@@ -6547,6 +6876,27 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
     if (distanceMeters.present) {
       map['distance_meters'] = Variable<double>(distanceMeters.value);
     }
+    if (avgSpeed.present) {
+      map['avg_speed'] = Variable<double>(avgSpeed.value);
+    }
+    if (avgCadence.present) {
+      map['avg_cadence'] = Variable<double>(avgCadence.value);
+    }
+    if (avgPulse.present) {
+      map['avg_pulse'] = Variable<int>(avgPulse.value);
+    }
+    if (ascentMeters.present) {
+      map['ascent_meters'] = Variable<double>(ascentMeters.value);
+    }
+    if (descentMeters.present) {
+      map['descent_meters'] = Variable<double>(descentMeters.value);
+    }
+    if (avgPace.present) {
+      map['avg_pace'] = Variable<double>(avgPace.value);
+    }
+    if (steps.present) {
+      map['steps'] = Variable<int>(steps.value);
+    }
     if (side.present) {
       map['side'] = Variable<String>(side.value);
     }
@@ -6571,6 +6921,13 @@ class WorkoutSetResultsCompanion extends UpdateCompanion<WorkoutSetResultRow> {
           ..write('weightKg: $weightKg, ')
           ..write('durationSeconds: $durationSeconds, ')
           ..write('distanceMeters: $distanceMeters, ')
+          ..write('avgSpeed: $avgSpeed, ')
+          ..write('avgCadence: $avgCadence, ')
+          ..write('avgPulse: $avgPulse, ')
+          ..write('ascentMeters: $ascentMeters, ')
+          ..write('descentMeters: $descentMeters, ')
+          ..write('avgPace: $avgPace, ')
+          ..write('steps: $steps, ')
           ..write('side: $side, ')
           ..write('completedAt: $completedAt')
           ..write(')'))
@@ -14542,6 +14899,13 @@ typedef $$WorkoutSetResultsTableCreateCompanionBuilder =
       Value<double?> weightKg,
       Value<int?> durationSeconds,
       Value<double?> distanceMeters,
+      Value<double?> avgSpeed,
+      Value<double?> avgCadence,
+      Value<int?> avgPulse,
+      Value<double?> ascentMeters,
+      Value<double?> descentMeters,
+      Value<double?> avgPace,
+      Value<int?> steps,
       Value<String?> side,
       required DateTime completedAt,
     });
@@ -14557,6 +14921,13 @@ typedef $$WorkoutSetResultsTableUpdateCompanionBuilder =
       Value<double?> weightKg,
       Value<int?> durationSeconds,
       Value<double?> distanceMeters,
+      Value<double?> avgSpeed,
+      Value<double?> avgCadence,
+      Value<int?> avgPulse,
+      Value<double?> ascentMeters,
+      Value<double?> descentMeters,
+      Value<double?> avgPace,
+      Value<int?> steps,
       Value<String?> side,
       Value<DateTime> completedAt,
     });
@@ -14657,6 +15028,41 @@ class $$WorkoutSetResultsTableFilterComposer
 
   ColumnFilters<double> get distanceMeters => $composableBuilder(
     column: $table.distanceMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get avgSpeed => $composableBuilder(
+    column: $table.avgSpeed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get avgCadence => $composableBuilder(
+    column: $table.avgCadence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get avgPulse => $composableBuilder(
+    column: $table.avgPulse,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get ascentMeters => $composableBuilder(
+    column: $table.ascentMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get descentMeters => $composableBuilder(
+    column: $table.descentMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get avgPace => $composableBuilder(
+    column: $table.avgPace,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get steps => $composableBuilder(
+    column: $table.steps,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14767,6 +15173,41 @@ class $$WorkoutSetResultsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get avgSpeed => $composableBuilder(
+    column: $table.avgSpeed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get avgCadence => $composableBuilder(
+    column: $table.avgCadence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get avgPulse => $composableBuilder(
+    column: $table.avgPulse,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get ascentMeters => $composableBuilder(
+    column: $table.ascentMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get descentMeters => $composableBuilder(
+    column: $table.descentMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get avgPace => $composableBuilder(
+    column: $table.avgPace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get steps => $composableBuilder(
+    column: $table.steps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get side => $composableBuilder(
     column: $table.side,
     builder: (column) => ColumnOrderings(column),
@@ -14865,6 +15306,33 @@ class $$WorkoutSetResultsTableAnnotationComposer
     column: $table.distanceMeters,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get avgSpeed =>
+      $composableBuilder(column: $table.avgSpeed, builder: (column) => column);
+
+  GeneratedColumn<double> get avgCadence => $composableBuilder(
+    column: $table.avgCadence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get avgPulse =>
+      $composableBuilder(column: $table.avgPulse, builder: (column) => column);
+
+  GeneratedColumn<double> get ascentMeters => $composableBuilder(
+    column: $table.ascentMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get descentMeters => $composableBuilder(
+    column: $table.descentMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get avgPace =>
+      $composableBuilder(column: $table.avgPace, builder: (column) => column);
+
+  GeneratedColumn<int> get steps =>
+      $composableBuilder(column: $table.steps, builder: (column) => column);
 
   GeneratedColumn<String> get side =>
       $composableBuilder(column: $table.side, builder: (column) => column);
@@ -14965,6 +15433,13 @@ class $$WorkoutSetResultsTableTableManager
                 Value<double?> weightKg = const Value.absent(),
                 Value<int?> durationSeconds = const Value.absent(),
                 Value<double?> distanceMeters = const Value.absent(),
+                Value<double?> avgSpeed = const Value.absent(),
+                Value<double?> avgCadence = const Value.absent(),
+                Value<int?> avgPulse = const Value.absent(),
+                Value<double?> ascentMeters = const Value.absent(),
+                Value<double?> descentMeters = const Value.absent(),
+                Value<double?> avgPace = const Value.absent(),
+                Value<int?> steps = const Value.absent(),
                 Value<String?> side = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
               }) => WorkoutSetResultsCompanion(
@@ -14978,6 +15453,13 @@ class $$WorkoutSetResultsTableTableManager
                 weightKg: weightKg,
                 durationSeconds: durationSeconds,
                 distanceMeters: distanceMeters,
+                avgSpeed: avgSpeed,
+                avgCadence: avgCadence,
+                avgPulse: avgPulse,
+                ascentMeters: ascentMeters,
+                descentMeters: descentMeters,
+                avgPace: avgPace,
+                steps: steps,
                 side: side,
                 completedAt: completedAt,
               ),
@@ -14993,6 +15475,13 @@ class $$WorkoutSetResultsTableTableManager
                 Value<double?> weightKg = const Value.absent(),
                 Value<int?> durationSeconds = const Value.absent(),
                 Value<double?> distanceMeters = const Value.absent(),
+                Value<double?> avgSpeed = const Value.absent(),
+                Value<double?> avgCadence = const Value.absent(),
+                Value<int?> avgPulse = const Value.absent(),
+                Value<double?> ascentMeters = const Value.absent(),
+                Value<double?> descentMeters = const Value.absent(),
+                Value<double?> avgPace = const Value.absent(),
+                Value<int?> steps = const Value.absent(),
                 Value<String?> side = const Value.absent(),
                 required DateTime completedAt,
               }) => WorkoutSetResultsCompanion.insert(
@@ -15006,6 +15495,13 @@ class $$WorkoutSetResultsTableTableManager
                 weightKg: weightKg,
                 durationSeconds: durationSeconds,
                 distanceMeters: distanceMeters,
+                avgSpeed: avgSpeed,
+                avgCadence: avgCadence,
+                avgPulse: avgPulse,
+                ascentMeters: ascentMeters,
+                descentMeters: descentMeters,
+                avgPace: avgPace,
+                steps: steps,
                 side: side,
                 completedAt: completedAt,
               ),

@@ -423,8 +423,9 @@ void main() {
   group('нагрузка на мышцы', () {
     test('primary даёт 1.0, secondary 0.5, сумма ≈ 100%', () async {
       final groups = await exerciseRepo.getAllMuscleGroups();
-      final primary = groups.first;
-      final secondary = groups.last;
+      final standalone = groups.where((g) => g.parentKey == null).toList();
+      final primary = standalone.first;
+      final secondary = standalone.last;
 
       final exercise = await exerciseRepo.create(
         Exercise(
@@ -573,11 +574,11 @@ void main() {
     test('standalone-группы не имеют детей', () async {
       final groups = await exerciseRepo.getAllMuscleGroups();
       final groupsByKey = {for (final g in groups) g.key: g};
-      final absGroup = groupsByKey['abs']!;
+      final chestGroup = groupsByKey['chest']!;
 
       final exercise = await exerciseRepo.create(
         Exercise(
-          name: 'Планка',
+          name: 'Жим',
           type: ExerciseType.strength,
           createdAt: clock(),
           updatedAt: clock(),
@@ -585,7 +586,7 @@ void main() {
         [
           ExerciseMuscle(
             exerciseId: 0,
-            muscleGroupId: absGroup.id!,
+            muscleGroupId: chestGroup.id!,
             intensity: MuscleIntensity.primary,
           ),
         ],
@@ -597,7 +598,7 @@ void main() {
 
       final loads = await aggregator.muscleLoadPercent(StatPeriod.week);
       expect(loads, hasLength(1));
-      expect(loads.single.muscleGroup.key, 'abs');
+      expect(loads.single.muscleGroup.key, 'chest');
       expect(loads.single.percent, closeTo(100, 0.01));
       expect(loads.single.children, isEmpty);
     });

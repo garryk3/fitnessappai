@@ -13,6 +13,13 @@ class WorkoutSetResult {
     this.weightKg,
     this.durationSeconds,
     this.distanceMeters,
+    this.avgSpeed,
+    this.avgCadence,
+    this.avgPulse,
+    this.ascentMeters,
+    this.descentMeters,
+    this.avgPace,
+    this.steps,
     this.side,
     required this.completedAt,
   });
@@ -30,6 +37,17 @@ class WorkoutSetResult {
   final int? durationSeconds;
   final double? distanceMeters;
 
+  /// Средняя скорость в км/ч (велосипед).
+  final double? avgSpeed;
+  final double? avgCadence;
+  final int? avgPulse;
+  final double? ascentMeters;
+  final double? descentMeters;
+
+  /// Средний темп в минутах на км (бег).
+  final double? avgPace;
+  final int? steps;
+
   /// Сторона для упражнений «по сторонам» ('left'/'right').
   final String? side;
   final DateTime completedAt;
@@ -45,6 +63,13 @@ class WorkoutSetResult {
     double? weightKg,
     int? durationSeconds,
     double? distanceMeters,
+    double? avgSpeed,
+    double? avgCadence,
+    int? avgPulse,
+    double? ascentMeters,
+    double? descentMeters,
+    double? avgPace,
+    int? steps,
     String? side,
     DateTime? completedAt,
     bool clearId = false,
@@ -61,6 +86,13 @@ class WorkoutSetResult {
       weightKg: weightKg ?? this.weightKg,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       distanceMeters: distanceMeters ?? this.distanceMeters,
+      avgSpeed: avgSpeed ?? this.avgSpeed,
+      avgCadence: avgCadence ?? this.avgCadence,
+      avgPulse: avgPulse ?? this.avgPulse,
+      ascentMeters: ascentMeters ?? this.ascentMeters,
+      descentMeters: descentMeters ?? this.descentMeters,
+      avgPace: avgPace ?? this.avgPace,
+      steps: steps ?? this.steps,
       side: side ?? this.side,
       completedAt: completedAt ?? this.completedAt,
     );
@@ -80,6 +112,13 @@ class WorkoutSetResult {
             other.weightKg == weightKg &&
             other.durationSeconds == durationSeconds &&
             other.distanceMeters == distanceMeters &&
+            other.avgSpeed == avgSpeed &&
+            other.avgCadence == avgCadence &&
+            other.avgPulse == avgPulse &&
+            other.ascentMeters == ascentMeters &&
+            other.descentMeters == descentMeters &&
+            other.avgPace == avgPace &&
+            other.steps == steps &&
             other.side == side &&
             other.completedAt == completedAt;
   }
@@ -97,6 +136,13 @@ class WorkoutSetResult {
       weightKg,
       durationSeconds,
       distanceMeters,
+      avgSpeed,
+      avgCadence,
+      avgPulse,
+      ascentMeters,
+      descentMeters,
+      avgPace,
+      steps,
       side,
       completedAt,
     );
