@@ -36,7 +36,8 @@ flutter build apk --debug
 ```
 
 - Single test: `flutter test test/<path>_test.dart`.
-- Integration tests (`integration_test/`) are NOT run in CI. They run on Linux desktop: `flutter test integration_test -d linux` (takes ~2 minutes, requires the `StubSoundService` stub registered in `pumpApp`). In this WSL2 env there is no Android emulator (Android SDK on Windows disk, no AVD).
+- Integration tests (`integration_test/`) are NOT run in CI. They run on Linux desktop: `flutter test integration_test -d linux` (takes ~2 minutes, requires the `StubSoundService` stub registered in `pumpApp`).
+- Environment: native Ubuntu (no WSL). Android emulators available: AVDs `Pixel_10_Pro` (x86_64, Android 16) and `Pixel_10_Pro_Fold`. adb: `~/Android/Sdk/platform-tools/adb`. Android SDK: `~/Android/Sdk` (platform 36). Note: local `flutter build apk` may fail with Gradle error `Could not determine the dependencies of task ':app:compileFlutterBuildDebug'. > Index: 1, Size: 1` — Flutter picks up Java 25 from Android Studio's bundled jbr, but Gradle 9.1 supports Java ≤ 24. Fix: point Gradle at JDK 17/21 (e.g. install `openjdk-21-jdk-headless` and set `JAVA_HOME`) or run the build in CI, which uses the runner's JDK 17/21.
 - Stack: Flutter/Dart, `drift` ORM, `signals`/`signals_flutter`, `go_router`, `fl_chart`, `flutter_localizations` (template `lib/l10n/app_ru.arb`).
 
 ## Generated code (commit it, CI never regenerates)
