@@ -21,6 +21,7 @@ import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/main.dart' hide main;
+import 'package:fitnessappai/app/widgets/profile_avatar.dart';
 
 const _programName = 'Тест Сплит';
 const _squat = 'Тест Приседания';
@@ -151,6 +152,11 @@ IconData _filledIcon(IconData outlined) => switch (outlined) {
   Icons.person_outline => Icons.person,
   _ => outlined,
 };
+
+Future<void> goToProfile(WidgetTester tester) async {
+  await tester.tap(find.byType(ProfileAvatar).first, warnIfMissed: false);
+  await tester.pumpAndSettle();
+}
 
 Future<void> ensureFieldVisible(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
@@ -869,7 +875,7 @@ void main() {
     addTearDown(() => db.close());
     await pumpApp(tester, db);
 
-    await goToTab(tester, Icons.person_outline);
+    await goToProfile(tester);
     final healthLink = find.text('Противопоказания');
     await ensureFieldVisible(tester, healthLink);
     await tester.tap(healthLink);
@@ -1417,7 +1423,7 @@ void main() {
     addTearDown(() => db.close());
     await pumpApp(tester, db);
 
-    await goToTab(tester, Icons.person_outline);
+    await goToProfile(tester);
     expect(find.text('Текущие значения'), findsNothing);
     expect(find.text('Пока нет замеров тела'), findsOneWidget);
 
@@ -1453,7 +1459,7 @@ void main() {
     addTearDown(() => db.close());
     await pumpApp(tester, db);
 
-    await goToTab(tester, Icons.person_outline);
+    await goToProfile(tester);
     final healthLink = find.text('Противопоказания');
     await ensureFieldVisible(tester, healthLink);
     await tester.tap(healthLink);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/main.dart';
+import 'package:fitnessappai/app/widgets/profile_avatar.dart';
 
 import '../../helpers/test_services.dart';
 
@@ -77,6 +78,23 @@ void main() {
   testWidgets('на самом узком экране (320dp) нет overflow', (tester) async {
     await pumpAtSize(tester, const Size(320, 640));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('в шапке меню аватар и тап по нему открывает Профиль', (
+    tester,
+  ) async {
+    await pumpAtSize(tester, const Size(480, 800));
+    final scaffoldWithDrawer = find.byWidgetPredicate(
+      (widget) => widget is Scaffold && widget.drawer != null,
+    );
+    tester.state<ScaffoldState>(scaffoldWithDrawer).openDrawer();
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfileAvatar), findsWidgets);
+    await tester.tap(find.byType(ProfileAvatar).first);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(Drawer), findsNothing);
+    expect(find.widgetWithText(AppBar, 'Профиль'), findsOneWidget);
   });
 
   testWidgets(
