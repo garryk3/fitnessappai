@@ -96,9 +96,9 @@ flutter:
   assets:
     - assets/data/
     - assets/exercises/
+    - assets/images/
     - assets/sounds/
     - assets/videos/
-    - assets/images/groups/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

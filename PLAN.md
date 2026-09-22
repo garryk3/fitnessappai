@@ -2564,10 +2564,11 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
   3. План-ревью + (по запросу) e2e Linux перед мержем.
 - **Тест:** ручной эмулятор: TC-018, TC-019 (воспроизведение), TC-029 (смена размера на ходу), TC-033 (регресс после фикса). Блокирует TC-025 (Профиль/аватар), TC-026 (узкий экран) — шаги через меню на Замеры/Прогресс/Профиль.
 
-### 40.8 — Аватар профиля 40.1 не попал в main (ветка не смёржена) [ ]
+### 40.8 — Аватар профиля 40.1 не попал в main (ветка не смёржена) ✅
+- **Сделано (2026-09-22):** ветка `task/40.1-profile-icon` доиспользована как основа. `ProfileAvatar` подключён в `adaptive_navigation.dart`: (1) иконка пункта «Профиль» в NavigationBar (узкие) и NavigationRail (широкие) = `ProfileAvatar` вместо `Icons.person_outline`; (2) шапка drawer (узкие): аватар по центру поверх `Divider`, тап открывает Профиль (ветка 5), TC-025. `pubspec.yaml`: assets `assets/images/` (включая `groups/`). Integration-тест: helper `goToProfile(tester)` (тап по `ProfileAvatar`), заменены 3 вызова `goToTab(Icons.person_outline)`. Widget-тесты `adaptive_navigation_test.dart`: +тест шапки drawer (аватар + тап → Профиль), всего 10 в файле; `flutter analyze` чисто; `flutter test` 796 зелёные. Ручной прогон TC-025 — в QA после мержа.
 - **Проблема (QA, TEST_PLAN TC-025, 2026-09-22):** задача 40.1 помечена в PLAN.md как «Сделано 2026-09-20», но в сборке v1.0.21 (origin/main) аватар профиля отсутствует: `ProfileAvatar` и `assets/images/profile_avatar.jpg` нет в рабочем дереве `fitnessappai/pubspec.yaml`/`lib/app/widgets/`.
 - **Предполагаемая причина:** коммит `5421108` («task/40.1: иконка профиля через ProfileAvatar вместо person_outline») существует только в ветке `task/40.1-profile-icon`; в origin/main ветка не смёржена (PR отсутствует, `gh pr list` его не показывает). Этап 40.2 смёржен позже и переписал `adaptive_navigation.dart`, а 40.1 так и осталась висящей веткой.
-- **Решение:** смёржить ветку `task/40.1-profile-icon` в `main` через PR (проверить конфликты с текущим `adaptive_navigation.dart` из 40.2 — drawer/rail построены на `Icons.person_outline`), заново прогнать `flutter analyze`/`flutter test`; убедиться, что `ProfileAvatar` корректно подключён в drawer/меню и в профиле.
+- **Решение:** вместо слития ветки (в ней `integration_test` в старой версии, конфликты с 40.2/40.7) извлечены файлы `ProfileAvatar` + ассет + unit-тест, интеграция с актуальным `adaptive_navigation.dart` сделана вручную.
 - **Тест:** TC-025 (аватар в меню сверху + тап по аватару открывает Профиль) на узком и широком экранах.
 
 ### 40.9 — Задача 40.3 смёржена частично: метрики bike/бега и мышцы «ядро» отсутствуют (дефект) [ ]

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:fitnessappai/app/widgets/profile_avatar.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Адаптивная оболочка навигации по плану 40.2:
@@ -111,13 +112,13 @@ class AdaptiveNavigation extends StatelessWidget {
       (
         branchIndex: 5,
         bar: NavigationDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
+          icon: const ProfileAvatar(),
+          selectedIcon: const ProfileAvatar(),
           label: l10n.navProfile,
         ),
         rail: NavigationRailDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
+          icon: const ProfileAvatar(),
+          selectedIcon: const ProfileAvatar(),
           label: Text(l10n.navProfile),
         ),
       ),
@@ -181,6 +182,18 @@ class AdaptiveNavigation extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
+            // Шапка меню: аватар, тап открывает Профиль (TC-025).
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pop();
+                _onDestinationSelected(5);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: ProfileAvatar(radius: 28)),
+              ),
+            ),
+            const Divider(height: 1),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
