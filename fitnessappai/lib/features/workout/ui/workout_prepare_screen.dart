@@ -304,6 +304,11 @@ class _ExerciseCard extends StatelessWidget {
             ? '${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
                   '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}'
             : l10n.programBuilderNoMetrics;
+      case ExerciseType.bike:
+        return distance != null && duration != null
+            ? '${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
+                  '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}'
+            : l10n.programBuilderNoMetrics;
     }
   }
 }
@@ -321,6 +326,7 @@ class _TypeIcon extends StatelessWidget {
       ExerciseType.bodyweight => Icons.accessibility_new,
       ExerciseType.plank => Icons.self_improvement,
       ExerciseType.running => Icons.directions_run,
+      ExerciseType.bike => Icons.directions_bike,
     };
     return Container(
       padding: const EdgeInsets.all(8),

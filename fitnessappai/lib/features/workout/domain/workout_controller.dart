@@ -682,6 +682,18 @@ class WorkoutController {
           side: input.side,
           completedAt: now,
         );
+      case ExerciseType.bike:
+        return WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          exerciseType: exercise.type,
+          setIndex: currentSet.value,
+          durationSeconds: input.durationSeconds,
+          distanceMeters: input.distanceMeters,
+          side: input.side,
+          completedAt: now,
+        );
     }
   }
 

@@ -121,7 +121,8 @@ class _ProgramDayExerciseParamsScreenState
       durationSeconds: switch (type) {
         ExerciseType.strength || ExerciseType.bodyweight => null,
         ExerciseType.plank => int.parse(_durationController.text),
-        ExerciseType.running => int.parse(_durationController.text) * 60,
+        ExerciseType.running ||
+        ExerciseType.bike => int.parse(_durationController.text) * 60,
       },
       distanceMeters: type == ExerciseType.running
           ? _kmToMeters(_distanceController.text)

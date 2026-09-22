@@ -336,7 +336,7 @@ class StatsAggregator {
           return inSlice
               .fold<int>(0, (sum, r) => sum + (r.reps ?? 0))
               .toDouble();
-        case ExerciseType.running:
+        case ExerciseType.running || ExerciseType.bike:
           return inSlice.fold<double>(
             0,
             (sum, r) => sum + (r.distanceMeters ?? 0),
@@ -380,7 +380,8 @@ class StatsAggregator {
           ExerciseType.strength when (r.weightKg ?? 0) > current => r.weightKg!,
           ExerciseType.strength => current,
           ExerciseType.bodyweight => current + (r.reps ?? 0),
-          ExerciseType.running => current + (r.distanceMeters ?? 0),
+          ExerciseType.running ||
+          ExerciseType.bike => current + (r.distanceMeters ?? 0),
           ExerciseType.plank => current + (r.durationSeconds ?? 0),
         };
       }
@@ -461,6 +462,6 @@ class StatsAggregator {
     ExerciseType.strength => r.weightKg ?? 0,
     ExerciseType.bodyweight => (r.reps ?? 0).toDouble(),
     ExerciseType.plank => (r.durationSeconds ?? 0).toDouble(),
-    ExerciseType.running => r.distanceMeters ?? 0,
+    ExerciseType.running || ExerciseType.bike => r.distanceMeters ?? 0,
   };
 }

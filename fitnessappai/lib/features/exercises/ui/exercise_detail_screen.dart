@@ -356,7 +356,7 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
       ExerciseType.bodyweight => '${result.reps ?? 0} ${l10n.workoutUnitReps}',
       ExerciseType.plank =>
         '${result.durationSeconds ?? 0} ${l10n.workoutUnitSeconds}',
-      ExerciseType.running =>
+      ExerciseType.running || ExerciseType.bike =>
         '${_fmt((result.distanceMeters ?? 0) / 1000)} ${l10n.workoutUnitKm} × '
             '${(result.durationSeconds ?? 0) ~/ 60} ${l10n.workoutUnitMinutes}',
     };
@@ -426,6 +426,7 @@ class _TypeBadge extends StatelessWidget {
       ExerciseType.bodyweight => l10n.exerciseTypeBodyweight,
       ExerciseType.plank => l10n.exerciseTypePlank,
       ExerciseType.running => l10n.exerciseTypeRunning,
+      ExerciseType.bike => l10n.exerciseTypeBike,
     };
     final colorScheme = Theme.of(context).colorScheme;
     return Container(

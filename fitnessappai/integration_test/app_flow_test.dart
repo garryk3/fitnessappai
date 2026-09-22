@@ -227,6 +227,7 @@ Future<void> createExercise(
       ExerciseType.bodyweight => 'Свой вес',
       ExerciseType.plank => 'Время',
       ExerciseType.running => 'Бег',
+      ExerciseType.bike => 'Велосипед',
     }).last,
   );
   await tester.pumpAndSettle();

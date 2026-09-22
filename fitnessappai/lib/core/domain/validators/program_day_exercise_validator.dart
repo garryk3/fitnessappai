@@ -36,6 +36,13 @@ class ProgramDayExerciseValidator {
         if (item.distanceMeters != null && item.distanceMeters! < 0) {
           errors.add('Дистанция не может быть отрицательной');
         }
+      case ExerciseType.bike:
+        if (item.durationSeconds == null || item.durationSeconds! < 1) {
+          errors.add('Продолжительность должна быть >= 1 с');
+        }
+        if (item.distanceMeters != null && item.distanceMeters! < 0) {
+          errors.add('Дистанция не может быть отрицательной');
+        }
     }
     return ValidationResult(errors);
   }

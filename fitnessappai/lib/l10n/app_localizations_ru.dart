@@ -174,6 +174,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseTypeRunning => 'Бег';
 
   @override
+  String get exerciseTypeBike => 'Велосипед';
+
+  @override
   String get exerciseListHint => 'Поиск упражнений';
 
   @override

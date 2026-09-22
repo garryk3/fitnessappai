@@ -616,7 +616,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
         return sets != null && duration != null
             ? '$sets × $duration ${l10n.workoutUnitSeconds}'
             : '';
-      case ExerciseType.running:
+      case ExerciseType.running || ExerciseType.bike:
         return distance != null && duration != null
             ? '${(distance / 1000).toStringAsFixed(1)} ${l10n.workoutUnitKm} · '
                   '${(duration / 60).toStringAsFixed(1)} ${l10n.workoutUnitMinutes}'
@@ -672,6 +672,7 @@ class _ExerciseMedia extends StatelessWidget {
           ExerciseType.bodyweight => Icons.accessibility_new,
           ExerciseType.plank => Icons.self_improvement,
           ExerciseType.running => Icons.directions_run,
+          ExerciseType.bike => Icons.directions_bike,
         },
         size: 56,
         color: colorScheme.onSurfaceVariant,
@@ -764,7 +765,7 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
       ExerciseType.bodyweight => '${result.reps ?? 0} ${l10n.workoutUnitReps}',
       ExerciseType.plank =>
         '${result.durationSeconds ?? 0} ${l10n.workoutUnitSeconds}',
-      ExerciseType.running =>
+      ExerciseType.running || ExerciseType.bike =>
         '${_fmt((result.distanceMeters ?? 0) / 1000)} ${l10n.workoutUnitKm} × '
             '${(result.durationSeconds ?? 0) ~/ 60} ${l10n.workoutUnitMinutes}',
     };
@@ -903,7 +904,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
       ExerciseType.plank => WorkoutSetInput(
         durationSeconds: _parsePlankDuration(),
       ),
-      ExerciseType.running => _buildRunningInput(),
+      ExerciseType.running || ExerciseType.bike => _buildRunningInput(),
     };
     widget.onConfirm(input);
   }
@@ -1032,7 +1033,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 },
               ),
             ],
-            ExerciseType.running => [
+            ExerciseType.running || ExerciseType.bike => [
               TextFormField(
                 controller: _distance,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -1260,6 +1261,7 @@ class _FinishedViewState extends State<_FinishedView> {
     ExerciseType.bodyweight => Icons.accessibility_new,
     ExerciseType.plank => Icons.self_improvement,
     ExerciseType.running => Icons.directions_run,
+    ExerciseType.bike => Icons.directions_bike,
   };
 }
 
