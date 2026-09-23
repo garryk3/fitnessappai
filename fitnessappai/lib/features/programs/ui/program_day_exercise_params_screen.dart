@@ -88,7 +88,7 @@ class _ProgramDayExerciseParamsScreenState
       _setsController.text = _formatInt(item?.sets);
       _repsController.text = _formatInt(item?.reps);
       _weightController.text = _formatDouble(item?.weightKg);
-      if (type == ExerciseType.running) {
+      if (type == ExerciseType.running || type == ExerciseType.bike) {
         final minutes = item?.durationSeconds;
         _durationController.text = minutes == null
             ? ''
@@ -122,11 +122,15 @@ class _ProgramDayExerciseParamsScreenState
         ExerciseType.strength || ExerciseType.bodyweight => null,
         ExerciseType.plank => int.parse(_durationController.text),
         ExerciseType.running ||
-        ExerciseType.bike => int.parse(_durationController.text) * 60,
+        ExerciseType.bike => _minutesToSeconds(_durationController.text),
       },
-      distanceMeters: type == ExerciseType.running
-          ? _kmToMeters(_distanceController.text)
-          : null,
+      distanceMeters: switch (type) {
+        ExerciseType.running ||
+        ExerciseType.bike => _kmToMeters(_distanceController.text),
+        ExerciseType.strength ||
+        ExerciseType.bodyweight ||
+        ExerciseType.plank => null,
+      },
       restSeconds: rest,
     );
   }
@@ -251,7 +255,7 @@ class _ProgramDayExerciseParamsScreenState
               label: l10n.exerciseParamsDurationSeconds,
               validator: _validateRequiredPositive,
             ),
-          if (type == ExerciseType.running) ...[
+          if (type == ExerciseType.running || type == ExerciseType.bike) ...[
             _buildNumberField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,
@@ -304,6 +308,11 @@ class _ProgramDayExerciseParamsScreenState
   double? _kmToMeters(String? text) {
     final km = _parseDouble(text);
     return km == null ? null : km * 1000;
+  }
+
+  int? _minutesToSeconds(String? text) {
+    final minutes = _parseInt(text);
+    return minutes == null ? null : minutes * 60;
   }
 
   static int? _parseInt(String? text) {

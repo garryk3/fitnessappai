@@ -142,6 +142,41 @@ void main() {
     expect(field('Время (сек)'), findsNothing);
   });
 
+  testWidgets('bike: набор полей по типу', (tester) async {
+    final positionId = await addPosition('Велосипед', ExerciseType.bike);
+
+    await pumpParams(tester, positionId);
+
+    expect(field('Подходы'), findsOneWidget);
+    expect(field('Время (мин)'), findsOneWidget);
+    expect(field('Дистанция (км)'), findsOneWidget);
+    expect(field('Отдых (сек)'), findsOneWidget);
+    expect(field('Повторения'), findsNothing);
+    expect(field('Вес (кг)'), findsNothing);
+    expect(field('Время (сек)'), findsNothing);
+  });
+
+  testWidgets('bike: минуты и километры сохраняются без исключения', (
+    tester,
+  ) async {
+    final positionId = await addPosition('Велосипед', ExerciseType.bike);
+
+    await pumpParams(tester, positionId);
+    await enterField(tester, 'Подходы', '3');
+    await enterField(tester, 'Время (мин)', '40');
+    await enterField(tester, 'Дистанция (км)', '15');
+    await enterField(tester, 'Отдых (сек)', '60');
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final items = await _dayItems(programRepository, positionId);
+    expect(items.sets, 3);
+    expect(items.durationSeconds, 2400);
+    expect(items.distanceMeters, 15000);
+    expect(items.restSeconds, 60);
+  });
+
   testWidgets('сохранение bodyweight сохраняет повторы без веса', (
     tester,
   ) async {
