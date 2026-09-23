@@ -699,6 +699,43 @@ void main() {
   });
 
   testWidgets(
+    'узкий экран: попап месяца — дата и кнопки на своих строках, без вертикальной даты',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('Месяц'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('10'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      // Заголовок даты — единственное место с датой, на своей строке.
+      expect(
+        find.descendant(of: sheet, matching: find.text('10 августа 2026')),
+        findsOneWidget,
+      );
+      // Кнопка «Начать» видна и тапабельна (день 10.08 — сегодня).
+      expect(
+        find.descendant(of: sheet, matching: find.text('Начать')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(
+        find
+            .descendant(of: sheet, matching: find.text('Пропустить'))
+            .hitTestable(),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'пустая неделя: тап по пустому состоянию открывает планирование',
     (tester) async {
       await pumpPlan(tester);

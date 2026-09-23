@@ -2614,3 +2614,70 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
   4. Проверка: `flutter analyze --fatal-infos`, `flutter test` (файл + полный прогон), `dart format --set-exit-if-changed`.
 - **Прогресс (2026-09-23):** шаги 1–3 выполнены в ветке `task/40.10-bike-start-params`: для bike добавлены поля «Время (мин)»/«Дистанция (км)», `!` убран (null-safe). Проверки шага 4: `flutter analyze --fatal-infos` — чисто; `flutter test` — 803/803 PASS (в т.ч. +2 widget-кейса bike); `dart format --set-exit-if-changed` — 0 изменённых файлов. Перепрогон TC-034 на эмуляторе (debug-сборка ветки) — PASS: bike стартует с предтренировочного экрана, форма метрик и валидация работают, crash в logcat нет; блокер TC-030 снят (поля/валидация подтверждены, сохранение покрыто `workout_full_flow_test`). План-ревью PASS (оба коммита). Мерж выполнен: PR #160 → squash `dc29863` в `main` 2026-09-23.
 - **Тест:** TC-034 (ручной перепрогон), widget-тест старта bike после фикса; разблокирует TC-030.
+
+---
+
+## Этап 41: Меню-навигация (иконка + rail toggle + 840), bike в программе, унификация календаря, дата в bottom sheet
+
+| № | Задача | Статус | Ветка | Дата |
+|---|--------|--------|-------|------|
+| 41.1 | Меню-навигация: иконка top-left (компакт) + rail toggle extended/коллапс (wide), брейкпоинт 840 | [x] | task/41.1-nav-menu-rail-840 | 2026-09-23 |
+| 41.2 | Программа: bike-упражнение не сохраняется (дефект, FormatException в `_buildUpdated`) | [x] | task/41.2-program-bike-save | 2026-09-23 |
+| 41.3 | Календарь истории ≠ плана: унификация виджета (недоделано из 37.1) | [x] | task/41.3-calendar-unify | 2026-09-23 |
+| 41.4 | План → месяц: дата «30 сентября» по вертикали от кнопки в bottom sheet (дефект) | [x] | task/41.4-day-sheet-date | 2026-09-23 |
+
+### 41.1 — Меню-навигация: иконка top-left + rail toggle + брейкпоинт 840
+- **Сделано (2026-09-23):** реализовано в ветке `task/41.1-nav-menu-rail-840`.
+  - Брейкпоинт rail: `>600` → `>=840` (`AppBreakpoints.isExpanded`); диапазон 600–840 теперь компактный (bottom bar + drawer).
+  - Новый `MenuOpener` (InheritedWidget) + `AppMenuButton` (`lib/app/responsive/app_menu_button.dart`): на компакте открывает drawer оболочки (по `GlobalKey<ScaffoldState>`), в `leading` всех 6 AppBar-экранов веток.
+  - Wide: `NavigationRail(leading: …, extended: _railExtended)` — иконка меню в `leading` переключает сжатие/расширение (подписи видны только при extended); `AppMenuButton` на wide скрыт (rail уже имеет иконку слева-сверху).
+  - l10n: добавлены `navMenu`/`navRailExpand`/`navRailCollapse`, регенерированы локали.
+  - Тесты: `adaptive_navigation_test.dart` переведён на брейкпоинт 840 (900dp → rail, 700dp → бар), +2 кейса (hamburger открывает drawer; rail-иконка разворачивает/сворачивает подписи). `flutter analyze` чисто, `flutter test` 805 зелёные, `dart format` — 0 изменений.
+- **Проблема (пользователь, эмулятор 2026-09-23):** (1) на узких экранах drawer открывается только edge-swipe — нет иконки вызова в левом верхнем углу; (3) на широких экранах rail всегда icon-only (без подписей) и нет переключателя: иконка-меню должна быть видна на всех разрешениях, нажатие расширяет меню до иконок+подписей (стандарт M3), повторное — только иконки.
+- **Файлы:** `lib/app/responsive/adaptive_navigation.dart`, 6 AppBar-экранов веток, `test/app/responsive/adaptive_navigation_test.dart`, `app_breakpoints_test.dart`.
+- **Рабочий план (2026-09-23):**
+  1. Брейкпоинт: `useRail = maxWidth > 600` → `>= 840` (M3, DESIGN.md «точка переключения 840 dp»). Диапазон 600–840 — компактный layout (bottom bar + drawer). Обновить заголовок-комментарий класса.
+  2. Компакт (<840): общий виджет кнопки меню `Icons.menu` в `leading` AppBar всех 6 экранов; открытие drawer оболочки через зарегистрированный `GlobalKey<ScaffoldState>` (nested scaffold не достаёт scaffold оболочки через `Scaffold.of`). Опепер оболочки — приватный `MenuOpener`-наследник `InheritedWidget`.
+  3. Wide (≥840): `NavigationRail(extended: _extended, leading: _railLeading)` — toggle labelType none↔extended (80dp ↔ 256dp), состояние в StatefulWidget. `NavigationRailDestination` без меток при collapsed — заголовки у последней секции (как текущий) или None.
+  4. Widget-тесты: брейкпоинт миграции (600–840 → компакт, ≥840 → rail), hamburger на компакте открывает drawer с 6 пунктами, toggle rail (иконка-кнопка переключает extended, подписи видны/скрыты), регресс «белого экрана» 40.7 на новых брейкпоинтах.
+  5. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`. План-ревью + (по запросу) e2e Linux.
+- **Тест:** эмулятор — иконка меню на всех разрешениях, открытие меню с текстом (TC-027 расширенный), повторное нажатие — коллапс; регресс TC-018/019/026/029 на 600–840.
+
+### 41.2 — Программа: bike-упражнение не сохраняется (дефект)
+- **Сделано (2026-09-23):** `program_day_exercise_params_screen.dart`: (1) `_buildBody()` — поля «Время (мин)»/«Дистанция (км)» теперь и для `bike` (`running || bike`); (2) `_load()` предзаполняет минуты/дистанцию и для bike; (3) `_buildUpdated()` — null-safe `_minutesToSeconds()`, `distanceMeters` заполняется и для bike (switch вместо ветвления по running); (4) `_minutesToSeconds` хелпер. Widget-тесты: +2 кейса bike (набор полей; сохранение 40 мин → 2400 с, 15 км → 15000 м, без исключения). `flutter analyze` чисто, `flutter test` (файл + полный) зелёные.
+- **Проблема (QA, TEST_PLAN, воспроизведение 2026-09-23):** кастомное упражнение типа bike «Велосипед» (QA_Bike_Core) нельзя добавить в программу — кнопка «Сохранить» на `ProgramDayExerciseParamsScreen` ни к чему не приводит.
+- **Причина (подтверждена кодом):** `lib/features/programs/ui/program_day_exercise_params_screen.dart`: `_buildBody()` рендерит «Время (мин)»/«Дистанция (км)» только для `type == ExerciseType.running` (строки 254–266), а `_buildUpdated()` для `bike` читает `int.parse(_durationController.text) * 60` (строки 121–126) — пустой контроллер → необработанный `FormatException` в `_save()` (ловится только `ProgramValidationException`) → сохранение молча не происходит, строка откатывается при возврате. Виджет-тесты покрывают только strength/plank/running/bodyweight.
+- **Рабочий план (2026-09-23):**
+  1. `_buildBody()`: поля «Время (мин)» и «Дистанция (км)» для `running || bike` (как `single_exercise_params_screen.dart` после 40.10), валидация как у running.
+  2. `_load()`: предзаполнение `_durationController`/`_distanceController` и для bike.
+  3. `_buildUpdated()`: bike — null-safe расчёт `durationSeconds`, заполнять `distanceMeters` и для bike.
+  4. Widget-тесты `program_day_exercise_params_screen_test.dart`: + кейс bike (поля рендерятся, сохранение проходит без исключения).
+  5. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`.
+- **Тест:** ручной эмулятор: добавление QA_Bike_Core в день программы → сохранение проходит.
+
+### 41.3 — Календарь истории ≠ плана: унификация виджета
+- **Сделано (2026-09-23):** вынесен общий виджет `lib/app/widgets/calendar/month_grid.dart` (публичные `MonthSwitcher`, `MonthGridView`, `MonthDayCell`, `monthTitle`). План (вид месяц) и История переведены на него; приватные `_MonthGrid`/`_MonthSwitcher` из обоих экранов удалены.
+  - `MonthGridView`: заголовки дней недели из l10n, пустые ячейки, свайп месяцев (порог 100px, воединён внутрь виджета вместо копий в State), политика высоты — `fillHeight` (История: Expanded-строки, регрессы фолд-экранов 34.7/31.5 сохраняются; План: ListView фикс-ячейки 52).
+  - `MonthDayCell` — единая ячейка дизайна плана (номер дня слева-сверху в FittedBox, иконка fitness_center справа-снизу, рамка/подсветка «сегодня», tooltip), `fillHeight` для режима истории.
+  - `MonthSwitcher` — общий (l10n-тултипы, label через `monthTitle`, капитализация «Сентябрь 2026» как в плане).
+  - История: ячейки дней с тренировками теперь «как в плане» (primaryContainer + иконка), тап только по дням с тренировками; пустые дни — surfaceContainerLow (раньше прозрачные).
+  - Тесты: history_screen_test — поиск заголовка месяца стал регистронезависимым (заголовок капитализирован), +1 кейс «день с тренировкой выглядит как в плане (иконка в ячейке)»; week_plan_screen_test — все проходят без изменений. `flutter analyze` чисто.
+- **Проблема (пользователь, 2026-09-23):** календарь на «Истории» не соответствует календарю «План → месяц», хотя задача на унификацию (37.1) была прописана, но не выполнена: два приватных `_MonthGrid`/`_MonthSwitcher` (плана и истории) с разной семантикой.
+- **Файлы:** `lib/features/workout/ui/week_plan_screen.dart` (`_MonthGrid` :892, `_MonthSwitcher` :394), `lib/features/progress/ui/history_screen.dart` (`_MonthGrid` :216, `_MonthSwitcher` :178), новый общий виджет `lib/app/widgets/calendar/month_grid.dart`.
+- **Рабочий план (2026-09-23):**
+  1. Общий `MonthGridView` на базе дизайна плана: l10n-дни недели, tooltip, colour-статусы, рамка «сегодня», свайп месяцев, месяц-переключатель (`MonthSwitcher`) — общий.
+  2. Параметры: политика высоты (план — ListView фикс-ячейки 52; история — Expanded-заполнение, регресс фолд-экранов 34.7/31.5); построение ячейки (план — статусы; история — «как в плане + fitness-иконка», тап только по дням с тренировками).
+  3. Тесты: `week_plan_screen_test.dart` + `history_screen_test.dart` без потери покрытия (включая фолд-регрессы).
+  4. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`.
+- **Тест:** эмулятор — вид календаря истории соответствует плану; тап по дню с тренировкой открывает детали; фолд-экраны не обрезаются.
+
+### 41.4 — План → месяц: дата «30 сентября» по вертикали от кнопки (дефект)
+- **Сделано (2026-09-23):** `_MonthDayActionTile` (`week_plan_screen.dart`) перестроен: вместо `ListTile` с датой в `subtitle` и широким `trailing` — `Column` из `ListTile` (только название программы) и блока действий на всю ширину (`Wrap`/стрип-блок: FilledButton «Начать»/«Перенести на сегодня» + TextButton «Пропустить» + крестик). Дубль даты убран — единственная дата в заголовке листа `_showDayActions`; кнопки переносятся на новые строки через `Wrap` без переполнения. Побочно: в ячейке месячной сетки номер дня обёрнут в `FittedBox(scaleDown)` — на узких экранах «10» больше не переносится столбиком (overflow 8px). Widget-тест «узкий экран: попап месяца» (320dp) — дата на своей строке, «Начать»/«Пропустить» hitTestable, без исключений. `flutter analyze` чисто, `dart format` — 0 изменений.
+- **Проблема (пользователь, эмулятор 2026-09-23):** на экране «План» (вид месяц) тап по дню (например 30 сентября) — строка даты отображается слева от кнопки «Перенести на сегодня», но располагается по вертикали (разбита столбиком).
+- **Причина:** `_MonthDayActionTile` (`week_plan_screen.dart:1099–1135`): `ListTile` c датой в `subtitle` и широким `trailing` (FilledButton «Перенести на сегодня» + TextButton «Пропустить» + крестик) — на узкой ширине subtitle сжимается и дата переносится столбиком. Плюс дубль даты: заголовок `_showDayActions` (строки 303–309) и subtitle тайла.
+- **Рабочий план (2026-09-23):**
+  1. Действия из `trailing` — в нижнюю строку на всю ширину ListTile (или `Wrap`), дата остаётся на своей строке (subtitle без сжатия, maxLines 1 + ellipsis).
+  2. Убрать дублирующий заголовок-дату в `_showDayActions` (или выровнять по дизайну) — дата остаётся единственной в subtitle.
+  3. Widget-тест на узкую ширину: дата не переносится столбиком, кнопки доступны.
+  4. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`.
+- **Тест:** эмулятор — тап по дню, дата и кнопки на своих строках.
