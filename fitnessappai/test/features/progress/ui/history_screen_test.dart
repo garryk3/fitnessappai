@@ -434,6 +434,25 @@ void main() {
     expect(find.text('$lastDay'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('календарь компактен на телефоне (ячейки 52px, не растянут)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    // Ячейки фиксированной высоты 52 (как в плане), а не растягиваются на
+    // всю высоту — между рядами нет пустых промежутков.
+    expect(tester.getSize(find.byType(MonthDayCell).first).height, 52);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 /// Сервис экспорта, возвращающий фиксированный JSON без обращения к БД.

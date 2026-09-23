@@ -236,11 +236,15 @@ class _MonthGridViewState extends State<MonthGridView> {
         ),
     ];
 
-    final grid = GestureDetector(
+    Widget wrapDrag(Widget child) => GestureDetector(
       onHorizontalDragStart: _onDragStart,
       onHorizontalDragUpdate: _onDragUpdate,
       onHorizontalDragEnd: _onDragEnd,
-      child: widget.fillHeight
+      child: child,
+    );
+
+    final grid = wrapDrag(
+      widget.fillHeight
           ? Column(children: [for (final row in weekRows) Expanded(child: row)])
           : ListView(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
@@ -256,14 +260,52 @@ class _MonthGridViewState extends State<MonthGridView> {
     );
 
     if (widget.fillHeight) {
-      return Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: headerRow,
-          ),
-          Expanded(child: grid),
-        ],
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          const double rowHeight = 52;
+          const double rowGap = 6;
+          // Натуральная высота компактной сетки: шапка + строки 52 + зазоры.
+          final naturalHeight =
+              32 + weekCount * rowHeight + (weekCount - 1) * rowGap;
+          final fitsCompact =
+              constraints.maxHeight.isFinite &&
+              naturalHeight <= constraints.maxHeight;
+          if (!fitsCompact) {
+            // Не влезает компактно (квадратный/фолд-экран) — растягиваем
+            // строки, чтобы ничего не обрезалось (регресс 34.7/31.5).
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                  child: headerRow,
+                ),
+                Expanded(child: grid),
+              ],
+            );
+          }
+          // Компактная сетка с фиксированной высотой ячеек 52 — содержимое не
+          // «плавает», между рядами нет пустых промежутков.
+          return Center(
+            child: SingleChildScrollView(
+              child: wrapDrag(
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                      child: headerRow,
+                    ),
+                    for (var i = 0; i < weekRows.length; i++) ...[
+                      SizedBox(height: rowHeight, child: weekRows[i]),
+                      if (i < weekRows.length - 1)
+                        const SizedBox(height: rowGap),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       );
     }
     return grid;
