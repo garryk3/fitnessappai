@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/app/theme/status_colors.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
@@ -53,7 +54,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).navProgress)),
+      appBar: AppBar(
+        leading: const AppMenuButton(),
+        title: Text(AppLocalizations.of(context).navProgress),
+      ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
   }

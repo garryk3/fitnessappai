@@ -35,6 +35,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navProfile => 'Профиль';
 
   @override
+  String get navMenu => 'Меню';
+
+  @override
+  String get navRailExpand => 'Развернуть меню';
+
+  @override
+  String get navRailCollapse => 'Свернуть меню';
+
+  @override
   String get commonSave => 'Сохранить';
 
   @override

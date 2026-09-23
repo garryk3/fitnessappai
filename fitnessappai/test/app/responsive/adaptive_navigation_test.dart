@@ -27,12 +27,14 @@ void main() {
     }
   });
 
-  testWidgets('на широком экране (800dp) — всегда развёрнутый NavigationRail', (
+  testWidgets('на широком экране (900dp) — свернутый NavigationRail', (
     tester,
   ) async {
-    await pumpAtSize(tester, const Size(800, 800));
+    await pumpAtSize(tester, const Size(900, 800));
     expect(find.byType(NavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
+    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    expect(rail.extended, isFalse);
   });
 
   testWidgets('на широком экране (1200dp) — rail со всеми шестью пунктами', (
@@ -43,10 +45,12 @@ void main() {
     expect(rail.destinations, hasLength(6));
   });
 
-  testWidgets('на среднем экране (700dp) — rail, а не бар', (tester) async {
+  testWidgets('на среднем экране (700dp) — компактный бар, а не rail', (
+    tester,
+  ) async {
     await pumpAtSize(tester, const Size(700, 800));
-    expect(find.byType(NavigationRail), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(NavigationRail), findsNothing);
   });
 
   testWidgets('первые четыре вкладки одинаковые на всех размерах', (
@@ -73,6 +77,63 @@ void main() {
     for (final label in ['Главная', 'Упражнения', 'Программы', 'План']) {
       expect(find.text(label), findsWidgets);
     }
+  });
+
+  testWidgets('иконка меню слева-сверху открывает drawer на узком экране', (
+    tester,
+  ) async {
+    await pumpAtSize(tester, const Size(480, 800));
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    expect(find.byType(Drawer), findsOneWidget);
+    for (final label in ['Главная', 'Упражнения', 'Программы', 'План']) {
+      expect(
+        find.descendant(of: find.byType(Drawer), matching: find.text(label)),
+        findsWidgets,
+      );
+    }
+  });
+
+  testWidgets('иконка rail-а разворачивает подписи и сворачивает обратно', (
+    tester,
+  ) async {
+    await pumpAtSize(tester, const Size(1200, 800));
+    // На expanded-экране иконка меню одна — в leading rail-а (в AppBar не
+    // дублируется).
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    expect(rail.extended, isFalse);
+    expect(
+      find
+          .descendant(
+            of: find.byType(NavigationRail),
+            matching: find.text('Прогресс'),
+          )
+          .hitTestable(),
+      findsNothing,
+    );
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).extended,
+      isTrue,
+    );
+    expect(
+      find
+          .descendant(
+            of: find.byType(NavigationRail),
+            matching: find.text('Прогресс'),
+          )
+          .hitTestable(),
+      findsWidgets,
+    );
+    await tester.tap(find.byIcon(Icons.menu_open));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).extended,
+      isFalse,
+    );
   });
 
   testWidgets('на самом узком экране (320dp) нет overflow', (tester) async {

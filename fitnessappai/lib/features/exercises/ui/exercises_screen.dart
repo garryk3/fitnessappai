@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
@@ -179,7 +180,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 icon: const Icon(Icons.close),
                 onPressed: _exitSelectionMode,
               )
-            : null,
+            : const AppMenuButton(),
         actions: _selectionMode
             ? [
                 IconButton(

@@ -142,6 +142,24 @@ abstract class AppLocalizations {
   /// **'Профиль'**
   String get navProfile;
 
+  /// No description provided for @navMenu.
+  ///
+  /// In ru, this message translates to:
+  /// **'Меню'**
+  String get navMenu;
+
+  /// No description provided for @navRailExpand.
+  ///
+  /// In ru, this message translates to:
+  /// **'Развернуть меню'**
+  String get navRailExpand;
+
+  /// No description provided for @navRailCollapse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свернуть меню'**
+  String get navRailCollapse;
+
   /// No description provided for @commonSave.
   ///
   /// In ru, this message translates to:

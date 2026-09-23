@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
@@ -45,7 +46,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navPrograms)),
+      appBar: AppBar(
+        leading: const AppMenuButton(),
+        title: Text(l10n.navPrograms),
+      ),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
       floatingActionButton: FloatingActionButton(
         heroTag: 'programs-fab',
