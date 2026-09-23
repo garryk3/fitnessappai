@@ -89,11 +89,15 @@ class _SingleExerciseParamsScreenState
     final weightKg = type == ExerciseType.strength
         ? _parseDouble(_weightController.text)
         : null;
+    final durationMinutes =
+        type == ExerciseType.running || type == ExerciseType.bike
+        ? _parseInt(_durationController.text)
+        : null;
     final durationSeconds = switch (type) {
       ExerciseType.strength || ExerciseType.bodyweight => null,
       ExerciseType.plank => _parseInt(_durationController.text),
-      ExerciseType.running ||
-      ExerciseType.bike => _parseInt(_durationController.text)! * 60,
+      ExerciseType.running || ExerciseType.bike =>
+        durationMinutes == null ? null : durationMinutes * 60,
     };
     final distanceMeters =
         type == ExerciseType.running || type == ExerciseType.bike
@@ -203,7 +207,7 @@ class _SingleExerciseParamsScreenState
               validator: _validateOptionalNotNegative,
               helperText: l10n.exerciseParamsHoldHint,
             ),
-          if (type == ExerciseType.running) ...[
+          if (type == ExerciseType.running || type == ExerciseType.bike) ...[
             _buildNumberField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,
