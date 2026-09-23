@@ -141,6 +141,66 @@ void main() {
     expect(field('Повторения'), findsNothing);
   });
 
+  testWidgets('bike: набор полей по типу', (tester) async {
+    final exercise = await createExercise('Вело', ExerciseType.bike);
+
+    await pumpParams(tester, exercise.id!);
+
+    expect(field('Время (мин)'), findsOneWidget);
+    expect(field('Дистанция (км)'), findsOneWidget);
+    expect(field('Отдых (сек)'), findsOneWidget);
+    expect(field('Подходы'), findsOneWidget);
+    expect(field('Повторения'), findsNothing);
+  });
+
+  testWidgets('старт bike конвертирует минуты и километры', (tester) async {
+    final exercise = await createExercise('Вело', ExerciseType.bike);
+
+    Uri? navigatedUri;
+    final router = GoRouter(
+      initialLocation: '/exercises/${exercise.id}/params',
+      routes: [
+        GoRoute(
+          path: '/exercises/:id/params',
+          builder: (context, state) => SingleExerciseParamsScreen(
+            exerciseId: int.parse(state.pathParameters['id']!),
+            exerciseRepository: exerciseRepository,
+          ),
+        ),
+        GoRoute(
+          path: '/workout/run',
+          builder: (context, state) {
+            navigatedUri = state.uri;
+            return const Scaffold(body: Text('workout run'));
+          },
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await enterField(tester, 'Подходы', '1');
+    await enterField(tester, 'Время (мин)', '30');
+    await enterField(tester, 'Дистанция (км)', '5');
+    await enterField(tester, 'Отдых (сек)', '60');
+    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.pumpAndSettle();
+
+    final qp = navigatedUri!.queryParameters;
+    expect(qp['sets'], '1');
+    expect(qp['durationSeconds'], '1800');
+    expect(qp['distanceMeters'], '5000.0');
+    expect(qp['restSeconds'], '60');
+  });
+
   testWidgets('bodyweight: набор полей по типу', (tester) async {
     final exercise = await createExercise('Отжимания', ExerciseType.bodyweight);
 
