@@ -143,6 +143,31 @@ Finder? _navIconIn(Finder container, IconData icon) {
   return found.evaluate().isEmpty ? null : found;
 }
 
+/// Открывает экран настроек через меню: на широких экранах — тап по пункту
+/// «Настройки» rail-а, на узких — через drawer-меню (иконка настроек на
+/// главной убрана, доступ только через меню).
+Future<void> openSettings(WidgetTester tester) async {
+  final railFinder = find.byType(NavigationRail);
+  if (railFinder.evaluate().isNotEmpty) {
+    await tester.tap(
+      find
+          .descendant(
+            of: railFinder,
+            matching: find.byIcon(Icons.settings_outlined),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    return;
+  }
+  await tester.tap(find.byTooltip('Меню'));
+  await tester.pumpAndSettle();
+  await tester.tap(
+    find.descendant(of: find.byType(Drawer), matching: find.text('Настройки')),
+  );
+  await tester.pumpAndSettle();
+}
+
 IconData _filledIcon(IconData outlined) => switch (outlined) {
   Icons.home_outlined => Icons.home,
   Icons.fitness_center_outlined => Icons.fitness_center,
@@ -1235,9 +1260,7 @@ void main() {
     addTearDown(() => db.close());
     await pumpApp(tester, db, stubPlatformServices: true);
 
-    await goToTab(tester, Icons.home_outlined);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
+    await openSettings(tester);
     expect(find.text('Настройки'), findsOneWidget);
 
     await tester.tap(find.text('Светлая'));
@@ -1744,9 +1767,7 @@ void main() {
     addTearDown(() => db.close());
     await pumpApp(tester, db, stubPlatformServices: true);
 
-    await goToTab(tester, Icons.home_outlined);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
+    await openSettings(tester);
 
     final listenButton = find.byIcon(Icons.play_arrow);
     await tester.scrollUntilVisible(
