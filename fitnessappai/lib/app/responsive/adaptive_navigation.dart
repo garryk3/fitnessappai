@@ -102,16 +102,16 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     ];
   }
 
-  /// Порядок веток в rail-списке для текущего состояния.
-  ///
-  /// В свёрнутом состоянии профиль-иконка среди пунктов («закрытое состояние»
-  /// осталось прежним); в расширенном её место — аватар в шапке (`leading`).
-  List<int> _railBranchOrder() {
-    if (_railExtended) {
-      return const [0, 1, 2, 3, 4, _historyBranchIndex];
-    }
-    return const [0, 1, 2, 3, 4, _profileBranchIndex, _historyBranchIndex];
-  }
+  /// Порядок веток в rail-списке (одинаков в обоих состояниях). Профиль в
+  /// список не входит — его место в `leading`, пунктом меню под иконкой меню.
+  static const List<int> _railBranchOrder = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    _historyBranchIndex,
+  ];
 
   List<NavigationRailDestination> _railDestinations(
     List<
@@ -119,71 +119,126 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     >
     items,
   ) {
-    final l10n = AppLocalizations.of(context);
     final byBranch = {for (final item in items) item.branchIndex: item};
     return [
-      for (final branch in _railBranchOrder())
-        if (branch == _profileBranchIndex)
-          NavigationRailDestination(
-            icon: const ProfileAvatar(),
-            selectedIcon: const ProfileAvatar(),
-            label: Text(l10n.navProfile),
-          )
-        else
-          NavigationRailDestination(
-            icon: Icon(byBranch[branch]!.icon),
-            selectedIcon: Icon(byBranch[branch]!.selectedIcon),
-            label: Text(byBranch[branch]!.label),
-          ),
+      for (final branch in _railBranchOrder)
+        NavigationRailDestination(
+          icon: Icon(byBranch[branch]!.icon),
+          selectedIcon: Icon(byBranch[branch]!.selectedIcon),
+          label: Text(byBranch[branch]!.label),
+        ),
     ];
   }
 
-  /// Индекс выбранного пункта rail. Ветки без пункта в текущем состоянии
-  /// (расширенное: Профиль/Настройки; свёрнутое: Настройки) — `null`, чтобы
-  /// соседний пункт не подсвечивался ложно.
+  /// Индекс выбранного пункта rail. Ветки без пункта (Профиль/Настройки) —
+  /// `null`, чтобы соседний пункт не подсвечивался ложно.
   int? _railSelectedIndex() {
-    final index = _railBranchOrder().indexOf(navigationShell.currentIndex);
+    final index = _railBranchOrder.indexOf(navigationShell.currentIndex);
     return index < 0 ? null : index;
   }
 
   void _onRailDestinationSelected(int i) {
-    _goToBranch(_railBranchOrder()[i]);
+    _goToBranch(_railBranchOrder[i]);
+  }
+
+  void _goToProfile() => _goToBranch(_profileBranchIndex);
+
+  /// Профиль — пункт меню в шапке rail, ниже иконки меню (toggle).
+  ///
+  /// В расширенном состоянии иконка сворачивания — у правого края, профиль —
+  /// слева с подписью; в свёрнутом (80dp) — подпись не помещается, остаётся
+  /// аватар с tooltip. Высота блока профиля одинакова в обоих состояниях,
+  /// чтобы пункты меню не смещались при переключении.
+  Widget _buildRailProfile() {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final selected = navigationShell.currentIndex == _profileBranchIndex;
+    final avatar = ProfileAvatar(radius: 12, onTap: _goToProfile);
+    if (_railExtended) {
+      // Пункт меню: аватар — в колонке иконок (как у остальных пунктов),
+      // подпись рядом. Левая колонка 80dp совпадает с колонкой иконок
+      // направлений, поэтому профиль выровнен с остальными пунктами.
+      return SizedBox(
+        height: 48,
+        child: InkWell(
+          onTap: _goToProfile,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 80,
+                child: Center(
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    alignment: Alignment.center,
+                    decoration: selected
+                        ? BoxDecoration(
+                            color: scheme.secondaryContainer,
+                            shape: BoxShape.circle,
+                          )
+                        : null,
+                    child: avatar,
+                  ),
+                ),
+              ),
+              Text(
+                l10n.navProfile,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    // Свёрнутое: аватар 24dp центрирован в колонке иконок, как и остальные
+    // пункты (center, а не слева), чтобы выравниваться с ними по одной линии.
+    return SizedBox(
+      height: 48,
+      child: Center(
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          decoration: selected
+              ? BoxDecoration(
+                  color: scheme.secondaryContainer,
+                  shape: BoxShape.circle,
+                )
+              : null,
+          child: Tooltip(message: l10n.navProfile, child: avatar),
+        ),
+      ),
+    );
   }
 
   Widget _buildRailLeading() {
     final l10n = AppLocalizations.of(context);
-    if (!_railExtended) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: IconButton(
-          icon: const Icon(Icons.menu),
-          tooltip: l10n.navRailExpand,
-          onPressed: _toggleRailExtended,
-        ),
-      );
-    }
-    // Расширенное меню: аватар-шапка по центру (тап — Профиль), иконка
-    // сворачивания — у правого края контейнера.
     return SizedBox(
       width: _railWidth,
       child: Padding(
         padding: const EdgeInsets.only(top: 8),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Компенсируем ширину toggle справа, чтобы аватар оставался в центре.
-            const SizedBox(width: 48),
-            Expanded(
-              child: InkWell(
-                onTap: () => _goToBranch(_profileBranchIndex),
-                borderRadius: BorderRadius.circular(28),
-                child: const Center(child: ProfileAvatar(radius: 28)),
+            // Иконка меню — сверху; свёрнутое: по центру колонки иконок
+            // (одна линия с пунктами), расширенное: у правого края.
+            SizedBox(
+              height: 48,
+              child: Align(
+                alignment: _railExtended
+                    ? Alignment.centerRight
+                    : Alignment.center,
+                child: IconButton(
+                  icon: Icon(_railExtended ? Icons.menu_open : Icons.menu),
+                  tooltip: _railExtended
+                      ? l10n.navRailCollapse
+                      : l10n.navRailExpand,
+                  onPressed: _toggleRailExtended,
+                ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.menu_open),
-              tooltip: l10n.navRailCollapse,
-              onPressed: _toggleRailExtended,
-            ),
+            _buildRailProfile(),
+            const Divider(height: 1),
           ],
         ),
       ),
@@ -286,15 +341,28 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
       child: SafeArea(
         child: Column(
           children: [
-            // Шапка меню: аватар, тап открывает Профиль (TC-025).
+            // Шапка меню: профиль как пункт меню (аватар слева + подпись),
+            // тап открывает Профиль.
             InkWell(
               onTap: () {
                 Navigator.of(context).pop();
                 _goToBranch(_profileBranchIndex);
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: ProfileAvatar(radius: 28)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    const ProfileAvatar(radius: 12),
+                    const SizedBox(width: 16),
+                    Text(
+                      AppLocalizations.of(context).navProfile,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
               ),
             ),
             const Divider(height: 1),

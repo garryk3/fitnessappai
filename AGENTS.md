@@ -48,7 +48,7 @@ flutter build apk --debug
 ## Workflow & conventions
 
 - Repo language is Russian: PLAN.md, commit messages, UI strings. Write commit messages as `task/NN.NN: <краткое описание на русском> (#PR)`.
-- **Before every commit, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`, ~2 min, not in CI). The user may opt out; never run them silently or skip the question.
+- **Before opening a pull request, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`, ~2 min, not in CI). The user may opt out; never run them silently or skip the question.
 - Each task = branch `task/<NN>-<slug>` from `main` → PR → green CI → squash merge, in dependency order.
 - **Update task branches with `git merge`, NOT `git rebase`.** Rebase rewrites history and has in this repo repeatedly dropped `PLAN.md` rows, broken `dart format`/l10n sync, and left the branch out of sync with `origin/main` — all invisible until CI/e2e failed. `git merge origin/main` keeps the shared `main` story intact and makes PR review (`git diff origin/main..HEAD`) deterministic. Remember: your real diff vs `main` is only the few files you actually changed (`git diff --name-status origin/main..HEAD`), the rest that differ are rebase fallout and must be reconciled, not committed.
 - **Before every commit, run the `plan-review` agent** to verify: (1) the task is recorded in `PLAN.md` with correct status `[x]` and completion date; (2) if a work plan was drafted for this task, it was written into `PLAN.md`. Block the commit if either check fails.

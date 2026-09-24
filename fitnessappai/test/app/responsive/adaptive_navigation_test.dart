@@ -42,10 +42,24 @@ void main() {
     (tester) async {
       await pumpAtSize(tester, const Size(1200, 800));
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      // 6 вкладок навигации + «Профиль» (аватар) среди пунктов в свёрнутом
-      // состоянии.
-      expect(rail.destinations, hasLength(7));
+      // 6 вкладок навигации; «Профиль» — пункт `leading`, а не направление.
+      expect(rail.destinations, hasLength(6));
       expect((rail.destinations.last.label as Text).data, 'История');
+      // «Профиль» в шапке rail (leading), а не среди иконок направлений.
+      expect(
+        find.descendant(
+          of: find.byType(NavigationRail),
+          matching: find.byType(ProfileAvatar),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(NavigationRail),
+          matching: find.text('Профиль'),
+        ),
+        findsNothing,
+      );
       // «Настройки» — trailing за divider-ом, а не пункт rail.
       expect(rail.trailing, isNotNull);
       expect(
@@ -55,6 +69,27 @@ void main() {
         ),
         findsOneWidget,
       );
+      // Иконка меню (toggle) и аватар профиля выровнены по одной вертикали
+      // с иконками направлений: центр совпадает с центром колонки иконок.
+      final destIconX = tester
+          .getCenter(
+            find.descendant(
+              of: find.byType(NavigationRail),
+              matching: find.byIcon(Icons.home),
+            ),
+          )
+          .dx;
+      final menuIconX = tester.getCenter(find.byIcon(Icons.menu)).dx;
+      final profileX = tester
+          .getCenter(
+            find.descendant(
+              of: find.byType(NavigationRail),
+              matching: find.byType(ProfileAvatar),
+            ),
+          )
+          .dx;
+      expect(menuIconX, closeTo(destIconX, 1.0));
+      expect(profileX, closeTo(destIconX, 1.0));
     },
   );
 
@@ -226,9 +261,17 @@ void main() {
     );
     tester.state<ScaffoldState>(scaffoldWithDrawer).openDrawer();
     await tester.pumpAndSettle();
-    // Дублирующий пункт «Профиль» в списке меню убран — доступ через аватар.
+    // «Профиль» — только шапка меню, дублирующего пункта-ListTile в списке нет.
     expect(
-      find.descendant(of: find.byType(Drawer), matching: find.text('Профиль')),
+      find.descendant(
+        of: find.byType(Drawer),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is ListTile &&
+              widget.title is Text &&
+              (widget.title as Text).data == 'Профиль',
+        ),
+      ),
       findsNothing,
     );
     await tester.tap(
@@ -274,26 +317,10 @@ void main() {
   );
 
   testWidgets(
-    'расширенный rail: аватар-шапка по центру, toggle у правого края',
+    'расширенный rail: профиль ниже toggle, слева с подписью «Профиль»',
     (tester) async {
       await pumpAtSize(tester, const Size(1200, 800));
-      // Аватар в свёрнутом состоянии — пункт rail (закрытый вид прежний).
-      expect(
-        find.descendant(
-          of: find.byType(NavigationRail),
-          matching: find.byType(ProfileAvatar),
-        ),
-        findsWidgets,
-      );
-
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      // «Профиль» не пункт расширенного rail: 6 вкладок без него.
-      expect(rail.destinations, hasLength(6));
-      // Аватар в шапке leading (43.4): аватар присутствует, пункта «Профиль»
-      // среди подписей нет.
+      // В свёрнутом состоянии профиль — пункт leading, не направление.
       expect(
         find.descendant(
           of: find.byType(NavigationRail),
@@ -301,13 +328,37 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(
-        find.descendant(
-          of: find.byType(NavigationRail),
-          matching: find.text('Профиль'),
-        ),
-        findsNothing,
+      final collapsedRail = tester.widget<NavigationRail>(
+        find.byType(NavigationRail),
       );
+      expect(collapsedRail.destinations, hasLength(6));
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.destinations, hasLength(6));
+      // Профиль — пункт leading с подписью (44.1): аватар и текст ниже toggle.
+      final profileAvatar = find.descendant(
+        of: find.byType(NavigationRail),
+        matching: find.byType(ProfileAvatar),
+      );
+      expect(profileAvatar, findsOneWidget);
+      final profileLabel = find.descendant(
+        of: find.byType(NavigationRail),
+        matching: find.text('Профиль'),
+      );
+      expect(profileLabel, findsOneWidget);
+      // Аватар профиля выровнен с иконками направлений (та же вертикаль).
+      final destIconX = tester
+          .getCenter(
+            find.descendant(
+              of: find.byType(NavigationRail),
+              matching: find.byIcon(Icons.home),
+            ),
+          )
+          .dx;
+      expect(tester.getCenter(profileAvatar).dx, closeTo(destIconX, 1.0));
       // Toggle у правого края контейнера (43.1): сам IconButton прижат
       // к правому краю (иконка 24dp центрируется в 48dp tap-target).
       final railRect = tester.getRect(find.byType(NavigationRail));
@@ -317,17 +368,11 @@ void main() {
       );
       final toggleRect = tester.getRect(toggleButton);
       expect(toggleRect.right, closeTo(railRect.right, 1.0));
-      expect(
-        tester.getCenter(find.byIcon(Icons.menu_open)).dx,
-        greaterThan(railRect.center.dx),
-      );
+      // Профиль (leading) ниже toggle и левее его центра.
+      expect(tester.getCenter(profileAvatar).dy, greaterThan(toggleRect.top));
+      expect(tester.getCenter(profileLabel).dx, lessThan(toggleRect.left));
       // Тап по аватару открывает Профиль.
-      await tester.tap(
-        find.descendant(
-          of: find.byType(NavigationRail),
-          matching: find.byType(ProfileAvatar),
-        ),
-      );
+      await tester.tap(profileAvatar);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.widgetWithText(AppBar, 'Профиль'), findsOneWidget);
