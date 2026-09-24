@@ -33,6 +33,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
 
   static const int _programsBranchIndex = 2;
   static const int _planBranchIndex = 3;
+  static const int _profileBranchIndex = 5;
 
   StatefulNavigationShell get navigationShell => widget.navigationShell;
 
@@ -230,7 +231,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
             InkWell(
               onTap: () {
                 Navigator.of(context).pop();
-                _onDestinationSelected(5);
+                _onDestinationSelected(_profileBranchIndex);
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -243,15 +244,16 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                 padding: EdgeInsets.zero,
                 children: [
                   for (final d in destinations)
-                    ListTile(
-                      leading: d.rail.icon,
-                      selected: d.branchIndex == navigationShell.currentIndex,
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        _onDestinationSelected(d.branchIndex);
-                      },
-                      title: d.rail.label,
-                    ),
+                    if (d.branchIndex != _profileBranchIndex)
+                      ListTile(
+                        leading: d.rail.icon,
+                        selected: d.branchIndex == navigationShell.currentIndex,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          _onDestinationSelected(d.branchIndex);
+                        },
+                        title: d.rail.label,
+                      ),
                 ],
               ),
             ),

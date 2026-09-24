@@ -158,30 +158,32 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Профиль'), findsOneWidget);
   });
 
-  testWidgets(
-    'с узкого экрана через меню открываются Прогресс и Профиль без assertion',
-    (tester) async {
-      await pumpAtSize(tester, const Size(480, 800));
-      final scaffoldWithDrawer = find.byWidgetPredicate(
-        (widget) => widget is Scaffold && widget.drawer != null,
-      );
-      for (final label in ['Прогресс', 'Профиль']) {
-        tester.state<ScaffoldState>(scaffoldWithDrawer).openDrawer();
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: find.byType(Drawer), matching: find.text(label)),
-        );
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), isNull);
-        expect(find.byType(Drawer), findsNothing);
-        // Страница реально переключилась: заголовок AppBar выбранного экрана.
-        expect(find.widgetWithText(AppBar, label), findsOneWidget);
-        // Бар ограничил выбранный индекс до доступных 4 вкладок.
-        final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-        expect(bar.selectedIndex, 3);
-      }
-    },
-  );
+  testWidgets('с узкого экрана через меню открывается Прогресс без assertion', (
+    tester,
+  ) async {
+    await pumpAtSize(tester, const Size(480, 800));
+    final scaffoldWithDrawer = find.byWidgetPredicate(
+      (widget) => widget is Scaffold && widget.drawer != null,
+    );
+    tester.state<ScaffoldState>(scaffoldWithDrawer).openDrawer();
+    await tester.pumpAndSettle();
+    // Дублирующий пункт «Профиль» в списке меню убран — доступ через аватар.
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Профиль')),
+      findsNothing,
+    );
+    await tester.tap(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Прогресс')),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(Drawer), findsNothing);
+    // Страница реально переключилась: заголовок AppBar выбранного экрана.
+    expect(find.widgetWithText(AppBar, 'Прогресс'), findsOneWidget);
+    // Бар ограничил выбранный индекс до доступных 4 вкладок.
+    final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(bar.selectedIndex, 3);
+  });
 
   testWidgets(
     'смена размера на ходу с открытым Прогрессом (широкий → узкий) без assertion',
