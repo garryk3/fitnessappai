@@ -38,6 +38,10 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
   StatefulNavigationShell get navigationShell => widget.navigationShell;
 
   void _onDestinationSelected(int branchIndex) {
+    if (branchIndex == _settingsRailIndex) {
+      context.push('/settings');
+      return;
+    }
     navigationShell.goBranch(
       branchIndex,
       initialLocation: branchIndex == navigationShell.currentIndex,
@@ -160,6 +164,17 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     );
   }
 
+  static const int _settingsRailIndex = 6;
+
+  NavigationRailDestination _settingsRailDestination(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return NavigationRailDestination(
+      icon: const Icon(Icons.settings_outlined),
+      selectedIcon: const Icon(Icons.settings),
+      label: Text(l10n.settings),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -176,7 +191,10 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                       onDestinationSelected: _onDestinationSelected,
                       leading: _buildRailLeading(),
                       extended: _railExtended,
-                      destinations: [for (final d in allDestinations) d.rail],
+                      destinations: [
+                        for (final d in allDestinations) d.rail,
+                        _settingsRailDestination(context),
+                      ],
                     ),
                     const VerticalDivider(width: 1, thickness: 1),
                     Expanded(child: navigationShell),
@@ -256,6 +274,16 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                       ),
                 ],
               ),
+            ),
+            // «Настройки» прикреплены к низу меню, отделены divider-ом.
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: Text(AppLocalizations.of(context).settings),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/settings');
+              },
             ),
           ],
         ),

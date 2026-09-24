@@ -37,13 +37,16 @@ void main() {
     expect(rail.extended, isFalse);
   });
 
-  testWidgets('на широком экране (1200dp) — rail со всеми шестью пунктами', (
-    tester,
-  ) async {
-    await pumpAtSize(tester, const Size(1200, 800));
-    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-    expect(rail.destinations, hasLength(6));
-  });
+  testWidgets(
+    'на широком экране (1200dp) — rail со всеми пунктами и «Настройки»',
+    (tester) async {
+      await pumpAtSize(tester, const Size(1200, 800));
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      // 6 вкладок навигации + «Настройки» последним пунктом.
+      expect(rail.destinations, hasLength(7));
+      expect((rail.destinations.last.label as Text).data, 'Настройки');
+    },
+  );
 
   testWidgets('на среднем экране (700dp) — компактный бар, а не rail', (
     tester,
@@ -157,6 +160,52 @@ void main() {
     expect(find.byType(Drawer), findsNothing);
     expect(find.widgetWithText(AppBar, 'Профиль'), findsOneWidget);
   });
+
+  testWidgets(
+    'в меню есть «Настройки» внизу (за divider-ом) и тап ведёт на экран настроек',
+    (tester) async {
+      await pumpAtSize(tester, const Size(480, 800));
+      final scaffoldWithDrawer = find.byWidgetPredicate(
+        (widget) => widget is Scaffold && widget.drawer != null,
+      );
+      tester.state<ScaffoldState>(scaffoldWithDrawer).openDrawer();
+      await tester.pumpAndSettle();
+
+      // «Настройки» — последний пункт, прикреплён к низу блока меню.
+      final settingsTile = find.descendant(
+        of: find.byType(Drawer),
+        matching: find.text('Настройки'),
+      );
+      expect(settingsTile, findsOneWidget);
+      final drawerRect = tester.getRect(find.byType(Drawer));
+      expect(
+        tester.getTopLeft(settingsTile).dy,
+        greaterThan(drawerRect.center.dy),
+      );
+
+      await tester.tap(settingsTile);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(Drawer), findsNothing);
+      expect(find.widgetWithText(AppBar, 'Настройки'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'на широком экране тап по «Настройки» в rail открывает экран настроек',
+    (tester) async {
+      await pumpAtSize(tester, const Size(1200, 800));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationRail),
+          matching: find.byIcon(Icons.settings_outlined),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.widgetWithText(AppBar, 'Настройки'), findsOneWidget);
+    },
+  );
 
   testWidgets('с узкого экрана через меню открывается Прогресс без assertion', (
     tester,
