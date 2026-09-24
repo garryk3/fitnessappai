@@ -363,7 +363,7 @@ void main() {
   });
 
   testWidgets('сессия в другой день даёт статус «Перенесено»', (tester) async {
-    final weekday = _weekdayAfter(fixedNow.weekday);
+    final weekday = fixedNow.weekday;
     final day = await createDay(weekday);
     final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
     await saveSession(
@@ -377,6 +377,25 @@ void main() {
     expect(find.text('Перенесено'), findsOneWidget);
     expect(find.text('Начать'), findsNothing);
   });
+
+  testWidgets(
+    'будущий запланированный день с сессией в другой день остаётся «Запланировано»',
+    (tester) async {
+      final weekday = _weekdayAfter(fixedNow.weekday);
+      final day = await createDay(weekday);
+      final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
+      await saveSession(
+        workoutRepo,
+        day,
+        scheduledDate.add(const Duration(days: 1)),
+      );
+
+      await pumpPlan(tester);
+
+      expect(find.text('Запланировано'), findsOneWidget);
+      expect(find.text('Перенесено'), findsNothing);
+    },
+  );
 
   for (final theme in [AppTheme.light(), AppTheme.dark()]) {
     final themeName = theme.brightness == Brightness.light
@@ -412,7 +431,7 @@ void main() {
     });
 
     testWidgets('бейдж «Перенесено» контрастен ($themeName)', (tester) async {
-      final weekday = _weekdayAfter(fixedNow.weekday);
+      final weekday = fixedNow.weekday;
       final day = await createDay(weekday);
       final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
       await saveSession(

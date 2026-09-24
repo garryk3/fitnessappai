@@ -1038,7 +1038,10 @@ void main() {
 
     await goToTab(tester, Icons.event_note_outlined);
     await reloadWeekPlan(tester);
-    expect(find.text('Перенесено'), findsOneWidget);
+    // Будущая ячейка (завтра) никогда не показывается «Перенесено»: перенос
+    // выполняется сегодня, будущая запись остаётся «Запланировано».
+    expect(find.text('Запланировано'), findsOneWidget);
+    expect(find.text('Перенесено'), findsNothing);
   });
 
   testWidgets('флоу: тренировка по сторонам с фиксированным весом', (
