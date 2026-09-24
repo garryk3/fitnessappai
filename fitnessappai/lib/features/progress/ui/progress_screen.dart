@@ -150,7 +150,7 @@ class _StatCards extends StatelessWidget {
             label: l10n.progressWorkouts,
             value: '${controller.workoutCount.value}',
             icon: Icons.fitness_center,
-            onTap: () => context.push('/history'),
+            onTap: () => context.go('/history'),
           ),
         ),
         const SizedBox(width: 8),

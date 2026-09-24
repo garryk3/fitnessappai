@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppSectionHeader(
           title: l10n.homeRecentWorkouts,
           actionLabel: workouts.isNotEmpty ? l10n.homeGoToHistory : null,
-          onAction: () => context.push('/history'),
+          onAction: () => context.go('/history'),
         ),
         const SizedBox(height: 12),
         if (workouts.isEmpty)

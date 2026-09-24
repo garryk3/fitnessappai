@@ -105,6 +105,22 @@ class AppRouter {
                 ),
               ],
             ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/history',
+                  builder: (context, state) => const HistoryScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/settings',
+                  builder: (context, state) => const SettingsScreen(),
+                ),
+              ],
+            ),
           ],
         ),
         GoRoute(
@@ -207,10 +223,6 @@ class AppRouter {
           },
         ),
         GoRoute(
-          path: '/history',
-          builder: (context, state) => const HistoryScreen(),
-        ),
-        GoRoute(
           path: '/history/:id',
           builder: (context, state) => HistoryDetailScreen(
             sessionId: int.tryParse(state.pathParameters['id'] ?? '') ?? -1,
@@ -234,10 +246,6 @@ class AppRouter {
               end: DateTime.fromMillisecondsSinceEpoch(endMs),
             );
           },
-        ),
-        GoRoute(
-          path: '/settings',
-          builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
           path: '/contraindications',
