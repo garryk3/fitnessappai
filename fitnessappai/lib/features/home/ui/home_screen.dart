@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/ui/program_thumbnail.dart';
@@ -65,16 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.navHome),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.settings,
-            onPressed: () => context.push('/settings'),
-          ),
-        ],
-      ),
+      appBar: AppBar(leading: const AppMenuButton(), title: Text(l10n.navHome)),
       body: SignalBuilder(
         builder: (context) {
           final controller = _controller;
@@ -159,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppSectionHeader(
           title: l10n.homeRecentWorkouts,
           actionLabel: workouts.isNotEmpty ? l10n.homeGoToHistory : null,
-          onAction: () => context.push('/history'),
+          onAction: () => context.go('/history'),
         ),
         const SizedBox(height: 12),
         if (workouts.isEmpty)

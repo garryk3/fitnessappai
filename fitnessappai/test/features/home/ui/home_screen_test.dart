@@ -403,16 +403,13 @@ void main() {
     expect(find.text('programs-route'), findsOneWidget);
   });
 
-  testWidgets('иконка настроек в AppBar ведёт на экран настроек', (
+  testWidgets('иконки настроек в AppBar главной нет (доступ через меню)', (
     tester,
   ) async {
     await pumpHome(tester);
 
-    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
-
-    expect(find.text('settings-route'), findsOneWidget);
+    expect(find.byIcon(Icons.settings_outlined), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(

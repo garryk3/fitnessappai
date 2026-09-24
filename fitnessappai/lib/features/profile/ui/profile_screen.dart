@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
@@ -39,7 +40,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navProfile)),
+      appBar: AppBar(
+        leading: const AppMenuButton(),
+        title: Text(l10n.navProfile),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'profile-fab',
         onPressed: () async {

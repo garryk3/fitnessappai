@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/responsive/app_menu_button.dart';
+import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
@@ -32,12 +34,6 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   late final HistoryController _controller;
   late DateTime _currentMonth;
-
-  /// Порог горизонтального свайпа для переключения месяца (логические px).
-  static const double _swipeThreshold = 100;
-
-  /// Накопленное смещение горизонтального свайпа для переключения месяца.
-  double _dragOffset = 0;
 
   @override
   void initState() {
@@ -85,28 +81,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
   }
 
-  void _onHorizontalDragStart(DragStartDetails details) {
-    _dragOffset = 0;
-  }
-
-  void _onHorizontalDragUpdate(DragUpdateDetails details) {
-    _dragOffset += details.delta.dx;
-  }
-
-  void _onHorizontalDragEnd(DragEndDetails details) {
-    if (_dragOffset <= -_swipeThreshold) {
-      _nextMonth();
-    } else if (_dragOffset >= _swipeThreshold) {
-      _previousMonth();
-    }
-    _dragOffset = 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
+        leading: const AppMenuButton(),
         title: Text(l10n.history),
         actions: [
           IconButton(
@@ -144,24 +124,50 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
     return Column(
       children: [
-        _MonthSwitcher(
-          currentMonth: _currentMonth,
+        MonthSwitcher(
+          label: monthTitle(_currentMonth),
           onPrevious: _previousMonth,
           onNext: _canGoNextMonth ? _nextMonth : null,
         ),
         Expanded(
-          child: GestureDetector(
-            onHorizontalDragStart: _onHorizontalDragStart,
-            onHorizontalDragUpdate: _onHorizontalDragUpdate,
-            onHorizontalDragEnd: _onHorizontalDragEnd,
-            child: _MonthGrid(
-              currentMonth: _currentMonth,
-              workoutDates: dates,
-              onDayTap: (date) => _openDay(context, date),
-            ),
+          child: MonthGridView(
+            monthStart: _currentMonth,
+            today: DateTime.now(),
+            fillHeight: true,
+            onPrevious: _previousMonth,
+            onNext: _canGoNextMonth ? _nextMonth : null,
+            cellBuilder: (context, date) => _buildDayCell(context, date, dates),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDayCell(
+    BuildContext context,
+    DateTime date,
+    Set<DateTime> dates,
+  ) {
+    if (date.month != _currentMonth.month || date.year != _currentMonth.year) {
+      return const SizedBox();
+    }
+    final hasWorkout = dates.contains(date);
+    final now = DateTime.now();
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
+    final colorScheme = Theme.of(context).colorScheme;
+    return MonthDayCell(
+      day: date.day,
+      background: hasWorkout
+          ? colorScheme.primaryContainer
+          : colorScheme.surfaceContainerLow,
+      foreground: hasWorkout
+          ? colorScheme.onPrimaryContainer
+          : colorScheme.onSurfaceVariant,
+      border: isToday ? Border.all(color: colorScheme.primary) : null,
+      isToday: isToday,
+      showWorkoutIcon: hasWorkout,
+      onTap: hasWorkout ? () => _openDay(context, date) : null,
     );
   }
 
@@ -170,146 +176,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final end = start.add(const Duration(days: 1));
     context.push(
       '/progress/day?start=${start.millisecondsSinceEpoch}&end=${end.millisecondsSinceEpoch}',
-    );
-  }
-}
-
-/// Переключатель месяцев: стрелки + заголовок.
-class _MonthSwitcher extends StatelessWidget {
-  const _MonthSwitcher({
-    required this.currentMonth,
-    required this.onPrevious,
-    required this.onNext,
-  });
-
-  final DateTime currentMonth;
-  final VoidCallback onPrevious;
-  final VoidCallback? onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final monthName = DateFormat('LLLL yyyy', 'ru').format(currentMonth);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: onPrevious,
-          ),
-          Expanded(
-            child: Text(
-              monthName,
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          IconButton(icon: const Icon(Icons.chevron_right), onPressed: onNext),
-        ],
-      ),
-    );
-  }
-}
-
-/// Сетка месяца: 7 колонок (пн–вс), строки по неделям.
-class _MonthGrid extends StatelessWidget {
-  const _MonthGrid({
-    required this.currentMonth,
-    required this.workoutDates,
-    required this.onDayTap,
-  });
-
-  final DateTime currentMonth;
-  final Set<DateTime> workoutDates;
-  final void Function(DateTime date) onDayTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final year = currentMonth.year;
-    final month = currentMonth.month;
-    final firstDay = DateTime(year, month, 1);
-    final lastDay = DateTime(year, month + 1, 0);
-    final daysInMonth = lastDay.day;
-    // Понедельник = 0, воскресенье = 6.
-    final startWeekday = (firstDay.weekday - 1) % 7;
-
-    final cells = <Widget>[];
-    // Заголовки дней недели.
-    for (final label in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']) {
-      cells.add(
-        Center(
-          child: Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      );
-    }
-    // Пустые ячейки до первого дня.
-    for (var i = 0; i < startWeekday; i++) {
-      cells.add(const SizedBox());
-    }
-    // Дни месяца.
-    for (var day = 1; day <= daysInMonth; day++) {
-      final date = DateTime(year, month, day);
-      final hasWorkout = workoutDates.contains(date);
-      final today = DateTime.now();
-      final isToday =
-          date.year == today.year &&
-          date.month == today.month &&
-          date.day == today.day;
-      cells.add(
-        GestureDetector(
-          onTap: hasWorkout ? () => onDayTap(date) : null,
-          child: Container(
-            margin: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: hasWorkout ? theme.colorScheme.primaryContainer : null,
-              borderRadius: BorderRadius.circular(8),
-              border: isToday
-                  ? Border.all(color: theme.colorScheme.primary, width: 2)
-                  : null,
-            ),
-            alignment: Alignment.center,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                '$day',
-                style: TextStyle(
-                  color: hasWorkout
-                      ? theme.colorScheme.onPrimaryContainer
-                      : theme.colorScheme.onSurface,
-                  fontWeight: hasWorkout ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-    // Дополняем пустыми ячейками до кратного 7 количества (для заполнения сетки).
-    while (cells.length % 7 != 0) {
-      cells.add(const SizedBox());
-    }
-    // Каждая из строк (заголовок + недели) занимает равную долю высоты,
-    // каждая ячейка в строке — равную долю ширины. Сетка подстраивается
-    // под доступную высоту и не обрезается на квадратных экранах.
-    return Column(
-      children: [
-        for (var row = 0; row < cells.length ~/ 7; row++)
-          Expanded(
-            child: Row(
-              children: [
-                for (var col = 0; col < 7; col++)
-                  Expanded(child: cells[row * 7 + col]),
-              ],
-            ),
-          ),
-      ],
     );
   }
 }

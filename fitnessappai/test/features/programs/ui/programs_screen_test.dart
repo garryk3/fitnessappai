@@ -105,6 +105,23 @@ void main() {
     expect(find.text('1 упражнение'), findsOneWidget);
   });
 
+  testWidgets(
+    'программа без привязки дня недели не показывает пустой цветной бейдж',
+    (tester) async {
+      await repository.create(program('Сплит', daysCount: 1), [
+        ProgramDay(programId: 0, dayIndex: 0),
+      ]);
+
+      await pumpPrograms(tester);
+
+      expect(find.text('Сплит'), findsOneWidget);
+      expect(find.text('1 день'), findsOneWidget);
+      // 43.6: раньше при dayOfWeek == null рисовался цветной бейдж с пустым
+      // текстом.
+      expect(find.text(''), findsNothing);
+    },
+  );
+
   testWidgets('кнопка «Начать» ведёт к подготовке тренировки', (tester) async {
     Uri opened = Uri();
     final created = await repository.create(program('Сплит', daysCount: 2), [

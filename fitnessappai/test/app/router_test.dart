@@ -55,6 +55,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Пока нет тренировок'), findsOneWidget);
+      // 43.2: история — ветка shell: нижний бар с вкладками на месте.
+      expect(find.byType(NavigationBar), findsOneWidget);
     });
 
     testWidgets('deep-link на динамику упражнения открывает экран', (
@@ -105,6 +107,8 @@ void main() {
       expect(find.text('Настройки'), findsOneWidget);
       expect(find.text('Поделиться'), findsOneWidget);
       expect(find.text('Сохранить в файлы'), findsOneWidget);
+      // 43.5: настройки — ветка shell с меню: нижний бар на месте.
+      expect(find.byType(NavigationBar), findsOneWidget);
     });
 
     testWidgets('неизвестный маршрут показывает 404', (

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
@@ -18,6 +19,11 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/progress/ui/history_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+
+/// Заголовок месяца в шапке календаря — регистронезависимый поиск
+/// (заголовок капитализируется, ожидания в тестах — в нижнем регистре).
+Finder monthTitle(String monthName) =>
+    find.textContaining(RegExp(monthName, caseSensitive: false));
 
 void main() {
   late AppDatabase db;
@@ -156,13 +162,13 @@ void main() {
     await pumpHistory(tester);
 
     // Находим заголовок с текущим месяцем.
-    expect(find.textContaining(monthName), findsOneWidget);
+    expect(monthTitle(monthName), findsOneWidget);
 
     // Переключаем на предыдущий месяц.
     await tester.tap(find.byIcon(Icons.chevron_left));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining(prevMonthName), findsOneWidget);
+    expect(monthTitle(prevMonthName), findsOneWidget);
   });
 
   testWidgets('на текущем месяце переход вперёд заблокирован', (tester) async {
@@ -199,10 +205,7 @@ void main() {
     // Переход вперёд возвращает на текущий месяц.
     await tester.tap(find.byIcon(Icons.chevron_right));
     await tester.pumpAndSettle();
-    expect(
-      find.textContaining(DateFormat('LLLL', 'ru').format(now)),
-      findsOneWidget,
-    );
+    expect(monthTitle(DateFormat('LLLL', 'ru').format(now)), findsOneWidget);
   });
 
   testWidgets('свайп вправо открывает предыдущий месяц', (tester) async {
@@ -221,12 +224,12 @@ void main() {
       [setResult()],
     );
     await pumpHistory(tester);
-    expect(find.textContaining(monthName), findsOneWidget);
+    expect(monthTitle(monthName), findsOneWidget);
 
     await tester.drag(find.text('10'), const Offset(150, 0));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining(prevMonthName), findsOneWidget);
+    expect(monthTitle(prevMonthName), findsOneWidget);
   });
 
   testWidgets('свайп влево с прошлого месяца возвращает на текущий', (
@@ -250,11 +253,11 @@ void main() {
 
     await tester.drag(find.text('10'), const Offset(150, 0));
     await tester.pumpAndSettle();
-    expect(find.textContaining(prevMonthName), findsOneWidget);
+    expect(monthTitle(prevMonthName), findsOneWidget);
 
     await tester.drag(find.text('15'), const Offset(-150, 0));
     await tester.pumpAndSettle();
-    expect(find.textContaining(monthName), findsOneWidget);
+    expect(monthTitle(monthName), findsOneWidget);
   });
 
   testWidgets('свайп влево на текущем месяце не уходит вперёд', (tester) async {
@@ -269,9 +272,9 @@ void main() {
     await tester.drag(find.text('10'), const Offset(-150, 0));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining(monthName), findsOneWidget);
+    expect(monthTitle(monthName), findsOneWidget);
     expect(
-      find.textContaining(
+      monthTitle(
         DateFormat('LLLL', 'ru').format(DateTime(now.year, now.month + 1)),
       ),
       findsNothing,
@@ -391,6 +394,29 @@ void main() {
     expect(find.text('day detail'), findsOneWidget);
   });
 
+  testWidgets('день с тренировкой выглядит как в плане (иконка в ячейке)', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 11)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    // Иконка тренировки стоит в ячейках дней с попытками (как в плане).
+    final icons = find.descendant(
+      of: find.byType(MonthGridView),
+      matching: find.byIcon(Icons.fitness_center),
+    );
+    expect(icons, findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('календарь не обрезается на низком фолд-экране (~585×520)', (
     tester,
   ) async {
@@ -406,6 +432,30 @@ void main() {
 
     final lastDay = DateTime(now.year, now.month + 1, 0).day;
     expect(find.text('$lastDay'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('календарь компактен на телефоне (ячейки 52px, не растянут)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    // Ячейки фиксированной высоты 52 (как в плане), а не растягиваются на
+    // всю высоту — между рядами нет пустых промежутков.
+    expect(tester.getSize(find.byType(MonthDayCell).first).height, 52);
+    // Компактная сетка прижата к верху под заголовком месяца: между
+    // переключателем месяца и календарём нет пустого промежутка.
+    final switcherBottom = tester.getBottomLeft(find.byType(MonthSwitcher)).dy;
+    final gridTop = tester.getTopLeft(find.byType(MonthGridView)).dy;
+    expect(gridTop - switcherBottom, lessThan(20));
     expect(tester.takeException(), isNull);
   });
 }

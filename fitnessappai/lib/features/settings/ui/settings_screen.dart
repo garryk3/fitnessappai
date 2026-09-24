@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/app_restart.dart';
+import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
@@ -78,7 +79,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settings)),
+      appBar: AppBar(
+        leading: const AppMenuButton(),
+        title: Text(l10n.settings),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

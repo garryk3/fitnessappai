@@ -414,7 +414,17 @@ class WeekPlanController {
     if (sessions.isNotEmpty) {
       final latest = sessions.first;
       final sameDay = _sameDay(latest.performedDate, item.scheduledDate);
-      return sameDay ? WeekPlanStatus.performed : WeekPlanStatus.rescheduled;
+      if (sameDay) {
+        return WeekPlanStatus.performed;
+      }
+      // Будущую запись нельзя «перенести»: чужая сессия того же programDayId
+      // принадлежит другому вхождению (например выполнение на своём дне), а
+      // не этой будущей тренировке. Если вхождение пропущено — «Пропущено»,
+      // иначе — «Запланировано».
+      if (item.scheduledDate.isAfter(now)) {
+        return isSkipped ? WeekPlanStatus.skipped : WeekPlanStatus.pending;
+      }
+      return WeekPlanStatus.rescheduled;
     }
     if (isSkipped) {
       return WeekPlanStatus.skipped;
