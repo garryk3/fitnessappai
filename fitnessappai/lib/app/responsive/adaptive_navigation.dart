@@ -205,21 +205,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                 key: _scaffoldKey,
                 body: navigationShell,
                 drawer: _buildDrawer(context, allDestinations),
-                bottomNavigationBar: NavigationBar(
-                  // Бар из 4 вкладок: пункты «Прогресс»/«Профиль» (индексы 4/5)
-                  // доступны только через меню — им временно подставляется
-                  // последняя доступная вкладка «План», чтобы selectedIndex не
-                  // выходил за пределы destinations (иначе NavigationBar
-                  // бросает assertion).
-                  selectedIndex: navigationShell.currentIndex > 3
-                      ? 3
-                      : navigationShell.currentIndex,
-                  onDestinationSelected: _onBarDestinationSelected,
-                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                  destinations: [
-                    for (final d in allDestinations.take(4)) d.bar,
-                  ],
-                ),
+                bottomNavigationBar: _buildBottomBar(context, allDestinations),
               );
 
         return MenuOpener(
@@ -288,6 +274,53 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Нижний бар из 4 вкладок.
+  ///
+  /// Когда активна ветка вне 4 вкладок (Прогресс/Профиль, только через меню),
+  /// `NavigationBar` требует valid `selectedIndex` в диапазоне, а «ничего не
+  /// выбрано» в M3 не поддерживается. Чтобы бар не подсвечивал «План» на таких
+  /// экранах, он оборачивается в `NavigationBarTheme` с прозрачным индикатором
+  /// и единым цветом иконок/подписей — визуально ни одна вкладка не выбрана.
+  Widget _buildBottomBar(
+    BuildContext context,
+    List<
+      ({
+        NavigationRailDestination rail,
+        NavigationDestination bar,
+        int branchIndex,
+      })
+    >
+    destinations,
+  ) {
+    final int currentIndex = navigationShell.currentIndex;
+    final bool isMenuOnly = currentIndex > 3;
+    final bar = NavigationBar(
+      selectedIndex: isMenuOnly ? 3 : currentIndex,
+      onDestinationSelected: _onBarDestinationSelected,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      destinations: [for (final d in destinations.take(4)) d.bar],
+    );
+    if (!isMenuOnly) {
+      return bar;
+    }
+    final colorScheme = Theme.of(context).colorScheme;
+    return NavigationBarTheme(
+      data: NavigationBarThemeData(
+        indicatorColor: Colors.transparent,
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        iconTheme: WidgetStatePropertyAll(
+          IconThemeData(color: colorScheme.onSurfaceVariant),
+        ),
+        labelTextStyle: WidgetStatePropertyAll(
+          Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+      ),
+      child: bar,
     );
   }
 }

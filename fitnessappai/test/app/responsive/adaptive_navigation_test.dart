@@ -229,9 +229,16 @@ void main() {
     expect(find.byType(Drawer), findsNothing);
     // Страница реально переключилась: заголовок AppBar выбранного экрана.
     expect(find.widgetWithText(AppBar, 'Прогресс'), findsOneWidget);
-    // Бар ограничил выбранный индекс до доступных 4 вкладок.
-    final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    expect(bar.selectedIndex, 3);
+    // Бар на месте, но без подсветки: выбранная вкладка «План» не горит
+    // (NavigationBarTheme с прозрачным индикатором).
+    expect(find.byType(NavigationBar), findsOneWidget);
+    final barTheme = tester.widget<NavigationBarTheme>(
+      find.ancestor(
+        of: find.byType(NavigationBar),
+        matching: find.byType(NavigationBarTheme),
+      ),
+    );
+    expect(barTheme.data.indicatorColor, Colors.transparent);
   });
 
   testWidgets(
