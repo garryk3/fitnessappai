@@ -229,9 +229,10 @@ class _ProgramCard extends StatelessWidget {
                             runSpacing: 4,
                             children: [
                               for (final day in item.days)
-                                _DayBadge(
-                                  label: _weekdayLabel(l10n, day.dayOfWeek),
-                                ),
+                                if (day.dayOfWeek != null)
+                                  _DayBadge(
+                                    label: _weekdayLabel(l10n, day.dayOfWeek!),
+                                  ),
                             ],
                           ),
                         ],
