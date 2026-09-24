@@ -284,8 +284,10 @@ class _MonthGridViewState extends State<MonthGridView> {
             );
           }
           // Компактная сетка с фиксированной высотой ячеек 52 — содержимое не
-          // «плавает», между рядами нет пустых промежутков.
-          return Center(
+          // «плавает», между рядами нет пустых промежутков. Прижата к верху,
+          // чтобы не было пустоты между заголовком месяца и календарём.
+          return Align(
+            alignment: Alignment.topCenter,
             child: SingleChildScrollView(
               child: wrapDrag(
                 Column(

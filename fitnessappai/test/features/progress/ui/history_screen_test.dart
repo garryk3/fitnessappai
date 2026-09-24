@@ -451,6 +451,11 @@ void main() {
     // Ячейки фиксированной высоты 52 (как в плане), а не растягиваются на
     // всю высоту — между рядами нет пустых промежутков.
     expect(tester.getSize(find.byType(MonthDayCell).first).height, 52);
+    // Компактная сетка прижата к верху под заголовком месяца: между
+    // переключателем месяца и календарём нет пустого промежутка.
+    final switcherBottom = tester.getBottomLeft(find.byType(MonthSwitcher)).dy;
+    final gridTop = tester.getTopLeft(find.byType(MonthGridView)).dy;
+    expect(gridTop - switcherBottom, lessThan(20));
     expect(tester.takeException(), isNull);
   });
 }
