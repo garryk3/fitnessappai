@@ -419,9 +419,10 @@ class WeekPlanController {
       }
       // Будущую запись нельзя «перенести»: чужая сессия того же programDayId
       // принадлежит другому вхождению (например выполнение на своём дне), а
-      // не этой будущей тренировке — она остаётся «Запланировано».
+      // не этой будущей тренировке. Если вхождение пропущено — «Пропущено»,
+      // иначе — «Запланировано».
       if (item.scheduledDate.isAfter(now)) {
-        return WeekPlanStatus.pending;
+        return isSkipped ? WeekPlanStatus.skipped : WeekPlanStatus.pending;
       }
       return WeekPlanStatus.rescheduled;
     }

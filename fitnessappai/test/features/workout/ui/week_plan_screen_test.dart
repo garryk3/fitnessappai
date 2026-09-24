@@ -611,6 +611,58 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Июль 2026'), findsOneWidget);
     });
+
+    testWidgets(
+      'будущий день с сессией в текущей неделе: «Пропустить» переводит в «Пропущено»',
+      (tester) async {
+        final weekday = _weekdayAfter(fixedNow.weekday);
+        final day = await createDay(weekday);
+        final scheduledDate = mondayOf(
+          fixedNow,
+        ).add(Duration(days: weekday - 1));
+        // «Чужая» сессия того же programDayId в текущей неделе (прошедший
+        // день): до 43.7 из-за неё пропуск будущей тренировки игнорировался.
+        await saveSession(workoutRepo, day, mondayOf(fixedNow));
+        await pumpPlan(tester);
+
+        await tester.tap(find.text('Месяц'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('${scheduledDate.day}'));
+        await tester.pumpAndSettle();
+        final sheet = find.byType(BottomSheet);
+        expect(sheet, findsOneWidget);
+        expect(
+          find.descendant(of: sheet, matching: find.text('Пропустить')),
+          findsOneWidget,
+        );
+
+        await tester.tap(
+          find.descendant(of: sheet, matching: find.text('Пропустить')),
+        );
+        await tester.pumpAndSettle();
+
+        // Статус стал «Пропущено»: в переоткрытом листе «Пропустить» заменён
+        // на «Отменить пропуск».
+        await tester.tap(find.text('${scheduledDate.day}'));
+        await tester.pumpAndSettle();
+        expect(find.byType(BottomSheet), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(BottomSheet),
+            matching: find.text('Пропустить'),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(BottomSheet),
+            matching: find.text('Отменить пропуск'),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   testWidgets('текущий день в неделе выделен цветом', (tester) async {
