@@ -11,6 +11,7 @@
   - `git` commands work from anywhere under the repo root; `../PLAN.md` relative to the package is the SAME file.
 - **`PLAN.md`** (at repo root, path `PLAN.md` in git): task tracking with `[x]` statuses + progress table. Update it whenever a task is done. Russian language. It lives at the repo root, NOT inside the Flutter package.
 - `docs/llm_contract.md`: contract for the LLM content-generation interface (future tasks 6.2–6.6).
+- `lib/uikit/` (inside Flutter package): единый источник базовых UI-компонентов (`AppCard`, `AppSection`, `AppSectionHeader`, `AppGradientButton`, `AppStatCard` и др.) — в приоритете при построении UI (см. `## Workflow & conventions`).
 - `.agents/` is the shared, version-controlled location for cross-tool agent assets:
   - `.agents/rules/FLUTTER.md` — style/state-mgmt rules (loaded via `opencode.json` `instructions`). Follow it: native-first state (signals, `ChangeNotifier`, `ValueNotifier`), no Riverpod/Bloc/GetX, MVVM, manual DI.
   - `.agents/skills/<name>/SKILL.md` — reusable agent skills (opencode + other tools).
@@ -56,6 +57,7 @@ flutter build apk --debug
 - Keep the `@DriftDatabase` annotation on the database class, NOT on a top-level `const` — drift_dev 2.34 fails to detect the DB otherwise.
 - If `build_runner` reports stale/skipped outputs after a schema change, `rm -rf .dart_tool/build` and rebuild.
 - **After finishing a task with new functionality, run the `android-tester` subagent to APPEND test cases to `TEST_PLAN.md`** (короткий прогон: только добавить сценарии для нового функционала по протоколу — TC-<NNN>, шаги, ожидание). **Не запускать полный прогон всех сценариев** — полный QA-прогон стартует только по требованию пользователя или обязательно перед публикацией релиза.
+- **UI опирается на `lib/uikit/`** — единый источник базовых компонентов (`AppCard`, `AppSection`, `AppSectionHeader`, `AppGradientButton`, `AppStatCard`, `AppBadge`, `AppTile`, `AppThumbnail`, `AppEmptyState`). При создании нового или обновлении существующего UI отдавать приоритет компонентам uikit перед ручным дублированием: заголовки секций — `AppSectionHeader`/`AppSection` (не `Text(... titleMedium)`), primary CTA — `AppGradientButton`, карточки/списки — `AppCard`/`AppTile`. Контекстные виджеты — в `features/<feature>/ui/`. Исключения (delete-действия и т.п.) — осознанно, с пометкой в PR.
 
 ## Testing quirks
 

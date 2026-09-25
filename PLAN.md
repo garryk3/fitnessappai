@@ -2926,3 +2926,12 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
   5. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`.
 - **Примечание:** delete-CTA (`FilledButton` «Удалить» в `exercises_screen:149`, `programs_screen:144`, `exercise_detail_screen:101`) НЕ заменяются — это не primary-действия.
 - **Сделано (2026-09-25):** расширен `AppGradientButton` (`onPressed` nullable + `busy`), добавлены 2 теста (disabled/busy). Заменены все 7 CTA-кнопок. Заголовки: 5 секций settings, `_Section`→`AppSection` (6 мест, класс удалён), 2 заголовка program_builder → `AppSectionHeader`. Тесты: finder'ы дневной/переименовывающей кнопок → `ElevatedButton`, кнопка параметров упражнения осталась `FilledButton`; в `program-day_builder`-тесте «Сохранить заблокирован…» закрытие параметров через ввод и сейв (позиция удаляется при выходе без сохранения). `flutter analyze` чист, `flutter test` 852 passed.
+
+### 45.4 — Правило в AGENTS.md: опора на `lib/uikit/` при реализации UI
+- **Статус: [x] выполнена** (2026-09-25).
+- **Цель:** закрепить в AGENTS.md обязательный ориентир на UI-кит (замечание пользователя от 2026-09-25) и обновить описание репозитория.
+- **Рабочий план (2026-09-25):**
+  1. В `AGENTS.md` секция `## Workflow & conventions` (перед `## Testing quirks`) добавить правило: при создании нового и обновлении существующего UI отдавать приоритет компонентам `lib/uikit/` (`AppCard`, `AppSection`, `AppSectionHeader`, `AppGradientButton`, `AppStatCard` и т.д.) перед дублированием вручную (заголовки `titleMedium`, собственные CTA, карточки); контекстные виджеты — в `features/<feature>/ui/`.
+  2. В `AGENTS.md` секция `## Repo layout` добавить упоминание `lib/uikit/` как единого источника базовых UI-компонентов.
+  3. Проверка: `git diff` — только AGENTS.md и PLAN.md.
+- **Сделано (2026-09-25):** правило об опоре на `lib/uikit/` добавлено в `## Workflow & conventions` (перед `## Testing quirks`); в `## Repo layout` добавлен отдельный пункт про `lib/uikit/` как единый источник базовых UI-компонентов.
