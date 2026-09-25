@@ -4,6 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
+import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 import '../helpers/test_services.dart';
@@ -123,5 +129,71 @@ void main() {
       expect(find.text('404'), findsOneWidget);
       expect(find.text('Страница не найдена'), findsOneWidget);
     });
+
+    testWidgets(
+      'восстановление тренировки: redirect одноразовый, выход не застревает',
+      (WidgetTester tester) async {
+        final db = locator.get<AppDatabase>();
+        locator.registerLazySingleton<WakelockService>(
+          () => _StubWakelockService(),
+        );
+        locator.registerLazySingleton<WorkoutForegroundService>(
+          () => _StubForegroundService(),
+        );
+        locator.registerLazySingleton<WakelockBannerRepository>(
+          () => WakelockBannerRepository(db),
+        );
+
+        final checkpoint = WorkoutCheckpoint(
+          programDayId: 999,
+          exerciseIndex: 0,
+          currentSet: 1,
+          completedSets: 0,
+          resultsJson: '[]',
+          startedAt: DateTime(2026, 9, 25),
+          programName: 'Тест',
+          dayIndex: 0,
+        );
+        final GoRouter router = AppRouter.create(
+          initialCheckpoint: checkpoint,
+        );
+        await tester.pumpWidget(buildApp(router));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        // Первая навигация перенаправляется на восстановление тренировки.
+        expect(router.state.matchedLocation, '/workout/run');
+
+        // Переход на главную после обработки восстановленного экрана
+        // не должен уводить обратно на пустую тренировку (TC-058).
+        router.go('/home');
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(router.state.matchedLocation, '/home');
+      },
+    );
   });
+}
+
+class _StubWakelockService implements WakelockService {
+  @override
+  bool get isEnabled => true;
+
+  @override
+  Future<void> enable() async {}
+
+  @override
+  Future<void> disable() async {}
+}
+
+class _StubForegroundService implements WorkoutForegroundService {
+  @override
+  Future<void> start({required String title, required String text}) async {}
+
+  @override
+  Future<void> update({required String title, required String text}) async {}
+
+  @override
+  Future<void> stop() async {}
 }
