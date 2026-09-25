@@ -294,7 +294,7 @@ Future<void> createExercise(
     await _toggleFormCheckbox(tester, 'Выполнение по сторонам (левая/правая)');
   }
 
-  await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+  await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
   await tester.pumpAndSettle();
 }
 
@@ -404,7 +404,7 @@ Future<void> configureDay(
 
   final save = find.descendant(
     of: find.byType(ProgramDayBuilderScreen),
-    matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
   );
   await ensureFieldVisible(tester, save);
   await tester.tap(save);
@@ -475,7 +475,7 @@ Future<void> startWorkout(
   await tester.pumpAndSettle();
 
   final startWorkoutBtn = find.widgetWithText(
-    FilledButton,
+    ElevatedButton,
     'Начать тренировку',
   );
   await pumpUntilFound(tester, startWorkoutBtn);
@@ -871,7 +871,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(_squat), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     await completeStrengthSet(tester, repeats: '12', weight: '50');
@@ -958,7 +958,7 @@ void main() {
     await goToTab(tester, Icons.event_note_outlined);
     await tester.tap(find.text('Начать'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     expect(find.text('Противопоказания'), findsOneWidget);
@@ -1028,7 +1028,7 @@ void main() {
 
     await tester.tap(find.text('Перенести на сегодня'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     await completeRunningSet(tester, minutes: '15', distance: '3');
@@ -1253,7 +1253,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.play_arrow));
     await tester.pumpAndSettle();
     expect(
-      find.widgetWithText(FilledButton, 'Начать тренировку'),
+      find.widgetWithText(ElevatedButton, 'Начать тренировку'),
       findsOneWidget,
     );
   });
@@ -1457,7 +1457,7 @@ void main() {
     await tester.pumpAndSettle();
     await enterField(tester, find.widgetWithText(TextFormField, 'Рост'), '180');
     await enterField(tester, find.widgetWithText(TextFormField, 'Вес'), '80');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Текущие значения'), findsOneWidget);
@@ -1468,7 +1468,7 @@ void main() {
     await tester.pumpAndSettle();
     await enterField(tester, find.widgetWithText(TextFormField, 'Рост'), '181');
     await enterField(tester, find.widgetWithText(TextFormField, 'Вес'), '79');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('181 см'), findsOneWidget);
@@ -1565,7 +1565,7 @@ void main() {
     await tester.tap(find.text('Начать'));
     await tester.pumpAndSettle();
     final startWorkoutBtn = find.widgetWithText(
-      FilledButton,
+      ElevatedButton,
       'Начать тренировку',
     );
     await pumpUntilFound(tester, startWorkoutBtn);
@@ -1591,7 +1591,7 @@ void main() {
     await tester.tap(find.text('Перенести на сегодня'));
     await tester.pumpAndSettle();
     final startWorkoutBtn2 = find.widgetWithText(
-      FilledButton,
+      ElevatedButton,
       'Начать тренировку',
     );
     await pumpUntilFound(tester, startWorkoutBtn2);
@@ -1654,7 +1654,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.play_arrow));
     await tester.pumpAndSettle();
     expect(
-      find.widgetWithText(FilledButton, 'Начать тренировку'),
+      find.widgetWithText(ElevatedButton, 'Начать тренировку'),
       findsOneWidget,
     );
   });
@@ -1757,7 +1757,7 @@ void main() {
 
       final save = find.descendant(
         of: find.byType(ProgramDayBuilderScreen),
-        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+        matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
       );
       await ensureFieldVisible(tester, save);
       await tester.tap(save);
@@ -2040,7 +2040,7 @@ void main() {
 
     final save = find.descendant(
       of: find.byType(ProgramDayBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
+      matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
     );
     await ensureFieldVisible(tester, save);
     await tester.tap(save);
@@ -2084,7 +2084,7 @@ void main() {
 
     final save2 = find.descendant(
       of: find.byType(ProgramDayBuilderScreen),
-      matching: find.widgetWithText(FilledButton, 'Сохранить'),
+      matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
     );
     await ensureFieldVisible(tester, save2);
     await tester.tap(save2);
