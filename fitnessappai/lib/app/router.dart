@@ -37,12 +37,19 @@ class AppRouter {
   /// По умолчанию читает [restoredCheckpoint] из [bootstrap].
   static GoRouter create({WorkoutCheckpoint? initialCheckpoint}) {
     final checkpoint = initialCheckpoint ?? restoredCheckpoint;
+    var redirected = false;
     return GoRouter(
       initialLocation: '/home',
       errorBuilder: (context, state) => const NotFoundScreen(),
       redirect: checkpoint != null
           ? (context, state) {
+              // Восстановление срабатывает один раз: только первая навигация
+              // направляется на `/workout/run`. Иначе после завершения/выхода
+              // из восстановленной тренировки переход на `/home` снова
+              // уводил бы на пустой экран тренировки.
+              if (redirected) return null;
               if (state.matchedLocation == '/workout/run') return null;
+              redirected = true;
               return '/workout/run?programDayId=${checkpoint.programDayId}';
             }
           : null,
