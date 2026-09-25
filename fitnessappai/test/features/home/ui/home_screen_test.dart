@@ -17,11 +17,11 @@ import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
-import 'package:fitnessappai/core/ui/program_thumbnail.dart';
-import 'package:fitnessappai/core/ui/uikit.dart';
 import 'package:fitnessappai/features/home/ui/home_screen.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {

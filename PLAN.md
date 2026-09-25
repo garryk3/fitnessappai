@@ -2889,3 +2889,19 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
 - **Примечание:** `AppGradientButton` пока unused-код (переносится как есть по решению пользователя); первое реальное внедрение CTA — задача 45.3.
 - **Сделано (2026-09-25):** созданы `lib/uikit/` (10 компонентов) и barrel `uikit.dart` (library без имени). Перенесены как есть: `AppCard`, `AppGradientButton`, `AppSectionHeader`, `MuscleGroupIcon` (у `assetPathFor` добавлен тестовый хук `@visibleForTesting`). Новые нейтральные фигмы: `AppBadge`, `AppSection`, `AppEmptyState`, `AppStatCard`, `AppTile`, `AppThumbnail` — без импортов features/core-domains. Тесты `test/uikit/` (32 кейса): рендер + конфигурация. Проверка: `flutter analyze --fatal-infos` чисто, `flutter test` — 850 passed, формат ок.
 - **Примечание (2026-09-25):** попутный служебный фикс — `fitnessappai/android/.gitignore` дополнено `/build/` (артефакт gradle-сборки `android/build/` переставал быть untracked / не игнорировался).
+
+### 45.2 — Миграция потребителей `core/ui` → `uikit`, удаление `lib/core/ui/`
+- **Цель:** после 45.1 единственный источник UI-компонентов — `lib/uikit/`; доменные виджеты переезжают в свои feature-папки (uikit без импортов features/domain); папка `lib/core/ui/` удаляется целиком. Внешний вид и поведения НЕ меняются.
+- **Рабочий план (2026-09-25):**
+  1. Удалить `core/ui/uikit.dart` (AppCard/AppGradientButton/AppSectionHeader уже перенесены в 45.1).
+  2. Удалить `core/ui/muscle_group_icon.dart` (перенесён в 45.1).
+  3. Доменные виджеты — в feature-папки (переезд как есть, без изменения логики):
+     - `core/ui/status_badge.dart` → `features/workout/ui/status_badge.dart` (зависит от `WeekPlanStatus`);
+     - `core/ui/exercise_thumbnail.dart` → `features/exercises/ui/exercise_thumbnail.dart` (зависит от `Exercise`+`MediaCache`);
+     - `core/ui/program_thumbnail.dart` → `features/programs/ui/program_thumbnail.dart` (зависит от `MediaCache`).
+  4. Обновить импорты в lib: `home_screen.dart`, `week_plan_screen.dart`, `day_detail_screen.dart`, `history_screen.dart`, `programs_screen.dart`, `program_day_builder_screen.dart`, `exercises_screen.dart`, `exercise_detail_screen.dart`.
+  5. Обновить импорты в тестах: `home_screen_test.dart`, `programs_screen_test.dart`, `program_day_builder_screen_test.dart`.
+  6. Удалить папку `lib/core/ui/` целиком; проверить, что `core/ui` нигде не импортируется.
+  7. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`.
+- **Примечание:** после 45.2 остаётся 6 дублирующих CTA-кнопок и 4 дублирующих заголовка секций (замена и первое внедрение `AppGradientButton`/`AppSectionHeader` — задача 45.3). `AppSection` из uikit (title+child) — аналог `_Section`/`AppSectionHeader` без action; внедрение в 45.3.
+- **Сделано (2026-09-25):** удалены `core/ui/uikit.dart` и `core/ui/muscle_group_icon.dart` (перенесены в 45.1). Доменные виджеты переехали в feature-папки (как есть): `status_badge.dart` → `features/workout/ui/`, `exercise_thumbnail.dart` → `features/exercises/ui/`, `program_thumbnail.dart` → `features/programs/ui/`. Обновлены импорты в 8 lib-файлах (`home_screen`, `week_plan_screen`, `day_detail_screen`, `history_screen`, `programs_screen`, `program_day_builder_screen`, `exercises_screen`, `exercise_detail_screen`) и 3 тестах (`home_screen_test`, `programs_screen_test`, `program_day_builder_screen_test`). Папка `lib/core/ui/` удалена целиком; grep `core/ui` по lib/test — 0 вхождений. Проверка: analyze чисто, `flutter test` — 850 passed, формат ок.
