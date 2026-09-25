@@ -154,9 +154,7 @@ void main() {
           programName: 'Тест',
           dayIndex: 0,
         );
-        final GoRouter router = AppRouter.create(
-          initialCheckpoint: checkpoint,
-        );
+        final GoRouter router = AppRouter.create(initialCheckpoint: checkpoint);
         await tester.pumpWidget(buildApp(router));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 50));
