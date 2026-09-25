@@ -7,10 +7,10 @@ import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
-import 'package:fitnessappai/core/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
+import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Экран списка программ: карточки с днями и упражнениями.

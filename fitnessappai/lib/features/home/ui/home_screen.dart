@@ -6,14 +6,14 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
-import 'package:fitnessappai/core/ui/program_thumbnail.dart';
-import 'package:fitnessappai/core/ui/uikit.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
-import 'package:fitnessappai/core/ui/status_badge.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
-import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/ui/status_badge.dart';
+import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 /// Домашний экран: активная программа и последние тренировки.

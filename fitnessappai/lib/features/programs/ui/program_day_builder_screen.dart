@@ -10,8 +10,8 @@ import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/validators/program_day_exercise_validator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
-import 'package:fitnessappai/core/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
