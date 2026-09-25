@@ -2874,3 +2874,18 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
   5. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`, `flutter build apk --debug`.
 - **Тест:** эмулятор/Linux desktop — свёрнутый и расширенный rail: профиль вверху за toggle, без дублирования в списке; drawer — шапка с подписью «Профиль» слева.
 - **Сделано (2026-09-24):** `_railBranchOrder` → `const [0,1,2,3,4,6]` (профиль больше не направление); `_railDestinations` — без спец-ветки `ProfileAvatar`; `_buildRailLeading` → `Column` (toggle по центру/справа по состоянию, `_buildRailProfile`, далее `Divider`); `_buildDrawer` — шапка `InkWell+Row(avatar+navProfile)`, не `ListTile`. Профиль и toggle выровнены по колонке иконок (правка по фидбеку: аватару и иконке меню место как у остальных пунктов меню). Тесты: 6 направлений; drawer — нет `ListTile` с «Профиль»; выравнивание toggle/профиля с иконками направлений.
+
+## Этап 45: UI-кит — выделение атомов/молекул в `lib/uikit/`
+
+### 45.1 — Создать `lib/uikit/`: базовые нейтральные компоненты (базис)
+- **Цель:** чистая папка атомов/молекул без бизнес-логики; перенос текущих фигм из `lib/core/ui/` + новые нейтральные компоненты; barrel `uikit.dart`. Внешний вид и цвета НЕ меняются (DESIGN.md: токены из `ColorScheme`); редизайн элементов — следующий этап.
+- **Рабочий план (2026-09-25):**
+  1. Папка `lib/uikit/` + barrel `uikit.dart` (публичный экспорт всех компонентов).
+  2. Перенос как есть: `AppCard` (из `core/ui/uikit.dart`), `AppGradientButton`, `AppSectionHeader`, `MuscleGroupIcon` (`core/ui/muscle_group_icon.dart`).
+  3. Новые нейтральные фигмы (без импортов features/core-domains): `AppBadge` (label/icon/bg/fg/border), `AppSection` (title+child, обобщение `_Section` экранов), `AppEmptyState` (icon/title/hint/action, из `_EmptyHint` home), `AppStatCard` (value/label/icon/onTap, из `_StatCard` progress), `AppTile` (leading/title/subtitle/trailing), `AppThumbnail` (ImageProvider?+size+radius+placeholder).
+  4. Тесты `test/uikit/` для всех компонентов (рендер + конфигурация).
+  5. Проверка: `flutter analyze --fatal-infos`, `flutter test test/uikit`, `dart format --set-exit-if-changed`.
+- **Замечание пользователя (2026-09-25):** после выделения — правило в AGENTS.md «при реализации нового и обновлении старого функционала опираться на `lib/uikit/`» (задача 45.4). Нумерация 45.x — следующие свободные после смерженных 41–44 (разделов для 41–44 в PLAN.md нет).
+- **Примечание:** `AppGradientButton` пока unused-код (переносится как есть по решению пользователя); первое реальное внедрение CTA — задача 45.3.
+- **Сделано (2026-09-25):** созданы `lib/uikit/` (10 компонентов) и barrel `uikit.dart` (library без имени). Перенесены как есть: `AppCard`, `AppGradientButton`, `AppSectionHeader`, `MuscleGroupIcon` (у `assetPathFor` добавлен тестовый хук `@visibleForTesting`). Новые нейтральные фигмы: `AppBadge`, `AppSection`, `AppEmptyState`, `AppStatCard`, `AppTile`, `AppThumbnail` — без импортов features/core-domains. Тесты `test/uikit/` (32 кейса): рендер + конфигурация. Проверка: `flutter analyze --fatal-infos` чисто, `flutter test` — 850 passed, формат ок.
+- **Примечание (2026-09-25):** попутный служебный фикс — `fitnessappai/android/.gitignore` дополнено `/build/` (артефакт gradle-сборки `android/build/` переставал быть untracked / не игнорировался).
