@@ -2935,3 +2935,9 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
   2. В `AGENTS.md` секция `## Repo layout` добавить упоминание `lib/uikit/` как единого источника базовых UI-компонентов.
   3. Проверка: `git diff` — только AGENTS.md и PLAN.md.
 - **Сделано (2026-09-25):** правило об опоре на `lib/uikit/` добавлено в `## Workflow & conventions` (перед `## Testing quirks`); в `## Repo layout` добавлен отдельный пункт про `lib/uikit/` как единый источник базовых UI-компонентов.
+
+### 45.5 — Фикс e2e-тестов под `AppGradientButton` (интеграционные тесты)
+- **Статус: [x] выполнена** (2026-09-25).
+- **Цель:** интеграционный флоу-тест (`integration_test/app_flow_test.dart`) падал после 45.3 (18 из 20), т.к. искал заменённые на `AppGradientButton` primary-кнопки как `FilledButton`; внутри `AppGradientButton` лежит `ElevatedButton`. Юнит-тесты были обновлены в 45.3, интеграционные — нет.
+- **Рабочий план (2026-09-25):** по контексту каждого finder'а заменить `find.widgetWithText(FilledButton, …)` на `ElevatedButton` только для кнопок, заменённых в 45.3 (пуск тренировки «Начать тренировку», сохранение замера/упражнения/дня); оставить `FilledButton` для: параметров упражнения, диалога настроек дня, «Сделать активной», диалога противопоказаний («Продолжить»), workout_run («Подход выполнен», «Пропустить отдых», «Начать» планки), «ОК», «Удалить», сохранения конструктора программ. Затем прогнать e2e до зелёного.
+- **Сделано (2026-09-25):** заменены 15 finder'ов → `ElevatedButton` (пуск тренировки prepare/warmup/быстрый старт из home, сохранение измерения `measurement_form`, сохранение упражнения `exercise_form`, сохранение дня в `ProgramDayBuilderScreen`); остальные 20 оставлены `FilledButton` (см. план). `dart format` чист, `flutter analyze --fatal-infos` чисто, `flutter test integration_test -d linux` — 20/20 passed (~7.5 мин).
