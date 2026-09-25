@@ -7,6 +7,7 @@ import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 
 /// Экран разминки перед тренировкой: обратный отсчёт и «Пропустить».
@@ -126,10 +127,10 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
                   child: Text(l10n.workoutWarmupSkip),
                 )
               else
-                FilledButton.icon(
+                AppGradientButton(
                   onPressed: _goToRun,
-                  icon: const Icon(Icons.play_arrow),
-                  label: Text(l10n.workoutWarmupStartWorkout),
+                  icon: Icons.play_arrow,
+                  label: l10n.workoutWarmupStartWorkout,
                 ),
             ],
           ),

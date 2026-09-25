@@ -7,6 +7,7 @@ import 'package:fitnessappai/features/profile/data/body_measurement_repository.d
 import 'package:fitnessappai/features/profile/domain/body_measurement_validator.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Форма добавления замера: дата + числовые поля, всё кроме даты опционально.
 class MeasurementFormScreen extends StatefulWidget {
@@ -79,10 +80,10 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            FilledButton.icon(
+            AppGradientButton(
               onPressed: _save,
-              icon: const Icon(Icons.check),
-              label: Text(l10n.commonSave),
+              icon: Icons.check,
+              label: l10n.commonSave,
             ),
           ],
         ),

@@ -111,7 +111,7 @@ void main() {
     expect(field('Дистанция (км)'), findsNothing);
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(
-      find.widgetWithText(FilledButton, 'Начать тренировку'),
+      find.widgetWithText(ElevatedButton, 'Начать тренировку'),
       findsOneWidget,
     );
   });
@@ -191,7 +191,7 @@ void main() {
     await enterField(tester, 'Время (мин)', '30');
     await enterField(tester, 'Дистанция (км)', '5');
     await enterField(tester, 'Отдых (сек)', '60');
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     final qp = navigatedUri!.queryParameters;
@@ -251,7 +251,7 @@ void main() {
     await enterField(tester, 'Повторения', '8');
     await enterField(tester, 'Вес (кг)', '20.5');
     await enterField(tester, 'Отдых (сек)', '90');
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     final qp = navigatedUri!.queryParameters;
@@ -300,7 +300,7 @@ void main() {
     await enterField(tester, 'Время (мин)', '30');
     await enterField(tester, 'Дистанция (км)', '5');
     await enterField(tester, 'Отдых (сек)', '60');
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     final qp = navigatedUri!.queryParameters;
@@ -318,7 +318,7 @@ void main() {
     var started = false;
     await pumpParams(tester, exercise.id!, onStart: () => started = true);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     expect(find.text('Заполните поле'), findsNWidgets(2));
@@ -363,7 +363,7 @@ void main() {
 
     await enterField(tester, 'Подходы', '3');
     await enterField(tester, 'Отдых (сек)', '60');
-    await tester.tap(find.widgetWithText(FilledButton, 'Начать тренировку'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
 
     final qp = navigatedUri!.queryParameters;

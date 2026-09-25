@@ -45,5 +45,28 @@ void main() {
       await tester.tap(find.text('Старт'));
       expect(pressed, isTrue);
     });
+
+    testWidgets('onPressed=null — кнопка неактивна', (tester) async {
+      await _pump(tester, AppGradientButton(label: 'Старт', onPressed: null));
+
+      final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('busy=true — спиннер вместо текста и disabled', (tester) async {
+      await _pump(
+        tester,
+        AppGradientButton(
+          label: 'Старт',
+          busy: true,
+          onPressed: () => fail('busy не должен вызываться'),
+        ),
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Старт'), findsNothing);
+      final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+      expect(button.onPressed, isNull);
+    });
   });
 }

@@ -2905,3 +2905,24 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
   7. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`.
 - **Примечание:** после 45.2 остаётся 6 дублирующих CTA-кнопок и 4 дублирующих заголовка секций (замена и первое внедрение `AppGradientButton`/`AppSectionHeader` — задача 45.3). `AppSection` из uikit (title+child) — аналог `_Section`/`AppSectionHeader` без action; внедрение в 45.3.
 - **Сделано (2026-09-25):** удалены `core/ui/uikit.dart` и `core/ui/muscle_group_icon.dart` (перенесены в 45.1). Доменные виджеты переехали в feature-папки (как есть): `status_badge.dart` → `features/workout/ui/`, `exercise_thumbnail.dart` → `features/exercises/ui/`, `program_thumbnail.dart` → `features/programs/ui/`. Обновлены импорты в 8 lib-файлах (`home_screen`, `week_plan_screen`, `day_detail_screen`, `history_screen`, `programs_screen`, `program_day_builder_screen`, `exercises_screen`, `exercise_detail_screen`) и 3 тестах (`home_screen_test`, `programs_screen_test`, `program_day_builder_screen_test`). Папка `lib/core/ui/` удалена целиком; grep `core/ui` по lib/test — 0 вхождений. Проверка: analyze чисто, `flutter test` — 850 passed, формат ок.
+
+### 45.3 — Внедрение uikit в экраны: CTA-кнопки (`AppGradientButton`) и заголовки секций (`AppSectionHeader`/`AppSection`)
+- **Цель:** первое реальное внедрение `AppGradientButton` (сейчас unused) и замена локальных дубликатов заголовков секций на `AppSectionHeader`/`AppSection`; единый визуальный ритм CTA без изменения логики. Delete-CTA не трогаем.
+- **Рабочий план (2026-09-25):**
+  1. Расширить `AppGradientButton` (uikit): `onPressed` → nullable (disabled-состояние) + параметр `busy` (spinner при сейве); тест `test/uikit/app_gradient_button_test.dart` дополнить кейсами disabled/busy.
+  2. Заменить CTA-кнопки (7 шт.) на `AppGradientButton`:
+     - `workout_prepare_screen.dart:192` — «Старт» (`workoutPrepareStart`, icon play);
+     - `workout_warmup_screen.dart:129` — «Начать тренировку» (`workoutWarmupStartWorkout`, icon play);
+     - `measurement_form_screen.dart:82` — «Сохранить» (`commonSave`, icon check);
+     - `exercise_form_screen.dart:318` — «Сохранить» (`exerciseFormSave`, busy = `_saving`);
+     - `single_exercise_params_screen.dart:157` — «Начать тренировку» (`exerciseListStartWorkout`);
+     - `program_day_builder_screen.dart:147` — «Сохранить» в диалоге переименования дня (`programBuilderRenameDaySave`);
+     - `program_day_builder_screen.dart:365` — «Сохранить» (`programBuilderSave`, busy = `_saving`).
+  3. Заголовки секций:
+     - `settings_screen.dart:89,93,99,105,129` (5 секций: синк/звук/уведомления/тема/о) → `AppSectionHeader(title:)` без действия;
+     - `exercise_detail_screen.dart` — удалить локальный `_Section` (строки 448–465), заменить все `_Section(` → `AppSection(` (6 мест: 212,219,226,312,476,524);
+     - `program_builder_screen.dart:1009-1012` (заголовок «Изображение») и `1069-1072` («Количество дней») → `AppSectionHeader`.
+  4. Обновить тесты, ищущие `FilledButton` по label (в `AppGradientButton` внутри `ElevatedButton`): `program_builder_screen_test.dart`, `program_day_builder_screen_test.dart` — заменить `find.widgetWithText(FilledButton, ...)` на `find.widgetWithText(ElevatedButton, ...)`; проверить `exercise_form_screen_test.dart`, `measurement_form_screen_test.dart`, `workout_*_test.dart`, `settings_screen_test.dart` на предмет типов кнопок/заголовков.
+  5. Проверка: `flutter analyze --fatal-infos`, `flutter test`, `dart format --set-exit-if-changed`.
+- **Примечание:** delete-CTA (`FilledButton` «Удалить» в `exercises_screen:149`, `programs_screen:144`, `exercise_detail_screen:101`) НЕ заменяются — это не primary-действия.
+- **Сделано (2026-09-25):** расширен `AppGradientButton` (`onPressed` nullable + `busy`), добавлены 2 теста (disabled/busy). Заменены все 7 CTA-кнопок. Заголовки: 5 секций settings, `_Section`→`AppSection` (6 мест, класс удалён), 2 заголовка program_builder → `AppSectionHeader`. Тесты: finder'ы дневной/переименовывающей кнопок → `ElevatedButton`, кнопка параметров упражнения осталась `FilledButton`; в `program-day_builder`-тесте «Сохранить заблокирован…» закрытие параметров через ввод и сейв (позиция удаляется при выходе без сохранения). `flutter analyze` чист, `flutter test` 852 passed.

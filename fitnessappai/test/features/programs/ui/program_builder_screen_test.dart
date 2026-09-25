@@ -842,7 +842,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
       await tester.pumpAndSettle();
 
       // День сохранён в БД через параметры; экран дня закрывается и

@@ -14,6 +14,7 @@ import 'package:fitnessappai/features/settings/domain/update_check_controller.da
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран «Настройки»: синхронизация, звуки, уведомления и тема.
 class SettingsScreen extends StatefulWidget {
@@ -77,7 +78,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         leading: const AppMenuButton(),
@@ -86,23 +86,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(l10n.settingsSyncSection, style: theme.textTheme.titleMedium),
+          AppSectionHeader(title: l10n.settingsSyncSection),
           const SizedBox(height: 8),
           _SyncSection(controller: _syncController),
           const SizedBox(height: 24),
-          Text(l10n.settingsSoundSection, style: theme.textTheme.titleMedium),
+          AppSectionHeader(title: l10n.settingsSoundSection),
           const SizedBox(height: 8),
           _SoundSection(controller: _soundController),
           const SizedBox(height: 24),
-          Text(
-            l10n.settingsNotificationsSection,
-            style: theme.textTheme.titleMedium,
-          ),
+          AppSectionHeader(title: l10n.settingsNotificationsSection),
           const SizedBox(height: 8),
           if (_notificationController != null)
             _NotificationsSection(controller: _notificationController!),
           const SizedBox(height: 24),
-          Text(l10n.settingsThemeSection, style: theme.textTheme.titleMedium),
+          AppSectionHeader(title: l10n.settingsThemeSection),
           const SizedBox(height: 8),
           ValueListenableBuilder<ThemeMode>(
             valueListenable: _themeController,
@@ -126,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text(l10n.settingsAboutSection, style: theme.textTheme.titleMedium),
+          AppSectionHeader(title: l10n.settingsAboutSection),
           const SizedBox(height: 8),
           _AboutSection(controller: _updateController),
         ],

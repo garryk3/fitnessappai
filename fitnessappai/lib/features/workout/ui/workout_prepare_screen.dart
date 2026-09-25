@@ -11,6 +11,7 @@ import 'package:fitnessappai/features/profile/domain/user_profile_repository.dar
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран подготовки к тренировке: список упражнений дня и выбор набора.
 class WorkoutPrepareScreen extends StatefulWidget {
@@ -189,10 +190,10 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: FilledButton.icon(
+            child: AppGradientButton(
               onPressed: _start,
-              icon: const Icon(Icons.play_arrow),
-              label: Text(l10n.workoutPrepareStart),
+              icon: Icons.play_arrow,
+              label: l10n.workoutPrepareStart,
             ),
           ),
         ),
