@@ -165,11 +165,12 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   onPressed: () =>
                       context.push('/exercises/${widget.exerciseId}/edit'),
                 ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline),
-                tooltip: l10n.commonDelete,
-                onPressed: _confirmDelete,
-              ),
+              if (canEdit)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: l10n.commonDelete,
+                  onPressed: _confirmDelete,
+                ),
             ],
           ),
           body: SignalBuilder(

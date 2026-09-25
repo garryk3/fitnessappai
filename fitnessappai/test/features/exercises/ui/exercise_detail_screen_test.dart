@@ -229,7 +229,7 @@ void main() {
     expect(find.text('Упражнение не найдено'), findsOneWidget);
   });
 
-  testWidgets('редактирование видно только для кастомных, удаление — всегда', (
+  testWidgets('редактирование и удаление видны только для кастомных', (
     tester,
   ) async {
     final builtIn = await repository.create(exercise('Жим штанги'), const []);
@@ -240,7 +240,7 @@ void main() {
 
     await pumpDetail(tester, exerciseId: builtIn.id!);
     expect(find.byIcon(Icons.edit_outlined), findsNothing);
-    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
 
     await pumpDetail(tester, exerciseId: custom.id!);
     expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
@@ -267,26 +267,24 @@ void main() {
     expect(await repository.getById(custom.id!), isNull);
   });
 
-  testWidgets('удаление встроенного неиспользуемого упражнения работает', (
+  testWidgets('встроенное неиспользуемое упражнение нельзя удалить', (
     tester,
   ) async {
     final builtIn = await repository.create(exercise('Жим штанги'), const []);
 
     await pumpDetail(tester, exerciseId: builtIn.id!);
-    await tester.tap(find.byIcon(Icons.delete_outline));
-    await tester.pumpAndSettle();
-    expect(find.text('Удалить упражнение «Жим штанги»?'), findsOneWidget);
 
-    await tester.tap(find.text('Удалить'));
-    await tester.pumpAndSettle();
-
-    expect(await repository.getById(builtIn.id!), isNull);
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
+    expect(await repository.getById(builtIn.id!), isNotNull);
   });
 
   testWidgets('удаление блокируется, если упражнение в программе', (
     tester,
   ) async {
-    final created = await repository.create(exercise('Приседания'), const []);
+    final created = await repository.create(
+      exercise('Приседания', isCustom: true),
+      const [],
+    );
     final programRepo = ProgramRepository(db);
     final program = await programRepo.create(
       Program(
