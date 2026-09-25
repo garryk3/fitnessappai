@@ -7,6 +7,7 @@ import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран параметров одиночного упражнения перед стартом.
 ///
@@ -154,9 +155,9 @@ class _SingleExerciseParamsScreenState
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: FilledButton(
+                child: AppGradientButton(
                   onPressed: _start,
-                  child: Text(l10n.exerciseListStartWorkout),
+                  label: l10n.exerciseListStartWorkout,
                 ),
               ),
             ),

@@ -14,6 +14,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Второй шаг конструктора программы: наполнение тренировочного дня.
 ///
@@ -144,10 +145,10 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(dialogL10n.commonCancel),
             ),
-            FilledButton(
+            AppGradientButton(
               onPressed: () =>
                   Navigator.of(dialogContext).pop(controller.text.trim()),
-              child: Text(dialogL10n.programBuilderRenameDaySave),
+              label: dialogL10n.programBuilderRenameDaySave,
             ),
           ],
         );
@@ -362,18 +363,13 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: FilledButton(
+                child: AppGradientButton(
+                  busy: _saving,
                   onPressed:
                       _saving || (_mainItems.isEmpty && _altItems.isEmpty)
                       ? null
                       : _save,
-                  child: _saving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.programBuilderSave),
+                  label: l10n.programBuilderSave,
                 ),
               ),
             ),

@@ -209,21 +209,21 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         Center(child: _TypeBadge(type: exercise.type)),
         if (!exercise.hideOptional && exercise.description.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _Section(
+          AppSection(
             title: l10n.exerciseDetailDescription,
             child: Text(exercise.description),
           ),
         ],
         if (!exercise.hideOptional && exercise.instructions.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _Section(
+          AppSection(
             title: l10n.exerciseDetailTechnique,
             child: Text(exercise.instructions),
           ),
         ],
         if (!exercise.hideOptional && exercise.commonMistakes.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _Section(
+          AppSection(
             title: l10n.exerciseDetailMistakes,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,7 +309,7 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
         }
         final theme = Theme.of(context);
         final date = results.first.completedAt;
-        return _Section(
+        return AppSection(
           title: l10n.exerciseDetailHistoryRecent,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,25 +445,6 @@ class _TypeBadge extends StatelessWidget {
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 6),
-        child,
-      ],
-    );
-  }
-}
-
 class _MusclesSection extends StatelessWidget {
   const _MusclesSection({required this.highlights, required this.muscles});
 
@@ -473,7 +454,7 @@ class _MusclesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return _Section(
+    return AppSection(
       title: l10n.exerciseDetailMuscles,
       child: Column(
         children: [
@@ -521,7 +502,7 @@ class _ContraindicationsSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final warningKeys = {for (final tag in warnings) tag.key};
-    return _Section(
+    return AppSection(
       title: l10n.contraindications,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -24,6 +24,7 @@ import 'package:fitnessappai/features/programs/ui/muscle_panel.dart';
 import 'package:fitnessappai/features/programs/ui/program_validation_dialog.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Конструктор программы: параметры и тренировочные дни.
 ///
@@ -1006,10 +1007,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.programBuilderImage,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        AppSectionHeader(title: l10n.programBuilderImage),
         const SizedBox(height: 8),
         if (provider != null) ...[
           ClipRRect(
@@ -1066,10 +1064,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.programBuilderDaysCount,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        AppSectionHeader(title: l10n.programBuilderDaysCount),
         const SizedBox(height: 8),
         SegmentedButton<int>(
           segments: [

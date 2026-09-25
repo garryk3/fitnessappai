@@ -5,15 +5,23 @@ class AppGradientButton extends StatelessWidget {
   const AppGradientButton({
     super.key,
     required this.label,
-    required this.onPressed,
+    this.onPressed,
     this.icon,
     this.gradient,
+    this.busy = false,
   });
 
+  /// Текст кнопки; при [busy] заменяется спиннером.
   final String label;
-  final VoidCallback onPressed;
+
+  /// null — кнопка неактивна.
+  final VoidCallback? onPressed;
+
   final IconData? icon;
   final Gradient? gradient;
+
+  /// true — спиннер вместо текста, кнопка неактивна (сохранение).
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +33,7 @@ class AppGradientButton extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
+    final enabled = onPressed != null && !busy;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -39,10 +48,12 @@ class AppGradientButton extends StatelessWidget {
         ],
       ),
       child: ElevatedButton.icon(
-        onPressed: onPressed,
+        onPressed: enabled ? onPressed : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           foregroundColor: theme.colorScheme.onPrimary,
+          disabledBackgroundColor: Colors.transparent,
+          disabledForegroundColor: theme.colorScheme.onPrimary,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -50,8 +61,16 @@ class AppGradientButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        icon: icon != null ? Icon(icon) : const SizedBox.shrink(),
-        label: Text(label),
+        icon: busy
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : icon != null
+            ? Icon(icon)
+            : const SizedBox.shrink(),
+        label: busy ? const SizedBox.shrink() : Text(label),
       ),
     );
   }

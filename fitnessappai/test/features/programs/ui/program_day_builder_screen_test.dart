@@ -257,7 +257,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+        matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
       ),
     );
     await tester.pumpAndSettle();
@@ -285,7 +285,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.widgetWithText(FilledButton, 'Сохранить'),
+        matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
       ),
     );
     await tester.pumpAndSettle();
@@ -437,7 +437,7 @@ void main() {
 
     await pumpDayBuilder(tester, programId: program.id!);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(
@@ -458,7 +458,7 @@ void main() {
     await addValidExercise(days[0].id!, exercise.id!);
 
     await pumpDayBuilder(tester, programId: program.id!);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final detail = await programRepository.getProgram(program.id!);
@@ -477,7 +477,7 @@ void main() {
     await addValidExercise(days[0].id!, exercise.id!);
 
     await pumpDayBuilder(tester, programId: program.id!, dayIndex: 0);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Недостаточно данных для сохранения'), findsNothing);
@@ -519,7 +519,7 @@ void main() {
     expect(find.text('Параметры упражнения'), findsNothing);
     expect(find.text('Приседания'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final detail = await programRepository.getProgram(program.id!);
@@ -656,12 +656,18 @@ void main() {
 
     await pumpDayBuilder(tester, programId: program.id!);
 
-    FilledButton saveButton() => tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Сохранить'),
+    ElevatedButton saveButton() => tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Сохранить'),
     );
     expect(saveButton().onPressed, isNull);
 
     await addExercise(tester, 'Жим штанги');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Подходы'), '3');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Повторения'),
+      '10',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(saveButton().onPressed, isNotNull);

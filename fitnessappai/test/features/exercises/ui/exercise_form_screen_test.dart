@@ -176,7 +176,7 @@ void main() {
     await pumpForm(tester);
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pump();
 
     expect(find.text('Введите название'), findsOneWidget);
@@ -188,7 +188,7 @@ void main() {
     await pumpForm(tester);
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pump();
     expect(find.text('Введите название'), findsOneWidget);
 
@@ -239,7 +239,7 @@ void main() {
     await tester.pump();
 
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final exercises = await repository.getAll();
@@ -286,7 +286,7 @@ void main() {
     );
     await scrollFormTo(tester, find.text('Задействованные мышцы'));
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Выберите хотя бы одну мышцу'), findsOneWidget);
@@ -297,7 +297,7 @@ void main() {
 
     expect(find.text('Выберите хотя бы одну мышцу'), findsNothing);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
@@ -317,7 +317,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
@@ -341,7 +341,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
@@ -383,7 +383,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
@@ -435,7 +435,7 @@ void main() {
     expect(find.byTooltip('Убрать изображение'), findsOneWidget);
 
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
@@ -465,7 +465,7 @@ void main() {
     expect(find.byTooltip('Убрать миниатюру'), findsOneWidget);
 
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
@@ -492,7 +492,7 @@ void main() {
     expect(find.byTooltip('Убрать изображение'), findsOneWidget);
 
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final updated = await repository.getById(saved.id!);
@@ -515,7 +515,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final updated = await repository.getById(saved.id!);
@@ -537,7 +537,7 @@ void main() {
       'Жим штанги лёжа',
     );
     await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final updated = await repository.getById(created.id!);
@@ -568,7 +568,7 @@ void main() {
     await tester.pump();
 
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
