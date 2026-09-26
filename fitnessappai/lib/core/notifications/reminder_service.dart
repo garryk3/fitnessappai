@@ -19,6 +19,25 @@ class NotificationPermissionStatus {
   final bool exactAlarmsEnabled;
 }
 
+/// Флаг процесса: launch details холодного старта уже прочитаны.
+///
+/// На Android плагин выводит ответ из launch Intent главной активности
+/// (`mainActivity.getIntent()`): Intent не очищается и не меняется, пока
+/// жива активность, поэтому `getNotificationAppLaunchDetails()` вернул бы
+/// тот же payload при любом повторном вызове. Он описывает запуск
+/// **активности**, а не конкретного экземпляра сервиса, и потому читается
+/// ровно один раз: иначе пересоздание `ReminderService` (например, импорт
+/// БД) доставило бы payload повторно и продублировало переход на уже
+/// открытый день.
+bool _launchDetailsRead = false;
+
+/// Сбрасывает [_launchDetailsRead] для тестов.
+///
+/// Каждый тест имитирует новый запуск процесса, поэтому без сброса сценарии
+/// начнут зависеть от порядка выполнения.
+@visibleForTesting
+void resetLaunchDetailsForTests() => _launchDetailsRead = false;
+
 /// Управление еженедельными уведомлениями о тренировочных днях.
 ///
 /// Планирование через [FlutterLocalNotificationsPlugin] с повторением
@@ -190,6 +209,13 @@ class ReminderService {
     _initialized = true;
     // Приложение могло быть запущено тапом по уведомлению: событие дошло до
     // плагина до инициализации, поэтому payload приходит только здесь.
+    // Читаем не больше раза за процесс (см. [_launchDetailsRead]): сервис
+    // пересоздаётся при импорте БД, и повторное чтение продублировало бы
+    // переход на уже открытый день.
+    if (_launchDetailsRead) {
+      return;
+    }
+    _launchDetailsRead = true;
     final launchDetails = await _plugin.getNotificationAppLaunchDetails();
     final launchResponse = launchDetails?.notificationResponse;
     if ((launchDetails?.didNotificationLaunchApp ?? false) &&
