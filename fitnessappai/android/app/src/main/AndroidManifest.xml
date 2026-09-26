@@ -8,7 +8,6 @@
     <!-- Foreground service активной тренировки (flutter_foreground_task). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <application
         android:label="Личный тренер"
         android:name="${applicationName}"

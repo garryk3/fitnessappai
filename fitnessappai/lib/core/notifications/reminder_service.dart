@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -7,6 +5,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
+import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 
 /// Статус разрешений на уведомления.
@@ -40,8 +39,27 @@ class ReminderService {
   static const String _channelDescription =
       'Еженедельные напоминания о тренировочных днях';
   static const String _iconName = 'ic_stat_launcher';
+  static const String _soundName = 'notification';
 
   bool _initialized = false;
+
+  void Function(int programDayId)? _onReminderTapped;
+  int? _pendingProgramDayId;
+
+  /// Обработчик тапа по уведомлению; получает `programDayId` из payload.
+  ///
+  /// Задаётся слоем приложения, у которого есть роутер: [ReminderService]
+  /// создаётся в контейнере до появления UI.
+  void Function(int programDayId)? get onReminderTapped => _onReminderTapped;
+
+  set onReminderTapped(void Function(int programDayId)? handler) {
+    _onReminderTapped = handler;
+    final pending = _pendingProgramDayId;
+    if (handler != null && pending != null) {
+      _pendingProgramDayId = null;
+      handler(pending);
+    }
+  }
 
   /// Статус разрешений на уведомления.
   Future<NotificationPermissionStatus> checkPermissions() async {
@@ -50,9 +68,14 @@ class ReminderService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android == null) {
+      // На не-Android платформах локальных уведомлений нет вовсе, поэтому
+      // оба флага всегда «не выдано». Прежде здесь возвращалось true/true,
+      // а позже — notificationsEnabled вычислялся из наличия
+      // запланированных напоминаний, что смешивало статус разрешения с
+      // состоянием расписания и снова показывало ложное «выдано».
       return const NotificationPermissionStatus(
-        notificationsEnabled: true,
-        exactAlarmsEnabled: true,
+        notificationsEnabled: false,
+        exactAlarmsEnabled: false,
       );
     }
     final notificationsEnabled =
@@ -144,7 +167,10 @@ class ReminderService {
       macOS: DarwinInitializationSettings(),
       linux: LinuxInitializationSettings(defaultActionName: 'Открыть'),
     );
-    await _plugin.initialize(settings: settings);
+    await _plugin.initialize(
+      settings: settings,
+      onDidReceiveNotificationResponse: handleNotificationResponse,
+    );
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -156,12 +182,41 @@ class ReminderService {
         description: _channelDescription,
         importance: Importance.high,
         playSound: true,
-        sound: const RawResourceAndroidNotificationSound('notification'),
+        sound: const RawResourceAndroidNotificationSound(_soundName),
         enableVibration: true,
       );
       await android.createNotificationChannel(channel);
     }
     _initialized = true;
+    // Приложение могло быть запущено тапом по уведомлению: событие дошло до
+    // плагина до инициализации, поэтому payload приходит только здесь.
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    final launchResponse = launchDetails?.notificationResponse;
+    if ((launchDetails?.didNotificationLaunchApp ?? false) &&
+        launchResponse != null) {
+      handleNotificationResponse(launchResponse);
+    }
+  }
+
+  /// Разбирает нажатие на уведомление и передаёт `programDayId` обработчику.
+  ///
+  /// Открыт наружу (а не приватный метод) ради тестов: логика отложенной
+  /// доставки payload'а — единственное, что отличает запуск тапом от обычного
+  /// старта, и она обязана быть покрыта.
+  @visibleForTesting
+  void handleNotificationResponse(NotificationResponse response) {
+    final programDayId = int.tryParse(response.payload ?? '');
+    if (programDayId == null) {
+      return;
+    }
+    final handler = _onReminderTapped;
+    if (handler == null) {
+      // Приложение стартовало тапом по уведомлению: обработник появится
+      // только после сборки UI, payload ждёт его.
+      _pendingProgramDayId = programDayId;
+      return;
+    }
+    handler(programDayId);
   }
 
   /// Планирует еженедельное уведомление для дня по [dayOfWeek].
@@ -175,15 +230,20 @@ class ReminderService {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    if (android != null) {
-      final enabled = await android.areNotificationsEnabled() ?? false;
-      if (!enabled) {
-        log(
-          'Уведомления отключены пользователем, пропуск планирования',
-          name: 'ReminderService',
-        );
-        return;
-      }
+    if (android == null) {
+      // Планируемые локальные уведомления поддерживает только Android. Без
+      // этой проверки прямой вызов (например, при сохранении программы)
+      // дошёл бы до zonedSchedule и на Linux попытался завести DBus-будильник,
+      // а на web упал бы с MissingPluginException.
+      return;
+    }
+    final enabled = await android.areNotificationsEnabled() ?? false;
+    if (!enabled) {
+      logNotificationIssue(
+        'Уведомления отключены пользователем, пропуск планирования '
+        'дня ${reminder.programDayId}',
+      );
+      return;
     }
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextInstance(
@@ -192,7 +252,7 @@ class ReminderService {
       hour: reminder.hour,
       minute: reminder.minute,
     );
-    final canExact = await android?.canScheduleExactNotifications() ?? false;
+    final canExact = await android.canScheduleExactNotifications() ?? false;
     await _plugin.zonedSchedule(
       id: reminder.programDayId,
       title: programName,
@@ -205,7 +265,7 @@ class ReminderService {
           channelDescription: _channelDescription,
           importance: Importance.high,
           priority: Priority.high,
-          sound: RawResourceAndroidNotificationSound('notification'),
+          sound: RawResourceAndroidNotificationSound(_soundName),
         ),
         iOS: DarwinNotificationDetails(),
         macOS: DarwinNotificationDetails(),
@@ -223,20 +283,51 @@ class ReminderService {
     await _plugin.cancel(id: programDayId);
   }
 
+  /// Отменяет все запланированные уведомления.
+  ///
+  /// Нужен перед полной перепланировкой: аварийные будильники удалённых дней
+  /// иначе остаются жить и напоминают о несуществующих тренировках.
+  Future<void> cancelAll() async {
+    await _plugin.cancelAll();
+  }
+
   /// Перепланирует все сохранённые напоминания (после импорта БД).
+  ///
+  /// Ошибка отдельного дня не должна срывать перепланирование остальных:
+  /// иначе одно «битое» напоминание тихо оставляет весь список неактуальным.
   Future<void> rescheduleAll() async {
+    // Планируемые локальные уведомления есть только на Android. На остальных
+    // платформах расписание нечего переносить: `schedule()` там всё равно
+    // дошёл бы до `zonedSchedule` и попытался завести датчиковый будильник
+    // (DBus), который без запущенного приложения не сработает никогда.
+    if (_plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >() ==
+        null) {
+      return;
+    }
     final items = await _repository.allScheduled();
     for (final item in items) {
-      if (item.dayOfWeek == null || !item.reminder.enabled) {
-        await cancel(item.reminder.programDayId);
-        continue;
+      final programDayId = item.reminder.programDayId;
+      try {
+        if (item.dayOfWeek == null || !item.reminder.enabled) {
+          await cancel(programDayId);
+          continue;
+        }
+        await schedule(
+          item.reminder,
+          dayOfWeek: item.dayOfWeek!,
+          programName: item.programName,
+          dayNumber: item.dayNumber,
+        );
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось перепланировать напоминание дня $programDayId',
+          error: e,
+          stackTrace: st,
+        );
       }
-      await schedule(
-        item.reminder,
-        dayOfWeek: item.dayOfWeek!,
-        programName: item.programName,
-        dayNumber: item.dayNumber,
-      );
     }
   }
 
@@ -265,13 +356,22 @@ class ReminderService {
     return scheduled;
   }
 
+  /// Инициализирует базу часовых поясов и локальную зону.
+  ///
+  /// Без явного `setLocalLocation` планирование уходит в UTC, и уведомления
+  /// приходят со сдвигом на разницу часов — молча. Поэтому неудача видна в
+  /// логе, даже когда часовой пояс определить не удалось.
   Future<void> _initTimeZone() async {
     tz_data.initializeTimeZones();
     try {
       final name = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(name.identifier));
-    } on Exception {
-      // Оставляем локацию по умолчанию (UTC), если таймзону получить нельзя.
+    } on Exception catch (e) {
+      logNotificationIssue(
+        'Не удалось определить локальный часовой пояс, напоминания '
+        'планируются в UTC',
+        error: e,
+      );
     }
   }
 }

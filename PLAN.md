@@ -2986,3 +2986,122 @@ OD-ран (`color-expert` + `design-md`, run succeeded) рассчитал ди�
   6. Опционально после зелёного: `wm size`-сценарий широкого эмулятора для самопроверки rail на Android; записать команду прогона в AGENTS.md/README як опцию перед релизами.
 - **Тесты:** `flutter test integration_test -d emulator-5554` (эмулятор, phone) и `-d linux` (desktop) — оба 20/20 (проверено при закрытии).
 - **Замечания:** выполнено; на статусы 38.1/45.8 не влияло. Опция п. 6 (wm size-сценарий широкого эмулятора + команда в AGENTS.md) — на потом, не блокер.
+
+## Этап 46: Уведомления о тренировках в release-сборке (ветка task/46-release-notification-resources)
+
+| Задача | Название | Статус | Ветка | Дата завершения |
+|---|---|---|---|---|
+| 46.1 | Ресурсы иконки/звука уведомлений вырезаются R8 в release → уведомления не приходят | [x] | task/46-release-notification-resources | 2026-09-26 |
+| 46.2 | Ошибки планирования не видны в release (логи вырезаются AOT) | [x] | task/46-release-notification-resources | 2026-09-26 |
+| 46.3 | Напоминания не перепланируются при возврате в приложение (resume) | [x] | task/46-release-notification-resources | 2026-09-26 |
+| 46.4 | Тап по уведомлению ничего не делает (payload не обрабатывается) | [x] | task/46-release-notification-resources | 2026-09-26 |
+| 46.5 | После импорта БД остаются «сиротские» будильники удалённых дней | [x] | task/46-release-notification-resources | 2026-09-26 |
+| 46.6 | `checkPermissions()` на не-Android отдаёт `true/true` (ложное «всё выдано») | [x] | task/46-release-notification-resources | 2026-09-26 |
+| 46.7 | Убрать мёртвое разрешение `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | [x] | task/46-release-notification-resources | 2026-09-26 |
+| 46.8 | Payload холодного старта может доставиться повторно после импорта БД (новый `ReminderService` заново читает `getNotificationAppLaunchDetails()`) | [ ] | — | — |
+
+### Диагностика (2026-09-25, корень дефекта)
+
+Симптом: у пользователей release-сборки не приходят уведомления о тренировках; в эмуляторе (debug) всё работает.
+
+**Проверено и уже корректно** (гипотезы, не являющиеся причиной):
+- `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`, `VIBRATE` объявлены в `android/app/src/main/AndroidManifest.xml`;
+- `ScheduledNotificationBootReceiver` с `BOOT_COMPLETED`/`MY_PACKAGE_REPLACED` объявлен (манифест:48-57);
+- `androidScheduleMode: exactAllowWhileIdle` с фолбэком на `inexactAllowWhileIdle` (`reminder_service.dart:213-215`);
+- канал `AndroidNotificationChannel(importance: Importance.high, playSound: true, enableVibration: true)` (`reminder_service.dart:153-161`);
+- `USE_EXACT_ALARM` отсутствует — верно для `minSdk = 31` (Play его ограничивает);
+- release подписан debug-ключом (`android/app/build.gradle.kts:34`) — на уведомления не влияет.
+
+**Причина: shrinking ресурсов (не ProGuard).** Flutter **принудительно** включает минификацию и шринковку ресурсов для release, независимо от `build.gradle` приложения — `packages/flutter_tools/gradle/src/main/kotlin/FlutterPlugin.kt:216-227`:
+
+```kotlin
+if (FlutterPluginUtils.shouldShrinkResources(project)) {   // по умолчанию true (FlutterPluginUtils.kt:227)
+    releaseBuildType.isMinifyEnabled = true                // принудительно
+    releaseBuildType.isShrinkResources = isBuiltAsApp()    // true для :app
+    val proguardRulesPro = File("${project.projectDir}/proguard-rules.pro")
+    if (proguardRulesPro.exists()) { ... }                // файла в проекте НЕТ
+}
+```
+
+`res/drawable/ic_stat_launcher.xml` и `res/raw/notification.mp3` адресуются **только из Dart** через `Resources.getIdentifier` (иконка — `AndroidInitializationSettings('ic_stat_launcher')`, звук — `RawResourceAndroidNotificationSound('notification')`). Статических ссылок на них в `android/app/src/` нет: плейсхолдер `manifestPlaceholders["default_notification_icon"]` (`build.gradle.kts:27`) объявлен, но `${default_notification_icon}` в манифесте не используется, файла `res/raw/keep.xml` нет. Шринковщик не видит ссылок → вырезает оба ресурса.
+
+Цепочка отказа (полностью бесшумная):
+1. `ReminderService.initialize()` → `hasInvalidIcon` (плагин `:1850`) → `getIdentifier` возвращает `0` → `result.error(INVALID_ICON_ERROR_CODE)`;
+2. каждый `zonedSchedule` → `extractNotificationDetails` → `hasInvalidRawSoundResource` (плагин `:1786-1803`) → `0` → `result.error(INVALID_SOUND_ERROR_CODE)`;
+3. оба исключения гасятся в `try/catch` с `dart:developer log()` (`bootstrap.dart:45-54`), а `log()` **вырезается из AOT/release**;
+4. итог: ни один будильник не планируется. Debug-сборка не шринкуется → ресурсы на месте → работает.
+
+**Гипотеза про R8/ProGuard частично верна, но не является причиной для v22.3.0:** R8 действительно включается без единого проектного правила (файла `proguard-rules.pro` нет), однако README плагина (строка 465) указывает, что начиная с v19 правила для Gson поставляются автоматически, и `build.gradle` плагина v22.3.0 не содержит `consumerProguardFiles`. Тем не менее правила добавляются как дешёвая страховка (46.1).
+
+### 46.1 — Ресурсы иконки/звука вырезаются R8 в release
+- **Рабочий план (2026-09-25):**
+  1. `android/app/src/main/res/raw/keep.xml` (новый) — канонический способ из README плагина (строка 461):
+     ```xml
+     <?xml version="1.0" encoding="utf-8"?>
+     <resources xmlns:tools="http://schemas.android.com/tools"
+         tools:keep="@drawable/ic_stat_launcher,@raw/notification" />
+     ```
+  2. `android/app/proguard-rules.pro` (новый) — страховочные `-keep class com.dexterous.** { *; }`, `-keepattributes Signature`, `-keep class * extends com.google.gson.reflect.TypeToken`; Flutter подхватит файл автоматически (`FlutterPlugin.kt:224-226`).
+  3. Проверка сборкой: `flutter clean && flutter build apk --release` (локально может потребоваться `JAVA_HOME` на JDK 17/21 — см. AGENTS.md), затем `unzip -l build/app/outputs/flutter-apk/app-release.apk | grep -E 'ic_stat_launcher|notification\.mp3'` — **оба ресурса должны присутствовать** (до фикса отсутствуют).
+- **Тест:** `test/core/notifications/reminder_service_test.dart` — без изменений (дефект уровня gradle-ресурсов, Dart-тестами не ловится); проверка — содержимое release-APK.
+
+### 46.2 — Ошибки планирования не видны в release
+- **Проблема:** `bootstrap.dart:45-54` и `register_core_services.dart:143-147` гасят ошибки в `dart:developer log()`, который вырезается из AOT-сборки — диагностика полностью недоступна в release (именно поэтому дефект 46.1 не диагностировался месяцами).
+- **Рабочий план (2026-09-25):** добавить диагностику, работающую в release: `dart:developer log()` + `debugPrint` (через общий хелпер в `lib/core/notifications/`), с сохранением текущего поведения в debug. Ошибки планирования уведомлений — предупреждение, не фатальная ошибка (старт приложения не блокируется).
+- **Тесты:** `reminder_service_test.dart` — «rescheduleAll при ошибке: ошибка одного дня не срывает перепланирование остальных» (исключение `schedule` гасится и логируется, остальные дни планируются).
+
+### 46.3 — Напоминания не перепланируются при возврате в приложение
+- **Проблема:** обработчика `didChangeAppLifecycleState` для напоминаний в проекте нет. Если пользователь отозвал точные будильники или сменил часовой пояс, будильники остаются в старом состоянии до следующего холодного старта.
+- **Рабочий план (2026-09-25):** `WidgetsBindingObserver` в `_FitnessAppAiState` (`lib/main.dart`) → на `AppLifecycleState.resumed` вызывать `ReminderService.rescheduleAll()` (через `locator`, без DI-конструктора), с `try/catch` через хелпер 46.2. Отдельно зафиксировано решение: debounce/защита «от повторного срабатывания» **не делается** — `id` уведомления равен `programDayId`, поэтому повторный `rescheduleAll` перезаписывает тот же будильник, а не плодит дубли (покрыто тестом «повторное перепланирование не плодит будильники, а заменяет их»). Перепланирование на каждом `resumed` нужно намеренно: за время в фоне могли смениться часовой пояс или точность будильников. Дополнительно на не-Android добавлен ранний выход (`resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>() == null`) в **обоих** путях: и в `rescheduleAll()`, и в `schedule()`. Раньше выход стоял только в `rescheduleAll()`, и прямой вызов `schedule()` при сохранении программы (`program_builder_screen.dart:502`) на не-Android доходил до `zonedSchedule`: на Linux это попытка завести DBus-будильник, который без запущенного приложения не сработает никогда, на web — `MissingPluginException`. Тесты: «rescheduleAll вне Android не планирует и не ходит в БД» и «прямой schedule вне Android не доходит до плагина».
+- **Тесты:** `test/app/reminder_lifecycle_test.dart` — «при возврате в приложение напоминания перепланируются» (widget-тест на `resumed`), «после перезапуска приложения напоминания переподключены»; `reminder_service_test.dart` — «повторное перепланирование не плодит будильники, а заменяет их».
+
+### 46.4 — Тап по уведомлению ничего не делает
+- **Проблема:** `initialize()` (`reminder_service.dart:147`) не передаёт `onDidReceiveNotificationResponse`, а `getNotificationAppLaunchDetails()` не вызывается — `payload` (`reminder_service.dart:217`) мёртвый.
+- **Рабочий план (2026-09-25):**
+  1. `AppRouter` (`lib/app/router.dart:38`) — добавить `static final GlobalKey<NavigatorState> navigatorKey` и передать его в `GoRouter` (нужен для навигации из callback, где нет `BuildContext`).
+  2. `ReminderService` — регистрация `onDidReceiveNotificationResponse` + чтение `getNotificationAppLaunchDetails()` при старте; сеттэбл `void Function(int programDayId)? onReminderTapped`.
+  3. `WorkoutReminderRepository.targetForDay(int dayId)` — возвращает `programId` + `dayIndex` для `ProgramDayId` из payload (отдельный запрос к `programDays`, а не через join `allScheduled()`: у удалённого/битого дня записи в `allScheduled()` нет, а тап по такому уведомлению обязан обрабатываться без падения — TC-081).
+  4. Навигация на существующий маршрут `/programs/:id/day/:dayIndex` (`router.dart:159`).
+- **Тесты:** `reminder_service_test.dart`, группа «холодный старт из уведомления» — «payload запуска доставляется, даже если обработчик ещё не назначен», «payload запуска сразу уходит назначенному обработчику», «обычный запуск без уведомления обработчик не трогает», «повторный initialize не дублирует доставку payload», «битый payload при запуске не роняет инициализацию»; группа «тап по уведомлению» — «payload передаётся обработчику сразу», «payload без числа игнорируется», «payload, пришедший до назначения обработчика, не теряется», «отложенный payload доставляется только один раз»; `reminder_lifecycle_test.dart` — «тап по уведомлению открывает день тренировки».
+  Ранее ветка `getNotificationAppLaunchDetails()` считалась непокрытой (метод не стаббился в моках, а тестов `initialize()` не было вовсе) — закрыта отдельной группой из 5 тестов. TC-080 остаётся ручным только как подтверждение на устройстве.
+
+### 46.5 — После импорта БД остаются «сиротские» будильники
+- **Проблема:** `_rebuildAfterImport` (`register_core_services.dart:132`) полностью заменяет БД, но будильники дней, исчезнувших из импорта, не отменяются — пользователь получает уведомления о несуществующих тренировках.
+- **Рабочий план (2026-09-25):** `ReminderService.cancelAll()` + вызов перед `rescheduleAll()` в `_rebuildAfterImport`.
+- **Тесты:** `reminder_service_test.dart` — «cancelAll отменяет все запланированные уведомления»; `test/core/di/register_core_services_test.dart` — «после импорта сначала отменяем, потом создаём канал, потом планируем» и «сбой на этапе initialize не пробрасывается и не отменяет импорт». Для этого порядок вынесен из приватной `_rebuildAfterImport` в публичную `restoreRemindersAfterImport(ReminderService)` — иначе функция не тестируется, так как `sl.reset()` внутри неё уничтожает подставные зависимости.
+
+### 46.6 — `checkPermissions()` на не-Android отдаёт `true/true`
+- **Проблема:** `reminder_service.dart:52-57` при `android == null` возвращает оба флага `true` — экран «Настройки» показывает зелёные разрешения, хотя ничего не запланировано.
+- **Рабочий план (2026-09-25):** возвращать `false/false`; `_NotificationsSection` (`settings_screen.dart:397-431`) отрисует реальное состояние с кнопкой.
+- **Тесты:** `reminder_service_test.dart`, группа «checkPermissions вне Android» — «оба разрешения не выданы независимо от расписания» и «статус не выводится из расписания — репозиторий не опрашивается». `settings_screen_test.dart` не менялся: он использует собственный фейковый `ReminderService` и перекрывает `checkPermissions()`, поэтому экран на не-Android (`_NotificationsSection`, `settings_screen.dart:393-428`) тестируется только косвенно; сценарий TC-083 оставлен ручным.
+
+### 46.7 — Убрать мёртвое разрешение `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+- **Проблема:** разрешение объявлено (`AndroidManifest.xml:11`), но ни одна строка кода его не запрашивает (`permission_handler` в проекте нет). Напоминания планируются через `setAlarmClock` (`exactAllowWhileIdle`), поэтому Doze их не блокирует; разрешение не нужно и создаёт риск вопросов при публикации в Play.
+- **Рабочий план (2026-09-25):** удалить строку из манифеста; новых зависимостей не добавлять.
+- **Тесты:** проверка сборочной конфигурации (манифест собранного APK).
+
+### Сделано (2026-09-26)
+- **46.1** — `android/app/src/main/res/raw/keep.xml` защищает `@drawable/ic_stat_launcher` и `@raw/notification`; `android/app/proguard-rules.pro` добавляет keep-правила `com.dexterous`, `Signature`, `TypeToken`, `JsonAdapter` (защита R8, Flutter включает её принудительно).
+- **46.2** — `lib/core/notifications/notification_log.dart`: `logNotificationIssue()` пишет через `developer.log` и `debugPrint`; вызывается в `ReminderService`, `bootstrap.dart`, `register_core_services.dart` и `main.dart`. Дополнительно: в `rescheduleAll()` ошибка перепланирования одного дня гасится поимкой `try/catch` (остальные дни планируются), а неудачный `FlutterTimezone.getLocalTimezone()` логируется вместо молчаливого перехода на UTC.
+- **46.3** — `main.dart`: `didChangeAppLifecycleState(resumed)` → `rescheduleAll()`. Дополнительно найдено и исправлено: после импорта БД (`locator.reset()`) UI продолжал держать **старый** `ReminderService` с уже закрытой базой — `_handleRestart()` теперь переподключает callback и lifecycle к новому экземпляру.
+- **46.4** — `ReminderService.handleNotificationResponse()` + `onReminderTapped` (очередь для холодного старта), `AppRouter.navigatorKey`, маршрут `/programs/:id/day/:dayIndex`; `WorkoutReminderRepository.targetForDay()` резолвит `programId`/`dayIndex` из payload.
+- **46.5** — `ReminderService.cancelAll()`; в `_rebuildAfterImport` порядок `cancelAll()` → `initialize()` → `rescheduleAll()`.
+- **46.6** — на не-Android `checkPermissions()` всегда возвращает `false/false` (изменение семантики 46.3 относится к `rescheduleAll`, а не к этому пункту).
+- **Вне плана:** в `android/app/build.gradle.kts` добавлен поясняющий комментарий над `manifestPlaceholders["default_notification_icon"]` (сам плейсолдер не работает — ресурс держит `keep.xml`), и порядок восстановления напоминаний вынесен в публичную `restoreRemindersAfterImport()` ради тестируемости (см. тесты 46.5).
+- **Тесты этапа:** `test/app/reminder_lifecycle_test.dart` (4 widget-теста: перепланирование на `resumed`, старт без `ReminderService`, тап → `ProgramDayBuilderScreen`, переподключение сервиса после `restartApp()`), `test/core/di/register_core_services_test.dart` (2 теста на порядок и устойчивость), `test/core/notifications/reminder_service_test.dart` (+5 тестов холодного старта, +1 на ранний выход `rescheduleAll` вне Android, +1 на ранний выход прямого `schedule` вне Android), `test/features/programs/ui/program_builder_reminder_test.dart` (заглушка Android-реализации плагина — иначе ранний выход `schedule()` делал бы кейс про планирование вхолостую), `test/features/programs/data/workout_reminder_repository_test.dart`.
+- Ссылки в разделе «Диагностика» — снимок состояния на 2026-09-25 (до фикса); после правок номера строк в них сдвинуты. Промежуточный вариант вычислял `notificationsEnabled` из наличия активных напоминаний, но это смешивало статус разрешения с расписанием и снова давало ложное «выдано».
+- **46.7** — `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` удалён из `AndroidManifest.xml`.
+
+### Верификация (2026-09-26)
+- `dart format --set-exit-if-changed` — чисто; `flutter analyze --fatal-infos` — `No issues found`; `flutter test` — **877 passed**.
+- **46.1 доказан экспериментально:** release-APK, собранный **с** `keep.xml`, содержит `drawable/ic_stat_launcher` и `raw/notification`; контрольная сборка **без** `keep.xml` не содержит ни одного из них (77.1 МБ против 77.8 МБ). Проверка через `aapt2 dump resources`, т.к. в release AAPT2 сокращает пути (`unzip -l` по именам файлов не работает).
+- **46.7 проверен по собранному APK:** `aapt2 dump permissions` не содержит `IGNORE_BATTERY`, `POST_NOTIFICATIONS`/`SCHEDULE_EXACT_ALARM`/`RECEIVE_BOOT_COMPLETED` на месте.
+- Сборочное окружение: Gradle 9.1 не понимает JDK 25 из Android Studio — Flutter переключён на JDK 21 (`flutter config --jdk-dir`). Ошибка `Index: 1, Size: 1` оказалась не Java, а пустым (0 байт) артефактом `build/app/intermediates/flutter/release/flutter_build.d` — лечится `flutter clean`.
+
+### Известные долги (найдены при ревью этапа 46, не входят в 46.1–46.7)
+- **46.8 — повторная доставка payload холодного старта.** После импорта БД `_rebuildAfterImport` вызывает `initialize()` на **новом** экземпляре `ReminderService`, а `initialize()` заново читает `getNotificationAppLaunchDetails()`. На Android это нативное поле живёт весь процесс, поэтому payload холодного старта может быть обработан второй раз — пользователь увидит дублирующий переход на уже открытый день. Не падение; воспроизводится, только если импортировать БД сразу после запуска из уведомления. Требует состояния уровня процесса («payload запуска потреблён один раз»), поэтому не исправлено в рамках этапа 46 и заведено отдельной задачей.
+- Мелочь, не заводилась задачей: в `initialize()` остались `DarwinInitializationSettings(requestAlertPermission: true, …)` для платформ, которых в проекте нет (`ios`/`macos` каталогов нет) — мёртвая конфигурация, противоречащая комментарию о том, что разрешения на старте не запрашиваются.
+
+### Общие примечания
+- e2e (`integration_test`) перед PR **не** прогоняются — по решению пользователя (2026-09-25).
+- Верификация релиза: пункт 46.3 закрывает претензию «в эмуляторе всё ок» только частично — debug по-прежнему не шринкуется, поэтому регрессию 46.1 ловит только проверка содержимого release-APK.

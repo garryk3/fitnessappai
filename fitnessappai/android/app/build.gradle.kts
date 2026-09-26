@@ -24,6 +24,11 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
+        // Плейсхолдер для плагинов, читающих иконку уведомления из манифеста.
+        // Сам flutter_local_notifications берёт иконку из Dart
+        // (AndroidInitializationSettings), а R8-шринковка ресурсов
+        // отключается через res/raw/keep.xml — placeholder шринковщику
+        // невидим и сам по себе ресурс не сохраняет.
         manifestPlaceholders["default_notification_icon"] = "@drawable/ic_stat_launcher"
     }
 

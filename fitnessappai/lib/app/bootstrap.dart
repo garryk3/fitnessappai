@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/register_core_services.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 
@@ -44,13 +45,23 @@ Future<void> bootstrap({
   }
   try {
     await sl.get<ReminderService>().initialize();
-  } catch (e) {
-    log('Ошибка инициализации напоминаний', error: e, name: 'bootstrap');
+  } catch (e, st) {
+    logNotificationIssue(
+      'Ошибка инициализации напоминаний',
+      error: e,
+      stackTrace: st,
+      name: 'bootstrap',
+    );
   }
   try {
     await sl.get<ReminderService>().rescheduleAll();
-  } catch (e) {
-    log('Ошибка перепланирования напоминаний', error: e, name: 'bootstrap');
+  } catch (e, st) {
+    logNotificationIssue(
+      'Ошибка перепланирования напоминаний',
+      error: e,
+      stackTrace: st,
+      name: 'bootstrap',
+    );
   }
   try {
     restoredCheckpoint = await WorkoutCheckpoint.load();
