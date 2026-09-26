@@ -36,6 +36,10 @@ void main() {
   });
 
   setUp(() {
+    // Launch details — событие уровня процесса, а не экземпляра. Сброс на
+    // уровне файла, а не группы: любая будущая группа, зовущая initialize(),
+    // иначе молча потеряла бы launch details предыдущего теста.
+    resetLaunchDetailsForTests();
     plugin = _MockNotificationsPlugin();
     android = _MockAndroidPlugin();
     repository = _MockReminderRepository();
@@ -631,6 +635,51 @@ void main() {
 
       await expectLater(service.initialize(), completes);
       expect(tapped, isEmpty);
+    });
+
+    test(
+      'второй экземпляр сервиса в том же процессе не перечитывает payload',
+      () async {
+        // Сценарий импорта БД: контейнер пересоздан, ReminderService новый,
+        // а launch Intent главной активности плагином не очищается. Повторное чтение
+        // продублировало бы переход на уже открытый день.
+        when(
+          () => plugin.getNotificationAppLaunchDetails(),
+        ).thenAnswer((_) async => launchDetails(launched: true, payload: '42'));
+        final tapped = <int>[];
+        service.onReminderTapped = tapped.add;
+        await service.initialize();
+
+        // Совершенно новый экземпляр с тем же плагином — как после импорта.
+        final recreated = ReminderService(
+          repository: repository,
+          plugin: plugin,
+        )..onReminderTapped = tapped.add;
+        await recreated.initialize();
+
+        expect(tapped, [42], reason: 'переход ровно один за процесс');
+        verify(() => plugin.getNotificationAppLaunchDetails()).called(1);
+      },
+    );
+
+    test('новый процесс снова читает launch details', () async {
+      when(
+        () => plugin.getNotificationAppLaunchDetails(),
+      ).thenAnswer((_) async => launchDetails(launched: true, payload: '42'));
+      final tapped = <int>[];
+      service.onReminderTapped = tapped.add;
+      await service.initialize();
+      expect(tapped, [42]);
+
+      // Новый запуск процесса — флаг сброшен, payload должен обработаться.
+      resetLaunchDetailsForTests();
+      final afterRestart = ReminderService(
+        repository: repository,
+        plugin: plugin,
+      )..onReminderTapped = tapped.add;
+      await afterRestart.initialize();
+
+      expect(tapped, [42, 42]);
     });
   });
 
