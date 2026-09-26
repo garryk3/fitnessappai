@@ -25,12 +25,16 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 class _MockNotificationsPlugin extends Mock
     implements FlutterLocalNotificationsPlugin {}
 
+class _MockAndroidPlugin extends Mock
+    implements AndroidFlutterLocalNotificationsPlugin {}
+
 void main() {
   late AppDatabase db;
   late ProgramRepository repository;
   late ExerciseRepository exerciseRepository;
   late WorkoutReminderRepository reminderRepository;
   late _MockNotificationsPlugin plugin;
+  late _MockAndroidPlugin android;
   late ReminderService reminderService;
 
   setUpAll(() {
@@ -47,6 +51,19 @@ void main() {
     exerciseRepository = ExerciseRepository(db, MediaStore());
     reminderRepository = WorkoutReminderRepository(db);
     plugin = _MockNotificationsPlugin();
+    // Напоминания планируются только на Android: без этой заглушки
+    // ReminderService.schedule() выходит раньше и zonedSchedule не вызывается.
+    android = _MockAndroidPlugin();
+    when(
+      () => plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >(),
+    ).thenReturn(android);
+    when(() => android.areNotificationsEnabled()).thenAnswer((_) async => true);
+    when(
+      () => android.canScheduleExactNotifications(),
+    ).thenAnswer((_) async => true);
     reminderService = ReminderService(
       repository: reminderRepository,
       plugin: plugin,

@@ -1,5 +1,3 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -13,6 +11,7 @@ import 'package:fitnessappai/core/database/seed/reference_seeder.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/data/seed/exercise_seeder.dart';
@@ -134,13 +133,25 @@ Future<void> _rebuildAfterImport(ServiceLocator sl) async {
   final database = sl.get<AppDatabase>();
   await ReferenceSeeder(database).seed();
   await seedExercises(sl);
+  await restoreRemindersAfterImport(sl.get<ReminderService>());
+}
+
+/// Восстанавливает напоминания после импорта БД.
+///
+/// Порядок обязателен: будильники дней, исчезнувших из импортированной БД,
+/// иначе остались бы жить и напоминали бы о несуществующих тренировках,
+/// поэтому сначала всё отменяем, потом пересоздаём канал и только затем
+/// планируем заново. Сбой не должен прерывать импорт.
+Future<void> restoreRemindersAfterImport(ReminderService reminders) async {
   try {
-    final reminders = sl.get<ReminderService>();
+    await reminders.cancelAll();
     await reminders.initialize();
     await reminders.rescheduleAll();
-  } catch (e) {
-    developer.log(
-      'Reminder init failed after import (non-fatal): $e',
+  } catch (e, st) {
+    logNotificationIssue(
+      'Напоминания не перепланированы после импорта (не критично)',
+      error: e,
+      stackTrace: st,
       name: 'SyncService',
     );
   }

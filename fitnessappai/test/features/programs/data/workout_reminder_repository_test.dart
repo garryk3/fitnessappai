@@ -128,4 +128,35 @@ void main() {
     await programRepository.removeDay(day.id!);
     expect(await repository.allScheduled(), isEmpty);
   });
+
+  group('targetForDay', () {
+    test(
+      'возвращает программу и индекс дня для перехода из уведомления',
+      () async {
+        final program = await programRepository.create(
+          Program(
+            name: 'Сплит',
+            daysCount: 2,
+            createdAt: DateTime(2024, 1, 1),
+            updatedAt: DateTime(2024, 1, 1),
+          ),
+          [
+            ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),
+            ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: 4),
+          ],
+        );
+        final days = await programRepository.getDays(program.id!);
+
+        final target = await repository.targetForDay(days[1].id!);
+
+        expect(target, isNotNull);
+        expect(target!.programId, program.id);
+        expect(target.dayIndex, 1);
+      },
+    );
+
+    test('для несуществующего дня возвращает null', () async {
+      expect(await repository.targetForDay(9999), isNull);
+    });
+  });
 }

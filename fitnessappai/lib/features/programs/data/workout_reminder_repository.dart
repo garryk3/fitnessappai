@@ -19,6 +19,9 @@ class ReminderSchedule {
   final int dayNumber;
 }
 
+/// Идентификаторы дня тренировки, нужные для перехода из уведомления.
+typedef ReminderTarget = ({int programId, int dayIndex});
+
 /// Репозиторий напоминаний о тренировочных днях.
 class WorkoutReminderRepository {
   WorkoutReminderRepository(this._db, {DataChangeNotifier? changes})
@@ -75,6 +78,21 @@ class WorkoutReminderRepository {
       _db.workoutReminders,
     )..where((t) => t.programDayId.equals(dayId))).go();
     _changes.notifyChanged();
+  }
+
+  /// Ищет программу и индекс дня по [dayId].
+  ///
+  /// Уведомление несёт в payload только `programDayId`, а маршрут листа дня
+  /// требует пару «программа + индекс», поэтому они и достаются здесь.
+  /// `null`, если день удалён (например, импортирована база без него).
+  Future<ReminderTarget?> targetForDay(int dayId) async {
+    final row = await (_db.select(
+      _db.programDays,
+    )..where((t) => t.id.equals(dayId))).getSingleOrNull();
+    if (row == null) {
+      return null;
+    }
+    return (programId: row.programId, dayIndex: row.dayIndex);
   }
 
   /// Все напоминания с днём недели и названием программы — для

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,6 +19,8 @@ class _MockReminderRepository extends Mock
     implements WorkoutReminderRepository {}
 
 void main() {
+  // initialize() ходит в FlutterTimezone через method channel — нужен binding.
+  TestWidgetsFlutterBinding.ensureInitialized();
   tz_data.initializeTimeZones();
 
   late _MockNotificationsPlugin plugin;
@@ -50,6 +53,7 @@ void main() {
       ),
     ).thenAnswer((_) async {});
     when(() => plugin.cancel(id: any(named: 'id'))).thenAnswer((_) async {});
+    when(() => plugin.cancelAll()).thenAnswer((_) async {});
   });
 
   group('nextInstance', () {
@@ -345,5 +349,433 @@ void main() {
     ).called(1);
     verify(() => plugin.cancel(id: 11)).called(1);
     verify(() => plugin.cancel(id: 12)).called(1);
+  });
+
+  test('cancelAll отменяет все запланированные уведомления', () async {
+    await service.cancelAll();
+
+    verify(() => plugin.cancelAll()).called(1);
+  });
+
+  test(
+    'повторное перепланирование не плодит будильники, а заменяет их',
+    () async {
+      // id уведомления — programDayId, поэтому повторный rescheduleAll
+      // перезаписывает тот же будильник, а не создаёт второй (TC-078).
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          ReminderSchedule(
+            reminder: const WorkoutReminder(
+              id: 1,
+              programDayId: 10,
+              hour: 9,
+              minute: 0,
+            ),
+            dayOfWeek: 2,
+            programName: 'Сплит',
+            dayNumber: 1,
+          ),
+        ],
+      );
+      int? scheduledId() =>
+          verify(
+                () => plugin.zonedSchedule(
+                  id: captureAny(named: 'id'),
+                  title: any(named: 'title'),
+                  body: any(named: 'body'),
+                  scheduledDate: any(named: 'scheduledDate'),
+                  notificationDetails: any(named: 'notificationDetails'),
+                  androidScheduleMode: any(named: 'androidScheduleMode'),
+                  matchDateTimeComponents: any(
+                    named: 'matchDateTimeComponents',
+                  ),
+                  payload: any(named: 'payload'),
+                ),
+              ).captured.last
+              as int;
+
+      await service.rescheduleAll();
+      final first = scheduledId();
+
+      await service.rescheduleAll();
+      final second = scheduledId();
+
+      expect(first, 10);
+      expect(second, first, reason: 'id детерминирован, будильник заменяется');
+      verifyNever(() => plugin.cancelAll());
+    },
+  );
+
+  test('rescheduleAll вне Android не планирует и не ходит в БД', () async {
+    when(
+      () => plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >(),
+    ).thenReturn(null);
+    when(
+      () => repository.allScheduled(),
+    ).thenThrow(StateError('на не-Android расписание не восстанавливается'));
+
+    await expectLater(service.rescheduleAll(), completes);
+
+    verifyNever(() => repository.allScheduled());
+    verifyNever(
+      () => plugin.zonedSchedule(
+        id: any(named: 'id'),
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        scheduledDate: any(named: 'scheduledDate'),
+        notificationDetails: any(named: 'notificationDetails'),
+        androidScheduleMode: any(named: 'androidScheduleMode'),
+        matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+        payload: any(named: 'payload'),
+      ),
+    );
+  });
+
+  test('прямой schedule вне Android не доходит до плагина', () async {
+    when(
+      () => plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >(),
+    ).thenReturn(null);
+
+    await expectLater(
+      service.schedule(
+        const WorkoutReminder(id: 1, programDayId: 10, hour: 9, minute: 0),
+        dayOfWeek: 2,
+        programName: 'Сплит',
+        dayNumber: 1,
+      ),
+      completes,
+    );
+
+    verifyNever(
+      () => plugin.zonedSchedule(
+        id: any(named: 'id'),
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        scheduledDate: any(named: 'scheduledDate'),
+        notificationDetails: any(named: 'notificationDetails'),
+        androidScheduleMode: any(named: 'androidScheduleMode'),
+        matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+        payload: any(named: 'payload'),
+      ),
+    );
+  });
+
+  group('checkPermissions вне Android', () {
+    setUp(() {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(null);
+    });
+
+    test('оба разрешения не выданы независимо от расписания', () async {
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          ReminderSchedule(
+            reminder: const WorkoutReminder(
+              id: 1,
+              programDayId: 10,
+              hour: 9,
+              minute: 0,
+              enabled: true,
+            ),
+            dayOfWeek: 2,
+            programName: 'Сплит',
+            dayNumber: 1,
+          ),
+        ],
+      );
+
+      final status = await service.checkPermissions();
+
+      expect(status.notificationsEnabled, false);
+      expect(status.exactAlarmsEnabled, false);
+    });
+
+    test(
+      'статус не выводится из расписания — репозиторий не опрашивается',
+      () async {
+        when(
+          () => repository.allScheduled(),
+        ).thenThrow(StateError('allScheduled не должен вызываться'));
+
+        final status = await service.checkPermissions();
+
+        expect(status.notificationsEnabled, false);
+        expect(status.exactAlarmsEnabled, false);
+      },
+    );
+  });
+
+  group('холодный старт из уведомления', () {
+    setUp(() {
+      registerFallbackValue(const InitializationSettings());
+      when(
+        () => plugin.initialize(
+          settings: any(named: 'settings'),
+          onDidReceiveNotificationResponse: any(
+            named: 'onDidReceiveNotificationResponse',
+          ),
+        ),
+      ).thenAnswer((_) async => true);
+    });
+
+    NotificationAppLaunchDetails launchDetails({
+      required bool launched,
+      String? payload,
+    }) => NotificationAppLaunchDetails(
+      launched,
+      notificationResponse: payload == null
+          ? null
+          : NotificationResponse(
+              notificationResponseType:
+                  NotificationResponseType.selectedNotification,
+              payload: payload,
+            ),
+    );
+
+    test(
+      'payload запуска доставляется, даже если обработчик ещё не назначен',
+      () async {
+        // Порядок боевого запуска: плагин инициализируется раньше, чем UI
+        // успевает подписаться, поэтому payload обязан пережить это окно.
+        when(
+          () => plugin.getNotificationAppLaunchDetails(),
+        ).thenAnswer((_) async => launchDetails(launched: true, payload: '42'));
+        final tapped = <int>[];
+
+        await service.initialize();
+        expect(
+          tapped,
+          isEmpty,
+          reason: 'обработчика ещё нет — payload в очереди',
+        );
+
+        service.onReminderTapped = tapped.add;
+
+        expect(tapped, [42]);
+      },
+    );
+
+    test('payload запуска сразу уходит назначенному обработчику', () async {
+      when(
+        () => plugin.getNotificationAppLaunchDetails(),
+      ).thenAnswer((_) async => launchDetails(launched: true, payload: '7'));
+      final tapped = <int>[];
+      service.onReminderTapped = tapped.add;
+
+      await service.initialize();
+
+      expect(tapped, [7]);
+    });
+
+    test('обычный запуск без уведомления обработчик не трогает', () async {
+      when(
+        () => plugin.getNotificationAppLaunchDetails(),
+      ).thenAnswer((_) async => launchDetails(launched: false, payload: '42'));
+      final tapped = <int>[];
+      service.onReminderTapped = tapped.add;
+
+      await service.initialize();
+
+      expect(tapped, isEmpty);
+    });
+
+    test('повторный initialize не дублирует доставку payload', () async {
+      when(
+        () => plugin.getNotificationAppLaunchDetails(),
+      ).thenAnswer((_) async => launchDetails(launched: true, payload: '42'));
+      final tapped = <int>[];
+      service.onReminderTapped = tapped.add;
+
+      await service.initialize();
+      await service.initialize();
+
+      expect(tapped, [42], reason: 'инициализация идемпотентна');
+      verify(
+        () => plugin.initialize(
+          settings: any(named: 'settings'),
+          onDidReceiveNotificationResponse: any(
+            named: 'onDidReceiveNotificationResponse',
+          ),
+        ),
+      ).called(1);
+    });
+
+    test('битый payload при запуске не роняет инициализацию', () async {
+      when(
+        () => plugin.getNotificationAppLaunchDetails(),
+      ).thenAnswer((_) async => launchDetails(launched: true, payload: 'abc'));
+      final tapped = <int>[];
+      service.onReminderTapped = tapped.add;
+
+      await expectLater(service.initialize(), completes);
+      expect(tapped, isEmpty);
+    });
+  });
+
+  group('тап по уведомлению', () {
+    test('payload передаётся обработчику сразу', () async {
+      final tapped = <int>[];
+      service.onReminderTapped = tapped.add;
+
+      service.handleNotificationResponse(
+        const NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: '42',
+        ),
+      );
+
+      expect(tapped, [42]);
+    });
+
+    test('payload без числа игнорируется', () async {
+      final tapped = <int>[];
+      service.onReminderTapped = tapped.add;
+
+      service.handleNotificationResponse(
+        const NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+        ),
+      );
+      service.handleNotificationResponse(
+        const NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: 'abc',
+        ),
+      );
+
+      expect(tapped, isEmpty);
+    });
+
+    test('payload, пришедший до назначения обработчика, не теряется', () {
+      final tapped = <int>[];
+
+      service.handleNotificationResponse(
+        const NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: '7',
+        ),
+      );
+      expect(tapped, isEmpty);
+
+      service.onReminderTapped = tapped.add;
+
+      expect(tapped, [7]);
+    });
+
+    test('отложенный payload доставляется только один раз', () {
+      final tapped = <int>[];
+      service.handleNotificationResponse(
+        const NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: '7',
+        ),
+      );
+
+      service.onReminderTapped = tapped.add;
+      service.onReminderTapped = tapped.add;
+
+      expect(tapped, [7]);
+    });
+  });
+
+  group('rescheduleAll при ошибке', () {
+    test('ошибка одного дня не срывает перепланирование остальных', () async {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          ReminderSchedule(
+            reminder: const WorkoutReminder(
+              id: 1,
+              programDayId: 10,
+              hour: 9,
+              minute: 0,
+              enabled: true,
+            ),
+            dayOfWeek: 2,
+            programName: 'Сплит',
+            dayNumber: 1,
+          ),
+          ReminderSchedule(
+            reminder: const WorkoutReminder(
+              id: 2,
+              programDayId: 11,
+              hour: 9,
+              minute: 0,
+              enabled: true,
+            ),
+            dayOfWeek: 3,
+            programName: 'Бег',
+            dayNumber: 1,
+          ),
+        ],
+      );
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+      var first = true;
+      when(() => android.areNotificationsEnabled()).thenAnswer((_) async {
+        // Плагин падает на первом вызове — как это делает R8-сборка,
+        // вырезавшая ресурсы уведомления.
+        if (first) {
+          first = false;
+          throw PlatformException(code: 'invalid_resource');
+        }
+        return true;
+      });
+
+      await service.rescheduleAll();
+
+      // Второй день всё равно запланирован.
+      verify(
+        () => plugin.zonedSchedule(
+          id: 11,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).called(1);
+    });
   });
 }

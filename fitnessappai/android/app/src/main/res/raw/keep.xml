@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Flutter принудительно включает шринковку ресурсов для release-сборки
+  (FlutterPlugin.kt: `releaseBuildType.isShrinkResources = isBuiltAsApp()`),
+  а иконку и звук уведомлений плагин адресует только из Dart через
+  `Resources.getIdentifier`. Статических ссылок на эти ресурсы в проекте нет,
+  поэтому без этого файла R8 вырезает их, и планирование уведомлений молча
+  падает с `invalid_resource`. Иконка уведомления не показывается без small
+  icon, а звук не проигрывается.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_launcher,@raw/notification" />

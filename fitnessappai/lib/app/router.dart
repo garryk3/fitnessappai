@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/responsive/adaptive_navigation.dart';
@@ -32,6 +33,11 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 
 /// Конфигурация маршрутов приложения.
 class AppRouter {
+  /// Ключ навигатора для переходов из кода без [BuildContext] — из
+  /// обработчика тапа по уведомлению.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'root');
+
   /// Если передан [initialCheckpoint], роутер перенаправит на `/workout/run`
   /// для восстановления тренировки после сбоя/блокировки экрана.
   /// По умолчанию читает [restoredCheckpoint] из [bootstrap].
@@ -39,6 +45,7 @@ class AppRouter {
     final checkpoint = initialCheckpoint ?? restoredCheckpoint;
     var redirected = false;
     return GoRouter(
+      navigatorKey: navigatorKey,
       initialLocation: '/home',
       errorBuilder: (context, state) => const NotFoundScreen(),
       redirect: checkpoint != null
