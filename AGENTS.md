@@ -10,6 +10,7 @@
   All `flutter`/`dart` commands must run with `workdir: fitnessappai/fitnessappai` (CI sets `working-directory: fitnessappai`).
   - `git` commands work from anywhere under the repo root; `../PLAN.md` relative to the package is the SAME file.
 - **`PLAN.md`** (at repo root, path `PLAN.md` in git): task tracking with `[x]` statuses + progress table. Update it whenever a task is done. Russian language. It lives at the repo root, NOT inside the Flutter package.
+- **`TASKS.md`** (repo root, в git): входной «ящик» пользователя для новых пожеланий (см. `## Работа с TASKS.md`).
 - `docs/llm_contract.md`: contract for the LLM content-generation interface (future tasks 6.2–6.6).
 - `lib/uikit/` (inside Flutter package): единый источник базовых UI-компонентов (`AppCard`, `AppSection`, `AppSectionHeader`, `AppGradientButton`, `AppStatCard` и др.) — в приоритете при построении UI (см. `## Workflow & conventions`).
 - `.agents/` is the shared, version-controlled location for cross-tool agent assets:
@@ -58,6 +59,15 @@ flutter build apk --debug
 - If `build_runner` reports stale/skipped outputs after a schema change, `rm -rf .dart_tool/build` and rebuild.
 - **After finishing a task with new functionality, run the `android-tester` subagent to APPEND test cases to `TEST_PLAN.md`** (короткий прогон: только добавить сценарии для нового функционала по протоколу — TC-<NNN>, шаги, ожидание). **Не запускать полный прогон всех сценариев** — полный QA-прогон стартует только по требованию пользователя или обязательно перед публикацией релиза.
 - **UI опирается на `lib/uikit/`** — единый источник базовых компонентов (`AppCard`, `AppSection`, `AppSectionHeader`, `AppGradientButton`, `AppStatCard`, `AppBadge`, `AppTile`, `AppThumbnail`, `AppEmptyState`). При создании нового или обновлении существующего UI отдавать приоритет компонентам uikit перед ручным дублированием: заголовки секций — `AppSectionHeader`/`AppSection` (не `Text(... titleMedium)`), primary CTA — `AppGradientButton`, карточки/списки — `AppCard`/`AppTile`. Контекстные виджеты — в `features/<feature>/ui/`. Исключения (delete-действия и т.п.) — осознанно, с пометкой в PR.
+
+## Работа с TASKS.md (входной ящик пользователя)
+
+- `TASKS.md` (repo root) — локальный «ящик» пользователя для новых пожеланий: файл в git, содержит шапку-инструкцию; задачи дописываются списком.
+- При новом запросе пользователя с задачами (особенно «прочитай TASKS.md / добавь в TASKS.md и выполни»):
+  1. Сначала проанализировать задачи и **запланировать**: для каждой — рабочий план в `PLAN.md` (обязательный шаг перед реализацией, см. `## Workflow & conventions`), продолжая нумерацию этапов/задач.
+  2. **Перенести задачи в `PLAN.md`** (секция текущего этапа, задачи `### NN.NN` с рабочими планами).
+  3. **Очистить `TASKS.md`** — удалить содержимое, оставив шапку-инструкцию и отметку «задачи перенесены в PLAN.md, этап NN». Файл **не удалять** и **коммитить** вместе с правками PLAN.md.
+- Реализация перенесённых задач — по обычной конвенции: ветка `task/NN.NN-<slug>` → PR → зелёный CI → squash merge.
 
 ## Testing quirks
 
