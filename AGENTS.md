@@ -37,7 +37,7 @@ flutter build apk --debug
 ```
 
 - Single test: `flutter test test/<path>_test.dart`.
-- Integration tests (`integration_test/`) are NOT run in CI. They run on Linux desktop: `flutter test integration_test -d linux` (takes ~2 minutes, requires the `StubSoundService` stub registered in `pumpApp`).
+- Integration tests (`integration_test/`) are NOT run in CI. They run on Linux desktop: `flutter test integration_test -d linux` (measured 2026-09-26: 20/20 passed in 7m42s **on a cold run that rebuilds the desktop bundle**; a warm re-run was not measured, so budget generously. Requires the `StubSoundService` stub registered in `pumpApp`).
 - Environment: native Ubuntu (no WSL). Android emulators available: AVDs `Pixel_10_Pro` (x86_64, Android 16) and `Pixel_10_Pro_Fold`. adb: `~/Android/Sdk/platform-tools/adb`. Android SDK: `~/Android/Sdk` (platform 36). Note: local `flutter build apk` may fail with Gradle error `Could not determine the dependencies of task ':app:compileFlutterBuildDebug'. > Index: 1, Size: 1` — Flutter picks up Java 25 from Android Studio's bundled jbr, but Gradle 9.1 supports Java ≤ 24. Fix: point Gradle at JDK 17/21 (e.g. install `openjdk-21-jdk-headless` and set `JAVA_HOME`) or run the build in CI, which uses the runner's JDK 17/21.
 - Stack: Flutter/Dart, `drift` ORM, `signals`/`signals_flutter`, `go_router`, `fl_chart`, `flutter_localizations` (template `lib/l10n/app_ru.arb`).
 
@@ -49,7 +49,7 @@ flutter build apk --debug
 ## Workflow & conventions
 
 - Repo language is Russian: PLAN.md, commit messages, UI strings. Write commit messages as `task/NN.NN: <краткое описание на русском> (#PR)`.
-- **Before opening a pull request, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`, ~2 min, not in CI). The user may opt out; never run them silently or skip the question.
+- **Before opening a pull request, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`; 7+ min on a cold run per the measurement above, not in CI). The user may opt out; never run them silently or skip the question.
 - Each task = branch `task/<NN>-<slug>` from `main` → PR → green CI → squash merge, in dependency order.
 - **Update task branches with `git merge`, NOT `git rebase`.** Rebase rewrites history and has in this repo repeatedly dropped `PLAN.md` rows, broken `dart format`/l10n sync, and left the branch out of sync with `origin/main` — all invisible until CI/e2e failed. `git merge origin/main` keeps the shared `main` story intact and makes PR review (`git diff origin/main..HEAD`) deterministic. Remember: your real diff vs `main` is only the few files you actually changed (`git diff --name-status origin/main..HEAD`), the rest that differ are rebase fallout and must be reconciled, not committed.
 - **Before every commit, run the `plan-review` agent** to verify: (1) the task is recorded in `PLAN.md` with correct status `[x]` and completion date; (2) if a work plan was drafted for this task, it was written into `PLAN.md`. Block the commit if either check fails.
