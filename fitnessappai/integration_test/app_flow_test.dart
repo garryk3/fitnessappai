@@ -143,6 +143,16 @@ Finder? _navIconIn(Finder container, IconData icon) {
   return found.evaluate().isEmpty ? null : found;
 }
 
+/// Открывает пункт, который в узком режиме доступен только через drawer-меню.
+Future<void> _openDrawerItem(WidgetTester tester, String label) async {
+  await tester.tap(find.byTooltip('Меню'));
+  await tester.pumpAndSettle();
+  await tester.tap(
+    find.descendant(of: find.byType(Drawer), matching: find.text(label)),
+  );
+  await tester.pumpAndSettle();
+}
+
 /// Открывает экран настроек через меню: на широких экранах — тап по пункту
 /// «Настройки» rail-а, на узких — через drawer-меню (иконка настроек на
 /// главной убрана, доступ только через меню).
@@ -160,12 +170,7 @@ Future<void> openSettings(WidgetTester tester) async {
     await tester.pumpAndSettle();
     return;
   }
-  await tester.tap(find.byTooltip('Меню'));
-  await tester.pumpAndSettle();
-  await tester.tap(
-    find.descendant(of: find.byType(Drawer), matching: find.text('Настройки')),
-  );
-  await tester.pumpAndSettle();
+  await _openDrawerItem(tester, 'Настройки');
 }
 
 IconData _filledIcon(IconData outlined) => switch (outlined) {
@@ -178,13 +183,123 @@ IconData _filledIcon(IconData outlined) => switch (outlined) {
   _ => outlined,
 };
 
+/// Открывает профиль: на широких экранах — тап по аватару в шапке rail, на
+/// узких — через drawer-меню (аватар на главном в узком режиме отсутствует).
 Future<void> goToProfile(WidgetTester tester) async {
-  await tester.tap(find.byType(ProfileAvatar).first, warnIfMissed: false);
+  final railFinder = find.byType(NavigationRail);
+  if (railFinder.evaluate().isNotEmpty) {
+    await tester.tap(find.byType(ProfileAvatar).first, warnIfMissed: false);
+    await tester.pumpAndSettle();
+    return;
+  }
+  await _openDrawerItem(tester, 'Профиль');
+}
+
+/// Открывает экран прогресса: на широких экранах — вкладка rail, на узких —
+/// пункт «Прогресс» в drawer-меню (в нижний бар из 4 вкладок не входит).
+Future<void> goToProgress(WidgetTester tester) async {
+  final railFinder = find.byType(NavigationRail);
+  if (railFinder.evaluate().isNotEmpty) {
+    await goToTab(tester, Icons.bar_chart_outlined);
+    return;
+  }
+  await _openDrawerItem(tester, 'Прогресс');
+}
+
+/// Прокручивает видимые вертикальные скролл-области экрана, пока [target] не
+/// появится в дереве. На широких экранах цель обычно уже построена — тогда
+/// просто добираемся до неё через Scrollable.ensureVisible.
+///
+/// Стандартный `scrollUntilVisible` с `find.byType(Scrollable).first` на
+/// узких экранах попадает во внутренние скролл-области текстовых полей и
+/// скроллит не туда (или в неверном направлении — цель не строится, падение
+/// «Bad state: No element»). Здесь выбираем крупнейшую видимую вертикальную
+/// область и, если цель не появилась, перебираем остальные и пробуем обратное
+/// направление.
+Future<void> scrollUntilVisibleIn(
+  WidgetTester tester,
+  Finder target, {
+  int maxScrolls = 40,
+  Offset step = const Offset(0, -250),
+}) async {
+  if (target.evaluate().isNotEmpty) {
+    await tester.ensureVisible(target.first);
+    await tester.pumpAndSettle();
+    return;
+  }
+  final scrollables = _contentScrollables(tester);
+  for (final direction in const [1, -1]) {
+    final effectiveStep = Offset(step.dx * direction, step.dy * direction);
+    for (final current in scrollables) {
+      for (var i = 0; i < maxScrolls; i++) {
+        if (target.evaluate().isNotEmpty) {
+          break;
+        }
+        if (current.evaluate().isEmpty) {
+          break;
+        }
+        await tester.drag(current, effectiveStep);
+        await tester.pump();
+      }
+      if (target.evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    if (target.evaluate().isNotEmpty) {
+      break;
+    }
+  }
+  if (target.evaluate().isEmpty) {
+    throw StateError('Цель не появилась после прокрутки: $target');
+  }
+  await tester.ensureVisible(target.first);
   await tester.pumpAndSettle();
+}
+
+/// Видимые вертикальные скролл-области текущего экрана, отсортированные по
+/// убыванию площади (крупнейшая — главный список; внутренние скролл-области
+/// текстовых полей отсекаются по высоте).
+List<Finder> _contentScrollables(WidgetTester tester) {
+  final viewSize = tester.view.physicalSize / tester.view.devicePixelRatio;
+  final bounds = Offset.zero & viewSize;
+  final scored = <(Finder, double)>[];
+  for (final element in find.byType(Scrollable).evaluate()) {
+    final scrollable = element.widget as Scrollable;
+    if (scrollable.axisDirection == AxisDirection.left ||
+        scrollable.axisDirection == AxisDirection.right) {
+      continue;
+    }
+    final render = element.findRenderObject();
+    if (render is! RenderBox || !render.attached) {
+      continue;
+    }
+    final rect = render.localToGlobal(Offset.zero) & render.size;
+    if (rect.height < 100 || rect.width < 1 || !bounds.overlaps(rect)) {
+      continue;
+    }
+    scored.add((
+      find.byWidgetPredicate((widget) => identical(widget, element.widget)),
+      rect.width * rect.height,
+    ));
+  }
+  scored.sort((a, b) => b.$2.compareTo(a.$2));
+  return scored.map((entry) => entry.$1).toList();
 }
 
 Future<void> ensureFieldVisible(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+}
+
+/// Выбирает количество дней программы: сбрасывает фокус (закрывает клавиатуру,
+/// иначе на узких экранах кнопка «N» дней перекрыта) и долистывает до N.
+Future<void> setDayCount(WidgetTester tester, String count) async {
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
+  final option = find.text(count);
+  await scrollUntilVisibleIn(tester, option);
+  await tester.pumpAndSettle();
+  await tester.tap(option.last);
   await tester.pumpAndSettle();
 }
 
@@ -206,6 +321,16 @@ Future<void> enterWorkoutField(
   await ensureFieldVisible(tester, finder);
   await tester.enterText(finder, value);
   await tester.pump();
+}
+
+/// Скрывает софт-клавиатуру: на узких экранах открытая клавиатура перекрывает
+/// нижние элементы (кнопку «Подход выполнен»), и tap() промахивается. Без
+/// pumpAndSettle — на экране тренировки идёт анимация таймера, которая не
+/// «успокаивается».
+Future<void> hideKeyboard(WidgetTester tester) async {
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pump(const Duration(milliseconds: 350));
 }
 
 Future<void> pullToRefreshExercises(WidgetTester tester) async {
@@ -265,26 +390,18 @@ Future<void> createExercise(
 
   if (contraindication != null) {
     final chip = find.text(contraindication);
-    await tester.scrollUntilVisible(
-      chip,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.ensureVisible(chip);
+    await scrollUntilVisibleIn(tester, chip);
+    await tester.ensureVisible(chip.first);
     await tester.pumpAndSettle();
-    await tester.tap(chip);
+    await tester.tap(chip.first);
     await tester.pumpAndSettle();
   }
 
-  final primaryChip = find.text('Основная').first;
-  await tester.scrollUntilVisible(
-    primaryChip,
-    200,
-    scrollable: find.byType(Scrollable).first,
-  );
-  await tester.ensureVisible(primaryChip);
+  final primaryChip = find.text('Основная');
+  await scrollUntilVisibleIn(tester, primaryChip);
+  await tester.ensureVisible(primaryChip.first);
   await tester.pumpAndSettle();
-  await tester.tap(primaryChip);
+  await tester.tap(primaryChip.first);
   await tester.pumpAndSettle();
 
   if (fixedWeight) {
@@ -300,14 +417,10 @@ Future<void> createExercise(
 
 Future<void> _toggleFormCheckbox(WidgetTester tester, String label) async {
   final checkbox = find.widgetWithText(CheckboxListTile, label);
-  await tester.scrollUntilVisible(
-    checkbox,
-    200,
-    scrollable: find.byType(Scrollable).first,
-  );
-  await tester.ensureVisible(checkbox);
+  await scrollUntilVisibleIn(tester, checkbox);
+  await tester.ensureVisible(checkbox.first);
   await tester.pumpAndSettle();
-  await tester.tap(checkbox);
+  await tester.tap(checkbox.first);
   await tester.pumpAndSettle();
 }
 
@@ -372,11 +485,7 @@ Future<void> configureDay(
   required List<(String, Map<String, String>)> alternativeSets,
 }) async {
   final dayLabel = find.text('День $dayIndex');
-  await tester.scrollUntilVisible(
-    dayLabel,
-    200,
-    scrollable: find.byType(Scrollable).first,
-  );
+  await scrollUntilVisibleIn(tester, dayLabel);
   await tester.pumpAndSettle();
 
   final dayCard = find.ancestor(of: dayLabel, matching: find.byType(Card));
@@ -388,7 +497,8 @@ Future<void> configureDay(
     await selectWeekday(tester, weekdayLabel(weekday));
   }
 
-  await tester.tap(dayLabel);
+  await scrollUntilVisibleIn(tester, dayLabel);
+  await tester.tap(dayLabel.first);
   await tester.pumpAndSettle();
 
   for (final (name, params) in mainSets) {
@@ -515,6 +625,7 @@ Future<void> completeStrengthSet(
     weight,
   );
   final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
   await tester.pump();
@@ -530,6 +641,7 @@ Future<void> completePlankSet(
     seconds,
   );
   final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
   await tester.pump();
@@ -551,6 +663,7 @@ Future<void> completeRunningSet(
     distance,
   );
   final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
   await tester.pump();
@@ -574,6 +687,7 @@ Future<void> completePerSideSet(
     );
   }
   final leftDone = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, leftDone);
   await tester.tap(leftDone);
   await tester.pump();
@@ -597,6 +711,7 @@ Future<void> completePerSideSet(
     );
   }
   final rightDone = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, rightDone);
   await tester.tap(rightDone);
   await tester.pump();
@@ -613,6 +728,7 @@ Future<void> completeBodyweightSet(
   );
   expect(find.widgetWithText(TextFormField, 'Вес (кг)'), findsNothing);
   final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
   await tester.pump();
@@ -622,12 +738,14 @@ Future<void> completeBodyweightSet(
 /// времени — фактическое значение счётчика переносится в результат (13.5).
 Future<void> completePlankHoldSet(WidgetTester tester) async {
   final start = find.widgetWithText(FilledButton, 'Начать');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, start);
   await tester.tap(start);
   await tester.pump();
   await tester.pump(const Duration(seconds: 1));
   await tester.pump(const Duration(seconds: 1));
   final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
   await tester.pump();
@@ -704,7 +822,7 @@ void main() {
       _programName,
     );
 
-    await tester.tap(find.text('2').last);
+    await setDayCount(tester, '2');
     await tester.pumpAndSettle();
 
     await configureDay(
@@ -813,7 +931,7 @@ void main() {
       _programName,
     );
 
-    await tester.tap(find.text('2').last);
+    await setDayCount(tester, '2');
     await tester.pumpAndSettle();
 
     await configureDay(
@@ -863,8 +981,9 @@ void main() {
     await goToTab(tester, Icons.event_note_outlined);
     expect(find.text('Начать'), findsOneWidget);
     expect(find.text('Перенести на сегодня'), findsOneWidget);
-
-    await tester.tap(find.text('Перенести на сегодня'));
+    final rescheduleBtn = find.text('Перенести на сегодня');
+    await scrollUntilVisibleIn(tester, rescheduleBtn);
+    await tester.tap(rescheduleBtn.first);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Альтернативный набор'));
@@ -1026,7 +1145,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Запланировано'), findsOneWidget);
 
-    await tester.tap(find.text('Перенести на сегодня'));
+    final rescheduleBtn = find.text('Перенести на сегодня');
+    await scrollUntilVisibleIn(tester, rescheduleBtn);
+    await tester.tap(rescheduleBtn.first);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
@@ -1181,7 +1302,7 @@ void main() {
     );
     expect(workoutsCard, findsOneWidget);
 
-    await goToTab(tester, Icons.bar_chart_outlined);
+    await goToProgress(tester);
     await tester.pumpAndSettle();
     expect(find.text('Тренировок'), findsOneWidget);
     expect(find.text('Дистанция'), findsOneWidget);
@@ -1266,20 +1387,22 @@ void main() {
     await openSettings(tester);
     expect(find.text('Настройки'), findsOneWidget);
 
-    await tester.tap(find.text('Светлая'));
+    final lightTheme = find.text('Светлая');
+    await scrollUntilVisibleIn(tester, lightTheme);
+    await tester.tap(lightTheme.first);
     await tester.pumpAndSettle();
     expect(find.text('Настройки'), findsOneWidget);
 
     final soundSwitch = find.widgetWithText(SwitchListTile, 'Звук таймеров');
+    await scrollUntilVisibleIn(tester, soundSwitch);
     final initialSound = tester.widget<SwitchListTile>(soundSwitch).value;
-    await tester.tap(soundSwitch);
+    await tester.tap(soundSwitch.first);
     await tester.pumpAndSettle();
     expect(tester.widget<SwitchListTile>(soundSwitch).value, !initialSound);
 
     final updateBtn = find.text('Проверить обновление');
-    await tester.ensureVisible(updateBtn);
-    await tester.pumpAndSettle();
-    await tester.tap(updateBtn, warnIfMissed: false);
+    await scrollUntilVisibleIn(tester, updateBtn);
+    await tester.tap(updateBtn.first, warnIfMissed: false);
     await pumpUntilFound(tester, find.text('Релизы ещё не опубликованы'));
   });
 
@@ -1457,7 +1580,9 @@ void main() {
     await tester.pumpAndSettle();
     await enterField(tester, find.widgetWithText(TextFormField, 'Рост'), '180');
     await enterField(tester, find.widgetWithText(TextFormField, 'Вес'), '80');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
+    final saveMetrics1 = find.widgetWithText(ElevatedButton, 'Сохранить');
+    await scrollUntilVisibleIn(tester, saveMetrics1);
+    await tester.tap(saveMetrics1.first);
     await tester.pumpAndSettle();
 
     expect(find.text('Текущие значения'), findsOneWidget);
@@ -1468,7 +1593,9 @@ void main() {
     await tester.pumpAndSettle();
     await enterField(tester, find.widgetWithText(TextFormField, 'Рост'), '181');
     await enterField(tester, find.widgetWithText(TextFormField, 'Вес'), '79');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
+    final saveMetrics2 = find.widgetWithText(ElevatedButton, 'Сохранить');
+    await scrollUntilVisibleIn(tester, saveMetrics2);
+    await tester.tap(saveMetrics2.first);
     await tester.pumpAndSettle();
 
     expect(find.text('181 см'), findsOneWidget);
@@ -1519,7 +1646,7 @@ void main() {
       _programName,
     );
 
-    await tester.tap(find.text('2').last);
+    await setDayCount(tester, '2');
     await tester.pumpAndSettle();
 
     await configureDay(
@@ -1588,7 +1715,9 @@ void main() {
     await finishAndGoProgress(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    await tester.tap(find.text('Перенести на сегодня'));
+    final rescheduleBtn2 = find.text('Перенести на сегодня');
+    await scrollUntilVisibleIn(tester, rescheduleBtn2);
+    await tester.tap(rescheduleBtn2.first);
     await tester.pumpAndSettle();
     final startWorkoutBtn2 = find.widgetWithText(
       ElevatedButton,
@@ -1739,11 +1868,7 @@ void main() {
       );
 
       final dayLabel = find.text('День 1');
-      await tester.scrollUntilVisible(
-        dayLabel,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+      await scrollUntilVisibleIn(tester, dayLabel);
       await tester.pumpAndSettle();
       await tester.tap(dayLabel);
       await tester.pumpAndSettle();
@@ -1773,11 +1898,7 @@ void main() {
     await openSettings(tester);
 
     final listenButton = find.byIcon(Icons.play_arrow);
-    await tester.scrollUntilVisible(
-      listenButton,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await scrollUntilVisibleIn(tester, listenButton);
     await tester.ensureVisible(listenButton);
     await tester.pumpAndSettle();
     await tester.tap(listenButton);
@@ -1833,7 +1954,7 @@ void main() {
     await skipRestIfShown(tester);
     await finishAndGoProgress(tester);
 
-    await goToTab(tester, Icons.bar_chart_outlined);
+    await goToProgress(tester);
     await tester.pumpAndSettle();
 
     final workoutsCard = find.ancestor(
@@ -1998,15 +2119,11 @@ void main() {
       _programName,
     );
 
-    await tester.tap(find.text('2').last);
+    await setDayCount(tester, '2');
     await tester.pumpAndSettle();
 
     final dayLabel1 = find.text('День 1');
-    await tester.scrollUntilVisible(
-      dayLabel1,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await scrollUntilVisibleIn(tester, dayLabel1);
     await tester.pumpAndSettle();
 
     final dayCard1 = find.ancestor(of: dayLabel1, matching: find.byType(Card));
@@ -2025,11 +2142,7 @@ void main() {
     final today = DateTime.now().weekday;
     final todayLabel = weekdayLabel(today);
     final chip = find.widgetWithText(ChoiceChip, todayLabel);
-    await tester.scrollUntilVisible(
-      chip,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await scrollUntilVisibleIn(tester, chip);
     await tester.ensureVisible(chip);
     await tester.pumpAndSettle();
     await tester.tap(chip);
@@ -2063,11 +2176,7 @@ void main() {
     );
 
     final dayLabel2 = find.text('День 2');
-    await tester.scrollUntilVisible(
-      dayLabel2,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await scrollUntilVisibleIn(tester, dayLabel2);
     await tester.pumpAndSettle();
 
     await tester.tap(dayLabel2);
