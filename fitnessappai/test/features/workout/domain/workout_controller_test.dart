@@ -8,10 +8,38 @@ import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
 import 'package:fitnessappai/features/workout/domain/workout_exercise.dart';
 import 'package:fitnessappai/features/workout/domain/workout_session_context.dart';
 import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
+
+/// Звуковой сервис, считающий сигналы окончания отдыха.
+class _RecordingSoundService implements SoundService {
+  _RecordingSoundService(this.onPlay);
+
+  final void Function() onPlay;
+
+  int stops = 0;
+
+  @override
+  Future<void> playCompletion() async => onPlay();
+
+  @override
+  Future<void> stop() async => stops++;
+
+  @override
+  Future<void> preview() async {}
+
+  @override
+  bool get isPlaying => false;
+
+  @override
+  Stream<bool> get isPlayingStream => const Stream.empty();
+
+  @override
+  Future<void> dispose() async {}
+}
 
 void main() {
   final startTime = DateTime(2026, 8, 9, 18, 0);
@@ -153,6 +181,71 @@ void main() {
 
       async.elapse(const Duration(seconds: 5));
       expect(controller.restRemainingSeconds.value, isNull);
+      controller.dispose();
+    });
+  });
+
+  test('rest: восстановленный отдых не сигналит повторно (47.8, 2в)', () {
+    fakeAsync((async) {
+      DateTime clock() => startTime.add(async.elapsed);
+      var plays = 0;
+      final controller = WorkoutController(
+        clock: clock,
+        soundService: _RecordingSoundService(() => plays++),
+      );
+      controller.start([strengthExercise(sets: 3, rest: 60)]);
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+      final restEndsAt = clock().add(const Duration(seconds: 60));
+
+      // Отдых идёт своим тиком и сигналит один раз.
+      async.elapse(const Duration(seconds: 60));
+      expect(plays, 1);
+      expect(controller.phase.value, WorkoutPhase.exercise);
+
+      // Экран пересоздан (сворачивание/разворачивание складного): тот же
+      // отдых восстановлен из чекпоинта уже после его окончания.
+      controller.restoreFromCheckpoint(
+        WorkoutCheckpoint(
+          programDayId: 1,
+          exerciseIndex: 0,
+          currentSet: 1,
+          completedSets: 0,
+          resultsJson: '[]',
+          startedAt: startTime,
+          programName: 'База',
+          dayIndex: 0,
+          phase: 'rest',
+          restEndsAt: restEndsAt,
+        ),
+        [strengthExercise(sets: 3, rest: 60)],
+      );
+      async.elapse(const Duration(seconds: 2));
+
+      expect(plays, 1, reason: 'сигнал по этому отдыху уже прозвучал');
+      controller.dispose();
+    });
+  });
+
+  test('rest: сигнал нового отдыха после предыдущего звучит снова', () {
+    fakeAsync((async) {
+      var plays = 0;
+      final controller = WorkoutController(
+        clock: () => startTime.add(async.elapsed),
+        soundService: _RecordingSoundService(() => plays++),
+      );
+      controller.start([strengthExercise(sets: 3, rest: 60)]);
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+      async.elapse(const Duration(seconds: 60));
+      expect(plays, 1);
+
+      // Второй подход: другой отдых — другой сигнал.
+      controller.setResult(const WorkoutSetInput(reps: 8));
+      controller.confirmSet();
+      async.elapse(const Duration(seconds: 60));
+
+      expect(plays, 2);
       controller.dispose();
     });
   });

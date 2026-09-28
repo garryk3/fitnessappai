@@ -279,6 +279,13 @@ class ReminderService {
       minute: reminder.minute,
     );
     final canExact = await android.canScheduleExactNotifications() ?? false;
+    // Режим планирования в журнал: без него на устройстве (Xiaomi, задачи
+    // 47.6/47.8-2а) невозможно отличить «система отложила inexact-будильник»
+    // от «приложение запланировало не на то время».
+    logNotificationIssue(
+      'Напоминание дня ${reminder.programDayId} запланировано на $scheduled '
+      '(${canExact ? 'exactAllowWhileIdle' : 'inexactAllowWhileIdle'})',
+    );
     await _plugin.zonedSchedule(
       id: reminder.programDayId,
       title: programName,
@@ -307,6 +314,62 @@ class ReminderService {
   /// Отменяет уведомление дня по [programDayId].
   Future<void> cancel(int programDayId) async {
     await _plugin.cancel(id: programDayId);
+  }
+
+  /// Перепланирует напоминания указанных дней программы.
+  ///
+  /// Вызывается при активации программы (задача 47.8, п. 2г): настройки дней
+  /// сохраняются в БД и при деактивации, но уведомления должны появляться
+  /// только у активных программ. День без привязки или выключенное напоминание
+  /// отменяется, а не планируется.
+  Future<void> rescheduleDays(Iterable<int> programDayIds) async {
+    if (_plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >() ==
+        null) {
+      return;
+    }
+    final items = await _repository.scheduledForDays(programDayIds);
+    for (final item in items) {
+      final programDayId = item.reminder.programDayId;
+      try {
+        if (item.dayOfWeek == null || !item.reminder.enabled) {
+          await cancel(programDayId);
+          continue;
+        }
+        await schedule(
+          item.reminder,
+          dayOfWeek: item.dayOfWeek!,
+          programName: item.programName,
+          dayNumber: item.dayNumber,
+        );
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось перепланировать напоминание дня $programDayId',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+  }
+
+  /// Отменяет уведомления указанных дней, не удаляя их настройки из БД.
+  ///
+  /// Вызывается при деактивации программы (задача 47.8, п. 2г): настройки
+  /// сохраняются, чтобы повторная активация могла их запланировать снова.
+  Future<void> cancelDays(Iterable<int> programDayIds) async {
+    for (final programDayId in programDayIds) {
+      try {
+        await cancel(programDayId);
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось отменить напоминание дня $programDayId',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
   }
 
   /// Отменяет все запланированные уведомления.

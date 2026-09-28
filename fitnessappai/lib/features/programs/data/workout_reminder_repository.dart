@@ -95,6 +95,39 @@ class WorkoutReminderRepository {
     return (programId: row.programId, dayIndex: row.dayIndex);
   }
 
+  /// Напоминания указанных дней с данными для планирования.
+  ///
+  /// Нужно при (де)активации программы: настройки дней остаются в БД, но
+  /// запланированные уведомления должны следовать за активностью программы.
+  Future<List<ReminderSchedule>> scheduledForDays(
+    Iterable<int> programDayIds,
+  ) async {
+    final ids = programDayIds.toList();
+    if (ids.isEmpty) {
+      return const [];
+    }
+    final query = _db.select(_db.workoutReminders).join([
+      innerJoin(
+        _db.programDays,
+        _db.programDays.id.equalsExp(_db.workoutReminders.programDayId),
+      ),
+      innerJoin(
+        _db.programs,
+        _db.programs.id.equalsExp(_db.programDays.programId),
+      ),
+    ])..where(_db.workoutReminders.programDayId.isIn(ids));
+    final rows = await query.get();
+    return [
+      for (final row in rows)
+        ReminderSchedule(
+          reminder: _toReminder(row.readTable(_db.workoutReminders)),
+          dayOfWeek: row.readTable(_db.programDays).dayOfWeek,
+          programName: row.readTable(_db.programs).name,
+          dayNumber: row.readTable(_db.programDays).dayIndex + 1,
+        ),
+    ];
+  }
+
   /// Все напоминания с днём недели и названием программы — для
   /// перепланирования после импорта БД.
   Future<List<ReminderSchedule>> allScheduled() async {

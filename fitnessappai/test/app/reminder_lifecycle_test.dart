@@ -9,6 +9,7 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/home/ui/home_screen.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
 import 'package:fitnessappai/main.dart';
@@ -65,7 +66,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('тап по уведомлению открывает день тренировки', (tester) async {
+  testWidgets('тап по уведомлению открывает главный экран (47.8, 2б)', (
+    tester,
+  ) async {
     final repository = WorkoutReminderRepository(locator.get<AppDatabase>());
     locator.registerInstance<WorkoutReminderRepository>(repository);
     final reminders = _CountingReminderService(repository: repository);
@@ -86,6 +89,8 @@ void main() {
 
     await tester.pumpWidget(const FitnessAppAi());
     await tester.pumpAndSettle();
+    // Стартовый экран — программы; тап должен увести на главную.
+    expect(find.byType(ProgramDayBuilderScreen), findsNothing);
 
     reminders.handleNotificationResponse(
       NotificationResponse(
@@ -95,7 +100,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(ProgramDayBuilderScreen), findsOneWidget);
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(ProgramDayBuilderScreen), findsNothing);
   });
 
   testWidgets('после перезапуска приложения напоминания переподключены', (

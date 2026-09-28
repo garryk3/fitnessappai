@@ -91,6 +91,9 @@ class WorkoutController {
   Timer? _restTimer;
   Timer? _holdTimer;
 
+  /// Время окончания отдыха, для которого уже прозвучал сигнал (47.8, п. 2в).
+  DateTime? _signaledRestEndsAt;
+
   /// Поколение сессии: инкрементируется при каждом `start`/`restore`.
   /// Таймеры, созданные в прошлом поколении, при срабатывании становятся
   /// no-op (защита от stale-таймера после перезапуска/восстановления).
@@ -337,9 +340,7 @@ class WorkoutController {
       return;
     }
     _soundService?.stop();
-    _restTimer?.cancel();
-    _restTimer = null;
-    _restEndsAt = null;
+    _cancelRestTimer();
     restRemainingSeconds.value = null;
     sideRest.value = null;
     if (_restBetweenExercises) {
@@ -357,9 +358,7 @@ class WorkoutController {
     if (isLastExercise || phase.value == WorkoutPhase.finished) {
       return;
     }
-    _restTimer?.cancel();
-    _restTimer = null;
-    _restEndsAt = null;
+    _cancelRestTimer();
     restRemainingSeconds.value = null;
     sideRest.value = null;
     currentSide.value = null;
@@ -452,34 +451,51 @@ class WorkoutController {
     // Отсчёт ведётся от времени окончания по wall-clock: при уходе в сон и
     // возврате первый тик корректно завершает отдых, а не продолжает счёт
     // с прежнего значения (задача 14.8).
-    _restEndsAt = _clock().add(Duration(seconds: restSeconds));
+    final restEndsAt = _clock().add(Duration(seconds: restSeconds));
     remainingSignal.value = restSeconds;
-    _restTimer?.cancel();
-    _restTimer = _makeRestTicker(remainingSignal, _completeNormalRest);
+    _cancelRestTimer();
+    _restEndsAt = restEndsAt;
+    _restTimer = _makeRestTicker(
+      remainingSignal,
+      _completeNormalRest,
+      restEndsAt,
+    );
   }
 
   /// Начинает паузу отдыха между упражнениями. По завершении переходит
   /// к следующему упражнению.
   void _startRestBetween(int restSeconds) {
     phase.value = WorkoutPhase.rest;
-    _restEndsAt = _clock().add(Duration(seconds: restSeconds));
+    final restEndsAt = _clock().add(Duration(seconds: restSeconds));
     restRemainingSeconds.value = restSeconds;
+    _cancelRestTimer();
+    _restEndsAt = restEndsAt;
+    _restTimer = _makeRestTicker(
+      restRemainingSeconds,
+      _completeBetweenRest,
+      restEndsAt,
+    );
+  }
+
+  /// Останавливает тикер отдыха, не трогая [_signaledRestEndsAt].
+  void _cancelRestTimer() {
     _restTimer?.cancel();
-    _restTimer = _makeRestTicker(restRemainingSeconds, _completeBetweenRest);
+    _restTimer = null;
+    _restEndsAt = null;
   }
 
   /// Возобновляет отдых из чекпоинта. [restEndsAt] — сохранённое время
   /// окончания по wall-clock; если отдых уже истёк во время «сна», завершает
-  /// его немедленно.
+  /// его немедленно и молча: сигнал об окончании такого отдыха уже прозвучал
+  /// до ухода в фон (задача 47.8, п. 2в).
   void _resumeRest(
     DateTime restEndsAt, {
     required bool between,
     required bool side,
   }) {
     final remaining = restEndsAt.difference(_clock()).inSeconds;
+    _cancelRestTimer();
     if (remaining <= 0) {
-      _restEndsAt = null;
-      _restTimer = null;
       restRemainingSeconds.value = null;
       sideRest.value = null;
       if (between) {
@@ -498,14 +514,17 @@ class WorkoutController {
     _restTimer = _makeRestTicker(
       remainingSignal,
       between ? _completeBetweenRest : _completeNormalRest,
+      restEndsAt,
     );
   }
 
   /// Создаёт тикер отдыха: пересчитывает остаток от [_restEndsAt] и по
-  /// достижении нуля вызывает [onComplete].
+  /// достижении нуля вызывает [onComplete]. [restEndsAt] — время окончания
+  /// отдыха, по которому дедуплицируется сигнал.
   Timer _makeRestTicker(
     Signal<int?> remainingSignal,
-    void Function() onComplete,
+    void Function(DateTime restEndsAt) onComplete,
+    DateTime restEndsAt,
   ) {
     final generation = _generation;
     return _timerFactory(const Duration(seconds: 1), (timer) {
@@ -524,7 +543,7 @@ class WorkoutController {
         _restTimer = null;
         _restEndsAt = null;
         remainingSignal.value = null;
-        onComplete();
+        onComplete(endsAt);
       } else {
         remainingSignal.value = remaining;
       }
@@ -532,16 +551,31 @@ class WorkoutController {
   }
 
   /// Завершение обычного отдыха (между подходами или между сторонами).
-  void _completeNormalRest() {
+  void _completeNormalRest(DateTime restEndsAt) {
     phase.value = WorkoutPhase.exercise;
     _prepareHoldTimer();
-    _soundService?.playCompletion();
+    _signalRestEnd(restEndsAt);
   }
 
   /// Завершение отдыха между упражнениями: переход к следующему упражнению.
-  void _completeBetweenRest() {
+  void _completeBetweenRest(DateTime restEndsAt) {
     _restBetweenExercises = false;
     _advanceToNextExercise();
+    _signalRestEnd(restEndsAt);
+  }
+
+  /// Проигрывает сигнал окончания отдыха не более одного раза на [restEndsAt].
+  ///
+  /// Один и тот же отдых может быть «восстановлен» из чекпоинта уже после
+  /// того, как сигнал прозвучал (сворачивание приложения на время отдыха,
+  /// пересоздание экрана на складном устройстве): без проверки по времени
+  /// окончания таймер сигналил бы повторно, уже во время следующего подхода
+  /// (задача 47.8, п. 2в).
+  void _signalRestEnd(DateTime restEndsAt) {
+    if (_signaledRestEndsAt == restEndsAt) {
+      return;
+    }
+    _signaledRestEndsAt = restEndsAt;
     _soundService?.playCompletion();
   }
 
@@ -731,9 +765,7 @@ class WorkoutController {
   }
 
   void _cancelTimers() {
-    _restTimer?.cancel();
-    _restTimer = null;
-    _restEndsAt = null;
+    _cancelRestTimer();
     _holdTimer?.cancel();
     _holdTimer = null;
   }
