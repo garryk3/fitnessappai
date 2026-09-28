@@ -158,6 +158,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     return MonthDayCell(
       day: date.day,
+      fillHeight: true,
       background: hasWorkout
           ? colorScheme.primaryContainer
           : colorScheme.surfaceContainerLow,
