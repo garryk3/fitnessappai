@@ -118,8 +118,8 @@ void main() {
     expect(field('Вес (кг)'), findsNothing);
   });
 
-  testWidgets('running: набор полей по типу', (tester) async {
-    final positionId = await addPosition('Бег', ExerciseType.running);
+  testWidgets('дистанция: набор полей по типу (47.13)', (tester) async {
+    final positionId = await addPosition('Бег', ExerciseType.distance);
 
     await pumpParams(tester, positionId);
 
@@ -142,27 +142,13 @@ void main() {
     expect(field('Время (сек)'), findsNothing);
   });
 
-  testWidgets('bike: набор полей по типу', (tester) async {
-    final positionId = await addPosition('Велосипед', ExerciseType.bike);
-
-    await pumpParams(tester, positionId);
-
-    expect(field('Подходы'), findsOneWidget);
-    expect(field('Время (мин)'), findsOneWidget);
-    expect(field('Дистанция (км)'), findsOneWidget);
-    expect(field('Отдых (сек)'), findsOneWidget);
-    expect(field('Повторения'), findsNothing);
-    expect(field('Вес (кг)'), findsNothing);
-    expect(field('Время (сек)'), findsNothing);
-  });
-
-  testWidgets('bike: минуты и километры сохраняются без исключения', (
+  testWidgets('дистанция: отдых сохраняется, подходы скрыты (47.13)', (
     tester,
   ) async {
-    final positionId = await addPosition('Велосипед', ExerciseType.bike);
+    final positionId = await addPosition('Велосипед', ExerciseType.distance);
 
     await pumpParams(tester, positionId);
-    await enterField(tester, 'Подходы', '3');
+    expect(field('Подходы'), findsNothing);
     await enterField(tester, 'Время (мин)', '40');
     await enterField(tester, 'Дистанция (км)', '15');
     await enterField(tester, 'Отдых (сек)', '60');
@@ -171,7 +157,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     final items = await _dayItems(programRepository, positionId);
-    expect(items.sets, 3);
+    // Подходов у «дистанции» нет: сохраняется один заход.
+    expect(items.sets, 1);
     expect(items.durationSeconds, 2400);
     expect(items.distanceMeters, 15000);
     expect(items.restSeconds, 60);
@@ -265,8 +252,8 @@ void main() {
     expect(items.restSeconds, 60);
   });
 
-  testWidgets('running: минуты и километры конвертируются', (tester) async {
-    final positionId = await addPosition('Бег', ExerciseType.running);
+  testWidgets('дистанция: минуты и километры конвертируются', (tester) async {
+    final positionId = await addPosition('Бег', ExerciseType.distance);
 
     await pumpParams(tester, positionId);
     await enterField(tester, 'Время (мин)', '30');

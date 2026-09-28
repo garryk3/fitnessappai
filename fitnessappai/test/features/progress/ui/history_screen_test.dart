@@ -12,6 +12,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
@@ -62,6 +63,9 @@ void main() {
     double? weightKg = 20,
     int? durationSeconds,
     double? distanceMeters,
+    double? avgSpeed,
+    double? avgPace,
+    int? steps,
     String? side,
   }) => WorkoutSetResult(
     sessionId: 0,
@@ -73,6 +77,9 @@ void main() {
     weightKg: weightKg,
     durationSeconds: durationSeconds,
     distanceMeters: distanceMeters,
+    avgSpeed: avgSpeed,
+    avgPace: avgPace,
+    steps: steps,
     side: side,
     completedAt: DateTime(2026, 8, 10, 18, 5),
   );
@@ -352,6 +359,58 @@ void main() {
     expect(find.text('JSON скопирован в буфер обмена'), findsOneWidget);
     expect(copiedJson, isNotNull);
     expect(copiedJson, startsWith('{"type": "history"'));
+  });
+
+  testWidgets('детализация: дистанция с необязательными метриками (47.13)', (
+    tester,
+  ) async {
+    // Экран деталей тянет превью программы из общего кэша медиа.
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
+    addTearDown(locator.reset);
+
+    final detail = await workoutRepo
+        .saveSession(session(performedDate: DateTime(2026, 8, 10)), [
+          setResult(
+            name: 'Бег',
+            type: ExerciseType.distance,
+            reps: null,
+            weightKg: null,
+            durationSeconds: 3600,
+            distanceMeters: 20000,
+            avgSpeed: 30,
+            avgPace: 2.5,
+            steps: 5400,
+          ),
+        ]);
+    await pumpHistory(tester, location: '/history/${detail.session.id}');
+
+    // Дистанция и время плюс те метрики, которые ввёл пользователь.
+    expect(
+      find.text('1. 20 км × 60 мин · 30 км/ч · 2.5 мин/км · 5400 шагов'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('детализация: дистанция без метрик выводится без хвоста', (
+    tester,
+  ) async {
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
+    addTearDown(locator.reset);
+
+    final detail = await workoutRepo
+        .saveSession(session(performedDate: DateTime(2026, 8, 10)), [
+          setResult(
+            name: 'Вело',
+            type: ExerciseType.distance,
+            reps: null,
+            weightKg: null,
+            durationSeconds: 1800,
+            distanceMeters: 5000,
+          ),
+        ]);
+    await pumpHistory(tester, location: '/history/${detail.session.id}');
+
+    expect(find.text('1. 5 км × 30 мин'), findsOneWidget);
   });
 
   testWidgets('календарь не обрезается на квадратном экране', (tester) async {

@@ -248,12 +248,10 @@ void main() {
     },
   );
 
-  testWidgets('полный флоу running: дробная дистанция не роняет экран', (
-    tester,
-  ) async {
+  testWidgets('дистанция: дробное значение не роняет экран', (tester) async {
     final dayId = await createDay(
       name: 'Бег',
-      type: ExerciseType.running,
+      type: ExerciseType.distance,
       durationSeconds: 1800,
       distanceMeters: 5000,
     );
@@ -456,77 +454,12 @@ void main() {
     },
   );
 
-  testWidgets('полный флоу bike: метрики велосипеда сохраняются в результат', (
-    tester,
-  ) async {
-    final dayId = await createDay(
-      name: 'Велосипед',
-      type: ExerciseType.bike,
-      durationSeconds: 2400,
-      distanceMeters: 20000,
-    );
-    await pumpFlow(tester, dayId);
-
-    await startWorkout(tester);
-
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Дистанция (км)'),
-      '20',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Время (мин)'),
-      '40',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Ср. скорость (км/ч)'),
-      '30',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Ср. каденс (об/мин)'),
-      '90',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Ср. пульс (уд/мин)'),
-      '145',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Подъём (м)'),
-      '120',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Спуск (м)'),
-      '95',
-    );
-    await tester.ensureVisible(find.text('Подход выполнен'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Подход выполнен'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Тренировка завершена'), findsOneWidget);
-    await tester.pumpAndSettle();
-    expect(find.text('Тренировка сохранена'), findsOneWidget);
-
-    final sessions = await workoutRepo.getSessionsBetween(
-      DateTime(2020),
-      DateTime(2030),
-    );
-    final detail = await workoutRepo.getSession(sessions.first.id!);
-    final result = detail!.results.single;
-    expect(result.distanceMeters, 20000);
-    expect(result.durationSeconds, 2400);
-    expect(result.avgSpeed, 30);
-    expect(result.avgCadence, 90);
-    expect(result.avgPulse, 145);
-    expect(result.ascentMeters, 120);
-    expect(result.descentMeters, 95);
-  });
-
   testWidgets(
-    'bike без скорости не запускается: обязательное поле подсвечено',
+    'дистанция: метрики из раскрытия «Дополнительные» попадают в результат (47.13)',
     (tester) async {
       final dayId = await createDay(
         name: 'Велосипед',
-        type: ExerciseType.bike,
+        type: ExerciseType.distance,
         durationSeconds: 2400,
         distanceMeters: 20000,
       );
@@ -542,6 +475,86 @@ void main() {
         find.widgetWithText(TextFormField, 'Время (мин)'),
         '40',
       );
+      // Необязательные метрики спрятаны под раскрытие (задача 47.13).
+      expect(
+        find.widgetWithText(TextFormField, 'Ср. скорость (км/ч)'),
+        findsNothing,
+      );
+      await tester.ensureVisible(
+        find.text('Дополнительные метрики (необязательно)'),
+      );
+      await tester.tap(find.text('Дополнительные метрики (необязательно)'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ср. скорость (км/ч)'),
+        '30',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ср. каденс (об/мин)'),
+        '90',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ср. пульс (уд/мин)'),
+        '145',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Подъём (м)'),
+        '120',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Спуск (м)'),
+        '95',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ср. темп (мин/км)'),
+        '2',
+      );
+      await tester.enterText(find.widgetWithText(TextFormField, 'Шаги'), '0');
+      await tester.ensureVisible(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('Тренировка сохранена'), findsOneWidget);
+
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      final detail = await workoutRepo.getSession(sessions.first.id!);
+      final result = detail!.results.single;
+      expect(result.distanceMeters, 20000);
+      expect(result.durationSeconds, 2400);
+      expect(result.avgSpeed, 30);
+      expect(result.avgCadence, 90);
+      expect(result.avgPulse, 145);
+      expect(result.ascentMeters, 120);
+      expect(result.descentMeters, 95);
+      expect(result.avgPace, 2);
+    },
+  );
+
+  testWidgets(
+    'дистанция без дистанции/времени не запускается: обязательные поля',
+    (tester) async {
+      final dayId = await createDay(
+        name: 'Велосипед',
+        type: ExerciseType.distance,
+        durationSeconds: 2400,
+        distanceMeters: 20000,
+      );
+      await pumpFlow(tester, dayId);
+
+      await startWorkout(tester);
+
+      // Только дистанция: без времени подход не засчитывается.
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Дистанция (км)'),
+        '20',
+      );
       await tester.ensureVisible(find.text('Подход выполнен'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Подход выполнен'));
@@ -549,6 +562,26 @@ void main() {
 
       expect(find.text('Заполните поле'), findsOneWidget);
       expect(find.text('Тренировка завершена'), findsNothing);
+
+      // Метрики из раскрытия необязательны: подход засчитывается и без них.
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Время (мин)'),
+        '40',
+      );
+      await tester.pump();
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      final detail = await workoutRepo.getSession(sessions.first.id!);
+      final result = detail!.results.single;
+      expect(result.distanceMeters, 20000);
+      expect(result.durationSeconds, 2400);
+      expect(result.avgSpeed, isNull);
     },
   );
 }

@@ -6,7 +6,7 @@ import 'package:fitnessappai/core/domain/validators/validation_result.dart';
 ///
 /// Метрики по типам: strength → sets + reps + weightKg;
 /// bodyweight → sets + reps; plank → sets + durationSeconds;
-/// running → distanceMeters + durationSeconds.
+/// distance → distanceMeters + durationSeconds.
 class ProgramDayExerciseValidator {
   ValidationResult validate(ProgramDayExercise item, ExerciseType type) {
     final errors = <String>[];
@@ -29,14 +29,7 @@ class ProgramDayExerciseValidator {
         if (item.durationSeconds == null || item.durationSeconds! < 1) {
           errors.add('Время удержания должно быть >= 1 с');
         }
-      case ExerciseType.running:
-        if (item.durationSeconds == null || item.durationSeconds! < 1) {
-          errors.add('Продолжительность должна быть >= 1 с');
-        }
-        if (item.distanceMeters != null && item.distanceMeters! < 0) {
-          errors.add('Дистанция не может быть отрицательной');
-        }
-      case ExerciseType.bike:
+      case ExerciseType.distance:
         if (item.durationSeconds == null || item.durationSeconds! < 1) {
           errors.add('Продолжительность должна быть >= 1 с');
         }

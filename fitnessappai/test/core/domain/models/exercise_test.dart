@@ -59,6 +59,24 @@ void main() {
     expect(ExerciseType.strength.name, 'strength');
     expect(ExerciseType.bodyweight.name, 'bodyweight');
     expect(ExerciseType.plank.name, 'plank');
-    expect(ExerciseType.running.name, 'running');
+    expect(ExerciseType.distance.name, 'distance');
+  });
+
+  group('exerciseTypeFromName (47.13)', () {
+    test('актуальные имена разбираются как есть', () {
+      for (final type in ExerciseType.values) {
+        expect(exerciseTypeFromName(type.name), type);
+      }
+    });
+
+    test('устаревшие running и bike разбираются как distance', () {
+      expect(exerciseTypeFromName('running'), ExerciseType.distance);
+      expect(exerciseTypeFromName('bike'), ExerciseType.distance);
+    });
+
+    test('неизвестная строка даёт null, а не исключение', () {
+      expect(exerciseTypeFromName('swim'), isNull);
+      expect(exerciseTypeFromName(''), isNull);
+    });
   });
 }

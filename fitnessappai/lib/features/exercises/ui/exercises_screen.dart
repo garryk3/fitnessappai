@@ -314,8 +314,7 @@ String _typeLabel(AppLocalizations l10n, ExerciseType type) => switch (type) {
   ExerciseType.strength => l10n.exerciseTypeStrength,
   ExerciseType.bodyweight => l10n.exerciseTypeBodyweight,
   ExerciseType.plank => l10n.exerciseTypePlank,
-  ExerciseType.running => l10n.exerciseTypeRunning,
-  ExerciseType.bike => l10n.exerciseTypeBike,
+  ExerciseType.distance => l10n.exerciseTypeDistance,
 };
 
 class _ExerciseCard extends StatelessWidget {

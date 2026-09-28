@@ -555,8 +555,7 @@ class _MetricChart extends StatelessWidget {
   List<double> _displayValues(ExerciseType? type) {
     final values = controller.metricPerSlice.value;
     return switch (type) {
-      ExerciseType.running ||
-      ExerciseType.bike => [for (final v in values) v / 1000],
+      ExerciseType.distance => [for (final v in values) v / 1000],
       ExerciseType.plank => [for (final v in values) v / 60],
       ExerciseType.bodyweight || ExerciseType.strength || null => values,
     };
@@ -564,7 +563,7 @@ class _MetricChart extends StatelessWidget {
 
   String _unitSuffix(ExerciseType? type) => switch (type) {
     ExerciseType.plank => 'м',
-    ExerciseType.running || ExerciseType.bike => 'км',
+    ExerciseType.distance => 'км',
     ExerciseType.bodyweight => 'повт',
     ExerciseType.strength || null => 'кг',
   };

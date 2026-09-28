@@ -153,14 +153,14 @@ void main() {
         ),
       ],
     );
-    final running = await insertExercise('Бег', type: ExerciseType.running);
+    final running = await insertExercise('Бег', type: ExerciseType.distance);
     final plank = await insertExercise('Планка', type: ExerciseType.plank);
 
     await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
       setResult(exerciseId: strength.id!, reps: 8, weightKg: 20),
       setResult(
         exerciseId: running,
-        type: ExerciseType.running,
+        type: ExerciseType.distance,
         reps: null,
         weightKg: null,
         distanceMeters: 3000,
@@ -293,12 +293,12 @@ void main() {
   });
 
   testWidgets('выбор упражнения меняет график прогресса', (tester) async {
-    final first = await insertExercise('Бег', type: ExerciseType.running);
+    final first = await insertExercise('Бег', type: ExerciseType.distance);
     final second = await insertExercise('Приседания');
     await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
       setResult(
         exerciseId: first,
-        type: ExerciseType.running,
+        type: ExerciseType.distance,
         reps: null,
         weightKg: null,
         distanceMeters: 1000,

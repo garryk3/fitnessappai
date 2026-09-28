@@ -129,8 +129,8 @@ void main() {
     expect(find.text('Пусто — время удержания со счётчика'), findsOneWidget);
   });
 
-  testWidgets('running: набор полей по типу', (tester) async {
-    final exercise = await createExercise('Бег', ExerciseType.running);
+  testWidgets('дистанция: набор полей по типу (47.13)', (tester) async {
+    final exercise = await createExercise('Бег', ExerciseType.distance);
 
     await pumpParams(tester, exercise.id!);
 
@@ -141,20 +141,10 @@ void main() {
     expect(field('Повторения'), findsNothing);
   });
 
-  testWidgets('bike: набор полей по типу', (tester) async {
-    final exercise = await createExercise('Вело', ExerciseType.bike);
-
-    await pumpParams(tester, exercise.id!);
-
-    expect(field('Время (мин)'), findsOneWidget);
-    expect(field('Дистанция (км)'), findsOneWidget);
-    expect(field('Отдых (сек)'), findsOneWidget);
-    expect(field('Подходы'), findsOneWidget);
-    expect(field('Повторения'), findsNothing);
-  });
-
-  testWidgets('старт bike конвертирует минуты и километры', (tester) async {
-    final exercise = await createExercise('Вело', ExerciseType.bike);
+  testWidgets('дистанция: старт конвертирует минуты и километры', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Вело', ExerciseType.distance);
 
     Uri? navigatedUri;
     final router = GoRouter(
@@ -187,7 +177,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await enterField(tester, 'Подходы', '1');
+    expect(field('Подходы'), findsNothing);
     await enterField(tester, 'Время (мин)', '30');
     await enterField(tester, 'Дистанция (км)', '5');
     await enterField(tester, 'Отдых (сек)', '60');
@@ -264,7 +254,7 @@ void main() {
   });
 
   testWidgets('старт running конвертирует минуты и километры', (tester) async {
-    final exercise = await createExercise('Бег', ExerciseType.running);
+    final exercise = await createExercise('Бег', ExerciseType.distance);
 
     Uri? navigatedUri;
     final router = GoRouter(

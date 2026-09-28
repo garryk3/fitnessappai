@@ -86,12 +86,8 @@ class ExerciseSeedParser {
     if (value is! String) {
       return null;
     }
-    for (final type in ExerciseType.values) {
-      if (type.name == value) {
-        return type;
-      }
-    }
-    return null;
+    // Принимает и устаревшие `running`/`bike` → `distance` (задача 47.13).
+    return exerciseTypeFromName(value);
   }
 
   List<SeedExerciseMuscle> _parseMuscles(Object? value) {

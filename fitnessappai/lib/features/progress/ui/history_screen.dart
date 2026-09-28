@@ -403,31 +403,22 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
       case ExerciseType.plank:
         return '$label ${result.durationSeconds ?? 0} '
             '${l10n.workoutUnitSeconds}';
-      case ExerciseType.running:
+      case ExerciseType.distance:
         final distance = result.distanceMeters;
         final duration = result.durationSeconds;
         if (distance != null && duration != null) {
-          final avgPace = result.avgPace;
-          final pacePart = avgPace != null ? ' · ${_fmt(avgPace)} мин/км' : '';
-          final steps = result.steps;
-          final stepsPart = steps != null
-              ? ' · $steps ${l10n.workoutUnitSteps}'
-              : '';
+          // Необязательные метрики прежних «бега» и «велосипеда» показаны в
+          // одной строке, если они есть в результате (задача 47.13).
+          final extras = <String>[
+            if (result.avgSpeed != null)
+              '${_fmt(result.avgSpeed!)} ${l10n.workoutUnitKmh}',
+            if (result.avgPace != null) '${_fmt(result.avgPace!)} мин/км',
+            if (result.steps != null)
+              '${result.steps} ${l10n.workoutUnitSteps}',
+          ];
+          final extraPart = extras.isEmpty ? '' : ' · ${extras.join(' · ')}';
           return '$label ${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
-              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}'
-              '$pacePart$stepsPart';
-        }
-        return label;
-      case ExerciseType.bike:
-        final distance = result.distanceMeters;
-        final duration = result.durationSeconds;
-        final speed = result.avgSpeed;
-        if (distance != null && duration != null) {
-          final speedPart = speed != null
-              ? ' · ${_fmt(speed)} ${l10n.workoutUnitKmh}'
-              : '';
-          return '$label ${_fmt(distance / 1000)} ${l10n.workoutUnitKm} × '
-              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}$speedPart';
+              '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}$extraPart';
         }
         return label;
     }

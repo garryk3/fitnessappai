@@ -122,7 +122,7 @@ void main() {
   testWidgets('отображает карточки упражнений с бейджами типа', (tester) async {
     await repository.create(exercise('Жим штанги'), const []);
     await repository.create(
-      exercise('Бег трусцой', type: ExerciseType.running),
+      exercise('Бег трусцой', type: ExerciseType.distance),
       const [],
     );
     await repository.create(
@@ -135,7 +135,7 @@ void main() {
     expect(find.text('Бег трусцой'), findsOneWidget);
     expect(find.text('Планка'), findsOneWidget);
     expect(find.text('Силовые'), findsWidgets);
-    expect(find.text('Бег'), findsWidgets);
+    expect(find.text('Дистанция'), findsWidgets);
     expect(find.text('Время'), findsWidgets);
   });
 

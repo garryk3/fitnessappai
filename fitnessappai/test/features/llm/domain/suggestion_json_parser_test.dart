@@ -41,12 +41,22 @@ void main() {
       expect(suggestion.contraindications, ['knees', 'back']);
     });
 
-    test('поддерживает plank и running', () {
+    test('поддерживает plank и distance', () {
       final plank = parser.fromJson(validJson(name: 'Планка', type: 'plank'));
       expect(plank.type, ExerciseType.plank);
 
+      final distance = parser.fromJson(
+        validJson(name: 'Дистанция', type: 'distance'),
+      );
+      expect(distance.type, ExerciseType.distance);
+    });
+
+    test('принимает устаревшие running и bike как distance (47.13)', () {
       final run = parser.fromJson(validJson(name: 'Бег', type: 'running'));
-      expect(run.type, ExerciseType.running);
+      expect(run.type, ExerciseType.distance);
+
+      final bike = parser.fromJson(validJson(name: 'Вело', type: 'bike'));
+      expect(bike.type, ExerciseType.distance);
     });
 
     test('обрезает пробелы вокруг названия', () {
@@ -187,7 +197,7 @@ void main() {
       );
 
       expect(suggestion.name, 'Бег');
-      expect(suggestion.type, ExerciseType.running);
+      expect(suggestion.type, ExerciseType.distance);
     });
 
     test('некорректный JSON даёт typed-ошибку', () {

@@ -556,7 +556,7 @@ void main() {
   testWidgets('фильтр диалога выбора по категории', (tester) async {
     await createExercise('Жим штанги', ExerciseType.strength);
     await createExercise('Подтягивания', ExerciseType.bodyweight);
-    await createExercise('Бег трусцой', ExerciseType.running);
+    await createExercise('Бег трусцой', ExerciseType.distance);
     final program = await createProgram('Сплит', 1);
 
     await pumpDayBuilder(tester, programId: program.id!);
@@ -569,7 +569,7 @@ void main() {
 
     await tester.tap(find.byType(DropdownButtonFormField<ExerciseType?>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Бег').last);
+    await tester.tap(find.text('Дистанция').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Бег трусцой'), findsOneWidget);
@@ -584,7 +584,11 @@ void main() {
     final quads = await muscleId('quads');
     await createExercise('Жим штанги', ExerciseType.strength, muscles: [chest]);
     await createExercise('Приседания', ExerciseType.strength, muscles: [quads]);
-    await createExercise('Бег трусцой', ExerciseType.running, muscles: [chest]);
+    await createExercise(
+      'Бег трусцой',
+      ExerciseType.distance,
+      muscles: [chest],
+    );
     final program = await createProgram('Сплит', 1);
 
     await pumpDayBuilder(tester, programId: program.id!);

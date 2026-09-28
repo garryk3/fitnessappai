@@ -50,7 +50,11 @@ part 'app_database.g.dart';
 /// v11: таблица `plan_schedule` — ручное назначение программы на дату.
 /// v12: колонка `programs.imagePath` — изображение программы.
 /// v13: колонка `program_days.title` — название дня тренировки.
-const int appDatabaseSchemaVersion = 14;
+/// v14: колонки `workout_set_results.avgSpeed/avgCadence/avgPulse/
+/// ascentMeters/descentMeters/avgPace/steps`.
+/// v15: без изменений схемы — данные: типы упражнений `running`/`bike`
+/// переписаны в `distance` (задача 47.13).
+const int appDatabaseSchemaVersion = 15;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -147,6 +151,20 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(workoutSetResults, workoutSetResults.avgPace);
         await m.addColumn(workoutSetResults, workoutSetResults.steps);
         await ReferenceSeeder(this).seed();
+      }
+      if (from < 15) {
+        // 47.13: «бег» и «велосипед» объединены в тип «дистанция». Колонки
+        // TEXT, поэтому меняем данные, а не схему. Конвертер читает старые
+        // значения как `distance` даже без этой миграции — на случай, если
+        // база почему-то не обновилась.
+        await m.database.customStatement(
+          "UPDATE exercises SET type = 'distance' "
+          "WHERE type IN ('running', 'bike')",
+        );
+        await m.database.customStatement(
+          "UPDATE workout_set_results SET exercise_type = 'distance' "
+          "WHERE exercise_type IN ('running', 'bike')",
+        );
       }
     },
     beforeOpen: (details) async {

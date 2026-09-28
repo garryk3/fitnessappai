@@ -352,7 +352,7 @@ void main() {
     );
     await tester.tap(find.text('Силовые'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Бег').last);
+    await tester.tap(find.text('Дистанция').last);
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
@@ -360,7 +360,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final created = (await repository.getAll()).single;
-    expect(created.type, ExerciseType.running);
+    expect(created.type, ExerciseType.distance);
   });
 
   testWidgets('чекбокс скрытия необязательных полей сохраняется', (

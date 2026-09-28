@@ -382,8 +382,7 @@ Future<void> createExercise(
       ExerciseType.strength => 'Силовые',
       ExerciseType.bodyweight => 'Свой вес',
       ExerciseType.plank => 'Время',
-      ExerciseType.running => 'Бег',
-      ExerciseType.bike => 'Велосипед',
+      ExerciseType.distance => 'Дистанция',
     }).last,
   );
   await tester.pumpAndSettle();
@@ -806,7 +805,7 @@ void main() {
     await pullToRefreshExercises(tester);
     expect(find.text(_plank), findsOneWidget);
 
-    await createExercise(tester, _running, ExerciseType.running);
+    await createExercise(tester, _running, ExerciseType.distance);
     await pullToRefreshExercises(tester);
     expect(find.text(_running), findsOneWidget);
 
@@ -916,7 +915,7 @@ void main() {
 
     await createExercise(tester, _squat, ExerciseType.strength);
     await pullToRefreshExercises(tester);
-    await createExercise(tester, _running, ExerciseType.running);
+    await createExercise(tester, _running, ExerciseType.distance);
     await pullToRefreshExercises(tester);
 
     final today = DateTime.now().weekday;
@@ -1101,7 +1100,7 @@ void main() {
 
     await goToTab(tester, Icons.fitness_center_outlined);
 
-    await createExercise(tester, _running, ExerciseType.running);
+    await createExercise(tester, _running, ExerciseType.distance);
     await pullToRefreshExercises(tester);
 
     final tomorrow = day2Weekday(DateTime.now().weekday);
@@ -1254,7 +1253,7 @@ void main() {
     await goToTab(tester, Icons.fitness_center_outlined);
     await createExercise(tester, _squat, ExerciseType.strength);
     await pullToRefreshExercises(tester);
-    await createExercise(tester, _running, ExerciseType.running);
+    await createExercise(tester, _running, ExerciseType.distance);
     await pullToRefreshExercises(tester);
 
     final today = DateTime.now().weekday;

@@ -121,7 +121,7 @@ void main() {
       setResult(name: 'Планка', type: ExerciseType.plank, durationSeconds: 45),
       setResult(
         name: 'Бег',
-        type: ExerciseType.running,
+        type: ExerciseType.distance,
         durationSeconds: 1800,
         distanceMeters: 5000,
       ),
@@ -129,7 +129,7 @@ void main() {
 
     expect(detail.results[0].exerciseName, 'Планка');
     expect(detail.results[0].durationSeconds, 45);
-    expect(detail.results[1].exerciseType, ExerciseType.running);
+    expect(detail.results[1].exerciseType, ExerciseType.distance);
     expect(detail.results[1].distanceMeters, 5000);
   });
 

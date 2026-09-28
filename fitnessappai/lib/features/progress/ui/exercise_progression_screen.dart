@@ -253,8 +253,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
     return switch (type) {
       ExerciseType.strength => '${_fmt(value)} ${l10n.workoutUnitKg}',
       ExerciseType.bodyweight => '${value.round()} ${l10n.workoutUnitReps}',
-      ExerciseType.running ||
-      ExerciseType.bike => '${_fmt(value / 1000)} ${l10n.workoutUnitKm}',
+      ExerciseType.distance => '${_fmt(value / 1000)} ${l10n.workoutUnitKm}',
       ExerciseType.plank => '${_fmt(value / 60)} ${l10n.workoutUnitMinutes}',
     };
   }
@@ -262,7 +261,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
   String _formatMetricValue(ExerciseType type, double value) {
     return switch (type) {
       ExerciseType.strength || ExerciseType.bodyweight => _fmt(value),
-      ExerciseType.running || ExerciseType.bike => _fmt(value / 1000),
+      ExerciseType.distance => _fmt(value / 1000),
       ExerciseType.plank => _fmt(value / 60),
     };
   }

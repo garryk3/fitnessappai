@@ -80,7 +80,7 @@ class _SingleExerciseParamsScreenState
       return;
     }
     final type = _type!;
-    final sets = type == ExerciseType.running
+    final sets = type == ExerciseType.distance
         ? 1
         : int.parse(_setsController.text);
     final reps =
@@ -90,18 +90,16 @@ class _SingleExerciseParamsScreenState
     final weightKg = type == ExerciseType.strength
         ? _parseDouble(_weightController.text)
         : null;
-    final durationMinutes =
-        type == ExerciseType.running || type == ExerciseType.bike
+    final durationMinutes = type == ExerciseType.distance
         ? _parseInt(_durationController.text)
         : null;
     final durationSeconds = switch (type) {
       ExerciseType.strength || ExerciseType.bodyweight => null,
       ExerciseType.plank => _parseInt(_durationController.text),
-      ExerciseType.running || ExerciseType.bike =>
+      ExerciseType.distance =>
         durationMinutes == null ? null : durationMinutes * 60,
     };
-    final distanceMeters =
-        type == ExerciseType.running || type == ExerciseType.bike
+    final distanceMeters = type == ExerciseType.distance
         ? _kmToMeters(_distanceController.text)
         : null;
     final restSeconds = _parseInt(_restController.text);
@@ -180,7 +178,7 @@ class _SingleExerciseParamsScreenState
         children: [
           Text(exercise.name, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
-          if (type != ExerciseType.running)
+          if (type != ExerciseType.distance)
             _buildNumberField(
               controller: _setsController,
               label: l10n.exerciseParamsSets,
@@ -208,7 +206,7 @@ class _SingleExerciseParamsScreenState
               validator: _validateOptionalNotNegative,
               helperText: l10n.exerciseParamsHoldHint,
             ),
-          if (type == ExerciseType.running || type == ExerciseType.bike) ...[
+          if (type == ExerciseType.distance) ...[
             _buildNumberField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,

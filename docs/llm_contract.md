@@ -28,7 +28,7 @@ generate(nameHint) → ExerciseSuggestion
 > {
 >   "name": "Название упражнения",
 >   "description": "1–2 предложения о назначении упражнения",
->   "type": "strength | plank | running",
+>   "type": "strength | plank | distance",
 >   "instructions": "Пошаговая техника выполнения (2–6 пунктов, каждый с новой строки)",
 >   "commonMistakes": ["Типичная ошибка 1", "Типичная ошибка 2"],
 >   "muscles": ["key_muscle_group", "key_muscle_group"],
@@ -44,7 +44,7 @@ generate(nameHint) → ExerciseSuggestion
 |---|---|---|---|
 | `name` | string | да | непустая строка (после trim) |
 | `description` | string | да | может быть пустой |
-| `type` | string | да | одно из: `strength`, `plank`, `running` |
+| `type` | string | да | одно из: `strength`, `plank`, `distance` (прежние `running` и `bike` принимаются как `distance`) |
 | `instructions` | string | да | может быть пустой |
 | `commonMistakes` | array<string> | да | все элементы — строки |
 | `muscles` | array<string> | да | все элементы — строки; ключи справочника мышечных групп |
