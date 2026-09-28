@@ -3,25 +3,23 @@
     "lsp": true,
     "instructions": [".agents/rules/FLUTTER.md"],
     "mcp": {
-        "git": {
-            "command": "uvx",
-            "args": ["mcp-server-git"],
-            "type": "local",
-            "enabled": true
-        },
-        "dart-mcp-server": {
-            "type": "local",
-            "command": [
-                "dart",
-                "mcp-server"
-            ],
-            "enabled": true,
-            "environment": {}
+        "servers": {
+            "git": {
+                "type": "local",
+                "command": ["uvx", "mcp-server-git"],
+                "disabled": false
             },
-        "context7": {
-            "type": "remote",
-            "url": "https://mcp.context7.com/mcp",
-            "enabled": true
+            "dart-mcp-server": {
+                "type": "local",
+                "command": ["dart", "mcp-server"],
+                "disabled": false,
+                "environment": {}
+            },
+            "context7": {
+                "type": "remote",
+                "url": "https://mcp.context7.com/mcp",
+                "disabled": false
+            }
         }
     }
 }
