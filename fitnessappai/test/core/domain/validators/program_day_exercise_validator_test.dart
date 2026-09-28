@@ -90,11 +90,11 @@ void main() {
     });
   });
 
-  group('running', () {
+  group('distance', () {
     test('нужны продолжительность и дистанция', () {
       expect(
         validator
-            .validate(build(durationSeconds: null), ExerciseType.running)
+            .validate(build(durationSeconds: null), ExerciseType.distance)
             .isValid,
         isFalse,
       );
@@ -102,7 +102,7 @@ void main() {
         validator
             .validate(
               build(durationSeconds: 300, distanceMeters: 1000),
-              ExerciseType.running,
+              ExerciseType.distance,
             )
             .isValid,
         isTrue,
@@ -114,7 +114,7 @@ void main() {
         validator
             .validate(
               build(durationSeconds: 300, distanceMeters: -5),
-              ExerciseType.running,
+              ExerciseType.distance,
             )
             .isValid,
         isFalse,

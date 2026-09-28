@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 
 void main() {
   const programDaysV5 =
@@ -643,5 +644,109 @@ void main() {
     final version =
         sqlite.select('PRAGMA user_version;').single.columnAt(0) as int;
     expect(version, appDatabaseSchemaVersion);
+  });
+
+  test('миграция 14→15 переписывает running/bike в distance (47.13)', () async {
+    final sqlite = sqlite3.openInMemory();
+    // Миграция 14→15 меняет только данные, поэтому нужна схема v14: таблицы
+    // создаются вручную с уже добавленными в v14 колонками метрик.
+    sqlite.execute(
+      'CREATE TABLE exercises ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'name TEXT NOT NULL, '
+      'description TEXT NOT NULL DEFAULT \'\', '
+      'instructions TEXT NOT NULL DEFAULT \'\', '
+      'common_mistakes TEXT NOT NULL DEFAULT \'[]\', '
+      'type TEXT NOT NULL, '
+      'thumbnail_path TEXT NULL, '
+      'animation_path TEXT NULL, '
+      'thumbnail_blob BLOB NULL, '
+      'animation_blob BLOB NULL, '
+      'is_custom INTEGER NOT NULL DEFAULT 0, '
+      'hide_optional INTEGER NOT NULL DEFAULT 0, '
+      'fixed_weight INTEGER NOT NULL DEFAULT 0, '
+      'per_side INTEGER NOT NULL DEFAULT 0, '
+      'created_at INTEGER NOT NULL, '
+      'updated_at INTEGER NOT NULL);',
+    );
+    sqlite.execute(workoutSessionsV7);
+    sqlite.execute(
+      'CREATE TABLE workout_set_results ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'session_id INTEGER NOT NULL REFERENCES workout_sessions (id) '
+      'ON DELETE CASCADE, '
+      'exercise_id INTEGER NULL REFERENCES exercises (id) ON DELETE SET NULL, '
+      'exercise_name TEXT NOT NULL, '
+      'exercise_type TEXT NOT NULL, '
+      'set_index INTEGER NOT NULL, '
+      'reps INTEGER NULL, '
+      'weight_kg REAL NULL, '
+      'duration_seconds INTEGER NULL, '
+      'distance_meters REAL NULL, '
+      'side TEXT NULL, '
+      'completed_at INTEGER NOT NULL, '
+      'avg_speed REAL NULL, '
+      'avg_cadence REAL NULL, '
+      'avg_pulse INTEGER NULL, '
+      'ascent_meters REAL NULL, '
+      'descent_meters REAL NULL, '
+      'avg_pace REAL NULL, '
+      'steps INTEGER NULL);',
+    );
+    sqlite.execute(
+      'INSERT INTO exercises (name, type, created_at, updated_at) VALUES '
+      '(\'Бег\', \'running\', 0, 0), '
+      '(\'Вело\', \'bike\', 0, 0), '
+      '(\'Жим\', \'strength\', 0, 0)',
+    );
+    sqlite.execute(
+      'INSERT INTO workout_sessions '
+      '(program_name, day_index, variant, performed_date, started_at, '
+      'ended_at) VALUES (\'База\', 0, \'main\', 0, 0, 0)',
+    );
+    sqlite.execute(
+      'INSERT INTO workout_set_results (session_id, exercise_id, '
+      'exercise_name, exercise_type, set_index, duration_seconds, '
+      'distance_meters, completed_at) VALUES '
+      '(1, 1, \'Бег\', \'running\', 1, 1800, 5000, 0), '
+      '(1, 2, \'Вело\', \'bike\', 1, 3600, 20000, 0), '
+      '(1, 3, \'Жим\', \'strength\', 1, 0, 0, 0)',
+    );
+    sqlite.execute('PRAGMA user_version = 14;');
+
+    final database = AppDatabase(executor: NativeDatabase.opened(sqlite));
+    addTearDown(database.close);
+
+    // Первый запрос к drift открывает БД и выполняет миграцию.
+    final exercises = await database.select(database.exercises).get();
+    expect(exercises.map((e) => e.type), [
+      ExerciseType.distance,
+      ExerciseType.distance,
+      ExerciseType.strength,
+    ]);
+
+    final version =
+        sqlite.select('PRAGMA user_version;').single.columnAt(0) as int;
+    expect(version, appDatabaseSchemaVersion);
+
+    // Данные переписаны, а не просто прочитаны через legacy-конвертер.
+    final types = sqlite
+        .select('SELECT type FROM exercises ORDER BY id;')
+        .rows
+        .map((row) => row[0] as String)
+        .toList();
+    expect(types, ['distance', 'distance', 'strength']);
+
+    final resultTypes = sqlite
+        .select('SELECT exercise_type FROM workout_set_results ORDER BY id;')
+        .rows
+        .map((row) => row[0] as String)
+        .toList();
+    expect(resultTypes, ['distance', 'distance', 'strength']);
+
+    // Метрики прежних «бега» и «велосипеда» не теряются.
+    final results = await database.select(database.workoutSetResults).get();
+    expect(results[0].distanceMeters, 5000);
+    expect(results[1].distanceMeters, 20000);
   });
 }

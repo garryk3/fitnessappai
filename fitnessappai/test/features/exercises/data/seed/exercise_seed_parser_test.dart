@@ -19,7 +19,7 @@ void main() {
       containsAll([
         ExerciseType.bodyweight,
         ExerciseType.plank,
-        ExerciseType.running,
+        ExerciseType.distance,
       ]),
     );
     for (final e in exercises) {
@@ -48,7 +48,7 @@ void main() {
     expect(exercises.single.name, 'Планка');
   });
 
-  test('пропускает записи с неизвестным типом', () {
+  test('пропускает неизвестный тип, но принимает устаревший (47.13)', () {
     final source = jsonEncode({
       'exercises': [
         {'name': 'Неизвестный', 'type': 'yoga'},
@@ -56,7 +56,7 @@ void main() {
       ],
     });
     final exercises = parser.parse(source);
-    expect(exercises.single.type, ExerciseType.running);
+    expect(exercises.single.type, ExerciseType.distance);
   });
 
   test('заполняет отсутствующие строковые поля пустыми значениями', () {

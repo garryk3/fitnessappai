@@ -53,12 +53,13 @@ class SuggestionJsonParser {
     if (value is! String) {
       throw const MalformedSuggestionException('"type" должен быть строкой');
     }
-    for (final type in ExerciseType.values) {
-      if (type.name == value) {
-        return type;
-      }
+    // Принимает и устаревшие `running`/`bike` → `distance` (задача 47.13):
+    // подсказки, сгенерированные до объединения типов, остаются валидными.
+    final type = exerciseTypeFromName(value);
+    if (type == null) {
+      throw MalformedSuggestionException('Неизвестный "type": $value');
     }
-    throw MalformedSuggestionException('Неизвестный "type": $value');
+    return type;
   }
 
   String _requiredString(Map<String, dynamic> json, String key) {

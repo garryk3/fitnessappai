@@ -424,17 +424,11 @@ abstract class AppLocalizations {
   /// **'Время'**
   String get exerciseTypePlank;
 
-  /// No description provided for @exerciseTypeRunning.
+  /// No description provided for @exerciseTypeDistance.
   ///
   /// In ru, this message translates to:
-  /// **'Бег'**
-  String get exerciseTypeRunning;
-
-  /// No description provided for @exerciseTypeBike.
-  ///
-  /// In ru, this message translates to:
-  /// **'Велосипед'**
-  String get exerciseTypeBike;
+  /// **'Дистанция'**
+  String get exerciseTypeDistance;
 
   /// No description provided for @exerciseListHint.
   ///
@@ -1575,6 +1569,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Шаги'**
   String get exerciseParamsSteps;
+
+  /// No description provided for @exerciseParamsExtraMetrics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнительные метрики (необязательно)'**
+  String get exerciseParamsExtraMetrics;
 
   /// No description provided for @workoutUnitKmh.
   ///

@@ -49,6 +49,17 @@ void main() {
       expect(converter.toSql(ExerciseType.strength), 'strength');
     });
 
+    test(
+      'ExerciseType читает устаревшие running/bike как distance (47.13)',
+      () {
+        const converter = ExerciseTypeConverter();
+        expect(converter.fromSql('running'), ExerciseType.distance);
+        expect(converter.fromSql('bike'), ExerciseType.distance);
+        expect(converter.toSql(ExerciseType.distance), 'distance');
+        expect(() => converter.fromSql('swim'), throwsArgumentError);
+      },
+    );
+
     test('MuscleView', () {
       const converter = MuscleViewConverter();
       for (final value in MuscleView.values) {

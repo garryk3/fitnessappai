@@ -104,7 +104,7 @@ void main() {
 
     test('getAll сортирует по названию', () async {
       await repo.create(
-        exercise(name: 'Бег трусцой', type: ExerciseType.running),
+        exercise(name: 'Бег трусцой', type: ExerciseType.distance),
         const [],
       );
       await repo.create(
@@ -170,7 +170,7 @@ void main() {
       await repo.create(exercise(name: 'Жим штанги'), const []);
       await repo.create(exercise(name: 'Жим гантелей'), const []);
       await repo.create(
-        exercise(name: 'Бег трусцой', type: ExerciseType.running),
+        exercise(name: 'Бег трусцой', type: ExerciseType.distance),
         const [],
       );
 
@@ -198,13 +198,13 @@ void main() {
         const [],
       );
       await repo.create(
-        exercise(name: 'Бег трусцой', type: ExerciseType.running),
+        exercise(name: 'Бег трусцой', type: ExerciseType.distance),
         const [],
       );
 
       final planks = await repo.getByType(ExerciseType.plank);
       expect(planks.map((e) => e.name), ['Планка']);
-      expect(await repo.getByType(ExerciseType.running), hasLength(1));
+      expect(await repo.getByType(ExerciseType.distance), hasLength(1));
     });
   });
 

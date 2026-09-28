@@ -704,7 +704,7 @@ class WorkoutController {
           side: input.side,
           completedAt: now,
         );
-      case ExerciseType.running:
+      case ExerciseType.distance:
         return WorkoutSetResult(
           sessionId: 0,
           exerciseId: exercise.id,
@@ -713,25 +713,16 @@ class WorkoutController {
           setIndex: currentSet.value,
           durationSeconds: input.durationSeconds,
           distanceMeters: input.distanceMeters,
-          avgPace: input.avgPace,
-          steps: input.steps,
-          side: input.side,
-          completedAt: now,
-        );
-      case ExerciseType.bike:
-        return WorkoutSetResult(
-          sessionId: 0,
-          exerciseId: exercise.id,
-          exerciseName: exercise.name,
-          exerciseType: exercise.type,
-          setIndex: currentSet.value,
-          durationSeconds: input.durationSeconds,
-          distanceMeters: input.distanceMeters,
+          // Необязательные метрики: набор прежних «бега» (темп, шаги) и
+          // «велосипеда» (скорость, каденс, пульс, перепад высот) объединён
+          // в один тип (задача 47.13) — заполняется то, что ввёл пользователь.
           avgSpeed: input.avgSpeed,
           avgCadence: input.avgCadence,
           avgPulse: input.avgPulse,
           ascentMeters: input.ascentMeters,
           descentMeters: input.descentMeters,
+          avgPace: input.avgPace,
+          steps: input.steps,
           side: input.side,
           completedAt: now,
         );

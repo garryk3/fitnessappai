@@ -616,7 +616,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
         return sets != null && duration != null
             ? '$sets × $duration ${l10n.workoutUnitSeconds}'
             : '';
-      case ExerciseType.running || ExerciseType.bike:
+      case ExerciseType.distance:
         return distance != null && duration != null
             ? '${(distance / 1000).toStringAsFixed(1)} ${l10n.workoutUnitKm} · '
                   '${(duration / 60).toStringAsFixed(1)} ${l10n.workoutUnitMinutes}'
@@ -671,8 +671,7 @@ class _ExerciseMedia extends StatelessWidget {
           ExerciseType.strength => Icons.fitness_center,
           ExerciseType.bodyweight => Icons.accessibility_new,
           ExerciseType.plank => Icons.self_improvement,
-          ExerciseType.running => Icons.directions_run,
-          ExerciseType.bike => Icons.directions_bike,
+          ExerciseType.distance => Icons.directions_run,
         },
         size: 56,
         color: colorScheme.onSurfaceVariant,
@@ -765,7 +764,7 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
       ExerciseType.bodyweight => '${result.reps ?? 0} ${l10n.workoutUnitReps}',
       ExerciseType.plank =>
         '${result.durationSeconds ?? 0} ${l10n.workoutUnitSeconds}',
-      ExerciseType.running || ExerciseType.bike =>
+      ExerciseType.distance =>
         '${_fmt((result.distanceMeters ?? 0) / 1000)} ${l10n.workoutUnitKm} × '
             '${(result.durationSeconds ?? 0) ~/ 60} ${l10n.workoutUnitMinutes}',
     };
@@ -918,8 +917,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
       ExerciseType.plank => WorkoutSetInput(
         durationSeconds: _parsePlankDuration(),
       ),
-      ExerciseType.running => _buildRunningInput(),
-      ExerciseType.bike => _buildBikeInput(),
+      ExerciseType.distance => _buildDistanceInput(),
     };
     widget.onConfirm(input);
   }
@@ -930,36 +928,45 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
     return manual ?? (widget.holdElapsed?.call() ?? 0);
   }
 
-  WorkoutSetInput _buildRunningInput() {
+  /// Ввод «дистанции»: обязательны дистанция и время, остальные метрики
+  /// (скорость, темп, каденс, пульс, перепад высот, шаги) необязательны и
+  /// перешли в тип из бывших «бега» и «велосипеда» (задача 47.13).
+  WorkoutSetInput _buildDistanceInput() {
     final distanceKm = _parseDouble(_distance.text);
     final minutes = int.tryParse(_minutes.text.trim());
     if (distanceKm == null || minutes == null) {
-      throw StateError('Валидатор пропустил пустую дистанцию/время бега');
+      throw StateError('Валидатор пропустил пустую дистанцию/время');
     }
     return WorkoutSetInput(
       durationSeconds: minutes * 60,
       distanceMeters: distanceKm * 1000,
+      avgSpeed: _parseDouble(_avgSpeed.text),
+      avgCadence: _parseDouble(_avgCadence.text),
+      avgPulse: int.tryParse(_avgPulse.text.trim()),
+      ascentMeters: _parseDouble(_ascent.text),
+      descentMeters: _parseDouble(_descent.text),
       avgPace: _parseDouble(_avgPace.text),
       steps: int.tryParse(_steps.text.trim()),
     );
   }
 
-  WorkoutSetInput _buildBikeInput() {
-    final distanceKm = _parseDouble(_distance.text);
-    final minutes = int.tryParse(_minutes.text.trim());
-    final speed = _parseDouble(_avgSpeed.text);
-    if (distanceKm == null || minutes == null || speed == null) {
-      throw StateError('Валидатор пропустил пустую дистанцию/время/скорость');
+  /// Необязательное дробное поле: пустое значение допустимо, отрицательное —
+  /// нет. Необязательными стали все метрики типа «дистанция» (задача 47.13).
+  String? _validateOptionalDouble(String? value) {
+    final parsed = _parseDouble(value ?? '');
+    if (parsed != null && parsed < 0) {
+      return AppLocalizations.of(context).exerciseParamsNotNegative;
     }
-    return WorkoutSetInput(
-      durationSeconds: minutes * 60,
-      distanceMeters: distanceKm * 1000,
-      avgSpeed: speed,
-      avgCadence: _parseDouble(_avgCadence.text),
-      avgPulse: int.tryParse(_avgPulse.text.trim()),
-      ascentMeters: _parseDouble(_ascent.text),
-      descentMeters: _parseDouble(_descent.text),
-    );
+    return null;
+  }
+
+  /// То же для целочисленных метрик (пульс, шаги).
+  String? _validateOptionalInt(String? value) {
+    final parsed = int.tryParse((value ?? '').trim());
+    if (parsed != null && parsed < 0) {
+      return AppLocalizations.of(context).exerciseParamsNotNegative;
+    }
+    return null;
   }
 
   double? _parseDouble(String value) {
@@ -1068,7 +1075,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 },
               ),
             ],
-            ExerciseType.running => [
+            ExerciseType.distance => [
               TextFormField(
                 controller: _distance,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -1110,180 +1117,108 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                   return null;
                 },
               ),
+              // Метрики бывших «бега» (темп, шаги) и «велосипеда» (скорость,
+              // каденс, пульс, перепад высот) стали необязательными полями
+              // одного типа «дистанция» (задача 47.13) и спрятаны под
+              // раскрытие, чтобы базовая форма не выросла до девяти полей.
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _avgPace,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(bottom: 12),
+                title: Text(
+                  l10n.exerciseParamsExtraMetrics,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                inputFormatters: [DoubleTextInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsAvgPace,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final pace = _parseDouble(value ?? '');
-                  if (pace != null && pace < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _steps,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsSteps,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final steps = int.tryParse(value?.trim() ?? '');
-                  if (steps != null && steps < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
-              ),
-            ],
-            ExerciseType.bike => [
-              TextFormField(
-                controller: _distance,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [DoubleTextInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsDistanceKm,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final km = _parseDouble(value ?? '');
-                  if (km == null) {
-                    return l10n.exerciseParamsRequired;
-                  }
-                  if (km < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _duration,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsDurationMinutes,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final minutes = int.tryParse(value?.trim() ?? '');
-                  if (minutes == null) {
-                    return l10n.exerciseParamsRequired;
-                  }
-                  if (minutes < 1) {
-                    return l10n.exerciseParamsPositive;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _avgSpeed,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [DoubleTextInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsAvgSpeed,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final speed = _parseDouble(value ?? '');
-                  if (speed == null) {
-                    return l10n.exerciseParamsRequired;
-                  }
-                  if (speed < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _avgCadence,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [DoubleTextInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsAvgCadence,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final cadence = _parseDouble(value ?? '');
-                  if (cadence != null && cadence < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _avgPulse,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsAvgPulse,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final pulse = int.tryParse(value?.trim() ?? '');
-                  if (pulse != null && pulse < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _ascent,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [DoubleTextInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsAscent,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final ascent = _parseDouble(value ?? '');
-                  if (ascent != null && ascent < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descent,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [DoubleTextInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: l10n.exerciseParamsDescent,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  final descent = _parseDouble(value ?? '');
-                  if (descent != null && descent < 0) {
-                    return l10n.exerciseParamsNotNegative;
-                  }
-                  return null;
-                },
+                children: [
+                  TextFormField(
+                    controller: _avgSpeed,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [DoubleTextInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: l10n.exerciseParamsAvgSpeed,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => _validateOptionalDouble(value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _avgPace,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [DoubleTextInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: l10n.exerciseParamsAvgPace,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => _validateOptionalDouble(value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _avgCadence,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [DoubleTextInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: l10n.exerciseParamsAvgCadence,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => _validateOptionalDouble(value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _avgPulse,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: l10n.exerciseParamsAvgPulse,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => _validateOptionalInt(value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _ascent,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [DoubleTextInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: l10n.exerciseParamsAscent,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => _validateOptionalDouble(value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _descent,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [DoubleTextInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: l10n.exerciseParamsDescent,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => _validateOptionalDouble(value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _steps,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: l10n.exerciseParamsSteps,
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) => _validateOptionalInt(value),
+                  ),
+                ],
               ),
             ],
           },
@@ -1470,8 +1405,7 @@ class _FinishedViewState extends State<_FinishedView> {
     ExerciseType.strength => Icons.fitness_center,
     ExerciseType.bodyweight => Icons.accessibility_new,
     ExerciseType.plank => Icons.self_improvement,
-    ExerciseType.running => Icons.directions_run,
-    ExerciseType.bike => Icons.directions_bike,
+    ExerciseType.distance => Icons.directions_run,
   };
 }
 

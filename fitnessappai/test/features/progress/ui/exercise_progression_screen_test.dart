@@ -148,7 +148,7 @@ void main() {
     final exercise = await exerciseRepo.create(
       Exercise(
         name: 'Бег',
-        type: ExerciseType.running,
+        type: ExerciseType.distance,
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       ),
@@ -167,7 +167,7 @@ void main() {
           sessionId: 0,
           exerciseId: exercise.id,
           exerciseName: 'Бег',
-          exerciseType: ExerciseType.running,
+          exerciseType: ExerciseType.distance,
           setIndex: 1,
           distanceMeters: 5000,
           completedAt: DateTime(2026, 8, 10, 18),

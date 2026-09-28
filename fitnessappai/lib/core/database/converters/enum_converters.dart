@@ -6,12 +6,28 @@ import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 
-/// Сохраняет тип упражнения в TEXT-колонке по имени (strength/plank/running).
+/// Сохраняет тип упражнения в TEXT-колонке по имени
+/// (strength/bodyweight/plank/distance).
+///
+/// Чтение толерантно к прежним значениям: `running` и `bike` читаются как
+/// `distance` (задача 47.13). Миграция 14→15 переписывает такие строки, но
+/// конвертер не должен падать и на базе, которую по каким-то причинам не
+/// обновили.
 class ExerciseTypeConverter extends TypeConverter<ExerciseType, String> {
   const ExerciseTypeConverter();
 
   @override
-  ExerciseType fromSql(String fromDb) => ExerciseType.values.byName(fromDb);
+  ExerciseType fromSql(String fromDb) {
+    final type = exerciseTypeFromName(fromDb);
+    if (type == null) {
+      throw ArgumentError.value(
+        fromDb,
+        'fromDb',
+        'Неизвестный тип упражнения в БД',
+      );
+    }
+    return type;
+  }
 
   @override
   String toSql(ExerciseType value) => value.name;

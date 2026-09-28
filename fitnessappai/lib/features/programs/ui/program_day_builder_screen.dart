@@ -582,14 +582,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
         if (item.sets != null) {
           parts.add('${item.sets} × ${item.durationSeconds ?? '?'} с');
         }
-      case ExerciseType.running:
-        if (item.distanceMeters != null) {
-          parts.add('${_trimNumber(item.distanceMeters! / 1000)} км');
-        }
-        if (item.durationSeconds != null) {
-          parts.add('${(item.durationSeconds! / 60).round()} мин');
-        }
-      case ExerciseType.bike:
+      case ExerciseType.distance:
         if (item.distanceMeters != null) {
           parts.add('${_trimNumber(item.distanceMeters! / 1000)} км');
         }
@@ -759,6 +752,5 @@ String _typeLabel(AppLocalizations l10n, ExerciseType type) => switch (type) {
   ExerciseType.strength => l10n.exerciseTypeStrength,
   ExerciseType.bodyweight => l10n.exerciseTypeBodyweight,
   ExerciseType.plank => l10n.exerciseTypePlank,
-  ExerciseType.running => l10n.exerciseTypeRunning,
-  ExerciseType.bike => l10n.exerciseTypeBike,
+  ExerciseType.distance => l10n.exerciseTypeDistance,
 };

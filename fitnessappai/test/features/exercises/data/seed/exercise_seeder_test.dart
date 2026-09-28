@@ -57,7 +57,7 @@ void main() {
       containsAll([
         ExerciseType.bodyweight,
         ExerciseType.plank,
-        ExerciseType.running,
+        ExerciseType.distance,
       ]),
     );
 

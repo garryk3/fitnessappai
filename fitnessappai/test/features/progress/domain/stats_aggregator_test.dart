@@ -176,27 +176,30 @@ void main() {
       );
     });
 
-    test('totalDistance суммирует только бег', () async {
-      await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
-        setResult(
-          type: ExerciseType.running,
-          reps: null,
-          weightKg: null,
-          distanceMeters: 1000,
-          durationSeconds: 300,
-        ),
-        setResult(
-          type: ExerciseType.running,
-          reps: null,
-          weightKg: null,
-          distanceMeters: 2500,
-          durationSeconds: 600,
-        ),
-        setResult(),
-      ]);
+    test(
+      'totalDistance суммирует дистанцию упражнений типа distance',
+      () async {
+        await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+          setResult(
+            type: ExerciseType.distance,
+            reps: null,
+            weightKg: null,
+            distanceMeters: 1000,
+            durationSeconds: 300,
+          ),
+          setResult(
+            type: ExerciseType.distance,
+            reps: null,
+            weightKg: null,
+            distanceMeters: 2500,
+            durationSeconds: 600,
+          ),
+          setResult(),
+        ]);
 
-      expect(await aggregator.totalDistance(StatPeriod.week), 3500);
-    });
+        expect(await aggregator.totalDistance(StatPeriod.week), 3500);
+      },
+    );
 
     test('totalPlankTime суммирует только планку', () async {
       await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [

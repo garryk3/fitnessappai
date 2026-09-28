@@ -180,10 +180,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseTypePlank => 'Время';
 
   @override
-  String get exerciseTypeRunning => 'Бег';
-
-  @override
-  String get exerciseTypeBike => 'Велосипед';
+  String get exerciseTypeDistance => 'Дистанция';
 
   @override
   String get exerciseListHint => 'Поиск упражнений';
@@ -816,6 +813,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exerciseParamsSteps => 'Шаги';
+
+  @override
+  String get exerciseParamsExtraMetrics =>
+      'Дополнительные метрики (необязательно)';
 
   @override
   String get workoutUnitKmh => 'км/ч';

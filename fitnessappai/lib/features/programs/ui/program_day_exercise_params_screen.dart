@@ -88,7 +88,7 @@ class _ProgramDayExerciseParamsScreenState
       _setsController.text = _formatInt(item?.sets);
       _repsController.text = _formatInt(item?.reps);
       _weightController.text = _formatDouble(item?.weightKg);
-      if (type == ExerciseType.running || type == ExerciseType.bike) {
+      if (type == ExerciseType.distance) {
         final minutes = item?.durationSeconds;
         _durationController.text = minutes == null
             ? ''
@@ -111,7 +111,7 @@ class _ProgramDayExerciseParamsScreenState
       exerciseId: item.exerciseId,
       orderIndex: item.orderIndex,
       isAlternative: item.isAlternative,
-      sets: type == ExerciseType.running ? 1 : int.parse(_setsController.text),
+      sets: type == ExerciseType.distance ? 1 : int.parse(_setsController.text),
       reps: type == ExerciseType.strength || type == ExerciseType.bodyweight
           ? int.parse(_repsController.text)
           : null,
@@ -121,12 +121,10 @@ class _ProgramDayExerciseParamsScreenState
       durationSeconds: switch (type) {
         ExerciseType.strength || ExerciseType.bodyweight => null,
         ExerciseType.plank => int.parse(_durationController.text),
-        ExerciseType.running ||
-        ExerciseType.bike => _minutesToSeconds(_durationController.text),
+        ExerciseType.distance => _minutesToSeconds(_durationController.text),
       },
       distanceMeters: switch (type) {
-        ExerciseType.running ||
-        ExerciseType.bike => _kmToMeters(_distanceController.text),
+        ExerciseType.distance => _kmToMeters(_distanceController.text),
         ExerciseType.strength ||
         ExerciseType.bodyweight ||
         ExerciseType.plank => null,
@@ -228,7 +226,7 @@ class _ProgramDayExerciseParamsScreenState
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
-          if (type != ExerciseType.running)
+          if (type != ExerciseType.distance)
             _buildNumberField(
               controller: _setsController,
               label: l10n.exerciseParamsSets,
@@ -255,7 +253,7 @@ class _ProgramDayExerciseParamsScreenState
               label: l10n.exerciseParamsDurationSeconds,
               validator: _validateRequiredPositive,
             ),
-          if (type == ExerciseType.running || type == ExerciseType.bike) ...[
+          if (type == ExerciseType.distance) ...[
             _buildNumberField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,

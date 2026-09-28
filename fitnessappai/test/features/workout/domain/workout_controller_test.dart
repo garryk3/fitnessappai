@@ -80,7 +80,7 @@ void main() {
         exercise: exercise(11, 'Планка', ExerciseType.plank),
       );
 
-  WorkoutExercise runningExercise({
+  WorkoutExercise distanceExercise({
     int? duration = 1800,
     double? distanceMeters = 5000,
   }) => WorkoutExercise(
@@ -91,7 +91,7 @@ void main() {
       durationSeconds: duration,
       distanceMeters: distanceMeters,
     ),
-    exercise: exercise(12, 'Бег', ExerciseType.running),
+    exercise: exercise(12, 'Бег', ExerciseType.distance),
   );
 
   WorkoutExercise bodyweightExercise({int sets = 3, int? reps = 15}) =>
@@ -392,9 +392,9 @@ void main() {
     });
   });
 
-  test('running: фиксация дистанции и времени', () {
+  test('дистанция: фиксация дистанции, времени и необязательных метрик', () {
     final controller = WorkoutController(clock: () => startTime);
-    controller.start([runningExercise()]);
+    controller.start([distanceExercise()]);
 
     controller.setResult(
       const WorkoutSetInput(durationSeconds: 1800, distanceMeters: 5000),
@@ -403,9 +403,43 @@ void main() {
 
     expect(controller.phase.value, WorkoutPhase.finished);
     final result = controller.results.value.single;
-    expect(result.exerciseType, ExerciseType.running);
+    expect(result.exerciseType, ExerciseType.distance);
     expect(result.durationSeconds, 1800);
     expect(result.distanceMeters, 5000);
+    expect(result.avgSpeed, isNull);
+    controller.dispose();
+  });
+
+  test('дистанция: метрики бывших бега и велосипеда сохраняются вместе', () {
+    final controller = WorkoutController(clock: () => startTime);
+    controller.start([distanceExercise()]);
+
+    controller.setResult(
+      const WorkoutSetInput(
+        durationSeconds: 3600,
+        distanceMeters: 20000,
+        avgSpeed: 30,
+        avgCadence: 90,
+        avgPulse: 145,
+        ascentMeters: 120,
+        descentMeters: 95,
+        avgPace: 3,
+        steps: 5400,
+      ),
+    );
+    controller.confirmSet();
+
+    final result = controller.results.value.single;
+    expect(result.exerciseType, ExerciseType.distance);
+    expect(result.distanceMeters, 20000);
+    expect(result.durationSeconds, 3600);
+    expect(result.avgSpeed, 30);
+    expect(result.avgCadence, 90);
+    expect(result.avgPulse, 145);
+    expect(result.ascentMeters, 120);
+    expect(result.descentMeters, 95);
+    expect(result.avgPace, 3);
+    expect(result.steps, 5400);
     controller.dispose();
   });
 
@@ -428,7 +462,7 @@ void main() {
   test('переход к следующему упражнению после последнего подхода', () {
     fakeAsync((async) {
       final controller = WorkoutController(clock: () => startTime);
-      controller.start([strengthExercise(sets: 1), runningExercise()]);
+      controller.start([strengthExercise(sets: 1), distanceExercise()]);
 
       controller.setResult(const WorkoutSetInput(reps: 8));
       controller.confirmSet();
@@ -447,7 +481,7 @@ void main() {
         clock: () => startTime.add(async.elapsed),
       );
       controller.start(
-        [strengthExercise(sets: 1), runningExercise()],
+        [strengthExercise(sets: 1), distanceExercise()],
         context: const WorkoutSessionContext(
           programId: 5,
           programName: 'База',
@@ -478,7 +512,7 @@ void main() {
     fakeAsync((async) {
       final controller = WorkoutController(clock: () => startTime);
       controller.start(
-        [strengthExercise(sets: 1), runningExercise()],
+        [strengthExercise(sets: 1), distanceExercise()],
         context: const WorkoutSessionContext(
           programId: 5,
           programName: 'База',
@@ -510,7 +544,7 @@ void main() {
       final controller = WorkoutController(clock: () => startTime);
       controller.start([
         strengthExercise(sets: 2, rest: 60),
-        runningExercise(),
+        distanceExercise(),
       ]);
 
       controller.setResult(const WorkoutSetInput(reps: 8));
@@ -938,7 +972,7 @@ void main() {
         clock: () => startTime.add(async.elapsed),
       );
       controller.start(
-        [strengthExercise(sets: 2, rest: 60), runningExercise()],
+        [strengthExercise(sets: 2, rest: 60), distanceExercise()],
         context: const WorkoutSessionContext(
           programId: 5,
           programName: 'База',
@@ -968,7 +1002,7 @@ void main() {
       );
       final exercises = [
         strengthExercise(sets: 2, rest: 60),
-        runningExercise(),
+        distanceExercise(),
       ];
       restored.restoreFromCheckpoint(checkpoint, exercises);
 
@@ -1079,7 +1113,7 @@ void main() {
       var now = startTime;
       final controller = WorkoutController(clock: () => now);
       controller.start(
-        [strengthExercise(sets: 1), runningExercise()],
+        [strengthExercise(sets: 1), distanceExercise()],
         context: const WorkoutSessionContext(
           programId: 5,
           programName: 'База',
@@ -1106,7 +1140,7 @@ void main() {
       final restored = WorkoutController(clock: () => now);
       restored.restoreFromCheckpoint(checkpoint, [
         strengthExercise(sets: 1),
-        runningExercise(),
+        distanceExercise(),
       ]);
       expect(restored.phase.value, WorkoutPhase.rest);
       expect(restored.restRemainingSeconds.value, 40);
