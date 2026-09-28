@@ -1202,6 +1202,43 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileUnitCm => 'см';
 
   @override
+  String get profileGender => 'Пол';
+
+  @override
+  String get profileGenderMale => 'Мужской';
+
+  @override
+  String get profileGenderFemale => 'Женский';
+
+  @override
+  String get profileBmi => 'Индекс массы тела (ИМТ)';
+
+  @override
+  String get profileBmiUnderweight => 'Дефицит массы';
+
+  @override
+  String get profileBmiNormal => 'Норма';
+
+  @override
+  String get profileBmiOverweight => 'Избыток массы';
+
+  @override
+  String get profileBmiObese => 'Ожирение';
+
+  @override
+  String profileBmiNormalRange(String from, String to) {
+    return 'Норма: $from–$to для вашего пола';
+  }
+
+  @override
+  String get profileBmiScaleLabel => 'Шкала ИМТ: от 15 до 40';
+
+  @override
+  String profileBmiScale(String value, String category) {
+    return 'Шкала ИМТ: значение $value, $category';
+  }
+
+  @override
   String get measurementFormTitle => 'Новый замер';
 
   @override

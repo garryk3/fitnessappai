@@ -2248,6 +2248,72 @@ abstract class AppLocalizations {
   /// **'см'**
   String get profileUnitCm;
 
+  /// No description provided for @profileGender.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get profileGender;
+
+  /// No description provided for @profileGenderMale.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мужской'**
+  String get profileGenderMale;
+
+  /// No description provided for @profileGenderFemale.
+  ///
+  /// In ru, this message translates to:
+  /// **'Женский'**
+  String get profileGenderFemale;
+
+  /// No description provided for @profileBmi.
+  ///
+  /// In ru, this message translates to:
+  /// **'Индекс массы тела (ИМТ)'**
+  String get profileBmi;
+
+  /// No description provided for @profileBmiUnderweight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дефицит массы'**
+  String get profileBmiUnderweight;
+
+  /// No description provided for @profileBmiNormal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Норма'**
+  String get profileBmiNormal;
+
+  /// No description provided for @profileBmiOverweight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Избыток массы'**
+  String get profileBmiOverweight;
+
+  /// No description provided for @profileBmiObese.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ожирение'**
+  String get profileBmiObese;
+
+  /// Подпись диапазона нормы ИМТ в карточке ИМТ
+  ///
+  /// In ru, this message translates to:
+  /// **'Норма: {from}–{to} для вашего пола'**
+  String profileBmiNormalRange(String from, String to);
+
+  /// No description provided for @profileBmiScaleLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шкала ИМТ: от 15 до 40'**
+  String get profileBmiScaleLabel;
+
+  /// A11y-подпись шкалы ИМТ
+  ///
+  /// In ru, this message translates to:
+  /// **'Шкала ИМТ: значение {value}, {category}'**
+  String profileBmiScale(String value, String category);
+
   /// No description provided for @measurementFormTitle.
   ///
   /// In ru, this message translates to:

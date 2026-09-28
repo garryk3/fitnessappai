@@ -101,4 +101,31 @@ void main() {
       expect(tags.first.labelRu, 'Колени');
     });
   });
+
+  group('UserProfileRepository.setGender', () {
+    test('сохраняет и читает пол', () async {
+      await repo.setGender('female');
+
+      expect((await repo.get()).gender, 'female');
+    });
+
+    test('создаёт профиль при первом сохранении пола', () async {
+      final before = await db.select(db.userProfiles).get();
+      expect(before, isEmpty);
+
+      await repo.setGender('male');
+
+      final rows = await db.select(db.userProfiles).get();
+      expect(rows, hasLength(1));
+      expect(rows.single.gender, 'male');
+    });
+
+    test('null очищает пол, не затрагивая другие поля', () async {
+      await repo.setGender('male');
+      await repo.setGender(null);
+
+      expect((await repo.get()).gender, isNull);
+      expect((await repo.get()).id, UserProfileRepository.profileId);
+    });
+  });
 }
