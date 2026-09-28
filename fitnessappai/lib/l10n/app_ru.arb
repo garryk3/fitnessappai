@@ -561,6 +561,31 @@
   "profileAddMeasurement": "Добавить замер",
   "profileDeleteMeasurementConfirm": "Удалить замер?",
   "profileUnitCm": "см",
+  "profileGender": "Пол",
+  "profileGenderMale": "Мужской",
+  "profileGenderFemale": "Женский",
+  "profileBmi": "Индекс массы тела (ИМТ)",
+  "profileBmiUnderweight": "Дефицит массы",
+  "profileBmiNormal": "Норма",
+  "profileBmiOverweight": "Избыток массы",
+  "profileBmiObese": "Ожирение",
+  "profileBmiNormalRange": "Норма: {from}–{to} для вашего пола",
+  "@profileBmiNormalRange": {
+    "description": "Подпись диапазона нормы ИМТ в карточке ИМТ",
+    "placeholders": {
+      "from": {"type": "String", "example": "18.5"},
+      "to": {"type": "String", "example": "25"}
+    }
+  },
+  "profileBmiScaleLabel": "Шкала ИМТ: от 15 до 40",
+  "profileBmiScale": "Шкала ИМТ: значение {value}, {category}",
+  "@profileBmiScale": {
+    "description": "A11y-подпись шкалы ИМТ",
+    "placeholders": {
+      "value": {"type": "String", "example": "22.9"},
+      "category": {"type": "String", "example": "Норма"}
+    }
+  },
   "measurementFormTitle": "Новый замер",
   "measurementFormDate": "Дата",
   "measurementFormNumberError": "Введите число",

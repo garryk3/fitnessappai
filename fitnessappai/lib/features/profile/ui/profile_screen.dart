@@ -8,16 +8,24 @@ import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
+import 'package:fitnessappai/features/profile/domain/bmi.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/features/profile/domain/metric_point.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/profile/ui/profile_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран профиля: текущие замеры, график динамики и история.
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, this.measurementRepository});
+  const ProfileScreen({
+    super.key,
+    this.measurementRepository,
+    this.profileRepository,
+  });
 
   final BodyMeasurementRepository? measurementRepository;
+  final UserProfileRepository? profileRepository;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -33,6 +41,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       measurementRepository:
           widget.measurementRepository ??
           locator.get<BodyMeasurementRepository>(),
+      profileRepository:
+          widget.profileRepository ?? locator.get<UserProfileRepository>(),
     );
   }
 
@@ -66,14 +76,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     final measurements = _controller.measurements.value;
-    final latest = _controller.latest.value;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
-        if (latest != null) ...[
-          _SummaryCard(latest: latest),
+        _GenderCard(controller: _controller),
+        if (_controller.latest.value != null) ...[
           const SizedBox(height: 12),
+          _SummaryCard(latest: _controller.latest.value!),
         ],
+        if (_controller.bmi != null) ...[
+          const SizedBox(height: 12),
+          _BmiCard(controller: _controller),
+        ],
+        const SizedBox(height: 12),
         _MetricChartCard(controller: _controller),
         const SizedBox(height: 16),
         Text(
@@ -142,6 +157,237 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 }
+
+/// Карточка выбора пола — используется для пол-специфичных шкал (ИМТ).
+class _GenderCard extends StatelessWidget {
+  const _GenderCard({required this.controller});
+
+  final ProfileController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.profileGender,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<Gender>(
+            segments: [
+              ButtonSegment(
+                value: Gender.male,
+                label: Text(l10n.profileGenderMale),
+              ),
+              ButtonSegment(
+                value: Gender.female,
+                label: Text(l10n.profileGenderFemale),
+              ),
+            ],
+            selected: {?controller.gender.value},
+            emptySelectionAllowed: true,
+            onSelectionChanged: (selection) {
+              controller.setGender(selection.firstOrNull);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Карточка ИМТ: значение, категория и цветная шкала с маркером.
+class _BmiCard extends StatelessWidget {
+  const _BmiCard({required this.controller});
+
+  final ProfileController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final value = controller.bmi!;
+    final category = controller.bmiCategory!;
+    final gender = controller.gender.value!;
+    final color = _bmiCategoryColor(theme, category);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(l10n.profileBmi, style: theme.textTheme.titleSmall),
+              ),
+              AppBadge(
+                label: _bmiCategoryLabel(l10n, category),
+                background: color.withValues(alpha: 0.15),
+                foreground: color,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _fmt(value),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            l10n.profileBmiNormalRange(
+              _fmt(normalBmiLowerBound(gender)),
+              _fmt(normalBmiUpperBound(gender)),
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Semantics(
+            label: l10n.profileBmiScale(
+              _fmt(value),
+              _bmiCategoryLabel(l10n, category),
+            ),
+            child: _BmiScale(value: value, gender: gender, accent: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Горизонтальная шкала ИМТ с цветными зонами и маркером значения.
+class _BmiScale extends StatelessWidget {
+  const _BmiScale({
+    required this.value,
+    required this.gender,
+    required this.accent,
+  });
+
+  static const double _min = 15;
+  static const double _max = 40;
+
+  final double value;
+  final Gender gender;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final fraction = ((value - _min) / (_max - _min)).clamp(0.0, 1.0);
+    final normalStart = (normalBmiLowerBound(gender) - _min) / (_max - _min);
+    final normalEnd = (normalBmiUpperBound(gender) - _min) / (_max - _min);
+    final obeseStart = (obeseBmiBound - _min) / (_max - _min);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return SizedBox(
+          height: 34,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                top: 8,
+                left: 0,
+                right: 0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: SizedBox(
+                    height: 10,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: (normalStart * 1000).round(),
+                          child: ColoredBox(
+                            color: _categoryColor(
+                              theme,
+                              BmiCategory.underweight,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: ((normalEnd - normalStart) * 1000).round(),
+                          child: ColoredBox(
+                            color: _categoryColor(theme, BmiCategory.normal),
+                          ),
+                        ),
+                        Expanded(
+                          flex: ((obeseStart - normalEnd) * 1000).round(),
+                          child: ColoredBox(
+                            color: _categoryColor(
+                              theme,
+                              BmiCategory.overweight,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: ((1 - obeseStart) * 1000).round(),
+                          child: ColoredBox(
+                            color: _categoryColor(theme, BmiCategory.obese),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: (width * fraction - 5).clamp(0.0, width - 10),
+                top: 0,
+                child: Container(
+                  width: 10,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(
+                      color: theme.colorScheme.surface,
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                bottom: 0,
+                child: Text(
+                  l10n.profileBmiScaleLabel,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+String _bmiCategoryLabel(AppLocalizations l10n, BmiCategory category) =>
+    switch (category) {
+      BmiCategory.underweight => l10n.profileBmiUnderweight,
+      BmiCategory.normal => l10n.profileBmiNormal,
+      BmiCategory.overweight => l10n.profileBmiOverweight,
+      BmiCategory.obese => l10n.profileBmiObese,
+    };
+
+Color _bmiCategoryColor(ThemeData theme, BmiCategory category) =>
+    _categoryColor(theme, category);
+
+Color _categoryColor(ThemeData theme, BmiCategory category) =>
+    switch (category) {
+      BmiCategory.underweight => theme.colorScheme.tertiary,
+      BmiCategory.normal => theme.colorScheme.primary,
+      BmiCategory.overweight => theme.colorScheme.secondary,
+      BmiCategory.obese => theme.colorScheme.error,
+    };
 
 /// Карточка «Текущие значения» из самого свежего замера.
 class _SummaryCard extends StatelessWidget {

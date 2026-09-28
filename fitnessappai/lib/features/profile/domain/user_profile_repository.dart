@@ -71,6 +71,22 @@ class UserProfileRepository {
     _changes.notifyChanged();
   }
 
+  /// Сохраняет пол пользователя ('male' / 'female'); `null` — пол не задан.
+  ///
+  /// Профиль создаётся при необходимости.
+  Future<void> setGender(String? gender) async {
+    await get();
+    await (_db.update(
+      _db.userProfiles,
+    )..where((t) => t.id.equals(profileId))).write(
+      UserProfilesCompanion(
+        gender: Value(gender),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    _changes.notifyChanged();
+  }
+
   /// Возвращает весь каталог тегов противопоказаний, отсортированный по id.
   Future<List<ContraindicationTag>> getAllTags() async {
     final rows = await (_db.select(

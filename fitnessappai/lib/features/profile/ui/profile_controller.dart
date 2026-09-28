@@ -2,16 +2,22 @@ import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
+import 'package:fitnessappai/features/profile/domain/bmi.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/features/profile/domain/metric_point.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 
 /// Управляет экраном профиля: замеры, график и история.
 class ProfileController {
-  ProfileController({required this.measurementRepository}) {
+  ProfileController({
+    required this.measurementRepository,
+    required this.profileRepository,
+  }) {
     _load();
   }
 
   final BodyMeasurementRepository measurementRepository;
+  final UserProfileRepository profileRepository;
 
   static const int _pageSize = 10;
 
@@ -21,6 +27,39 @@ class ProfileController {
   final Signal<bool> hasMore = Signal(false);
   final Signal<BodyMetric> selectedMetric = Signal(BodyMetric.weight);
   final Signal<List<MetricPoint>> chartPoints = Signal(const []);
+
+  /// Пол пользователя (`null` — не задан), из `user_profiles.gender`.
+  final Signal<Gender?> gender = Signal(null);
+
+  /// Сохраняет пол и пересчитывает ИМТ.
+  Future<void> setGender(Gender? value) async {
+    await profileRepository.setGender(value?.storageValue);
+    gender.value = value;
+  }
+
+  /// Индекс массы тела по последнему замеру; `null`, если не хватает пола,
+  /// роста или веса.
+  double? get bmi {
+    final genderValue = gender.value;
+    if (genderValue == null) {
+      return null;
+    }
+    final measurement = latest.value;
+    return calculateBmi(
+      weightKg: measurement?.weightKg,
+      heightCm: measurement?.heightCm,
+    );
+  }
+
+  /// Категория ИМТ или `null`, если ИМТ не рассчитан.
+  BmiCategory? get bmiCategory {
+    final value = bmi;
+    final genderValue = gender.value;
+    if (value == null || genderValue == null) {
+      return null;
+    }
+    return bmiCategoryFor(value: value, gender: genderValue);
+  }
 
   /// Перезагружает замеры и график после внешних изменений.
   Future<void> reload() => _load();
@@ -35,6 +74,8 @@ class ProfileController {
   Future<void> _load() async {
     isLoading.value = true;
     try {
+      final profile = await profileRepository.get();
+      gender.value = genderFromStorage(profile.gender);
       final total = await measurementRepository.count();
       final page = await measurementRepository.getPage(
         offset: 0,

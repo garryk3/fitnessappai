@@ -9,7 +9,9 @@ import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
+import 'package:fitnessappai/features/profile/domain/bmi.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
+import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/profile/ui/measurement_form_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -17,10 +19,12 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 void main() {
   late AppDatabase db;
   late BodyMeasurementRepository repo;
+  late UserProfileRepository profileRepo;
 
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
     repo = BodyMeasurementRepository(db);
+    profileRepo = UserProfileRepository(db);
   });
 
   tearDown(() async {
@@ -49,8 +53,10 @@ void main() {
       routes: [
         GoRoute(
           path: '/profile',
-          builder: (context, state) =>
-              ProfileScreen(measurementRepository: repo),
+          builder: (context, state) => ProfileScreen(
+            measurementRepository: repo,
+            profileRepository: profileRepo,
+          ),
         ),
         GoRoute(
           path: '/measurements/new',
@@ -287,6 +293,93 @@ void main() {
     final latestY = tester.getTopLeft(find.text(latestDate)).dy;
     final olderY = tester.getTopLeft(find.text(olderDate)).dy;
     expect(latestY, lessThan(olderY));
+  });
+
+  group('пол и ИМТ', () {
+    testWidgets('поле пола отображается, ИМТ скрыт без замеров', (
+      tester,
+    ) async {
+      await pumpProfile(tester);
+
+      expect(find.text('Пол'), findsOneWidget);
+      expect(find.text('Мужской'), findsOneWidget);
+      expect(find.text('Женский'), findsOneWidget);
+      expect(find.textContaining('Индекс массы тела'), findsNothing);
+    });
+
+    testWidgets('выбор пола сохраняется в профиле', (tester) async {
+      await pumpProfile(tester);
+
+      await tester.tap(find.text('Женский'));
+      await tester.pumpAndSettle();
+
+      expect((await profileRepo.get()).gender, 'female');
+
+      // Значение восстанавливается после пересборки экрана.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await pumpProfile(tester);
+      final button = tester.widget<SegmentedButton<Gender>>(
+        find.byType(SegmentedButton<Gender>),
+      );
+      expect(button.selected, {Gender.female});
+    });
+
+    testWidgets('без пола карточка ИМТ не показывается', (tester) async {
+      await repo.add(measurement(weightKg: 70, heightCm: 175));
+
+      await pumpProfile(tester);
+
+      expect(find.textContaining('Индекс массы тела'), findsNothing);
+    });
+
+    testWidgets('ИМТ считается по последнему замеру и показывает шкалу', (
+      tester,
+    ) async {
+      await repo.add(
+        measurement(date: DateTime(2026, 8, 1), weightKg: 90, heightCm: 175),
+      );
+      await repo.add(
+        measurement(date: DateTime(2026, 8, 10), weightKg: 70, heightCm: 175),
+      );
+      await profileRepo.setGender('male');
+
+      await pumpProfile(tester);
+
+      expect(find.text('Индекс массы тела (ИМТ)'), findsOneWidget);
+      expect(find.text('22.9'), findsOneWidget);
+      expect(find.text('Норма'), findsOneWidget);
+      expect(find.text('Норма: 18.5–25 для вашего пола'), findsOneWidget);
+      expect(find.text('Шкала ИМТ: от 15 до 40'), findsOneWidget);
+    });
+
+    testWidgets(
+      'категория ИМТ учитывает пол: 24.5 — норма у мужчины, избыток у женщины',
+      (tester) async {
+        // 24.5 * 1.75² ≈ 75 кг.
+        await repo.add(measurement(weightKg: 75, heightCm: 175));
+        await profileRepo.setGender('male');
+
+        await pumpProfile(tester);
+        expect(find.text('24.5'), findsOneWidget);
+        expect(find.text('Норма'), findsOneWidget);
+        expect(find.text('Норма: 18.5–25 для вашего пола'), findsOneWidget);
+
+        await profileRepo.setGender('female');
+        await pumpProfile(tester);
+        expect(find.text('Избыток массы'), findsOneWidget);
+        expect(find.text('Норма: 19–24 для вашего пола'), findsOneWidget);
+      },
+    );
+
+    testWidgets('без роста в замере ИМТ не рассчитывается', (tester) async {
+      await repo.add(measurement(weightKg: 70));
+      await profileRepo.setGender('female');
+
+      await pumpProfile(tester);
+
+      expect(find.textContaining('Индекс массы тела'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
 
