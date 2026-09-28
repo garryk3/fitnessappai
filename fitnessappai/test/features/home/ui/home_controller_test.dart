@@ -365,4 +365,154 @@ void main() {
     final info = controller.activePrograms.value.first;
     expect(info.todayStatus, isNull);
   });
+
+  group('weeklyProgressPercent (чистая функция)', () {
+    test('1 из 3 дней → 33%', () {
+      expect(weeklyProgressPercent(performedDays: 1, assignedDays: 3), 33);
+    });
+
+    test('2 из 3 дней → 67%', () {
+      expect(weeklyProgressPercent(performedDays: 2, assignedDays: 3), 67);
+    });
+
+    test('полная неделя → 100%', () {
+      expect(weeklyProgressPercent(performedDays: 3, assignedDays: 3), 100);
+    });
+
+    test('без сессий → 0%', () {
+      expect(weeklyProgressPercent(performedDays: 0, assignedDays: 3), 0);
+    });
+
+    test('без закреплённых дней → null', () {
+      expect(weeklyProgressPercent(performedDays: 0, assignedDays: 0), isNull);
+    });
+  });
+
+  Future<WorkoutSession> singleSession({
+    required int programId,
+    required String programName,
+    required int programDayId,
+    required DateTime performedDate,
+  }) async {
+    final result = await workoutRepository.saveSession(
+      WorkoutSession(
+        programId: programId,
+        programName: programName,
+        programDayId: programDayId,
+        dayIndex: 0,
+        performedDate: performedDate,
+        startedAt: performedDate.add(const Duration(hours: 18)),
+        endedAt: performedDate.add(const Duration(hours: 18, minutes: 40)),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseName: 'Жим',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 10,
+          completedAt: performedDate.add(const Duration(minutes: 5)),
+        ),
+      ],
+    );
+    return result.session;
+  }
+
+  test('weeklyProgressPercent: 1 из 3 закреплённых дней → 33', () async {
+    final program = await createProgram(name: 'Три дня', dayOfWeeks: [1, 3, 5]);
+    final days = await programRepository.getDays(program.id!);
+    // fixedNow = понедельник 10.08.2026: сессия за понедельник — в эту неделю.
+    await singleSession(
+      programId: program.id!,
+      programName: 'Три дня',
+      programDayId: days[0].id!,
+      performedDate: DateTime(2026, 8, 10),
+    );
+    await programRepository.setActive(program.id!);
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.activePrograms.value.first.weeklyProgressPercent, 33);
+  });
+
+  test('weeklyProgressPercent: все 3 закреплённых дня → 100', () async {
+    final program = await createProgram(name: 'Полная', dayOfWeeks: [1, 3, 5]);
+    final days = await programRepository.getDays(program.id!);
+    for (var i = 0; i < days.length; i++) {
+      await singleSession(
+        programId: program.id!,
+        programName: 'Полная',
+        programDayId: days[i].id!,
+        performedDate: DateTime(2026, 8, 10 + i * 2),
+      );
+    }
+    await programRepository.setActive(program.id!);
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.activePrograms.value.first.weeklyProgressPercent, 100);
+  });
+
+  test(
+    'weeklyProgressPercent: сессия прошлой недели не засчитывается',
+    () async {
+      final program = await createProgram(name: 'Прошлая', dayOfWeeks: [1]);
+      final days = await programRepository.getDays(program.id!);
+      // 09.08 — воскресенье, неделя до понедельника 10.08.
+      await singleSession(
+        programId: program.id!,
+        programName: 'Прошлая',
+        programDayId: days.single.id!,
+        performedDate: DateTime(2026, 8, 9),
+      );
+      await programRepository.setActive(program.id!);
+
+      final controller = HomeController(
+        programRepository: programRepository,
+        exerciseRepository: exerciseRepository,
+        workoutRepository: workoutRepository,
+        clock: () => DateTime(2026, 8, 10),
+      );
+      addTearDown(controller.dispose);
+
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.activePrograms.value.first.weeklyProgressPercent, 0);
+    },
+  );
+
+  test('weeklyProgressPercent: без закреплённых дней → null', () async {
+    await createProgram(name: 'Без дней', dayOfWeeks: [null]);
+    await programRepository.setActive(
+      (await programRepository.getPrograms()).single.program.id!,
+    );
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.activePrograms.value.first.weeklyProgressPercent, isNull);
+  });
 }

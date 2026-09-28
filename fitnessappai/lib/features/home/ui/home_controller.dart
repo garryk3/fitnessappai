@@ -28,6 +28,7 @@ class ActiveProgramInfo {
     required this.upcomingDay,
     required this.exerciseNames,
     this.todayStatus,
+    this.weeklyProgressPercent,
   });
 
   final Program program;
@@ -36,6 +37,10 @@ class ActiveProgramInfo {
 
   /// Статус тренировки на сегодня, если ближайший день совпадает с сегодняшним.
   final WeekPlanStatus? todayStatus;
+
+  /// Процент выполнения программы на текущей неделе: выполненные/
+  /// закреплённые дни недели (0..100), `null` — закреплённых дней нет.
+  final int? weeklyProgressPercent;
 }
 
 /// Управляет домашним экраном: активные программы, ближайшие дни,
@@ -91,6 +96,7 @@ class HomeController {
         }
         final upcomingDay = _findUpcomingDay(detail.days, todayWeekday);
         final exerciseNames = await _exerciseNamesOf(detail, upcomingDay);
+        final progress = await _weeklyProgress(detail.days, weekStart);
 
         // Вычисляем статус тренировки на сегодня.
         WeekPlanStatus? todayStatus;
@@ -118,6 +124,7 @@ class HomeController {
             upcomingDay: upcomingDay,
             exerciseNames: exerciseNames,
             todayStatus: todayStatus,
+            weeklyProgressPercent: progress,
           ),
         );
       }
@@ -164,6 +171,34 @@ class HomeController {
     return null;
   }
 
+  /// Доля выполненных закреплённых дней недели: для каждого дня программы с
+  /// [ProgramDay.dayOfWeek] ищем сессию за текущую неделю [weekStart].
+  Future<int?> _weeklyProgress(
+    List<ProgramDayDetail> days,
+    DateTime weekStart,
+  ) async {
+    final assigned = days.where((d) => d.day.dayOfWeek != null).toList();
+    if (assigned.isEmpty) {
+      return null;
+    }
+    var performed = 0;
+    for (final detail in assigned) {
+      final id = detail.day.id;
+      if (id == null) {
+        // День без id не мог иметь сессий.
+        continue;
+      }
+      final sessions = await workoutRepository.getSessions(id, weekStart);
+      if (sessions.isNotEmpty) {
+        performed++;
+      }
+    }
+    return weeklyProgressPercent(
+      performedDays: performed,
+      assignedDays: assigned.length,
+    );
+  }
+
   Future<List<String>> _exerciseNamesOf(
     ProgramDetail detail,
     ProgramDay? day,
@@ -198,3 +233,15 @@ DateTime _dateOnly(DateTime value) =>
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Процент выполнения программы за неделю: [performedDays] выполненных
+/// закреплённых дней из [assignedDays]. `null`, если закреплённых дней нет.
+int? weeklyProgressPercent({
+  required int performedDays,
+  required int assignedDays,
+}) {
+  if (assignedDays <= 0) {
+    return null;
+  }
+  return (performedDays / assignedDays * 100).round();
+}
