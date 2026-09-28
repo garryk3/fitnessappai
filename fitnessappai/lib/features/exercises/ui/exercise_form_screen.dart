@@ -42,12 +42,14 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   late final MediaCache _mediaCache;
 
   final _formKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instructionsController = TextEditingController();
   final List<TextEditingController> _mistakeControllers = [];
   final Map<int, MuscleIntensity> _muscleSelections = {};
   String? _musclesError;
+  String? _nameError;
   final Set<int> _selectedContraindicationIds = {};
 
   ExerciseType _type = ExerciseType.strength;
@@ -79,6 +81,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _instructionsController.dispose();
+    _scrollController.dispose();
     for (final controller in _mistakeControllers) {
       controller.dispose();
     }
@@ -202,6 +205,19 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Future<void> _save() async {
+    // «Название» — обязательное поле. Форма построена на ленивом ListView:
+    // после прокрутки вниз верхнее поле демонтируется, и FormState.validate()
+    // его не проверяет (упражнение сохранялось без названия). Поэтому название
+    // валидируем явно и прокручиваем к полю, чтобы показать ошибку.
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(
+        () =>
+            _nameError = AppLocalizations.of(context).exerciseFormNameRequired,
+      );
+      _scrollToNameField();
+      return;
+    }
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -217,7 +233,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     try {
       final exercise = Exercise(
         id: widget.exerciseId,
-        name: _nameController.text.trim(),
+        name: name,
         description: _descriptionController.text.trim(),
         instructions: _instructionsController.text.trim(),
         commonMistakes: [
@@ -270,6 +286,18 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     }
   }
 
+  /// Прокручивает форму к полю названия (первый элемент списка), чтобы
+  /// показать ошибку обязательного поля после сохранения «снизу» формы.
+  void _scrollToNameField() {
+    if (_scrollController.hasClients && _scrollController.offset > 0) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -283,6 +311,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           : Form(
               key: _formKey,
               child: ListView(
+                controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
                   _nameField(l10n),
@@ -330,6 +359,11 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     return TextFormField(
       controller: _nameController,
       autovalidateMode: AutovalidateMode.onUserInteraction,
+      onChanged: (_) {
+        if (_nameError != null) {
+          setState(() => _nameError = null);
+        }
+      },
       decoration: InputDecoration(
         label: Text.rich(
           TextSpan(
@@ -346,6 +380,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ),
         ),
         border: const OutlineInputBorder(),
+        errorText: _nameError,
       ),
       validator: (value) => (value == null || value.trim().isEmpty)
           ? l10n.exerciseFormNameRequired
