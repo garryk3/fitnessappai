@@ -11,7 +11,6 @@ import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
-import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 Future<void> main() async {
@@ -88,35 +87,22 @@ class _FitnessAppAiState extends State<FitnessAppAi>
     }
   }
 
-  /// Открывает день тренировки, на который пришло нажатие уведомления.
-  Future<void> _openReminderDay(int programDayId) async {
-    final ReminderTarget? target;
-    try {
-      target = await locator.get<WorkoutReminderRepository>().targetForDay(
-        programDayId,
-      );
-    } catch (e, st) {
-      logNotificationIssue(
-        'Не удалось найти день $programDayId для перехода из уведомления',
-        error: e,
-        stackTrace: st,
-        name: 'main',
-      );
-      return;
-    }
-    if (!mounted) {
-      return;
-    }
+  /// Открывает главный экран по нажатию на уведомление о тренировке.
+  ///
+  /// С 47.8 тап ведёт именно на главный экран: переход сразу в день
+  /// тренировки (поведение 46.4) оказался неудобен и путался с экраном
+  /// подготовки, поэтому идентификатор дня используется только для журнала.
+  void _openReminderDay(int programDayId) {
     final context = AppRouter.navigatorKey.currentContext;
-    if (target == null || context == null || !context.mounted) {
+    if (context == null || !context.mounted) {
       logNotificationIssue(
         'Переход из уведомления не выполнен: '
-        'день=$programDayId, найден=$target, навигатор=${context != null}',
+        'день=$programDayId, навигатор=${context != null}',
         name: 'main',
       );
       return;
     }
-    context.go('/programs/${target.programId}/day/${target.dayIndex}');
+    context.go('/home');
   }
 
   /// Полный перезапуск после импорта БД: новый роутер + новый ключ,

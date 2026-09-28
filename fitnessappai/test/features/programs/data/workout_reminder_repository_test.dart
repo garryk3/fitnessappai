@@ -120,6 +120,42 @@ void main() {
     },
   );
 
+  test(
+    'scheduledForDays возвращает напоминания только указанных дней (47.8, 2г)',
+    () async {
+      final program = await programRepository.create(
+        Program(
+          name: 'Сплит',
+          daysCount: 3,
+          createdAt: DateTime(2024, 1, 1),
+          updatedAt: DateTime(2024, 1, 1),
+        ),
+        [
+          ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),
+          ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: 4),
+          ProgramDay(programId: 0, dayIndex: 2, dayOfWeek: null),
+        ],
+      );
+      final days = await programRepository.getDays(program.id!);
+      for (final day in days) {
+        await repository.saveForDay(day.id!, hour: 9, minute: 0, enabled: true);
+      }
+
+      final subset = await repository.scheduledForDays([days[1].id!]);
+      expect(subset, hasLength(1));
+      expect(subset.single.dayOfWeek, 4);
+      expect(subset.single.programName, 'Сплит');
+      expect(subset.single.dayNumber, 2);
+      expect(subset.single.reminder.programDayId, days[1].id);
+
+      final withNullWeekday = await repository.scheduledForDays([days[2].id!]);
+      expect(withNullWeekday.single.dayOfWeek, isNull);
+
+      expect(await repository.scheduledForDays([]), isEmpty);
+      expect(await repository.scheduledForDays([9999]), isEmpty);
+    },
+  );
+
   test('удаление дня удаляет напоминание (FK cascade)', () async {
     final day = await createDay(dayOfWeek: 6);
     await repository.saveForDay(day.id!, hour: 9, minute: 0, enabled: true);

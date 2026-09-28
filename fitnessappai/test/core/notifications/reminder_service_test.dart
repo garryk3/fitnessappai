@@ -355,6 +355,178 @@ void main() {
     verify(() => plugin.cancel(id: 12)).called(1);
   });
 
+  group('rescheduleDays / cancelDays (47.8, 2г)', () {
+    ReminderSchedule scheduleOf(
+      int programDayId, {
+      required bool enabled,
+      int? dayOfWeek = 2,
+    }) => ReminderSchedule(
+      reminder: WorkoutReminder(
+        id: programDayId,
+        programDayId: programDayId,
+        hour: 9,
+        minute: 0,
+        enabled: enabled,
+      ),
+      dayOfWeek: dayOfWeek,
+      programName: 'Сплит',
+      dayNumber: 1,
+    );
+
+    setUp(() {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+    });
+
+    test('планирует сохранённые напоминания только указанных дней', () async {
+      when(() => repository.scheduledForDays(any())).thenAnswer(
+        (_) async => [
+          scheduleOf(10, enabled: true),
+          scheduleOf(11, enabled: true),
+        ],
+      );
+
+      await service.rescheduleDays([10, 11]);
+
+      verify(() => repository.scheduledForDays([10, 11])).called(1);
+      verify(
+        () => plugin.zonedSchedule(
+          id: 10,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).called(1);
+      verify(
+        () => plugin.zonedSchedule(
+          id: 11,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).called(1);
+    });
+
+    test('выключенное напоминание и день без привязки отменяются', () async {
+      when(() => repository.scheduledForDays(any())).thenAnswer(
+        (_) async => [
+          scheduleOf(10, enabled: false),
+          scheduleOf(11, enabled: true, dayOfWeek: null),
+        ],
+      );
+
+      await service.rescheduleDays([10, 11]);
+
+      verify(() => plugin.cancel(id: 10)).called(1);
+      verify(() => plugin.cancel(id: 11)).called(1);
+      verifyNever(
+        () => plugin.zonedSchedule(
+          id: any(named: 'id'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      );
+    });
+
+    test('без списка дней ничего не планируется и не отменяется', () async {
+      when(
+        () => repository.scheduledForDays(any()),
+      ).thenAnswer((_) async => []);
+
+      await service.rescheduleDays([]);
+      await service.cancelDays([]);
+
+      verifyNever(() => plugin.cancel(id: any(named: 'id')));
+    });
+
+    test('cancelDays отменяет уведомления, не трогая другие', () async {
+      await service.cancelDays([10, 11]);
+
+      verify(() => plugin.cancel(id: 10)).called(1);
+      verify(() => plugin.cancel(id: 11)).called(1);
+      verifyNever(() => plugin.cancelAll());
+    });
+
+    test('ошибка планирования не прерывает остальные дни', () async {
+      when(() => repository.scheduledForDays(any())).thenAnswer(
+        (_) async => [
+          scheduleOf(10, enabled: true),
+          scheduleOf(11, enabled: true),
+        ],
+      );
+      when(
+        () => plugin.zonedSchedule(
+          id: 10,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).thenThrow(Exception('boom'));
+      when(
+        () => plugin.zonedSchedule(
+          id: 11,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).thenAnswer((_) async {});
+
+      await service.rescheduleDays([10, 11]);
+
+      verify(
+        () => plugin.zonedSchedule(
+          id: 11,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).called(1);
+    });
+
+    test('ошибка отмены не прерывает обработку остальных дней', () async {
+      when(() => plugin.cancel(id: 10)).thenThrow(Exception('boom'));
+
+      await service.cancelDays([10, 11]);
+
+      verify(() => plugin.cancel(id: 11)).called(1);
+    });
+  });
+
   test('cancelAll отменяет все запланированные уведомления', () async {
     await service.cancelAll();
 

@@ -14,7 +14,9 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -32,14 +34,30 @@ void main() {
     addTearDown(() => db.close());
   });
 
-  Future<void> pumpPrograms(WidgetTester tester) async {
+  Future<void> pumpPrograms(
+    WidgetTester tester, {
+    ReminderService? reminderService,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
-        home: ProgramsScreen(repository: repository),
+        home: ProgramsScreen(
+          repository: repository,
+          reminderService: reminderService,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> openCardMenu(WidgetTester tester) async {
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenuButton<String>),
+        matching: find.byType(IconButton),
       ),
     );
     await tester.pumpAndSettle();
@@ -333,6 +351,50 @@ void main() {
     expect(programs.single.program.isActive, isTrue);
   });
 
+  testWidgets(
+    '«Деактивировать» отменяет уведомления дней программы (47.8, 2г)',
+    (tester) async {
+      final reminders = _RecordingReminderService(
+        WorkoutReminderRepository(db),
+      );
+      final created = await repository.create(program('Сплит'), [
+        ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),
+      ]);
+      final day = (await repository.getDays(created.id!)).single;
+      await repository.setActive(created.id!);
+      await pumpPrograms(tester, reminderService: reminders);
+
+      await openCardMenu(tester);
+      await tester.tap(find.text('Деактивировать'));
+      await tester.pumpAndSettle();
+
+      expect(reminders.cancelledDays, [
+        [day.id!],
+      ]);
+      expect(find.text('Активная'), findsNothing);
+    },
+  );
+
+  testWidgets('«Сделать активной» перепланирует уведомления дней (47.8, 2г)', (
+    tester,
+  ) async {
+    final reminders = _RecordingReminderService(WorkoutReminderRepository(db));
+    final created = await repository.create(program('Сплит'), [
+      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),
+    ]);
+    final day = (await repository.getDays(created.id!)).single;
+    await pumpPrograms(tester, reminderService: reminders);
+
+    await openCardMenu(tester);
+    await tester.tap(find.text('Сделать активной'));
+    await tester.pumpAndSettle();
+
+    expect(reminders.rescheduledDays, [
+      [day.id!],
+    ]);
+    expect(find.text('Активная'), findsOneWidget);
+  });
+
   testWidgets('карточка показывает миниатюру-заглушку без изображения', (
     tester,
   ) async {
@@ -366,4 +428,23 @@ class _StubExportService extends LlmExportService {
 
   @override
   Future<String> historyToJson() async => '{"type": "history"}';
+}
+
+/// Сервис напоминаний, который только записывает вызовы (плагин не нужен).
+class _RecordingReminderService extends ReminderService {
+  _RecordingReminderService(WorkoutReminderRepository repository)
+    : super(repository: repository);
+
+  final List<List<int>> rescheduledDays = [];
+  final List<List<int>> cancelledDays = [];
+
+  @override
+  Future<void> rescheduleDays(Iterable<int> programDayIds) async {
+    rescheduledDays.add(programDayIds.toList()..sort());
+  }
+
+  @override
+  Future<void> cancelDays(Iterable<int> programDayIds) async {
+    cancelledDays.add(programDayIds.toList()..sort());
+  }
 }

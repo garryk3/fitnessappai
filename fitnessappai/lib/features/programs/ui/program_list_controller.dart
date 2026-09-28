@@ -55,9 +55,37 @@ class ProgramListController {
     await _repository.delete(programId);
   }
 
-  Future<void> setActive(int programId) => _repository.setActive(programId);
+  /// Делает программу активной и перепланирует напоминания её дней (47.8).
+  Future<void> setActive(int programId) async {
+    await _repository.setActive(programId);
+    await _syncReminders(programId, activate: true);
+  }
 
-  Future<void> deactivate(int programId) => _repository.deactivate(programId);
+  /// Деактивирует программу и отменяет напоминания её дней (47.8).
+  ///
+  /// Настройки напоминаний в БД сохраняются, поэтому повторная активация
+  /// снова их запланирует.
+  Future<void> deactivate(int programId) async {
+    await _repository.deactivate(programId);
+    await _syncReminders(programId, activate: false);
+  }
+
+  Future<void> _syncReminders(int programId, {required bool activate}) async {
+    final service = _reminderService;
+    if (service == null) {
+      return;
+    }
+    final days = await _repository.getDays(programId);
+    final dayIds = [
+      for (final day in days)
+        if (day.id != null) day.id!,
+    ];
+    if (activate) {
+      await service.rescheduleDays(dayIds);
+    } else {
+      await service.cancelDays(dayIds);
+    }
+  }
 
   Future<void> _load() async {
     isLoading.value = true;
