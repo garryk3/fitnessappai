@@ -435,7 +435,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('календарь компактен на телефоне (ячейки 52px, не растянут)', (
+  testWidgets('календарь на телефоне: квадратные ячейки, прижат к верху', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -448,14 +448,44 @@ void main() {
     );
     await pumpHistory(tester);
 
-    // Ячейки фиксированной высоты 52 (как в плане), а не растягиваются на
-    // всю высоту — между рядами нет пустых промежутков.
-    expect(tester.getSize(find.byType(MonthDayCell).first).height, 52);
-    // Компактная сетка прижата к верху под заголовком месяца: между
-    // переключателем месяца и календарём нет пустого промежутка.
+    // Ячейки квадратные (фикс 47.9), а не растянутые по высоте.
+    final cell = tester.getSize(find.byType(MonthDayCell).first);
+    expect(cell.width, closeTo(cell.height, 0.5));
+    // Сетка прижата к верху под заголовком месяца: между переключателем
+    // месяца и календарём нет пустого промежутка.
     final switcherBottom = tester.getBottomLeft(find.byType(MonthSwitcher)).dy;
     final gridTop = tester.getTopLeft(find.byType(MonthGridView)).dy;
     expect(gridTop - switcherBottom, lessThan(20));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('сжатый по высоте календарь: квадрат и сетка по центру', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult()],
+    );
+    await pumpHistory(tester);
+
+    // Квадрат: ячейки ужимаются по меньшей из сторон, а не растягиваются.
+    final cell = tester.getSize(find.byType(MonthDayCell).first);
+    expect(cell.width, closeTo(cell.height, 0.5));
+
+    // При избытке ширины контейнер календаря уменьшается и центрируется
+    // по горизонтали: шапка (строка «Пн … Вс») той же ширины, что и сетка.
+    final gridRect = tester.getRect(find.byType(MonthGridView));
+    const columnGap = 6;
+    final gridRowWidth = 7 * cell.width + 6 * columnGap;
+    final expectedGridLeft =
+        gridRect.left + (gridRect.width - gridRowWidth) / 2;
+    final mondayCenter = tester.getCenter(find.text('Пн'));
+    expect(mondayCenter.dx, closeTo(expectedGridLeft + cell.width / 2, 1));
+
     expect(tester.takeException(), isNull);
   });
 }

@@ -1,7 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fitnessappai/l10n/app_localizations.dart';
+
+/// Боковой отступ сетки календаря от краёв контейнера.
+const double _sidePadding = 12;
 
 /// Заголовок месяца с капитализацией, общий для плана и истории.
 String monthTitle(DateTime month) {
@@ -98,25 +103,32 @@ class MonthDayCell extends StatelessWidget {
             border: border,
           ),
           padding: const EdgeInsets.all(6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Stack вместо Column+Spacer: в маленьких квадратных ячейках
+          // (фикс 47.9) колонка не может переполниться по высоте — номер и
+          // иконка позиционируются без деформации оставшегося пространства.
+          child: Stack(
             children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '$day',
-                  maxLines: 1,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: isToday ? theme.colorScheme.primary : foreground,
-                    fontWeight: FontWeight.w600,
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '$day',
+                    maxLines: 1,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: isToday ? theme.colorScheme.primary : foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
               if (showWorkoutIcon)
-                Align(
-                  alignment: Alignment.bottomRight,
+                Positioned(
+                  bottom: 0,
+                  right: 0,
                   child: Icon(
                     Icons.fitness_center,
                     size: 14,
@@ -262,46 +274,96 @@ class _MonthGridViewState extends State<MonthGridView> {
     if (widget.fillHeight) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          const double rowHeight = 52;
+          const double columnGap = 6;
           const double rowGap = 6;
-          // Натуральная высота компактной сетки: шапка + строки 52 + зазоры.
-          final naturalHeight =
-              32 + weekCount * rowHeight + (weekCount - 1) * rowGap;
-          final fitsCompact =
-              constraints.maxHeight.isFinite &&
-              naturalHeight <= constraints.maxHeight;
-          if (!fitsCompact) {
-            // Не влезает компактно (квадратный/фолд-экран) — растягиваем
-            // строки, чтобы ничего не обрезалось (регресс 34.7/31.5).
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: headerRow,
-                ),
-                Expanded(child: grid),
-              ],
-            );
+          const double headerGap = 8;
+          // Высота строки названий дней (вариант «Плана», регресс 34.7).
+          const double headerHeight = 32;
+          final maxWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : double.infinity;
+          final maxHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : double.infinity;
+          // Доступно под сами ячейки после шапки названий дней и зазоров.
+          final availableWidth = math.max(
+            0.0,
+            maxWidth - _sidePadding * 2 - 6 * columnGap,
+          );
+          final availableHeight = math.max(
+            0.0,
+            maxHeight - headerHeight - headerGap - (weekCount - 1) * rowGap,
+          );
+          // Квадратная ячейка: ограничиваем по меньшей из сторон сетки
+          // 7×weekCount. Так ячейки всегда квадратные, а при непропорцио-
+          // нальном сжатии режется только избыточная сторона.
+          final double cell;
+          if (!availableWidth.isFinite && !availableHeight.isFinite) {
+            cell = 52;
+          } else if (!availableWidth.isFinite) {
+            cell = availableHeight / weekCount;
+          } else if (!availableHeight.isFinite) {
+            cell = availableWidth / 7;
+          } else {
+            cell = math.min(availableWidth / 7, availableHeight / weekCount);
           }
-          // Компактная сетка с фиксированной высотой ячеек 52 — содержимое не
-          // «плавает», между рядами нет пустых промежутков. Прижата к верху,
-          // чтобы не было пустоты между заголовком месяца и календарём.
+
+          final gridRowWidth = 7 * cell + 6 * columnGap;
+          final header = SizedBox(
+            width: gridRowWidth,
+            child: Row(
+              children: [
+                for (var col = 0; col < 7; col++) ...[
+                  SizedBox(
+                    width: cell,
+                    child: Center(
+                      child: Text(dayNames[col], style: _headerStyle(context)),
+                    ),
+                  ),
+                  if (col < 6) const SizedBox(width: columnGap),
+                ],
+              ],
+            ),
+          );
+
+          final rows = <Widget>[
+            for (var row = 0; row < weekCount; row++) ...[
+              SizedBox(
+                width: gridRowWidth,
+                child: Row(
+                  children: [
+                    for (var col = 0; col < 7; col++) ...[
+                      SizedBox(
+                        width: cell,
+                        height: cell,
+                        child: widget.cellBuilder(
+                          context,
+                          gridStart.add(Duration(days: row * 7 + col)),
+                        ),
+                      ),
+                      if (col < 6) const SizedBox(width: columnGap),
+                    ],
+                  ],
+                ),
+              ),
+              if (row < weekCount - 1) const SizedBox(height: rowGap),
+            ],
+          ];
+
+          // Контейнер календаря ограничен по меньшей из сторон: при избытке
+          // места по ширине сетка не растягивается, а центрируется по
+          // горизонтали; по вертикали прижата к верху под переключателем
+          // месяца, лишнее место скроллится при нехватке высоты.
           return Align(
             alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              child: wrapDrag(
-                Column(
+            child: wrapDrag(
+              SingleChildScrollView(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                      child: headerRow,
-                    ),
-                    for (var i = 0; i < weekRows.length; i++) ...[
-                      SizedBox(height: rowHeight, child: weekRows[i]),
-                      if (i < weekRows.length - 1)
-                        const SizedBox(height: rowGap),
-                    ],
+                    header,
+                    const SizedBox(height: headerGap),
+                    for (final row in rows) row,
                   ],
                 ),
               ),
