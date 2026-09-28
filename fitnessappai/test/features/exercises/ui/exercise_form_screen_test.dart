@@ -184,6 +184,45 @@ void main() {
     expect(exercises, isEmpty);
   });
 
+  testWidgets('создание без названия после прокрутки к мышцам блокируется', (
+    tester,
+  ) async {
+    // Сценарий из репорта: пользователь прокрутил форму к мышцам, выбрал их
+    // и сохранил, не заполнив обязательное «Название». Ленивый ListView
+    // демонтирует верхнее поле, и FormState.validate() его не проверяет.
+    await pumpForm(tester);
+    await tester.pump();
+
+    await selectChestMuscle(tester);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Введите название'), findsOneWidget);
+    expect(await repository.getAll(), isEmpty);
+  });
+
+  testWidgets('редактирование с пустым названием не сохраняет изменения', (
+    tester,
+  ) async {
+    final created = await repository.create(exercise('Жим штанги'), const []);
+    await pumpForm(tester, exerciseId: created.id!);
+    await tester.pump();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название *'),
+      '   ',
+    );
+    await selectChestMuscle(tester);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Введите название'), findsOneWidget);
+    final updated = await repository.getById(created.id!);
+    expect(updated!.name, 'Жим штанги');
+  });
+
   testWidgets('ошибка валидации названия очищается при вводе', (tester) async {
     await pumpForm(tester);
     await tester.pump();
