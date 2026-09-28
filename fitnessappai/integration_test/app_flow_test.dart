@@ -1103,7 +1103,13 @@ void main() {
     await createExercise(tester, _running, ExerciseType.distance);
     await pullToRefreshExercises(tester);
 
-    final tomorrow = day2Weekday(DateTime.now().weekday);
+    // Программа из двух дней: сегодняшний (пропуск доступен только тренировке
+    // текущего дня) и соседний день той же недели (перенос). В воскресенье
+    // «завтра» уже в следующей неделе, поэтому второй день — пятница.
+    final now = DateTime.now();
+    final today = now.weekday;
+    final other = today == DateTime.sunday ? DateTime.friday : today + 1;
+    final otherDate = now.add(Duration(days: other - today));
 
     await goToTab(tester, Icons.calendar_month_outlined);
     await tester.tap(find.byTooltip('Новая программа'));
@@ -1113,36 +1119,43 @@ void main() {
       find.widgetWithText(TextFormField, 'Название'),
       _programName,
     );
+    await setDayCount(tester, '2');
 
-    await configureDay(
-      tester,
-      1,
-      tomorrow,
-      mainSets: [
-        (
-          _running,
-          {'Время (мин)': '15', 'Дистанция (км)': '3', 'Отдых (сек)': '10'},
-        ),
-      ],
-      alternativeSets: const [],
-    );
+    for (final (index, weekday) in [(1, today), (2, other)]) {
+      await configureDay(
+        tester,
+        index,
+        weekday,
+        mainSets: [
+          (
+            _running,
+            {'Время (мин)': '15', 'Дистанция (км)': '3', 'Отдых (сек)': '10'},
+          ),
+        ],
+        alternativeSets: const [],
+      );
+    }
 
     await saveProgramBuilder(tester);
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    expect(find.text('Запланировано'), findsOneWidget);
-    expect(find.text('Перенести на сегодня'), findsOneWidget);
+    // Сегодня: старт и пропуск. Соседний день: только перенос. Удаления у дня
+    // программы нет (47.1).
+    expect(find.text('Начать'), findsOneWidget);
     expect(find.text('Пропустить'), findsOneWidget);
+    expect(find.text('Перенести на сегодня'), findsOneWidget);
 
     await tester.tap(find.text('Пропустить'));
     await tester.pumpAndSettle();
     expect(find.text('Пропущено'), findsOneWidget);
     expect(find.text('Отменить пропуск'), findsOneWidget);
+    expect(find.text('Начать'), findsNothing);
 
     await tester.tap(find.text('Отменить пропуск'));
     await tester.pumpAndSettle();
-    expect(find.text('Запланировано'), findsOneWidget);
+    expect(find.text('Начать'), findsOneWidget);
+    expect(find.text('Пропущено'), findsNothing);
 
     final rescheduleBtn = find.text('Перенести на сегодня');
     await scrollUntilVisibleIn(tester, rescheduleBtn);
@@ -1158,10 +1171,47 @@ void main() {
 
     await goToTab(tester, Icons.event_note_outlined);
     await reloadWeekPlan(tester);
-    // Будущая ячейка (завтра) никогда не показывается «Перенесено»: перенос
-    // выполняется сегодня, будущая запись остаётся «Запланировано».
-    expect(find.text('Запланировано'), findsOneWidget);
-    expect(find.text('Перенесено'), findsNothing);
+    // Сегодняшний день программы не начинали — он остался «Запланировано».
+    expect(find.text('Запланировано'), findsWidgets);
+    expect(find.text('Пропущено'), findsNothing);
+
+    // Лист действий соседнего дня: только перенос, пропуска и удаления нет.
+    await tester.tap(find.text('${otherDate.day}').last);
+    await tester.pumpAndSettle();
+    final sheet = find.byType(BottomSheet);
+    expect(sheet, findsWidgets);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Перенести на сегодня')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Пропустить')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Удалить назначение')),
+      findsNothing,
+    );
+
+    // Лист действий сегодняшнего дня: старт и пропуск, удаления нет.
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('${now.day}').last);
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('Начать'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('Удалить назначение'),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('флоу: тренировка по сторонам с фиксированным весом', (

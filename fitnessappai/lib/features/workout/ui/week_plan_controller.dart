@@ -19,6 +19,9 @@ enum WeekPlanStatus { pending, performed, rescheduled, skipped, pastSkipped }
 /// Максимум дней в прошлом, когда тренировку ещё можно перенести/выполнить.
 const int rescheduleWindowDays = 3;
 
+/// Действия, доступные для тренировки в дне плана (задача 47.1).
+enum DayAction { start, reschedule, skip, unskip, remove }
+
 /// Запланированная на дату тренировка: день программы с вычисленным статусом.
 class WeekPlanItem {
   const WeekPlanItem({
@@ -30,6 +33,7 @@ class WeekPlanItem {
     required this.status,
     this.imagePath,
     this.dayTitle,
+    this.isManual = false,
   });
 
   final int programDayId;
@@ -48,6 +52,35 @@ class WeekPlanItem {
   /// Дата, на которую закреплён день.
   final DateTime scheduledDate;
   final WeekPlanStatus status;
+
+  /// Назначение создано вручную (запись в `plan_schedule`) — «кастомная»
+  /// тренировка. Дни программы (в т.ч. непривязанные, показываемые на
+  /// «сегодня» автоматически) удалить из плана нельзя.
+  final bool isManual;
+}
+
+/// Набор действий дня для [item] на дату [today] (задача 47.1).
+///
+/// - «Кастомное» назначение ([WeekPlanItem.isManual]) умеет только одно —
+///   удаление из расписания: переносить и пропускать его нечего;
+/// - тренировку программы можно начать (сегодня) или перенести на сегодня;
+/// - пропуск и отмена пропуска доступны только тренировкам текущего дня
+///   (амендмент второй партии TASKS.md);
+/// - выполненные, перенесённые и устаревшие тренировки действий не имеют.
+Set<DayAction> dayActionsFor(WeekPlanItem item, DateTime today) {
+  if (item.status == WeekPlanStatus.skipped) {
+    return _sameDay(item.scheduledDate, today) ? {DayAction.unskip} : const {};
+  }
+  if (item.status != WeekPlanStatus.pending) {
+    return const {};
+  }
+  if (item.isManual) {
+    return {DayAction.remove};
+  }
+  if (_sameDay(item.scheduledDate, today)) {
+    return {DayAction.start, DayAction.skip};
+  }
+  return {DayAction.reschedule};
 }
 
 /// Управляет планом тренировок: сетка недели/месяца, статусы, пропуски.
@@ -310,6 +343,7 @@ class WeekPlanController {
             dayOfWeek: null,
             scheduledDate: entry.scheduledDate,
             status: WeekPlanStatus.pending,
+            isManual: true,
           ),
         );
         existingKeys.add(key);
@@ -345,6 +379,7 @@ class WeekPlanController {
             imagePath: item.imagePath,
             dayOfWeek: item.dayOfWeek,
             scheduledDate: item.scheduledDate,
+            isManual: item.isManual,
             status: _statusOf(
               item,
               sessionsByDayId[item.programDayId] ?? const <WorkoutSession>[],

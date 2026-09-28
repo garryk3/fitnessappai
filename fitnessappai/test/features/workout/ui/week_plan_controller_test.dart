@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -30,6 +31,9 @@ void main() {
   });
 
   tearDown(() async {
+    // Конструктор контроллера запускает загрузку без await — дожидаемся её
+    // перед закрытием БД, иначе запросы падают на закрытом соединении.
+    await pumpEventQueue();
     controller.dispose();
     await db.close();
   });
@@ -172,5 +176,174 @@ void main() {
     // Дальше границы нельзя: флаги остаются заблокированными.
     controller.weekStart.value = DateTime(2026, 8, 24);
     expect(controller.canGoNextWeek, isFalse);
+  });
+
+  group('набор действий дня (47.1)', () {
+    final today = DateTime(2026, 8, 10);
+
+    WeekPlanItem item({
+      required DateTime scheduledDate,
+      required WeekPlanStatus status,
+      int? dayOfWeek = 1,
+      bool isManual = false,
+    }) => WeekPlanItem(
+      programDayId: 1,
+      dayIndex: 0,
+      programName: 'База',
+      dayOfWeek: dayOfWeek,
+      scheduledDate: scheduledDate,
+      status: status,
+      isManual: isManual,
+    );
+
+    test('кастомное назначение — только удаление', () {
+      final scheduled = item(
+        scheduledDate: today,
+        status: WeekPlanStatus.pending,
+        dayOfWeek: null,
+        isManual: true,
+      );
+
+      expect(dayActionsFor(scheduled, today), {DayAction.remove});
+    });
+
+    test('кастомное назначение на будущий день — тоже только удаление', () {
+      final scheduled = item(
+        scheduledDate: DateTime(2026, 8, 13),
+        status: WeekPlanStatus.pending,
+        dayOfWeek: null,
+        isManual: true,
+      );
+
+      expect(dayActionsFor(scheduled, today), {DayAction.remove});
+    });
+
+    test(
+      'непривязанный день программы — не «кастомный», есть старт и пропуск',
+      () {
+        // Такой день показывается на «сегодня» автоматически, строки в
+        // plan_schedule не имеет — удалять его нечем.
+        final unlinked = item(
+          scheduledDate: today,
+          status: WeekPlanStatus.pending,
+          dayOfWeek: null,
+        );
+
+        expect(dayActionsFor(unlinked, today), {
+          DayAction.start,
+          DayAction.skip,
+        });
+      },
+    );
+
+    test('тренировка программы сегодня — старт и пропуск', () {
+      final scheduled = item(
+        scheduledDate: today,
+        status: WeekPlanStatus.pending,
+      );
+
+      expect(dayActionsFor(scheduled, today), {
+        DayAction.start,
+        DayAction.skip,
+      });
+    });
+
+    test(
+      'тренировка программы в другой день — только перенос, без пропуска',
+      () {
+        final scheduled = item(
+          scheduledDate: DateTime(2026, 8, 13),
+          status: WeekPlanStatus.pending,
+        );
+
+        expect(dayActionsFor(scheduled, today), {DayAction.reschedule});
+      },
+    );
+
+    test('пропуск тренировки сегодня отменяется, вчерашнего — нет', () {
+      final skippedToday = item(
+        scheduledDate: today,
+        status: WeekPlanStatus.skipped,
+      );
+      final skippedYesterday = item(
+        scheduledDate: DateTime(2026, 8, 9),
+        status: WeekPlanStatus.skipped,
+      );
+
+      expect(dayActionsFor(skippedToday, today), {DayAction.unskip});
+      expect(dayActionsFor(skippedYesterday, today), isEmpty);
+    });
+
+    test('выполненная и устаревшая тренировка действий не имеют', () {
+      for (final status in [
+        WeekPlanStatus.performed,
+        WeekPlanStatus.rescheduled,
+        WeekPlanStatus.pastSkipped,
+      ]) {
+        expect(
+          dayActionsFor(item(scheduledDate: today, status: status), today),
+          isEmpty,
+          reason: '$status',
+        );
+      }
+    });
+  });
+
+  test(
+    'пропуск тренировки сегодня работает при «чужой» сессии в неделе',
+    () async {
+      // Регресс 43.7: сессия того же programDayId за прошлый день в этой неделе
+      // не должна мешать пропуску сегодняшнего вхождения.
+      final dayId = await createLinkedDay(DateTime.monday);
+      final foreign = await programRepo.getDay(dayId);
+      await WorkoutRepository(db).saveSession(
+        WorkoutSession(
+          programName: 'По расписанию',
+          programDayId: foreign!.id,
+          dayIndex: foreign.dayIndex,
+          performedDate: DateTime(2026, 8, 9),
+          startedAt: DateTime(2026, 8, 9),
+          endedAt: DateTime(2026, 8, 9, 0, 40),
+        ),
+        const [],
+      );
+      await controller.refresh();
+
+      final today10 = controller.items.value.firstWhere(
+        (i) => i.scheduledDate.day == 10 && i.scheduledDate.month == 8,
+      );
+      expect(today10.status, WeekPlanStatus.pending);
+
+      await controller.markSkipped(today10);
+
+      final skipped = controller.items.value.firstWhere(
+        (i) => i.scheduledDate.day == 10 && i.scheduledDate.month == 8,
+      );
+      expect(skipped.status, WeekPlanStatus.skipped);
+      expect(dayActionsFor(skipped, fixedNow()), {DayAction.unskip});
+    },
+  );
+
+  test('ручное назначение помечается isManual, дни программы — нет', () async {
+    final linkedId = await createLinkedDay(DateTime.thursday);
+    final unlinkedId = await createUnlinkedDay();
+    await scheduleRepo.schedule(linkedId, DateTime(2026, 8, 14));
+    controller.weekStart.value = DateTime(2026, 8, 10);
+    await controller.refresh();
+
+    final manual = controller.items.value.firstWhere(
+      (i) => i.programDayId == linkedId && i.scheduledDate.day == 14,
+    );
+    final recurrent = controller.items.value.firstWhere(
+      (i) => i.programDayId == linkedId && i.scheduledDate.day == 13,
+    );
+    final unlinked = controller.items.value.firstWhere(
+      (i) => i.programDayId == unlinkedId,
+    );
+
+    expect(manual.isManual, isTrue);
+    expect(recurrent.isManual, isFalse);
+    expect(unlinked.isManual, isFalse);
+    expect(unlinked.scheduledDate, DateTime(2026, 8, 10));
   });
 }

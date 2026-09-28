@@ -119,7 +119,11 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  Future<void> pumpPlan(WidgetTester tester, {ThemeData? theme}) async {
+  Future<void> pumpPlan(
+    WidgetTester tester, {
+    ThemeData? theme,
+    DateTime? now,
+  }) async {
     final router = GoRouter(
       initialLocation: '/plan',
       routes: [
@@ -130,7 +134,7 @@ void main() {
             workoutRepository: workoutRepo,
             planViewSettingsRepository: PlanViewSettingsRepository(db),
             planScheduleRepository: planScheduleRepo,
-            clock: () => fixedNow,
+            clock: () => now ?? fixedNow,
           ),
         ),
         GoRoute(
@@ -186,6 +190,10 @@ void main() {
     final day = DateTime(d.year, d.month, d.day);
     return day.subtract(Duration(days: d.weekday - 1));
   }
+
+  /// Карточка (колонка) дня недели с указанным номером.
+  Finder dayColumn(WidgetTester tester, String dayNumber) =>
+      find.ancestor(of: find.text(dayNumber), matching: find.byType(Card));
 
   testWidgets('показывает пустое состояние без программ', (tester) async {
     await pumpPlan(tester);
@@ -613,7 +621,7 @@ void main() {
     });
 
     testWidgets(
-      'будущий день с сессией в текущей неделе: «Пропустить» переводит в «Пропущено»',
+      'будущий день в листе месяца: только «Перенести на сегодня» (47.1)',
       (tester) async {
         final weekday = _weekdayAfter(fixedNow.weekday);
         final day = await createDay(weekday);
@@ -632,34 +640,26 @@ void main() {
         await tester.pumpAndSettle();
         final sheet = find.byType(BottomSheet);
         expect(sheet, findsOneWidget);
-        expect(
-          find.descendant(of: sheet, matching: find.text('Пропустить')),
-          findsOneWidget,
-        );
-
-        await tester.tap(
-          find.descendant(of: sheet, matching: find.text('Пропустить')),
-        );
-        await tester.pumpAndSettle();
-
-        // Статус стал «Пропущено»: в переоткрытом листе «Пропустить» заменён
-        // на «Отменить пропуск».
-        await tester.tap(find.text('${scheduledDate.day}'));
-        await tester.pumpAndSettle();
-        expect(find.byType(BottomSheet), findsOneWidget);
+        // Будущий день: перенос доступен, пропуск — только для текущего дня.
         expect(
           find.descendant(
-            of: find.byType(BottomSheet),
-            matching: find.text('Пропустить'),
+            of: sheet,
+            matching: find.text('Перенести на сегодня'),
           ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: sheet, matching: find.text('Пропустить')),
           findsNothing,
         );
         expect(
-          find.descendant(
-            of: find.byType(BottomSheet),
-            matching: find.text('Отменить пропуск'),
-          ),
-          findsOneWidget,
+          find.descendant(of: sheet, matching: find.text('Начать')),
+          findsNothing,
+        );
+        // Удаление доступно только ручным назначениям.
+        expect(
+          find.descendant(of: sheet, matching: find.byIcon(Icons.close)),
+          findsNothing,
         );
       },
     );
@@ -681,27 +681,119 @@ void main() {
     expect(todayText.style?.color, colorScheme.primary);
   });
 
-  testWidgets('крестик отмены только для ручных назначений', (tester) async {
-    // Постоянная программа привязана к среде (не перекрывается с понедельником).
-    await createDay(DateTime.wednesday, name: 'Постоянная');
-    // Ручное назначение (dayOfWeek == null) — показывается на «сегодня».
+  testWidgets('крестик удаления — только у ручного назначения (47.1)', (
+    tester,
+  ) async {
+    // День программы на понедельник (сегодня): тренировка программы — старт и
+    // пропуск, удаления нет.
+    final day = await createDay(fixedNow.weekday, name: 'Разовое');
+    // То же назначение вручную на среду — «кастомное»: только удаление.
+    await planScheduleRepo.schedule(
+      day.id!,
+      fixedNow.add(const Duration(days: 2)),
+    );
+    await pumpPlan(tester);
+
+    final today = dayColumn(tester, '10');
+    expect(
+      find.descendant(of: today, matching: find.text('Начать')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: today, matching: find.text('Пропустить')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: today, matching: find.byIcon(Icons.close)),
+      findsNothing,
+    );
+
+    final wednesday = dayColumn(tester, '12');
+    expect(
+      find.descendant(of: wednesday, matching: find.byIcon(Icons.close)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: wednesday, matching: find.text('Начать')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: wednesday, matching: find.text('Пропустить')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: wednesday,
+        matching: find.text('Перенести на сегодня'),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('непривязанный день программы: удаления нет (47.1)', (
+    tester,
+  ) async {
+    // Такой день показывается на «сегодня» автоматически, строки в
+    // plan_schedule не имеет — крестик удаления был бы «мёртвой» кнопкой.
     await createManualDay(name: 'Ручная');
     await pumpPlan(tester);
 
+    final today = dayColumn(tester, '10');
+    expect(
+      find.descendant(of: today, matching: find.byIcon(Icons.close)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: today, matching: find.text('Начать')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: today, matching: find.text('Пропустить')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('тренировка программы в будущем дне — только перенос (47.1)', (
+    tester,
+  ) async {
+    await createDay(_weekdayAfter(fixedNow.weekday), name: 'Сплит');
+    await pumpPlan(tester);
+
+    final tomorrow = dayColumn(tester, '11');
     expect(
       find.descendant(
-        of: find.widgetWithText(Card, 'Ручная'),
-        matching: find.byIcon(Icons.close),
+        of: tomorrow,
+        matching: find.text('Перенести на сегодня'),
       ),
       findsOneWidget,
     );
     expect(
-      find.descendant(
-        of: find.widgetWithText(Card, 'Постоянная'),
-        matching: find.byIcon(Icons.close),
-      ),
+      find.descendant(of: tomorrow, matching: find.text('Начать')),
       findsNothing,
     );
+    // Пропуск доступен только тренировкам текущего дня.
+    expect(
+      find.descendant(of: tomorrow, matching: find.text('Пропустить')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: tomorrow, matching: find.byIcon(Icons.close)),
+      findsNothing,
+    );
+  });
+
+  testWidgets('пропуск вчерашней тренировки виден, но не отменяется (47.1)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    await workoutRepo.markSkipped(day.id!, mondayOf(fixedNow));
+    // «Сегодня» — вторник: пропуск понедельника остаётся в статусе, но кнопки
+    // отмены для прошедших дней нет (амендмент 47.1).
+    await pumpPlan(tester, now: fixedNow.add(const Duration(days: 1)));
+
+    expect(find.text('Пропущено'), findsOneWidget);
+    expect(find.text('Отменить пропуск'), findsNothing);
+    expect(find.text('Начать'), findsNothing);
   });
 
   testWidgets('тап по пустому дню недели открывает планирование', (
@@ -735,6 +827,40 @@ void main() {
     );
     expect(find.text('Сплит'), findsWidgets);
     expect(find.text('Начать'), findsWidgets);
+  });
+
+  testWidgets('лист действий ручного назначения — только удаление (47.1)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    // Ручное назначение того же дня программы на среду.
+    await planScheduleRepo.schedule(
+      day.id!,
+      fixedNow.add(const Duration(days: 2)),
+    );
+    await pumpPlan(tester);
+
+    await tester.tap(find.text('12').last);
+    await tester.pumpAndSettle();
+
+    final sheet = find.byType(BottomSheet);
+    expect(sheet, findsOneWidget);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Удалить назначение')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Начать')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Пропустить')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Перенести на сегодня')),
+      findsNothing,
+    );
   });
 
   testWidgets('карточка планирования показывает программу, день и дату', (

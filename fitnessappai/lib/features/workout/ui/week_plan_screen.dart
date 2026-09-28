@@ -327,7 +327,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             for (final item in dayItems)
               _MonthDayActionTile(
                 item: item,
-                isToday: _sameDay(date, controller.selectedDate.value),
+                today: controller.selectedDate.value,
                 onStart: () {
                   Navigator.of(sheetContext).pop();
                   _start(item);
@@ -445,6 +445,7 @@ class _WeekGrid extends StatelessWidget {
                 date: days[i],
                 items: _itemsForDay(items, days[i]),
                 isToday: _sameDay(days[i], today),
+                today: today,
                 onStart: onStart,
                 onSkip: onSkip,
                 onUnskip: onUnskip,
@@ -496,6 +497,7 @@ class _WeekList extends StatelessWidget {
             date: date,
             items: _itemsForDay(items, date),
             isToday: _sameDay(date, today),
+            today: today,
             onStart: onStart,
             onSkip: onSkip,
             onUnskip: onUnskip,
@@ -513,6 +515,7 @@ class _DayColumn extends StatelessWidget {
     required this.date,
     required this.items,
     required this.isToday,
+    required this.today,
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
@@ -523,6 +526,9 @@ class _DayColumn extends StatelessWidget {
   final DateTime date;
   final List<WeekPlanItem> items;
   final bool isToday;
+
+  /// Сегодняшняя дата — определяет набор доступных действий (47.1).
+  final DateTime today;
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
@@ -548,7 +554,7 @@ class _DayColumn extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: _PlannedWorkoutCard(
                 item: items[index],
-                isToday: isToday,
+                today: today,
                 onStart: onStart,
                 onSkip: onSkip,
                 onUnskip: onUnskip,
@@ -575,6 +581,7 @@ class _DayCard extends StatelessWidget {
     required this.date,
     required this.items,
     required this.isToday,
+    required this.today,
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
@@ -585,6 +592,9 @@ class _DayCard extends StatelessWidget {
   final DateTime date;
   final List<WeekPlanItem> items;
   final bool isToday;
+
+  /// Сегодняшняя дата — определяет набор доступных действий (47.1).
+  final DateTime today;
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
@@ -613,7 +623,7 @@ class _DayCard extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: _PlannedWorkoutCard(
                       item: item,
-                      isToday: isToday,
+                      today: today,
                       onStart: onStart,
                       onSkip: onSkip,
                       onUnskip: onUnskip,
@@ -696,7 +706,7 @@ class _DayHeader extends StatelessWidget {
 class _PlannedWorkoutCard extends StatelessWidget {
   const _PlannedWorkoutCard({
     required this.item,
-    required this.isToday,
+    required this.today,
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
@@ -704,7 +714,9 @@ class _PlannedWorkoutCard extends StatelessWidget {
   });
 
   final WeekPlanItem item;
-  final bool isToday;
+
+  /// Сегодняшняя дата — определяет набор доступных действий (47.1).
+  final DateTime today;
   final _WorkoutAction onStart;
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
@@ -715,13 +727,10 @@ class _PlannedWorkoutCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final status = item.status;
+    final actions = dayActionsFor(item, today);
 
-    // Крестик отмены показываем только для ручных назначений (dayOfWeek == null)
-    // в статусе ожидания — постоянные программы привязаны к дню недели.
-    final showCancel =
-        status == WeekPlanStatus.pending &&
-        item.dayOfWeek == null &&
-        onCancel != null;
+    // Крестик удаления — только для ручных назначений из plan_schedule.
+    final showCancel = actions.contains(DayAction.remove) && onCancel != null;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -778,27 +787,35 @@ class _PlannedWorkoutCard extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 4,
                 children: [
-                  FilledButton.tonalIcon(
-                    onPressed: () => onStart(item),
-                    icon: Icon(
-                      isToday ? Icons.play_arrow : Icons.event_repeat_outlined,
+                  if (actions.contains(DayAction.start))
+                    FilledButton.tonalIcon(
+                      onPressed: () => onStart(item),
+                      icon: const Icon(Icons.play_arrow),
+                      label: Text(l10n.weekPlanStart),
+                      style: FilledButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
                     ),
-                    label: Text(
-                      isToday ? l10n.weekPlanStart : l10n.weekPlanReschedule,
+                  if (actions.contains(DayAction.reschedule))
+                    FilledButton.tonalIcon(
+                      onPressed: () => onStart(item),
+                      icon: const Icon(Icons.event_repeat_outlined),
+                      label: Text(l10n.weekPlanReschedule),
+                      style: FilledButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
                     ),
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                  if (actions.contains(DayAction.skip))
+                    TextButton(
+                      onPressed: () => onSkip(item),
+                      child: Text(l10n.weekPlanSkip),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () => onSkip(item),
-                    child: Text(l10n.weekPlanSkip),
-                  ),
                 ],
               ),
             ],
-            if (status == WeekPlanStatus.skipped)
+            if (actions.contains(DayAction.unskip))
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
@@ -908,7 +925,7 @@ bool _isPast(DateTime date) {
 class _MonthDayActionTile extends StatelessWidget {
   const _MonthDayActionTile({
     required this.item,
-    required this.isToday,
+    required this.today,
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
@@ -916,7 +933,9 @@ class _MonthDayActionTile extends StatelessWidget {
   });
 
   final WeekPlanItem item;
-  final bool isToday;
+
+  /// Сегодняшняя дата — определяет набор доступных действий (47.1).
+  final DateTime today;
   final VoidCallback onStart;
   final VoidCallback onSkip;
   final VoidCallback onUnskip;
@@ -926,6 +945,7 @@ class _MonthDayActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final status = item.status;
+    final actions = dayActionsFor(item, today);
     final title = Text(
       '${item.programName} → '
       '${item.dayTitle ?? l10n.programBuilderDay(item.dayIndex + 1)}',
@@ -949,28 +969,41 @@ class _MonthDayActionTile extends StatelessWidget {
                 runSpacing: 8,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  FilledButton.tonalIcon(
-                    onPressed: onStart,
-                    icon: const Icon(Icons.play_arrow),
-                    label: Text(
-                      isToday ? l10n.weekPlanStart : l10n.weekPlanReschedule,
+                  if (actions.contains(DayAction.start))
+                    FilledButton.tonalIcon(
+                      onPressed: onStart,
+                      icon: const Icon(Icons.play_arrow),
+                      label: Text(l10n.weekPlanStart),
                     ),
-                  ),
-                  TextButton(onPressed: onSkip, child: Text(l10n.weekPlanSkip)),
-                  if (onCancel != null) ...[
-                    IconButton(
+                  if (actions.contains(DayAction.reschedule))
+                    FilledButton.tonalIcon(
+                      onPressed: onStart,
+                      icon: const Icon(Icons.event_repeat_outlined),
+                      label: Text(l10n.weekPlanReschedule),
+                    ),
+                  if (actions.contains(DayAction.skip))
+                    TextButton(
+                      onPressed: onSkip,
+                      child: Text(l10n.weekPlanSkip),
+                    ),
+                  // Удаление — единственное действие кастомного назначения,
+                  // поэтому с подписью, а не голым крестиком.
+                  if (actions.contains(DayAction.remove) && onCancel != null)
+                    TextButton.icon(
                       onPressed: onCancel,
-                      tooltip: l10n.weekPlanRemove,
                       icon: const Icon(Icons.close, size: 18),
+                      label: Text(l10n.weekPlanRemove),
                     ),
-                  ],
                 ],
               ),
-              WeekPlanStatus.skipped => TextButton.icon(
-                onPressed: onUnskip,
-                icon: const Icon(Icons.undo, size: 18),
-                label: Text(l10n.weekPlanUnskip),
-              ),
+              WeekPlanStatus.skipped =>
+                actions.contains(DayAction.unskip)
+                    ? TextButton.icon(
+                        onPressed: onUnskip,
+                        icon: const Icon(Icons.undo, size: 18),
+                        label: Text(l10n.weekPlanUnskip),
+                      )
+                    : StatusBadge(status: status),
               WeekPlanStatus.performed ||
               WeekPlanStatus.rescheduled ||
               WeekPlanStatus.pastSkipped => StatusBadge(status: status),
