@@ -1996,6 +1996,12 @@ abstract class AppLocalizations {
   /// **'К истории'**
   String get homeGoToHistory;
 
+  /// A11y-подпись кольца прогресса программы на главной
+  ///
+  /// In ru, this message translates to:
+  /// **'Выполнение программы за неделю: {percent}%'**
+  String homeWeekProgressLabel(int percent);
+
   /// No description provided for @historyCopyJson.
   ///
   /// In ru, this message translates to:

@@ -494,6 +494,16 @@
   "homeNoWorkoutsHint": "Выполните первую тренировку — она появится здесь.",
   "homeViewAll": "Вся история",
   "homeGoToHistory": "К истории",
+  "homeWeekProgressLabel": "Выполнение программы за неделю: {percent}%",
+  "@homeWeekProgressLabel": {
+    "description": "A11y-подпись кольца прогресса программы на главной",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "example": "33"
+      }
+    }
+  },
   "historyCopyJson": "Скопировать JSON",
   "historyCopyJsonTooltip": "Скопировать историю в JSON",
   "historyExercisesCount": "{count, plural, one{1 упражнение} few{{count} упражнения} other{{count} упражнений}}",

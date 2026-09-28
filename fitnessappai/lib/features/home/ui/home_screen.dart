@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -133,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? () => context.push('/workout/prepare/${info.upcomingDay!.id}')
                 : null,
             todayStatus: info.todayStatus,
+            weeklyProgressPercent: info.weeklyProgressPercent,
           ),
           const SizedBox(height: 12),
         ],
@@ -180,6 +183,7 @@ class _ActiveProgramCard extends StatelessWidget {
     this.imagePath,
     this.onStart,
     this.todayStatus,
+    this.weeklyProgressPercent,
   });
 
   final String programName;
@@ -189,6 +193,10 @@ class _ActiveProgramCard extends StatelessWidget {
   final String? imagePath;
   final VoidCallback? onStart;
   final WeekPlanStatus? todayStatus;
+
+  /// Процент выполнения программы за неделю (0..100) или `null`, когда
+  /// закреплённых дней нет — тогда кольцо прогресса не показывается.
+  final int? weeklyProgressPercent;
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +229,13 @@ class _ActiveProgramCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (weeklyProgressPercent != null) ...[
+                _ProgressRing(
+                  percent: weeklyProgressPercent!,
+                  label: l10n.homeWeekProgressLabel(weeklyProgressPercent!),
+                ),
+                const SizedBox(width: 10),
+              ],
               if (onStart != null)
                 IconButton.filledTonal(
                   icon: const Icon(Icons.play_arrow),
@@ -383,6 +398,99 @@ class _EmptyHint extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Кольцевой индикатор процента выполнения программы за неделю.
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.percent, required this.label});
+
+  /// Процент выполнения 0..100.
+  final int percent;
+
+  /// А11y-подпись кольца.
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      label: label,
+      child: SizedBox(
+        width: 52,
+        height: 52,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            CustomPaint(
+              painter: _RingPainter(
+                progress: percent / 100,
+                trackColor: theme.colorScheme.surfaceContainerHighest,
+                progressColor: theme.colorScheme.primary,
+                strokeWidth: 5,
+              ),
+            ),
+            Center(
+              child: Text(
+                '$percent%',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Рисует кольцо прогресса: трек + дуга вплоть до [progress] (0..1).
+class _RingPainter extends CustomPainter {
+  _RingPainter({
+    required this.progress,
+    required this.trackColor,
+    required this.progressColor,
+    required this.strokeWidth,
+  });
+
+  final double progress;
+  final Color trackColor;
+  final Color progressColor;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = trackColor;
+    canvas.drawCircle(center, radius, track);
+    if (progress <= 0) {
+      return;
+    }
+    final arc = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..color = progressColor;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      2 * math.pi * progress,
+      false,
+      arc,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.trackColor != trackColor ||
+      oldDelegate.progressColor != progressColor ||
+      oldDelegate.strokeWidth != strokeWidth;
 }
 
 String _weekdayLabel(AppLocalizations l10n, int? dayOfWeek) =>

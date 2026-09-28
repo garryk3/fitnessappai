@@ -1051,6 +1051,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeGoToHistory => 'К истории';
 
   @override
+  String homeWeekProgressLabel(int percent) {
+    return 'Выполнение программы за неделю: $percent%';
+  }
+
+  @override
   String get historyCopyJson => 'Скопировать JSON';
 
   @override

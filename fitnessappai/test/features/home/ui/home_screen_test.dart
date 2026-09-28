@@ -476,4 +476,118 @@ void main() {
     expect(find.text('Кардио'), findsOneWidget);
     expect(find.textContaining('Ближайший день'), findsOneWidget);
   });
+
+  Future<(Program, List<ProgramDay>)> createProgramWithDays(
+    String name,
+    List<int?> dayOfWeeks,
+  ) async {
+    final program = await programRepo.create(
+      Program(
+        name: name,
+        daysCount: dayOfWeeks.length,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+      [
+        for (var i = 0; i < dayOfWeeks.length; i++)
+          ProgramDay(programId: 0, dayIndex: i, dayOfWeek: dayOfWeeks[i]),
+      ],
+    );
+    final days = (await programRepo.getDays(program.id!)).toList();
+    return (program, days);
+  }
+
+  Future<void> saveDaySession(
+    int programId,
+    String programName,
+    int programDayId,
+    DateTime performedDate,
+  ) async {
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        programId: programId,
+        programName: programName,
+        programDayId: programDayId,
+        dayIndex: 0,
+        performedDate: performedDate,
+        startedAt: performedDate.add(const Duration(hours: 18)),
+        endedAt: performedDate.add(const Duration(hours: 18, minutes: 40)),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseName: 'Жим',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 10,
+          completedAt: performedDate.add(const Duration(minutes: 5)),
+        ),
+      ],
+    );
+  }
+
+  testWidgets('кольцо прогресса: 1 из 3 закреплённых дней → 33%', (
+    WidgetTester tester,
+  ) async {
+    final (program, days) = await createProgramWithDays('Три дня', [1, 3, 5]);
+    final monday = days.firstWhere((d) => d.dayOfWeek == 1);
+    await saveDaySession(
+      program.id!,
+      'Три дня',
+      monday.id!,
+      DateTime(2026, 8, 10),
+    );
+    await programRepo.setActive(program.id!);
+
+    await pumpHome(tester);
+
+    expect(find.text('Три дня'), findsWidgets);
+    expect(find.text('33%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('кольцо прогресса: все закреплённые дни → 100%', (
+    WidgetTester tester,
+  ) async {
+    final (program, days) = await createProgramWithDays('Полная', [1, 3, 5]);
+    for (var i = 0; i < days.length; i++) {
+      await saveDaySession(
+        program.id!,
+        'Полная',
+        days[i].id!,
+        DateTime(2026, 8, 10 + i * 2),
+      );
+    }
+    await programRepo.setActive(program.id!);
+
+    await pumpHome(tester);
+
+    expect(find.text('100%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('кольцо прогресса: без выполнений → 0% и кольцо на месте', (
+    WidgetTester tester,
+  ) async {
+    final (program, _) = await createProgramWithDays('Пусто', [1, 3, 5]);
+    await programRepo.setActive(program.id!);
+
+    await pumpHome(tester);
+
+    expect(find.text('0%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('без закреплённых дней кольцо прогресса не показывается', (
+    WidgetTester tester,
+  ) async {
+    final (program, _) = await createProgramWithDays('Без дней', [null]);
+    await programRepo.setActive(program.id!);
+
+    await pumpHome(tester);
+
+    expect(find.text('Без дней'), findsOneWidget);
+    expect(find.textContaining('%'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
