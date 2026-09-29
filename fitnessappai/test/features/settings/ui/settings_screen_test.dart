@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
+import 'package:fitnessappai/app/sound/sound_settings_store.dart';
+import 'package:fitnessappai/app/sound/sound_settings_section.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
@@ -82,6 +84,24 @@ class _FakeReminderService extends ReminderService {
   }
 }
 
+/// Хранилище настроек звука в памяти (47.5).
+class _FakeSoundStore implements SoundSettingsStore {
+  bool enabled = true;
+  String? filePath;
+
+  @override
+  Future<bool> isEnabled() async => enabled;
+
+  @override
+  Future<String?> soundFilePath() async => filePath;
+
+  @override
+  Future<void> setEnabled(bool value) async => enabled = value;
+
+  @override
+  Future<void> setSoundFile(String? path) async => filePath = path;
+}
+
 void main() {
   late _FakeSyncService service;
   late String? pickedPath;
@@ -105,6 +125,7 @@ void main() {
     Future<void> Function(String path)? shareFile,
     Future<bool> Function(String path)? saveFile,
     SoundSettingsController? soundController,
+    SoundSettingsController? reminderSoundController,
     UpdateCheckController? updateController,
     NotificationSettingsController? notificationController,
   }) async {
@@ -131,6 +152,7 @@ void main() {
           soundController:
               soundController ??
               SoundSettingsController(repository: SoundSettingsRepository(db)),
+          reminderSoundController: reminderSoundController,
           updateController:
               updateController ??
               UpdateCheckController(
@@ -165,6 +187,114 @@ void main() {
     expect(find.text('Импортировать БД'), findsOneWidget);
     expect(find.text('Облачная синхронизация появится позже.'), findsOneWidget);
     expect(find.byType(SnackBar), findsNothing);
+  });
+
+  group('звук напоминаний (47.5)', () {
+    late _FakeSoundStore store;
+    late List<SoundSettingsSnapshot> applied;
+
+    setUp(() {
+      // Хранилище-заглушка вместо настоящего: копирование файла проверяется
+      // в тестах репозитория, а реальный I/O внутри testWidgets не завершается
+      // в fake-async зоне.
+      store = _FakeSoundStore();
+      applied = <SoundSettingsSnapshot>[];
+    });
+
+    /// Контроллер звука напоминаний с подменённым пикером.
+    SoundSettingsController reminderController({
+      Future<String?> Function()? pickFile,
+    }) {
+      final controller = SoundSettingsController(
+        repository: store,
+        pickFile: pickFile,
+        onChanged: (snapshot) async => applied.add(snapshot),
+      );
+      addTearDown(controller.dispose);
+      return controller;
+    }
+
+    /// Секция звука напоминаний (вторая на экране).
+    Finder reminderSection() => find.byType(SoundSettingsSection).last;
+
+    testWidgets('секция показывается рядом со звуком таймеров', (tester) async {
+      await pumpScreen(tester, reminderSoundController: reminderController());
+
+      expect(find.text('Звук'), findsOneWidget);
+      expect(find.text('Звук напоминаний'), findsOneWidget);
+      expect(find.text('Звук уведомлений о тренировках'), findsOneWidget);
+      expect(find.byType(SoundSettingsSection), findsNWidgets(2));
+      // Подсказка честно предупреждает об ограничении системного уведомления.
+      expect(
+        find.textContaining('на некоторых версиях Android'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('без ReminderService секция скрыта', (tester) async {
+      await pumpScreen(tester);
+
+      expect(find.byType(SoundSettingsSection), findsOneWidget);
+      expect(find.text('Звук напоминаний'), findsNothing);
+    });
+
+    testWidgets('выбор файла применяется к каналу уведомлений', (tester) async {
+      await pumpScreen(
+        tester,
+        reminderSoundController: reminderController(
+          pickFile: () async => '/sounds/beep.mp3',
+        ),
+      );
+
+      await tester.tap(
+        find.descendant(
+          of: reminderSection(),
+          matching: find.widgetWithText(OutlinedButton, 'Выбрать звук'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(applied, hasLength(1));
+      expect(applied.single.enabled, isTrue);
+      expect(applied.single.filePath, '/sounds/beep.mp3');
+      expect(store.filePath, '/sounds/beep.mp3');
+      expect(find.text('Звук сохранён'), findsOneWidget);
+    });
+
+    testWidgets('выключатель звука применяется к каналу уведомлений', (
+      tester,
+    ) async {
+      await pumpScreen(tester, reminderSoundController: reminderController());
+
+      await tester.tap(
+        find.descendant(
+          of: reminderSection(),
+          matching: find.byType(SwitchListTile),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(applied.single.enabled, isFalse);
+      expect(store.enabled, isFalse);
+    });
+
+    testWidgets('сброс файла возвращает встроенный сигнал', (tester) async {
+      // Файл был выбран раньше — контроллер читает его при загрузке.
+      store.filePath = '/sounds/beep.mp3';
+      await pumpScreen(tester, reminderSoundController: reminderController());
+      expect(find.text('/sounds/beep.mp3'), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: reminderSection(),
+          matching: find.byTooltip('Вернуть стандартный сигнал'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(applied.single.filePath, isNull);
+      expect(store.filePath, isNull);
+    });
   });
 
   testWidgets('выбор темы сохраняется и переключает контроллер', (

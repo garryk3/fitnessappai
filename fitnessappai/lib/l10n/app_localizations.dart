@@ -274,6 +274,24 @@ abstract class AppLocalizations {
   /// **'Остановить'**
   String get soundStop;
 
+  /// No description provided for @settingsReminderSoundSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук напоминаний'**
+  String get settingsReminderSoundSection;
+
+  /// No description provided for @reminderSoundEnabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук уведомлений о тренировках'**
+  String get reminderSoundEnabled;
+
+  /// No description provided for @reminderSoundHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбранный файл проигрывается при проверке в приложении. Системное уведомление использует его, только если система может прочитать файл — на некоторых версиях Android уведомление приходит без звука.'**
+  String get reminderSoundHint;
+
   /// No description provided for @soundDefaultLabel.
   ///
   /// In ru, this message translates to:

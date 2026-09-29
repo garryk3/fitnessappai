@@ -5,26 +5,38 @@ import 'package:file_picker/file_picker.dart';
 import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/app/sound/sound_service.dart';
-import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
+import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 
 typedef SoundFilePicker = Future<String?> Function();
 
+/// Вызывается после каждого изменения настроек — например, чтобы применить
+/// новый звук к каналу уведомлений (задача 47.5).
+typedef SoundSettingsChanged =
+    Future<void> Function(SoundSettingsSnapshot snapshot);
+
 /// Управляет настройками звуковых сигналов: переключатель, выбор файла
 /// и предпрослушивание.
+///
+/// Один контроллер обслуживает и сигналы таймеров, и сигнал напоминаний:
+/// отличаются только хранилище ([SoundSettingsStore]) и обработчик изменений.
 class SoundSettingsController {
   SoundSettingsController({
     required this._repository,
     SoundFilePicker? pickFile,
     SoundService? soundService,
+    SoundSettingsChanged? onChanged,
   }) : _pickFile = pickFile ?? _defaultPick,
        // ignore: prefer_initializing_formals -- имя параметра публичное.
-       _soundService = soundService {
+       _soundService = soundService,
+       // ignore: prefer_initializing_formals -- имя параметра публичное.
+       _onChanged = onChanged {
     _subscription = _soundService?.isPlayingStream.listen((playing) {
       isPlaying.value = playing;
     });
   }
 
-  final SoundSettingsRepository _repository;
+  final SoundSettingsStore _repository;
+  final SoundSettingsChanged? _onChanged;
   final SoundFilePicker _pickFile;
   final SoundService? _soundService;
   StreamSubscription<bool>? _subscription;
@@ -50,6 +62,7 @@ class SoundSettingsController {
   Future<void> setEnabled(bool value) async {
     enabled.value = value;
     await _repository.setEnabled(value);
+    await _notifyChanged();
   }
 
   /// Переключает предпрослушивание: play если не играет, stop если играет.
@@ -70,7 +83,10 @@ class SoundSettingsController {
       }
       soundFilePath.value = path;
       await _repository.setSoundFile(path);
+      // Путь мог измениться: репозиторий копирует файл в постоянное хранилище.
+      soundFilePath.value = await _repository.soundFilePath() ?? path;
       statusText.value = 'Звук сохранён';
+      await _notifyChanged();
       hasError.value = false;
     } catch (error) {
       statusText.value = 'Ошибка выбора звука: $error';
@@ -84,6 +100,17 @@ class SoundSettingsController {
     await _repository.setSoundFile(null);
     statusText.value = 'Стандартный сигнал';
     hasError.value = false;
+    await _notifyChanged();
+  }
+
+  /// Сообщает подписчику об изменившихся настройках.
+  Future<void> _notifyChanged() async {
+    await _onChanged?.call(
+      SoundSettingsSnapshot(
+        enabled: enabled.value,
+        filePath: soundFilePath.value,
+      ),
+    );
   }
 
   /// Освобождает ресурсы (подписку на состояние воспроизведения).

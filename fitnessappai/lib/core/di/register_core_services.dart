@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:fitnessappai/app/sound/reminder_sound_settings_repository.dart';
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
@@ -50,6 +51,13 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   );
   sl.registerLazySingleton<SoundSettingsRepository>(
     () => SoundSettingsRepository(sl.get<AppDatabase>()),
+  );
+  // Звук уведомлений о тренировках — отдельные ключи и отдельный файл (47.5).
+  sl.registerLazySingleton<ReminderSoundSettingsRepository>(
+    () => ReminderSoundSettingsRepository(sl.get<AppDatabase>()),
+  );
+  sl.registerLazySingleton<ReminderSoundService>(
+    () => AudioplayersSoundService(sl.get<ReminderSoundSettingsRepository>()),
   );
   sl.registerLazySingleton<PlanViewSettingsRepository>(
     () => PlanViewSettingsRepository(sl.get<AppDatabase>()),
@@ -119,7 +127,10 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
     () => WorkoutReminderRepository(sl.get<AppDatabase>()),
   );
   sl.registerLazySingleton<ReminderService>(
-    () => ReminderService(repository: sl.get<WorkoutReminderRepository>()),
+    () => ReminderService(
+      repository: sl.get<WorkoutReminderRepository>(),
+      soundSettings: sl.get<ReminderSoundSettingsRepository>(),
+    ),
   );
   sl.registerLazySingleton<SyncService>(
     () => LocalFileSyncService(

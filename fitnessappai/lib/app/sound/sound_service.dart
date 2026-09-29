@@ -4,7 +4,12 @@ import 'dart:developer';
 import 'package:audio_session/audio_session.dart' hide AndroidAudioFocus;
 import 'package:audioplayers/audioplayers.dart';
 
-import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
+import 'package:fitnessappai/app/sound/sound_settings_store.dart';
+
+/// Отдельный экземпляр [SoundService] для звука уведомлений о тренировках
+/// (задача 47.5): в контейнере сервисы различаются по типу, поэтому у
+/// предпрослушивания сигнала напоминаний своя запись.
+typedef ReminderSoundService = AudioplayersSoundService;
 
 /// Играет звуковой сигнал по завершении таймеров (отдых, разминка).
 abstract class SoundService {
@@ -31,6 +36,9 @@ abstract class SoundService {
 /// Реализация [SoundService] на `audioplayers` + `audio_session`: встроенный
 /// ассет (звук окончания таймера) или выбранный пользователем файл из настроек.
 ///
+/// Экземпляр работает с любым [SoundSettingsStore], поэтому тем же классом
+/// проигрывается предпрослушивание сигнала напоминаний (задача 47.5).
+///
 /// Аудио-фокус управляется через [AudioSession] с типом `gainTransientMayDuck`
 /// (приглушение чужой музыки вместо полной остановки), поэтому `audioplayers`
 /// не запрашивает фокус сам (`audioFocus: none`).
@@ -48,7 +56,7 @@ class AudioplayersSoundService implements SoundService {
 
   static const String defaultAssetPath = 'sounds/timer.mp3';
 
-  final SoundSettingsRepository _repository;
+  final SoundSettingsStore _repository;
   final AudioPlayer _player = AudioPlayer();
   AudioSession? _session;
   bool _isPlaying = false;

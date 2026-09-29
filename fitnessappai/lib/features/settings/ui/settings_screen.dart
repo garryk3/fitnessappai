@@ -3,9 +3,11 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/app_restart.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
+import 'package:fitnessappai/app/sound/reminder_sound_settings_repository.dart';
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/app/sound/sound_settings_repository.dart';
+import 'package:fitnessappai/app/sound/sound_settings_section.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
@@ -23,6 +25,7 @@ class SettingsScreen extends StatefulWidget {
     this.syncController,
     this.themeController,
     this.soundController,
+    this.reminderSoundController,
     this.updateController,
     this.notificationController,
   });
@@ -30,6 +33,10 @@ class SettingsScreen extends StatefulWidget {
   final SyncController? syncController;
   final ThemeController? themeController;
   final SoundSettingsController? soundController;
+
+  /// Настройки звука напоминаний (задача 47.5). null — секция не показывается
+  /// (тесты, окружения без ReminderService).
+  final SoundSettingsController? reminderSoundController;
   final UpdateCheckController? updateController;
   final NotificationSettingsController? notificationController;
 
@@ -42,7 +49,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final ThemeController _themeController;
   late final SoundSettingsController _soundController;
   late final UpdateCheckController _updateController;
+  SoundSettingsController? _reminderSoundController;
   NotificationSettingsController? _notificationController;
+
+  /// Контроллер звука напоминаний создан экраном: его нужно освободить вместе
+  /// с подпиской на состояние воспроизведения.
+  bool _ownsReminderSoundController = false;
 
   @override
   void initState() {
@@ -56,6 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           soundService: locator.get<SoundService>(),
         );
     _soundController.load();
+    _initReminderSound();
     _updateController =
         widget.updateController ??
         UpdateCheckController(service: locator.get<UpdateService>());
@@ -75,6 +88,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// Создаёт контроллер звука напоминаний, если доступен ReminderService.
+  ///
+  /// Изменения применяются к каналу уведомлений: звук канала неизменен после
+  /// создания, поэтому канал пересоздаётся, а напоминания перепланируются
+  /// (задача 47.5).
+  void _initReminderSound() {
+    _reminderSoundController = widget.reminderSoundController;
+    if (_reminderSoundController == null) {
+      try {
+        final reminders = locator.get<ReminderService>();
+        _ownsReminderSoundController = true;
+        _reminderSoundController = SoundSettingsController(
+          repository: locator.get<ReminderSoundSettingsRepository>(),
+          soundService: locator.get<ReminderSoundService>(),
+          onChanged: (snapshot) => reminders.applySoundSettings(
+            enabled: snapshot.enabled,
+            filePath: snapshot.filePath,
+          ),
+        );
+      } catch (_) {
+        // ReminderService или БД не зарегистрированы (тесты) — секция скрыта.
+        _reminderSoundController = null;
+      }
+    }
+    _reminderSoundController?.load();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsReminderSoundController) {
+      _reminderSoundController?.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -92,7 +140,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
           AppSectionHeader(title: l10n.settingsSoundSection),
           const SizedBox(height: 8),
-          _SoundSection(controller: _soundController),
+          SoundSettingsSection(
+            controller: _soundController,
+            title: l10n.soundEnabled,
+          ),
+          if (_reminderSoundController != null) ...[
+            const SizedBox(height: 24),
+            AppSectionHeader(title: l10n.settingsReminderSoundSection),
+            const SizedBox(height: 8),
+            SoundSettingsSection(
+              controller: _reminderSoundController!,
+              title: l10n.reminderSoundEnabled,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.reminderSoundHint,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           AppSectionHeader(title: l10n.settingsNotificationsSection),
           const SizedBox(height: 8),
@@ -128,97 +195,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _AboutSection(controller: _updateController),
         ],
       ),
-    );
-  }
-}
-
-/// Секция настроек звуковых сигналов таймеров.
-class _SoundSection extends StatefulWidget {
-  const _SoundSection({required this.controller});
-
-  final SoundSettingsController controller;
-
-  @override
-  State<_SoundSection> createState() => _SoundSectionState();
-}
-
-class _SoundSectionState extends State<_SoundSection> {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SignalBuilder(
-      builder: (_) {
-        final controller = widget.controller;
-        if (controller.isLoading.value) {
-          return const SizedBox.shrink();
-        }
-        final file = controller.soundFilePath.value;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.soundEnabled),
-              value: controller.enabled.value,
-              onChanged: (value) => controller.setEnabled(value),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: controller.enabled.value
-                        ? () => controller.pickSoundFile()
-                        : null,
-                    icon: const Icon(Icons.audio_file_outlined),
-                    label: Text(l10n.soundPickFile),
-                  ),
-                ),
-                if (file != null) ...[
-                  const SizedBox(width: 8),
-                  IconButton(
-                    tooltip: l10n.soundReset,
-                    icon: const Icon(Icons.restart_alt),
-                    onPressed: () => controller.resetSoundFile(),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: controller.isPlaying.value
-                      ? l10n.soundStop
-                      : l10n.soundPreview,
-                  icon: Icon(
-                    controller.isPlaying.value ? Icons.stop : Icons.play_arrow,
-                  ),
-                  onPressed: controller.enabled.value
-                      ? () => controller.togglePreview()
-                      : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              file ?? l10n.soundDefaultLabel,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (controller.statusText.value case final status?) ...[
-              const SizedBox(height: 8),
-              Text(
-                status,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: controller.hasError.value
-                      ? Theme.of(context).colorScheme.error
-                      : Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
-          ],
-        );
-      },
     );
   }
 }
