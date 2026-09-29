@@ -402,6 +402,19 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
                     ? null
                     : l10n.settingsNotificationsExactRequest,
               ),
+              // Без точного режима задержка штатная, а в Doze — до десятков
+              // минут: об этом пользователь должен знать, иначе считает
+              // напоминания сломанными (задача 47.6).
+              if (!permissions.exactAlarmsEnabled)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    l10n.settingsNotificationsExactHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
             ],
             if (error != null) ...[
               const SizedBox(height: 8),

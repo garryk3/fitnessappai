@@ -13,6 +13,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
+import 'package:fitnessappai/core/notifications/reminder_catch_up_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/data/seed/exercise_seeder.dart';
@@ -130,6 +131,7 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
     () => ReminderService(
       repository: sl.get<WorkoutReminderRepository>(),
       soundSettings: sl.get<ReminderSoundSettingsRepository>(),
+      catchUpLog: AppMetaReminderCatchUpLog(sl.get<AppDatabase>()),
     ),
   );
   sl.registerLazySingleton<SyncService>(

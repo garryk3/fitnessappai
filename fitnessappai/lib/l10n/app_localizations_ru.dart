@@ -172,6 +172,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsNotificationsExactRequest => 'Настроить точные будильники';
 
   @override
+  String get settingsNotificationsExactHint =>
+      'Без точных будильников Android откладывает напоминание: обычно на минуты, при выключенном экране — на 15 минут и дольше, недельный будильник — до часа. Приложение покажет пропущенное напоминание, когда вы в него вернётесь.';
+
+  @override
   String get commonClose => 'Закрыть';
 
   @override

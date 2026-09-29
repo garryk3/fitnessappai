@@ -77,6 +77,10 @@ class _FitnessAppAiState extends State<FitnessAppAi>
   Future<void> _rescheduleReminders() async {
     try {
       await _reminders?.rescheduleAll();
+      // Пока приложение было в фоне, система могла не доставить напоминание
+      // (Doze, «Остановить приложение», отзыв точного режима) — показываем
+      // пропуск сразу, а не молча ждём следующей недели.
+      await _reminders?.catchUpMissed();
     } catch (e, st) {
       logNotificationIssue(
         'Напоминания не перепланированы при возврате в приложение',
