@@ -321,4 +321,18 @@ void main() {
     expect(loaded!.results.map((r) => r.side), ['left', 'right', 'left']);
     expect(loaded.results.map((r) => r.reps), [8, 6, 10]);
   });
+
+  test('deleteMarksBefore удаляет отметки прошлых недель (47.4)', () async {
+    final dayId = await createProgramDay();
+    await repo.markSkipped(dayId, DateTime(2026, 8, 3));
+    await repo.markRescheduled(dayId, DateTime(2026, 8, 10));
+    await repo.markSkipped(dayId, DateTime(2026, 8, 17));
+
+    final removed = await repo.deleteMarksBefore(DateTime(2026, 8, 10));
+
+    expect(removed, 1);
+    expect(await repo.getMarks(DateTime(2026, 8, 3)), isEmpty);
+    expect(await repo.getMarks(DateTime(2026, 8, 10)), hasLength(1));
+    expect(await repo.getMarks(DateTime(2026, 8, 17)), hasLength(1));
+  });
 }

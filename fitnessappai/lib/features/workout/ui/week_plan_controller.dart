@@ -5,6 +5,7 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
@@ -94,7 +95,7 @@ class WeekPlanController {
     DataChangeNotifier? changes,
   }) : _now = clock ?? DateTime.now {
     final today = _dateOnly(_now());
-    weekStart.value = _mondayOf(today);
+    weekStart.value = mondayOf(today);
     selectedDate.value = today;
     monthStart.value = DateTime(today.year, today.month, 1);
     _reloadSubscription = ChangeReloadSubscription(
@@ -161,12 +162,12 @@ class WeekPlanController {
 
   /// Можно ли сдвинуться ещё на неделю назад (ограничение навигации ±1).
   bool get canGoPrevWeek => weekStart.value.isAfter(
-    _mondayOf(_dateOnly(_now())).subtract(const Duration(days: 7)),
+    mondayOf(_dateOnly(_now())).subtract(const Duration(days: 7)),
   );
 
   /// Можно ли сдвинуться ещё на неделю вперёд (ограничение навигации ±1).
   bool get canGoNextWeek => weekStart.value.isBefore(
-    _mondayOf(_dateOnly(_now())).add(const Duration(days: 7)),
+    mondayOf(_dateOnly(_now())).add(const Duration(days: 7)),
   );
 
   /// Можно ли сдвинуться ещё на месяц назад (ограничение навигации ±1).
@@ -210,7 +211,7 @@ class WeekPlanController {
     }
     await workoutRepository.markSkipped(
       item.programDayId,
-      _mondayOf(item.scheduledDate),
+      mondayOf(item.scheduledDate),
     );
     await _load();
   }
@@ -224,7 +225,7 @@ class WeekPlanController {
     }
     await workoutRepository.markRescheduled(
       item.programDayId,
-      _mondayOf(item.scheduledDate),
+      mondayOf(item.scheduledDate),
     );
     await _load();
   }
@@ -236,7 +237,7 @@ class WeekPlanController {
     }
     await workoutRepository.clearSkip(
       item.programDayId,
-      _mondayOf(item.scheduledDate),
+      mondayOf(item.scheduledDate),
     );
     await _load();
   }
@@ -326,6 +327,14 @@ class WeekPlanController {
         }
       }
 
+      // Чистим записи прошлых недель перед чтением расписания (47.4).
+      // Два DELETE-запроса по крошечным таблицам — дешевле, чем следить за тем,
+      // не пережил ли экземпляр контроллера смену недели.
+      await PlanScheduleCleaner(
+        workoutRepository: workoutRepository,
+        planScheduleRepository: planScheduleRepository,
+      ).cleanupOldSchedule(now);
+
       // Добавляем ручные назначения из plan_schedule.
       final manualSchedule =
           await planScheduleRepository?.getForRange(rangeStart, rangeEnd) ??
@@ -382,7 +391,7 @@ class WeekPlanController {
 
       final result = <WeekPlanItem>[];
       for (final item in plannedItems) {
-        final weekStart = _mondayOf(item.scheduledDate);
+        final weekStart = mondayOf(item.scheduledDate);
         final key = '${item.programDayId}|${weekStart.millisecondsSinceEpoch}';
         // Перенесённая тренировка очищает свой день-источник (47.3).
         if (marks.rescheduled.contains(key)) {
@@ -428,7 +437,7 @@ class WeekPlanController {
       !date.isAfter(rangeEnd);
       date = date.add(const Duration(days: 1))
     ) {
-      final ws = _mondayOf(date);
+      final ws = mondayOf(date);
       if (weekStarts.add(ws.millisecondsSinceEpoch)) {
         for (final mark in await workoutRepository.getMarks(ws)) {
           final key =
@@ -489,7 +498,7 @@ class WeekPlanController {
     if (isSkipped) {
       return WeekPlanStatus.skipped;
     }
-    if (_mondayOf(item.scheduledDate).isBefore(_mondayOf(now))) {
+    if (mondayOf(item.scheduledDate).isBefore(mondayOf(now))) {
       return WeekPlanStatus.pastSkipped;
     }
     return WeekPlanStatus.pending;
@@ -509,9 +518,6 @@ bool _inRange(DateTime date, DateTime rangeStart, DateTime rangeEnd) =>
 
 DateTime _dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
-
-DateTime _mondayOf(DateTime value) =>
-    _dateOnly(value).subtract(Duration(days: value.weekday - 1));
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;

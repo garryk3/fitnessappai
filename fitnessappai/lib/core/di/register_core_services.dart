@@ -29,6 +29,7 @@ import 'package:fitnessappai/features/settings/data/github_update_service.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/data/local_file_sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
+import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
@@ -78,6 +79,13 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   );
   sl.registerLazySingleton<PlanScheduleRepository>(
     () => PlanScheduleRepository(sl.get<AppDatabase>()),
+  );
+  // Очистка «протухших» записей плана прошлых недель (47.4).
+  sl.registerLazySingleton<PlanScheduleCleaner>(
+    () => PlanScheduleCleaner(
+      workoutRepository: sl.get<WorkoutRepository>(),
+      planScheduleRepository: sl.get<PlanScheduleRepository>(),
+    ),
   );
   sl.registerLazySingleton<LlmExportService>(
     () => LlmExportService(

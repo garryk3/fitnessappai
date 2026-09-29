@@ -75,4 +75,16 @@ class PlanScheduleRepository {
             .get();
     return result.isNotEmpty;
   }
+
+  /// Удаляет назначения раньше [date] — «протухшие» строки расписания
+  /// прошлых недель (задача 47.4).
+  ///
+  /// Возвращает число удалённых строк и не шлёт уведомление об изменении
+  /// данных: вызывающий сам решает, нужно ли перерисовывать UI.
+  Future<int> deleteBefore(DateTime date) async {
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    return (_db.delete(
+      _db.planSchedule,
+    )..where((t) => t.scheduledDate.isSmallerThanValue(dateOnly))).go();
+  }
 }

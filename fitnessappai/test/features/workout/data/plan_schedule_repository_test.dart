@@ -96,4 +96,29 @@ void main() {
     );
     expect(allItems, hasLength(2));
   });
+
+  test('deleteBefore удаляет только прошлые записи (47.4)', () async {
+    // Понедельник недели — граница очистки.
+    await repo.schedule(dayId, DateTime(2026, 8, 3)); // прошлая неделя
+    await repo.schedule(dayId, DateTime(2026, 8, 9)); // прошлая неделя
+    await repo.schedule(dayId, DateTime(2026, 8, 10)); // граница
+    await repo.schedule(dayId, DateTime(2026, 8, 16)); // конец текущей недели
+    await repo.schedule(dayId, DateTime(2026, 8, 20)); // будущая неделя
+
+    final removed = await repo.deleteBefore(DateTime(2026, 8, 10));
+
+    expect(removed, 2);
+    final left = await repo.getForRange(
+      DateTime(2026, 1, 1),
+      DateTime(2026, 12, 31),
+    );
+    expect(left.map((i) => i.scheduledDate.day), [10, 16, 20]);
+  });
+
+  test('deleteBefore не трогает ничего, если прошлых записей нет', () async {
+    await repo.schedule(dayId, DateTime(2026, 8, 10));
+
+    expect(await repo.deleteBefore(DateTime(2026, 8, 10)), 0);
+    expect(await repo.isScheduled(dayId, DateTime(2026, 8, 10)), isTrue);
+  });
 }

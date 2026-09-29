@@ -556,4 +556,29 @@ void main() {
       );
     });
   });
+
+  test('загрузка плана чистит записи прошлых недель (47.4)', () async {
+    final dayId = await createLinkedDay(DateTime.wednesday);
+    // Назначение в прошлой неделе — должно исчезнуть при загрузке.
+    await scheduleRepo.schedule(dayId, DateTime(2026, 8, 5));
+    await WorkoutRepository(db).markSkipped(dayId, DateTime(2026, 8, 3));
+
+    expect(await scheduleRepo.isScheduled(dayId, DateTime(2026, 8, 5)), isTrue);
+
+    controller.weekStart.value = DateTime(2026, 8, 10);
+    await controller.refresh();
+
+    expect(
+      await scheduleRepo.isScheduled(dayId, DateTime(2026, 8, 5)),
+      isFalse,
+    );
+    expect(await WorkoutRepository(db).getMarks(DateTime(2026, 8, 3)), isEmpty);
+    // План текущей недели собирается и содержит тренировку за среду.
+    expect(
+      controller.items.value.any(
+        (i) => i.programDayId == dayId && i.scheduledDate.day == 12,
+      ),
+      isTrue,
+    );
+  });
 }
