@@ -710,6 +710,20 @@ void main() {
   group('холодный старт из уведомления', () {
     setUp(() {
       registerFallbackValue(const InitializationSettings());
+      // Сценарий Android: без Android-объекта плагина launch details не
+      // читаются вовсе (47.15).
+      registerFallbackValue(
+        const AndroidNotificationChannel('workout_reminders', 'Канал'),
+      );
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.createNotificationChannel(any()),
+      ).thenAnswer((_) async {});
       when(
         () => plugin.initialize(
           settings: any(named: 'settings'),
@@ -780,6 +794,39 @@ void main() {
 
       expect(tapped, isEmpty);
     });
+
+    test(
+      'вне Android launch details не читаются, ошибки нет (47.15)',
+      () async {
+        when(
+          () => plugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >(),
+        ).thenReturn(null);
+        // На Linux метод плагина не реализован — вызов бросил бы
+        // `UnimplementedError` в лог при каждом старте desktop-сборки.
+        when(
+          () => plugin.getNotificationAppLaunchDetails(),
+        ).thenThrow(UnimplementedError('getNotificationAppLaunchDetails'));
+        final tapped = <int>[];
+        service.onReminderTapped = tapped.add;
+
+        await service.initialize();
+
+        verifyNever(() => plugin.getNotificationAppLaunchDetails());
+        expect(tapped, isEmpty);
+        // Инициализация дошла до конца (иначе тест упал бы на исключении).
+        verify(
+          () => plugin.initialize(
+            settings: any(named: 'settings'),
+            onDidReceiveNotificationResponse: any(
+              named: 'onDidReceiveNotificationResponse',
+            ),
+          ),
+        ).called(1);
+      },
+    );
 
     test('повторный initialize не дублирует доставку payload', () async {
       when(
