@@ -259,6 +259,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanRemove => 'Удалить назначение';
 
   @override
+  String get weekPlanMissedHint =>
+      'Пропущенная тренировка — перенести можно только в рамках тренировочной недели';
+
+  @override
   String get weekPlanScheduleTitle => 'Запланировать тренировку';
 
   @override

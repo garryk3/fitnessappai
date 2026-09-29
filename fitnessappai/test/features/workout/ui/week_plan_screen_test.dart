@@ -322,7 +322,7 @@ void main() {
       expect(find.text('Запланировано'), findsOneWidget);
       expect(find.text('Начать'), findsOneWidget);
 
-      // Переходим на прошлую неделю — тренировка старше окна переноса.
+      // Переходим на прошлую неделю — тренировка из истёкшей недели.
       await tester.tap(find.byTooltip('Предыдущая неделя'));
       await tester.pumpAndSettle();
 
@@ -331,8 +331,36 @@ void main() {
       expect(find.text('Перенести на сегодня'), findsNothing);
       expect(find.text('Пропустить'), findsNothing);
       expect(find.text('Отменить пропуск'), findsNothing);
+      // Пояснение, почему переноса нет (47.2).
+      expect(
+        find.text(
+          'Пропущенная тренировка — перенести можно только в рамках '
+          'тренировочной недели',
+        ),
+        findsOneWidget,
+      );
     },
   );
+
+  testWidgets('прошедший день своей недели: перенос доступен (47.2)', (
+    tester,
+  ) async {
+    // fixedNow = 10.08.2026 (понедельник) — день сегодня, а не прошедший.
+    // Чтобы получить прошедший день своей же недели, ведём план на воскресенье.
+    await createDay(fixedNow.weekday);
+    await pumpPlan(tester, now: DateTime(2026, 8, 13));
+
+    expect(
+      find.text(
+        'Пропущенная тренировка — перенести можно только в рамках '
+        'тренировочной недели',
+      ),
+      findsNothing,
+    );
+    await tester.ensureVisible(find.text('Перенести на сегодня'));
+    await tester.pumpAndSettle();
+    expect(find.text('Перенести на сегодня'), findsOneWidget);
+  });
 
   testWidgets('быстрый старт: кнопки нет на плане при pending-дне', (
     tester,

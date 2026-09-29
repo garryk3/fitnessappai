@@ -556,6 +556,12 @@ abstract class AppLocalizations {
   /// **'Удалить назначение'**
   String get weekPlanRemove;
 
+  /// No description provided for @weekPlanMissedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропущенная тренировка — перенести можно только в рамках тренировочной недели'**
+  String get weekPlanMissedHint;
+
   /// No description provided for @weekPlanScheduleTitle.
   ///
   /// In ru, this message translates to:

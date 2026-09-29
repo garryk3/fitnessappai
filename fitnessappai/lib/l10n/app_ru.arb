@@ -100,6 +100,7 @@
   "weekPlanSkip": "Пропустить",
   "weekPlanUnskip": "Отменить пропуск",
   "weekPlanRemove": "Удалить назначение",
+  "weekPlanMissedHint": "Пропущенная тренировка — перенести можно только в рамках тренировочной недели",
   "weekPlanScheduleTitle": "Запланировать тренировку",
   "weekPlanScheduleSelectProgram": "Выберите программу",
   "weekPlanScheduleSelectDay": "Выберите день программы",

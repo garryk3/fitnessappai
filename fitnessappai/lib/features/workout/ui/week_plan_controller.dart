@@ -12,12 +12,11 @@ enum PlanViewMode { week, month }
 
 /// Статус запланированного тренировочного дня на неделе.
 ///
-/// [pastSkipped] — прошедшая невыполненная тренировка старше окна переноса:
+/// [pastSkipped] — невыполненная тренировка из истёкшей тренировочной недели:
 /// отображается как «Пропущено», но только в отображении (в БД не пишется).
+/// Перенос тренировки допускается только внутри её тренировочной недели
+/// (задача 47.2), поэтому такой день действий не имеет.
 enum WeekPlanStatus { pending, performed, rescheduled, skipped, pastSkipped }
-
-/// Максимум дней в прошлом, когда тренировку ещё можно перенести/выполнить.
-const int rescheduleWindowDays = 3;
 
 /// Действия, доступные для тренировки в дне плана (задача 47.1).
 enum DayAction { start, reschedule, skip, unskip, remove }
@@ -66,7 +65,8 @@ class WeekPlanItem {
 /// - тренировку программы можно начать (сегодня) или перенести на сегодня;
 /// - пропуск и отмена пропуска доступны только тренировкам текущего дня
 ///   (амендмент второй партии TASKS.md);
-/// - выполненные, перенесённые и устаревшие тренировки действий не имеют.
+/// - выполненные, перенесённые и тренировки из истёкшей недели (перенос
+///   возможен только внутри своей тренировочной недели, 47.2) действий не имеют.
 Set<DayAction> dayActionsFor(WeekPlanItem item, DateTime today) {
   if (item.status == WeekPlanStatus.skipped) {
     return _sameDay(item.scheduledDate, today) ? {DayAction.unskip} : const {};
@@ -464,7 +464,7 @@ class WeekPlanController {
     if (isSkipped) {
       return WeekPlanStatus.skipped;
     }
-    if (now.difference(item.scheduledDate).inDays > rescheduleWindowDays) {
+    if (_mondayOf(item.scheduledDate).isBefore(_mondayOf(now))) {
       return WeekPlanStatus.pastSkipped;
     }
     return WeekPlanStatus.pending;

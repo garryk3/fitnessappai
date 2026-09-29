@@ -346,4 +346,80 @@ void main() {
     expect(unlinked.isManual, isFalse);
     expect(unlinked.scheduledDate, DateTime(2026, 8, 10));
   });
+
+  group('окно переноса — только в рамках тренировочной недели (47.2)', () {
+    Future<WeekPlanItem> itemOn(DateTime now, int dayOfWeek) async {
+      // 10.08.2026 — понедельник.
+      final dayId = await createLinkedDay(dayOfWeek);
+      controller.dispose();
+      controller = WeekPlanController(
+        programRepository: programRepo,
+        workoutRepository: WorkoutRepository(db),
+        planScheduleRepository: scheduleRepo,
+        clock: () => now,
+      );
+      controller.weekStart.value = DateTime(2026, 8, 10);
+      await controller.refresh();
+      return controller.items.value.firstWhere(
+        (i) =>
+            i.programDayId == dayId &&
+            i.scheduledDate.day == 10 + dayOfWeek - 1,
+      );
+    }
+
+    test(
+      'прошедший день своей недели ещё можно перенести на сегодня',
+      () async {
+        // Воскресенье: понедельник той же недели — перенос доступен.
+        final item = await itemOn(DateTime(2026, 8, 16), DateTime.monday);
+
+        expect(item.status, WeekPlanStatus.pending);
+        expect(dayActionsFor(item, DateTime(2026, 8, 16)), {
+          DayAction.reschedule,
+        });
+      },
+    );
+
+    test(
+      'в следующий понедельник понедельник прошлой недели — переноса нет',
+      () async {
+        final item = await itemOn(DateTime(2026, 8, 17), DateTime.monday);
+
+        expect(item.status, WeekPlanStatus.pastSkipped);
+        expect(dayActionsFor(item, DateTime(2026, 8, 17)), isEmpty);
+      },
+    );
+
+    test(
+      'последний день недели (воскресенье) в понедельник — уже неделя',
+      () async {
+        // 16.08 — воскресенье, тренировка «сегодня» (старт + пропуск);
+        // 17.08 — понедельник следующей недели: переноса уже нет.
+        final sunday = await itemOn(DateTime(2026, 8, 16), DateTime.sunday);
+        expect(sunday.status, WeekPlanStatus.pending);
+        expect(dayActionsFor(sunday, DateTime(2026, 8, 16)), {
+          DayAction.start,
+          DayAction.skip,
+        });
+
+        controller.dispose();
+        controller = WeekPlanController(
+          programRepository: programRepo,
+          workoutRepository: WorkoutRepository(db),
+          planScheduleRepository: scheduleRepo,
+          clock: () => DateTime(2026, 8, 17),
+        );
+        controller.weekStart.value = DateTime(2026, 8, 10);
+        await controller.refresh();
+        final sundayNextMonday = controller.items.value.firstWhere(
+          (i) =>
+              i.programName == 'По расписанию' &&
+              i.scheduledDate.day == 16 &&
+              i.scheduledDate.month == 8,
+        );
+        expect(sundayNextMonday.status, WeekPlanStatus.pastSkipped);
+        expect(dayActionsFor(sundayNextMonday, DateTime(2026, 8, 17)), isEmpty);
+      },
+    );
+  });
 }
