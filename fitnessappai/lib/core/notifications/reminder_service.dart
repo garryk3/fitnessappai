@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
@@ -48,10 +51,22 @@ class ReminderService {
   ReminderService({
     required this._repository,
     FlutterLocalNotificationsPlugin? plugin,
-  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+    SoundSettingsStore? soundSettings,
+  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+       // ignore: prefer_initializing_formals -- имя параметра публичное.
+       _soundSettings = soundSettings;
 
   final WorkoutReminderRepository _repository;
   final FlutterLocalNotificationsPlugin _plugin;
+
+  /// Настройки звука напоминаний; null — звук остаётся стандартным (тесты,
+  /// окружения без зарегистрированного хранилища).
+  final SoundSettingsStore? _soundSettings;
+
+  /// Кэш последней применённой звуковой настройки: [initialize] и
+  /// [applySoundSettings] должны одинаково понимать, какой звук у канала.
+  bool _soundEnabled = true;
+  String? _soundFilePath;
 
   static const String _channelId = 'workout_reminders';
   static const String _channelName = 'Напоминания о тренировках';
@@ -176,6 +191,7 @@ class ReminderService {
       return;
     }
     await _initTimeZone();
+    await _loadSoundSettings();
     const settings = InitializationSettings(
       android: AndroidInitializationSettings(_iconName),
       iOS: DarwinInitializationSettings(
@@ -195,16 +211,10 @@ class ReminderService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android != null) {
-      final channel = AndroidNotificationChannel(
-        _channelId,
-        _channelName,
-        description: _channelDescription,
-        importance: Importance.high,
-        playSound: true,
-        sound: const RawResourceAndroidNotificationSound(_soundName),
-        enableVibration: true,
-      );
-      await android.createNotificationChannel(channel);
+      // Звук привязан к каналу и неизменен после создания, поэтому на первом
+      // запуске канал создаётся сразу с нужным звуком, а при смене настройки
+      // пересоздаётся (см. [_recreateChannel]).
+      await android.createNotificationChannel(_buildChannel());
     }
     _initialized = true;
     // Приложение могло быть запущено тапом по уведомлению: событие дошло до
@@ -222,6 +232,76 @@ class ReminderService {
         launchResponse != null) {
       handleNotificationResponse(launchResponse);
     }
+  }
+
+  /// Читает сохранённые настройки звука напоминаний в кэш полей.
+  Future<void> _loadSoundSettings() async {
+    final settings = _soundSettings;
+    if (settings == null) {
+      return;
+    }
+    _soundEnabled = await settings.isEnabled();
+    _soundFilePath = await settings.soundFilePath();
+  }
+
+  /// Применяет настройки звука напоминаний (задача 47.5).
+  ///
+  /// Звук в Android привязан к каналу уведомлений и не может быть изменён
+  /// после создания, поэтому канал удаляется и создаётся заново, а уже
+  /// запланированные уведомления перепланируются с новым каналом.
+  Future<void> applySoundSettings({
+    required bool enabled,
+    required String? filePath,
+  }) async {
+    _soundEnabled = enabled;
+    _soundFilePath = filePath;
+    await _recreateChannel();
+    await rescheduleAll();
+  }
+
+  /// Удаляет и заново создаёт канал уведомлений с текущим звуком.
+  Future<void> _recreateChannel() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android == null) {
+      return;
+    }
+    await android.deleteNotificationChannel(channelId: _channelId);
+    await android.createNotificationChannel(_buildChannel());
+  }
+
+  /// Канал уведомлений с текущими настройками звука.
+  AndroidNotificationChannel _buildChannel() {
+    return AndroidNotificationChannel(
+      _channelId,
+      _channelName,
+      description: _channelDescription,
+      importance: Importance.high,
+      playSound: _soundEnabled,
+      sound: _androidSound,
+      enableVibration: true,
+    );
+  }
+
+  /// Звук уведомления: выбранный пользователем файл, если он есть и
+  /// настройка включена; иначе встроенный raw-ресурс.
+  ///
+  /// **Ограничение Android:** системный процесс воспроизводит звук канала
+  /// самостоятельно, поэтому файл должен быть ему доступен. Для файлов в
+  /// приватном хранилище приложения это выполняется не на всех прошивках —
+  /// в таком случае уведомление приходит без звука. Выбранный файл при этом
+  /// всегда используется для предпрослушивания в настройках.
+  AndroidNotificationSound? get _androidSound {
+    if (!_soundEnabled) {
+      return null;
+    }
+    final file = _soundFilePath;
+    if (file == null || file.isEmpty || !File(file).existsSync()) {
+      return const RawResourceAndroidNotificationSound(_soundName);
+    }
+    return UriAndroidNotificationSound(Uri.file(file).toString());
   }
 
   /// Разбирает нажатие на уведомление и передаёт `programDayId` обработчику.
@@ -291,17 +371,18 @@ class ReminderService {
       title: programName,
       body: 'Тренировка: день $dayNumber',
       scheduledDate: scheduled,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
           _channelName,
           channelDescription: _channelDescription,
           importance: Importance.high,
           priority: Priority.high,
-          sound: RawResourceAndroidNotificationSound(_soundName),
+          playSound: _soundEnabled,
+          sound: _androidSound,
         ),
-        iOS: DarwinNotificationDetails(),
-        macOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
+        macOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: canExact
           ? AndroidScheduleMode.exactAllowWhileIdle

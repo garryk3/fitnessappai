@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
@@ -999,4 +1002,205 @@ void main() {
       ).called(1);
     });
   });
+
+  group('звук напоминаний (47.5)', () {
+    late Directory tempDir;
+
+    /// Реальный файл: сервис проверяет существование пути, иначе откатывается
+    /// на встроенный сигнал.
+    Future<File> soundFile([String name = 'beep.mp3']) async {
+      final file = File('${tempDir.path}/$name');
+      await file.writeAsBytes([1, 2, 3]);
+      return file;
+    }
+
+    var channelFallbackRegistered = false;
+
+    setUp(() async {
+      if (!channelFallbackRegistered) {
+        channelFallbackRegistered = true;
+        registerFallbackValue(
+          const AndroidNotificationChannel('workout_reminders', 'Канал'),
+        );
+      }
+      tempDir = await Directory.systemTemp.createTemp('reminder_sound');
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.createNotificationChannel(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => android.deleteNotificationChannel(
+          channelId: any(named: 'channelId'),
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => repository.allScheduled(),
+      ).thenAnswer((_) async => <ReminderSchedule>[]);
+    });
+
+    tearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    /// Канал, созданный сервисом (последний аргумент `createNotificationChannel`).
+    AndroidNotificationChannel createdChannel() {
+      final channels = verify(
+        () => android.createNotificationChannel(captureAny()),
+      ).captured.cast<AndroidNotificationChannel>();
+      return channels.last;
+    }
+
+    test('смена звука пересоздаёт канал и перепланирует напоминания', () async {
+      final file = await soundFile();
+
+      await service.applySoundSettings(enabled: true, filePath: file.path);
+
+      final channel = createdChannel();
+      expect(channel.sound, isA<UriAndroidNotificationSound>());
+      expect(
+        channel.sound!.sound,
+        allOf(startsWith('file://'), contains('beep.mp3')),
+      );
+      expect(channel.playSound, isTrue);
+      // Звук канала неизменен после создания — канал пересоздаётся.
+      verify(
+        () => android.deleteNotificationChannel(channelId: 'workout_reminders'),
+      ).called(1);
+      verify(() => repository.allScheduled()).called(1);
+    });
+
+    test('без файла канал возвращается к встроенному сигналу', () async {
+      await service.applySoundSettings(enabled: true, filePath: null);
+
+      final channel = createdChannel();
+      expect(channel.sound, isA<RawResourceAndroidNotificationSound>());
+      expect(
+        (channel.sound! as RawResourceAndroidNotificationSound).sound,
+        'notification',
+      );
+    });
+
+    test(
+      'удалённый файл не ломает уведомление (откат на raw-ресурс)',
+      () async {
+        final file = await soundFile();
+        final path = file.path;
+        await file.delete();
+
+        await service.applySoundSettings(enabled: true, filePath: path);
+
+        expect(
+          createdChannel().sound,
+          isA<RawResourceAndroidNotificationSound>(),
+        );
+      },
+    );
+
+    test('выключенный звук оставляет канал без звука', () async {
+      await service.applySoundSettings(enabled: false, filePath: null);
+
+      final channel = createdChannel();
+      expect(channel.playSound, isFalse);
+      expect(channel.sound, isNull);
+    });
+
+    test('initialize создаёт канал с сохранённым файлом', () async {
+      registerFallbackValue(const InitializationSettings());
+      when(
+        () => plugin.initialize(
+          settings: any(named: 'settings'),
+          onDidReceiveNotificationResponse: any(
+            named: 'onDidReceiveNotificationResponse',
+          ),
+        ),
+      ).thenAnswer((_) async => true);
+      when(
+        () => plugin.getNotificationAppLaunchDetails(),
+      ).thenAnswer((_) async => null);
+      final file = await soundFile();
+      final settings = _FakeSoundSettings()..filePath = file.path;
+      final withSound = ReminderService(
+        repository: repository,
+        plugin: plugin,
+        soundSettings: settings,
+      );
+
+      await withSound.initialize();
+
+      expect(createdChannel().sound, isA<UriAndroidNotificationSound>());
+    });
+
+    test('уведомление планируется с выбранным звуком', () async {
+      final file = await soundFile();
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          ReminderSchedule(
+            reminder: const WorkoutReminder(
+              id: 1,
+              programDayId: 10,
+              hour: 9,
+              minute: 0,
+              enabled: true,
+            ),
+            dayOfWeek: 2,
+            programName: 'Сплит',
+            dayNumber: 1,
+          ),
+        ],
+      );
+
+      await service.applySoundSettings(enabled: true, filePath: file.path);
+
+      final details =
+          verify(
+                () => plugin.zonedSchedule(
+                  id: 10,
+                  title: any(named: 'title'),
+                  body: any(named: 'body'),
+                  scheduledDate: any(named: 'scheduledDate'),
+                  notificationDetails: captureAny(named: 'notificationDetails'),
+                  androidScheduleMode: any(named: 'androidScheduleMode'),
+                  matchDateTimeComponents: any(
+                    named: 'matchDateTimeComponents',
+                  ),
+                  payload: any(named: 'payload'),
+                ),
+              ).captured.single
+              as NotificationDetails;
+      final androidDetails = details.android;
+      expect(androidDetails, isNotNull);
+      expect(androidDetails!.sound, isA<UriAndroidNotificationSound>());
+    });
+  });
+}
+
+/// Хранилище настроек звука напоминаний для [ReminderService] (47.5).
+class _FakeSoundSettings implements SoundSettingsStore {
+  bool enabled = true;
+  String? filePath;
+
+  @override
+  Future<bool> isEnabled() async => enabled;
+
+  @override
+  Future<String?> soundFilePath() async => filePath;
+
+  @override
+  Future<void> setEnabled(bool value) async => enabled = value;
+
+  @override
+  Future<void> setSoundFile(String? path) async => filePath = path;
 }

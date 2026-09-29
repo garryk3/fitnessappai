@@ -101,6 +101,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get soundStop => 'Остановить';
 
   @override
+  String get settingsReminderSoundSection => 'Звук напоминаний';
+
+  @override
+  String get reminderSoundEnabled => 'Звук уведомлений о тренировках';
+
+  @override
+  String get reminderSoundHint =>
+      'Выбранный файл проигрывается при проверке в приложении. Системное уведомление использует его, только если система может прочитать файл — на некоторых версиях Android уведомление приходит без звука.';
+
+  @override
   String get soundDefaultLabel => 'Стандартный сигнал';
 
   @override
