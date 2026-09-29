@@ -245,7 +245,15 @@ class ReminderService {
     // Читаем не больше раза за процесс (см. [_launchDetailsRead]): сервис
     // пересоздаётся при импорте БД, и повторное чтение продублировало бы
     // переход на уже открытый день.
-    if (_launchDetailsRead) {
+    //
+    // Только на Android: у плагина `getNotificationAppLaunchDetails()`
+    // реализован под web/Android/iOS/macOS/Windows, а на остальных платформах
+    // (Linux — на нём идёт e2e) метод не переопределён и бросает
+    // `UnimplementedError`, из-за чего каждая инициализация desktop-сборки
+    // падала с ошибкой в лог (задача 47.15). Напоминания вне Android и не
+    // планируются (те же методы пропускают Android-объект), так что терять
+    // здесь нечего.
+    if (android == null || _launchDetailsRead) {
       return;
     }
     _launchDetailsRead = true;
