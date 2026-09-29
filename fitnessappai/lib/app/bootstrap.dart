@@ -10,6 +10,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 
 /// Восстановленный checkpoint при загрузке приложения.
@@ -32,6 +33,18 @@ Future<void> bootstrap({
   final sl = container ?? locator;
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   registerCoreServices(sl, database: database);
+  // Записи плана прошлых недель больше не нужны (47.4): чистим на старте,
+  // чтобы база не копила мусор даже без открытия экрана плана.
+  try {
+    await sl.get<PlanScheduleCleaner>().cleanupOldSchedule(DateTime.now());
+  } catch (e, st) {
+    logNotificationIssue(
+      'Ошибка очистки устаревших записей плана',
+      error: e,
+      stackTrace: st,
+      name: 'bootstrap',
+    );
+  }
   await seedExercises(
     sl,
     mediaStore: mediaStore,

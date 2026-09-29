@@ -226,6 +226,19 @@ class WorkoutRepository {
     _notify();
   }
 
+  /// Удаляет отметки недель раньше [weekStart] — «протухшие» пропуски и переносы
+  /// прошлых недель (задача 47.4).
+  ///
+  /// Возвращает число удалённых строк и не шлёт уведомление об изменении
+  /// данных: вызывающий сам решает, нужно ли перерисовывать UI.
+  Future<int> deleteMarksBefore(DateTime weekStart) async {
+    return (_db.delete(_db.scheduleMarks)..where(
+          (t) =>
+              t.weekStart.isSmallerThanValue(weekStart.millisecondsSinceEpoch),
+        ))
+        .go();
+  }
+
   /// Отметки (пропуски и переносы) за неделю с понедельником [weekStart].
   Future<List<ScheduleMark>> getMarks(DateTime weekStart) async {
     final startMs = weekStart.millisecondsSinceEpoch;
