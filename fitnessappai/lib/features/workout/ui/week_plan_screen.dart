@@ -824,8 +824,45 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   label: Text(l10n.weekPlanUnskip),
                 ),
               ),
+            if (status == WeekPlanStatus.pastSkipped) ...[
+              const SizedBox(height: 8),
+              const _MissedWorkoutHint(),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Подсказка под пропущенной тренировкой: перенос возможен только внутри
+/// своей тренировочной недели (задача 47.2).
+class _MissedWorkoutHint extends StatelessWidget {
+  const _MissedWorkoutHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurfaceVariant;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 16, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              AppLocalizations.of(context).weekPlanMissedHint,
+              style: theme.textTheme.bodySmall?.copyWith(color: color),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1009,6 +1046,13 @@ class _MonthDayActionTile extends StatelessWidget {
               WeekPlanStatus.pastSkipped => StatusBadge(status: status),
             },
           ),
+          if (status == WeekPlanStatus.pastSkipped) ...[
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: _MissedWorkoutHint(),
+            ),
+          ],
         ],
       ),
     );
