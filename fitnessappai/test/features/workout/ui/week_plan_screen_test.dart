@@ -119,12 +119,14 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
+  late GoRouter router;
+
   Future<void> pumpPlan(
     WidgetTester tester, {
     ThemeData? theme,
     DateTime? now,
   }) async {
-    final router = GoRouter(
+    router = GoRouter(
       initialLocation: '/plan',
       routes: [
         GoRoute(
@@ -288,6 +290,50 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('prepare-${day.id}'), findsOneWidget);
+  });
+
+  testWidgets('после переноса день-источник пуст (47.3)', (tester) async {
+    await createDay(_weekdayAfter(fixedNow.weekday), name: 'Источник');
+    await pumpPlan(tester);
+
+    await tester.ensureVisible(find.text('Перенести на сегодня'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Перенести на сегодня'));
+    await tester.pumpAndSettle();
+
+    // Экран подготовки открыт; после возврата в план день источника пуст.
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Источник'), findsNothing);
+    expect(find.text('Перенести на сегодня'), findsNothing);
+  });
+
+  testWidgets('перенос не убирает соседнюю тренировку того же дня (47.3)', (
+    tester,
+  ) async {
+    final weekday = _weekdayAfter(fixedNow.weekday);
+    final first = await createDay(weekday, name: 'Первый');
+    await createDay(weekday, name: 'Второй');
+    await pumpPlan(tester);
+
+    // Обе тренировки в дне — переносим одну, вторая остаётся.
+    final reschedules = find.widgetWithText(
+      FilledButton,
+      'Перенести на сегодня',
+    );
+    expect(reschedules, findsNWidgets(2));
+    await tester.ensureVisible(reschedules.first);
+    await tester.pumpAndSettle();
+    await tester.tap(reschedules.first);
+    await tester.pumpAndSettle();
+
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('prepare-${first.id}'), findsNothing);
+    expect(find.text('Первый'), findsNothing);
+    expect(find.text('Второй'), findsOneWidget);
   });
 
   testWidgets('пропуск и отмена пропуска меняют статус', (tester) async {

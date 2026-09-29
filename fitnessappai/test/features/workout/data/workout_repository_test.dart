@@ -215,33 +215,65 @@ void main() {
     expect(sessions.single.performedDate, DateTime(2026, 8, 10));
   });
 
-  test('markSkipped идемпотентно, getSkips и clearSkip работают', () async {
+  test('markSkipped идемпотентно, getMarks и clearSkip работают', () async {
     final dayId = await createProgramDay();
     final weekStart = DateTime(2026, 8, 10);
 
     await repo.markSkipped(dayId, weekStart);
     await repo.markSkipped(dayId, weekStart);
 
-    var skips = await repo.getSkips(weekStart);
-    expect(skips, hasLength(1));
-    expect(skips.single.programDayId, dayId);
-    expect(skips.single.status, ScheduleMarkStatus.skipped);
+    var marks = await repo.getMarks(weekStart);
+    expect(marks, hasLength(1));
+    expect(marks.single.programDayId, dayId);
+    expect(marks.single.status, ScheduleMarkStatus.skipped);
 
     await repo.clearSkip(dayId, weekStart);
-    skips = await repo.getSkips(weekStart);
-    expect(skips, isEmpty);
+    marks = await repo.getMarks(weekStart);
+    expect(marks, isEmpty);
   });
 
-  test('getSkips не возвращает отметки других недель', () async {
+  test('getMarks не возвращает отметки других недель', () async {
     final dayId = await createProgramDay();
     await repo.markSkipped(dayId, DateTime(2026, 8, 10));
     await repo.markSkipped(dayId, DateTime(2026, 8, 17));
 
-    final skips = await repo.getSkips(DateTime(2026, 8, 10));
+    final marks = await repo.getMarks(DateTime(2026, 8, 10));
 
-    expect(skips, hasLength(1));
-    expect(skips.single.weekStart, DateTime(2026, 8, 10));
+    expect(marks, hasLength(1));
+    expect(marks.single.weekStart, DateTime(2026, 8, 10));
   });
+
+  test(
+    'markRescheduled создаёт маркер и заменяет существующую отметку (47.3)',
+    () async {
+      final dayId = await createProgramDay();
+      final weekStart = DateTime(2026, 8, 10);
+
+      await repo.markRescheduled(dayId, weekStart);
+      await repo.markRescheduled(dayId, weekStart);
+
+      var marks = await repo.getMarks(weekStart);
+      expect(marks, hasLength(1));
+      expect(marks.single.status, ScheduleMarkStatus.rescheduled);
+
+      // Перенос поверх пропуска: запись одна, статус — «перенесено».
+      final otherDayId = await createProgramDay();
+      await repo.markSkipped(otherDayId, weekStart);
+      await repo.markRescheduled(otherDayId, weekStart);
+
+      marks = await repo.getMarks(weekStart);
+      expect(marks, hasLength(2));
+      expect(
+        marks.singleWhere((m) => m.programDayId == otherDayId).status,
+        ScheduleMarkStatus.rescheduled,
+      );
+
+      // clearSkip убирает маркер независимо от статуса.
+      await repo.clearSkip(dayId, weekStart);
+      marks = await repo.getMarks(weekStart);
+      expect(marks.single.programDayId, otherDayId);
+    },
+  );
 
   test(
     'lastResultsForExercise возвращает результаты из последней сессии',

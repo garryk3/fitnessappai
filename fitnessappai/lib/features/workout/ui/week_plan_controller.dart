@@ -2,6 +2,7 @@ import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
+import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
@@ -214,6 +215,20 @@ class WeekPlanController {
     await _load();
   }
 
+  /// Помечает тренировку [item] перенесённой: её день-источник в этой неделе
+  /// становится пустым (задача 47.3).
+  Future<void> markRescheduled(WeekPlanItem item) async {
+    if (!await dayExists(item.programDayId)) {
+      await _load();
+      return;
+    }
+    await workoutRepository.markRescheduled(
+      item.programDayId,
+      _mondayOf(item.scheduledDate),
+    );
+    await _load();
+  }
+
   Future<void> clearSkip(WeekPlanItem item) async {
     if (!await dayExists(item.programDayId)) {
       await _load();
@@ -363,14 +378,17 @@ class WeekPlanController {
         sessionsByDayId.putIfAbsent(id, () => <WorkoutSession>[]).add(session);
       }
 
-      final skippedKeys = await _skippedKeysForRange(rangeStart, rangeEnd);
+      final marks = await _marksForRange(rangeStart, rangeEnd);
 
       final result = <WeekPlanItem>[];
       for (final item in plannedItems) {
         final weekStart = _mondayOf(item.scheduledDate);
-        final isSkipped = skippedKeys.contains(
-          '${item.programDayId}|${weekStart.millisecondsSinceEpoch}',
-        );
+        final key = '${item.programDayId}|${weekStart.millisecondsSinceEpoch}';
+        // Перенесённая тренировка очищает свой день-источник (47.3).
+        if (marks.rescheduled.contains(key)) {
+          continue;
+        }
+        final isSkipped = marks.skipped.contains(key);
         result.add(
           WeekPlanItem(
             programDayId: item.programDayId,
@@ -396,12 +414,14 @@ class WeekPlanController {
     }
   }
 
-  /// Собирает ключи пропусков `programDayId|weekStartMs` за период.
-  Future<Set<String>> _skippedKeysForRange(
+  /// Собирает ключи отметок `programDayId|weekStartMs` за период, разделённые
+  /// по статусу: пропуски и переносы (47.3).
+  Future<_PlanMarks> _marksForRange(
     DateTime rangeStart,
     DateTime rangeEnd,
   ) async {
-    final keys = <String>{};
+    final skipped = <String>{};
+    final rescheduled = <String>{};
     final weekStarts = <int>{};
     for (
       var date = rangeStart;
@@ -410,14 +430,19 @@ class WeekPlanController {
     ) {
       final ws = _mondayOf(date);
       if (weekStarts.add(ws.millisecondsSinceEpoch)) {
-        for (final mark in await workoutRepository.getSkips(ws)) {
-          keys.add(
-            '${mark.programDayId}|${mark.weekStart.millisecondsSinceEpoch}',
-          );
+        for (final mark in await workoutRepository.getMarks(ws)) {
+          final key =
+              '${mark.programDayId}|${mark.weekStart.millisecondsSinceEpoch}';
+          switch (mark.status) {
+            case ScheduleMarkStatus.skipped:
+              skipped.add(key);
+            case ScheduleMarkStatus.rescheduled:
+              rescheduled.add(key);
+          }
         }
       }
     }
-    return keys;
+    return _PlanMarks(skipped: skipped, rescheduled: rescheduled);
   }
 
   void dispose() {
@@ -469,6 +494,14 @@ class WeekPlanController {
     }
     return WeekPlanStatus.pending;
   }
+}
+
+/// Отметки недели, разделённые по статусу: пропуски и переносы (47.3).
+class _PlanMarks {
+  const _PlanMarks({required this.skipped, required this.rescheduled});
+
+  final Set<String> skipped;
+  final Set<String> rescheduled;
 }
 
 bool _inRange(DateTime date, DateTime rangeStart, DateTime rangeEnd) =>
