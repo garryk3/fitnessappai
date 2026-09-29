@@ -9,6 +9,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
+import 'package:fitnessappai/core/notifications/reminder_catch_up_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 
@@ -1185,6 +1186,387 @@ void main() {
       expect(androidDetails!.sound, isA<UriAndroidNotificationSound>());
     });
   });
+
+  group('догон пропущенных напоминаний (47.6)', () {
+    /// Журнал догона в памяти.
+    _FakeCatchUpLog? log;
+
+    ReminderSchedule scheduleOf(
+      int programDayId, {
+      required bool enabled,
+      int? dayOfWeek,
+      required int hour,
+      required int minute,
+    }) => ReminderSchedule(
+      reminder: WorkoutReminder(
+        id: programDayId,
+        programDayId: programDayId,
+        hour: hour,
+        minute: minute,
+        enabled: enabled,
+      ),
+      dayOfWeek: dayOfWeek,
+      programName: 'Сплит',
+      dayNumber: 1,
+    );
+
+    /// Время «минус [ago]» сегодня: удобный способ описать уже прошедшее
+    /// напоминание, не подменяя системные часы.
+    ///
+    /// Час и минута берутся из `tz.local`, а не из `DateTime.now()`: сервис
+    /// сравнивает их со временем в зоне напоминаний, а в тестах `tz.local` —
+    /// UTC, и локальное время машины на этом сдвиге расходится на
+    /// разницу часовых поясов.
+    tz.TZDateTime todayAt(Duration ago) =>
+        tz.TZDateTime.now(tz.local).subtract(ago);
+
+    int todayWeekday() => tz.TZDateTime.now(tz.local).weekday;
+
+    setUp(() {
+      log = _FakeCatchUpLog();
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => plugin.getActiveNotifications(),
+      ).thenAnswer((_) async => <ActiveNotification>[]);
+      when(
+        () => plugin.show(
+          id: any(named: 'id'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          notificationDetails: any(named: 'notificationDetails'),
+          payload: any(named: 'payload'),
+        ),
+      ).thenAnswer((_) async {});
+      service = ReminderService(
+        repository: repository,
+        plugin: plugin,
+        catchUpLog: log,
+      );
+    });
+
+    /// Одного напоминания с указанным временем (сегодня, сегодняшний день
+    /// недели), если не задано иное.
+    void onlyOne({
+      int programDayId = 10,
+      required bool enabled,
+      int? dayOfWeek,
+      required Duration ago,
+    }) {
+      final time = todayAt(ago);
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          scheduleOf(
+            programDayId,
+            enabled: enabled,
+            dayOfWeek: dayOfWeek ?? todayWeekday(),
+            hour: time.hour,
+            minute: time.minute,
+          ),
+        ],
+      );
+    }
+
+    /// Проверка, что догон-уведомление не показывалось.
+    void verifyNotShown() {
+      verifyNever(
+        () => plugin.show(
+          id: any(named: 'id'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          notificationDetails: any(named: 'notificationDetails'),
+          payload: any(named: 'payload'),
+        ),
+      );
+    }
+
+    test('просроченное напоминание показывается сразу', () async {
+      onlyOne(enabled: true, ago: const Duration(hours: 2));
+
+      await service.catchUpMissed();
+
+      // Тот же id и payload, что у обычного напоминания: тап ведёт в этот день.
+      verify(
+        () => plugin.show(
+          id: 10,
+          title: 'Сплит',
+          body: 'Тренировка: день 1 (напоминание задержано системой)',
+          notificationDetails: any(named: 'notificationDetails'),
+          payload: '10',
+        ),
+      ).called(1);
+      expect(log!.marked, [10]);
+    });
+
+    test(
+      'время в пределах штатной задержки inexact не считается пропуском',
+      () async {
+        onlyOne(enabled: true, ago: const Duration(minutes: 5));
+
+        await service.catchUpMissed();
+
+        verifyNotShown();
+      },
+    );
+
+    test('напоминание на будущее сегодня не показывается', () async {
+      onlyOne(enabled: true, ago: const Duration(hours: -2));
+
+      await service.catchUpMissed();
+
+      verifyNotShown();
+    });
+
+    test('напоминание другого дня недели не показывается', () async {
+      final time = todayAt(const Duration(hours: 2));
+      final weekday = todayWeekday();
+      final otherDay = weekday == 7 ? 1 : weekday + 1;
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          scheduleOf(
+            10,
+            enabled: true,
+            dayOfWeek: otherDay,
+            hour: time.hour,
+            minute: time.minute,
+          ),
+        ],
+      );
+
+      await service.catchUpMissed();
+
+      verifyNotShown();
+    });
+
+    test(
+      'выключенное напоминание и день без привязки не показываются',
+      () async {
+        final time = todayAt(const Duration(hours: 2));
+        when(() => repository.allScheduled()).thenAnswer(
+          (_) async => [
+            scheduleOf(
+              10,
+              enabled: false,
+              dayOfWeek: todayWeekday(),
+              hour: time.hour,
+              minute: time.minute,
+            ),
+            scheduleOf(
+              11,
+              enabled: true,
+              dayOfWeek: null,
+              hour: time.hour,
+              minute: time.minute,
+            ),
+          ],
+        );
+
+        await service.catchUpMissed();
+
+        verifyNotShown();
+      },
+    );
+
+    test('висящее в трее уведомление не дублируется', () async {
+      onlyOne(enabled: true, ago: const Duration(hours: 2));
+      when(() => plugin.getActiveNotifications()).thenAnswer(
+        (_) async => const [
+          ActiveNotification(id: 10, channelId: 'workout_reminders'),
+        ],
+      );
+
+      await service.catchUpMissed();
+
+      verifyNotShown();
+    });
+
+    test('в тот же день догон не повторяется', () async {
+      onlyOne(enabled: true, ago: const Duration(hours: 2));
+      log!.shownToday.add(10);
+
+      await service.catchUpMissed();
+
+      verifyNotShown();
+    });
+
+    test('вне Android догон ничего не делает', () async {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(null);
+
+      await service.catchUpMissed();
+
+      verifyNever(() => repository.allScheduled());
+    });
+
+    test('ошибка показа не срывает остальные дни', () async {
+      final time = todayAt(const Duration(hours: 2));
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          scheduleOf(
+            10,
+            enabled: true,
+            dayOfWeek: todayWeekday(),
+            hour: time.hour,
+            minute: time.minute,
+          ),
+          scheduleOf(
+            11,
+            enabled: true,
+            dayOfWeek: todayWeekday(),
+            hour: time.hour,
+            minute: time.minute,
+          ),
+        ],
+      );
+      var first = true;
+      when(
+        () => plugin.show(
+          id: any(named: 'id'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          notificationDetails: any(named: 'notificationDetails'),
+          payload: any(named: 'payload'),
+        ),
+      ).thenAnswer((_) async {
+        if (first) {
+          first = false;
+          throw PlatformException(code: 'boom');
+        }
+      });
+
+      await service.catchUpMissed();
+
+      expect(log!.marked, [11]);
+    });
+  });
+
+  group('catchUpDueTime (47.6)', () {
+    final now = tz.TZDateTime(tz.local, 2026, 9, 29, 18, 0); // вторник
+
+    tz.TZDateTime? due({
+      int? dayOfWeek = 2,
+      required int hour,
+      required int minute,
+    }) => ReminderService.catchUpDueTime(
+      now,
+      dayOfWeek: dayOfWeek,
+      hour: hour,
+      minute: minute,
+    );
+
+    test('час назад — пора догонять', () {
+      expect(
+        due(hour: 17, minute: 0),
+        tz.TZDateTime(tz.local, 2026, 9, 29, 17, 0),
+      );
+    });
+
+    test('ровно на границе порога — пора догонять', () {
+      expect(
+        due(hour: 17, minute: 45),
+        tz.TZDateTime(tz.local, 2026, 9, 29, 17, 45),
+      );
+    });
+
+    test('в пределах порога — ещё штатная задержка', () {
+      expect(due(hour: 17, minute: 46), isNull);
+    });
+
+    test('время впереди — не показываем', () {
+      expect(due(hour: 19, minute: 0), isNull);
+    });
+
+    test('другой день недели — не показываем', () {
+      expect(due(dayOfWeek: 3, hour: 17, minute: 0), isNull);
+    });
+
+    test('день без привязки — не показываем', () {
+      expect(due(dayOfWeek: null, hour: 17, minute: 0), isNull);
+    });
+  });
+
+  test(
+    'отзыв точного режима не оставляет день без напоминания (47.6)',
+    () async {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+      var first = true;
+      when(
+        () => plugin.zonedSchedule(
+          id: any(named: 'id'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).thenAnswer((_) async {
+        if (first) {
+          first = false;
+          throw PlatformException(
+            code: 'exact_alarms_not_permitted',
+            message: 'Exact alarms are not permitted',
+          );
+        }
+      });
+
+      await service.schedule(
+        const WorkoutReminder(
+          id: 1,
+          programDayId: 10,
+          hour: 9,
+          minute: 0,
+          enabled: true,
+        ),
+        dayOfWeek: 2,
+        programName: 'Сплит',
+        dayNumber: 1,
+      );
+
+      final modes = verify(
+        () => plugin.zonedSchedule(
+          id: 10,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: captureAny(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).captured;
+      expect(modes, [
+        AndroidScheduleMode.exactAllowWhileIdle,
+        AndroidScheduleMode.inexactAllowWhileIdle,
+      ]);
+    },
+  );
 }
 
 /// Хранилище настроек звука напоминаний для [ReminderService] (47.5).
@@ -1203,4 +1585,23 @@ class _FakeSoundSettings implements SoundSettingsStore {
 
   @override
   Future<void> setSoundFile(String? path) async => filePath = path;
+}
+
+/// Журнал догона пропущенных напоминаний в памяти (47.6).
+class _FakeCatchUpLog implements ReminderCatchUpLog {
+  /// Дни программы, для которых догон уже показывали сегодня.
+  final Set<int> shownToday = <int>{};
+
+  /// Дни программы, отмеченные журналом (в порядке показа).
+  final List<int> marked = <int>[];
+
+  @override
+  Future<bool> wasShownOn(int programDayId, DateTime day) async =>
+      shownToday.contains(programDayId);
+
+  @override
+  Future<void> markShown(int programDayId, DateTime at) async {
+    shownToday.add(programDayId);
+    marked.add(programDayId);
+  }
 }

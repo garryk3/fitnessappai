@@ -69,6 +69,7 @@
   "settingsNotificationsExactDisabled": "Точные будильники отключены",
   "settingsNotificationsRequest": "Разрешить уведомления",
   "settingsNotificationsExactRequest": "Настроить точные будильники",
+  "settingsNotificationsExactHint": "Без точных будильников Android откладывает напоминание: обычно на минуты, при выключенном экране — на 15 минут и дольше, недельный будильник — до часа. Приложение покажет пропущенное напоминание, когда вы в него вернётесь.",
   "commonClose": "Закрыть",
   "commonRetry": "Повторить",
   "commonStop": "Остановить звук",

@@ -77,6 +77,19 @@ Future<void> bootstrap({
     );
   }
   try {
+    // Напоминание, которое система не доставила (задержка inexact-будильника
+    // в Doze, отменённые «Остановить приложение» будильники), показываем сразу
+    // при запуске — иначе о нём пользователь узнаёт слишком поздно.
+    await sl.get<ReminderService>().catchUpMissed();
+  } catch (e, st) {
+    logNotificationIssue(
+      'Пропущенные напоминания не показаны при запуске',
+      error: e,
+      stackTrace: st,
+      name: 'bootstrap',
+    );
+  }
+  try {
     restoredCheckpoint = await WorkoutCheckpoint.load();
   } catch (e) {
     log('Не удалось загрузить checkpoint', error: e, name: 'bootstrap');

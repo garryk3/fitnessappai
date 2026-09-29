@@ -723,4 +723,42 @@ void main() {
     expect(find.text('Точные будильники включены'), findsOneWidget);
     expect(find.text('Настроить точные будильники'), findsNothing);
   });
+
+  testWidgets(
+    'без точного режима объясняем, что напоминание задержится (47.6)',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final reminder = _FakeReminderService(
+        repository: WorkoutReminderRepository(db),
+        status: const NotificationPermissionStatus(
+          notificationsEnabled: true,
+          exactAlarmsEnabled: false,
+        ),
+      );
+      await pumpScreen(
+        tester,
+        notificationController: NotificationSettingsController(
+          reminderService: reminder,
+        ),
+      );
+
+      // Без пояснения пользователь считает напоминания сломанными (47.6).
+      expect(
+        find.textContaining('Без точных будильников Android откладывает'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Настроить точные будильники'));
+      await tester.pumpAndSettle();
+
+      expect(reminder.exactAlarmsCalls, 1);
+      expect(
+        find.textContaining('Без точных будильников Android откладывает'),
+        findsNothing,
+      );
+    },
+  );
 }

@@ -1,6 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Точные будильники напоминаний (задача 47.6).
+         USE_EXACT_ALARM выдаётся при установке на Android 13+, поэтому
+         напоминание приходит вовремя даже при выключенном экране: без него
+         система планирует будильник с окном (минуты, а для недельного — до
+         часа) и в Doze отдаёт его только в обслуживающих окнах. Google Play
+         допускает это разрешение для приложений, чья основная функция —
+         будильник/календарь/таймер; при публикации в Play его нужно
+         обосновать или отозвать (SCHEDULE_EXACT_ALARM остаётся фолбэком). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- Фолбэк для Android 12 и старше, а также если пользователь отозвал
+         точный режим: выдаётся вручную в настройках «Будильники и напоминания». -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>

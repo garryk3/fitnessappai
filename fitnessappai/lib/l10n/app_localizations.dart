@@ -406,6 +406,12 @@ abstract class AppLocalizations {
   /// **'Настроить точные будильники'**
   String get settingsNotificationsExactRequest;
 
+  /// No description provided for @settingsNotificationsExactHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без точных будильников Android откладывает напоминание: обычно на минуты, при выключенном экране — на 15 минут и дольше, недельный будильник — до часа. Приложение покажет пропущенное напоминание, когда вы в него вернётесь.'**
+  String get settingsNotificationsExactHint;
+
   /// No description provided for @commonClose.
   ///
   /// In ru, this message translates to:

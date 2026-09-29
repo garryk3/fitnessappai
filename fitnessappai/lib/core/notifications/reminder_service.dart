@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -9,6 +10,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
+import 'package:fitnessappai/core/notifications/reminder_catch_up_log.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 
 /// Статус разрешений на уведомления.
@@ -52,9 +54,12 @@ class ReminderService {
     required this._repository,
     FlutterLocalNotificationsPlugin? plugin,
     SoundSettingsStore? soundSettings,
+    ReminderCatchUpLog? catchUpLog,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
        // ignore: prefer_initializing_formals -- имя параметра публичное.
-       _soundSettings = soundSettings;
+       _soundSettings = soundSettings,
+       // ignore: prefer_initializing_formals -- имя параметра публичное.
+       _catchUpLog = catchUpLog;
 
   final WorkoutReminderRepository _repository;
   final FlutterLocalNotificationsPlugin _plugin;
@@ -62,6 +67,24 @@ class ReminderService {
   /// Настройки звука напоминаний; null — звук остаётся стандартным (тесты,
   /// окружения без зарегистрированного хранилища).
   final SoundSettingsStore? _soundSettings;
+
+  /// Журнал показа «догоняющих» уведомлений; null — без защиты от повторов
+  /// (тесты, окружения без зарегистрированного хранилища).
+  final ReminderCatchUpLog? _catchUpLog;
+
+  /// Код ошибки плагина, когда точный режим недоступен: разрешение могли
+  /// отозвать между проверкой и планированием, и `zonedSchedule` падает
+  /// целиком — день остался бы без напоминания.
+  static const String _exactAlarmsNotPermitted = 'exact_alarms_not_permitted';
+
+  /// Насколько поздно должно пройти время напоминания, чтобы догон показал
+  /// его при возврате в приложение.
+  ///
+  /// Порог покрывает типичную задержку inexact-будильника с окном (замерено
+  /// на эмуляторе: 1–2 минуты) и не превращает обычное напоминание в
+  /// «пропущенное». Задержки Doze и агрессивных прошивок (Xiaomi) — от 15
+  /// минут до часа, их как раз и ловит догон.
+  static const Duration catchUpGrace = Duration(minutes: 15);
 
   /// Кэш последней применённой звуковой настройки: [initialize] и
   /// [applySoundSettings] должны одинаково понимать, какой звук у канала.
@@ -366,31 +389,178 @@ class ReminderService {
       'Напоминание дня ${reminder.programDayId} запланировано на $scheduled '
       '(${canExact ? 'exactAllowWhileIdle' : 'inexactAllowWhileIdle'})',
     );
-    await _plugin.zonedSchedule(
-      id: reminder.programDayId,
-      title: programName,
-      body: 'Тренировка: день $dayNumber',
-      scheduledDate: scheduled,
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: _channelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
-          playSound: _soundEnabled,
-          sound: _androidSound,
-        ),
-        iOS: const DarwinNotificationDetails(),
-        macOS: const DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: canExact
-          ? AndroidScheduleMode.exactAllowWhileIdle
-          : AndroidScheduleMode.inexactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      payload: reminder.programDayId.toString(),
-    );
+    final details = _notificationDetails();
+    try {
+      await _plugin.zonedSchedule(
+        id: reminder.programDayId,
+        title: programName,
+        body: _body(dayNumber),
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: canExact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        payload: reminder.programDayId.toString(),
+      );
+    } on PlatformException catch (e) {
+      if (!canExact || e.code != _exactAlarmsNotPermitted) {
+        rethrow;
+      }
+      // Точное разрешение отозвали между проверкой и вызовом: лучше
+      // неточное напоминание с задержкой, чем никакого.
+      logNotificationIssue(
+        'Точный режим недоступен для дня ${reminder.programDayId}, '
+        'планирую inexactAllowWhileIdle',
+        error: e,
+      );
+      await _plugin.zonedSchedule(
+        id: reminder.programDayId,
+        title: programName,
+        body: _body(dayNumber),
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        payload: reminder.programDayId.toString(),
+      );
+    }
   }
+
+  /// Показывает пропущенное напоминание сразу, если система его не доставила
+  /// (задача 47.6).
+  ///
+  /// Вызывается на холодном старте и при возврате в приложение. Без точных
+  /// будильников Android откладывает доставку (окно будильника — минуты, в
+  /// Doze и на агрессивных прошивках — до десятков минут), а после
+  /// «Остановить приложение» в настройках Android будильники отменяются
+  /// вовсе. Пользователь узнаёт о тренировке слишком поздно или не узнаёт —
+  /// догон показывает пропуск в момент возврата в приложение, один раз в
+  /// день на день программы ([catchUpGrace] отсекает штатную задержку
+  /// inexact-будильника).
+  Future<void> catchUpMissed() async {
+    if (_plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >() ==
+        null) {
+      return;
+    }
+    final items = await _repository.allScheduled();
+    if (items.isEmpty) {
+      return;
+    }
+    final now = tz.TZDateTime.now(tz.local);
+    final active = await _activeNotificationIds();
+    for (final item in items) {
+      if (!item.reminder.enabled) {
+        continue;
+      }
+      final programDayId = item.reminder.programDayId;
+      final due = catchUpDueTime(
+        now,
+        dayOfWeek: item.dayOfWeek,
+        hour: item.reminder.hour,
+        minute: item.reminder.minute,
+      );
+      if (due == null) {
+        continue;
+      }
+      // Система уже показала напоминание и оно ещё в трее — догон не нужен.
+      if (active.contains(programDayId)) {
+        continue;
+      }
+      final log = _catchUpLog;
+      try {
+        if (log != null && await log.wasShownOn(programDayId, now)) {
+          continue;
+        }
+        await _plugin.show(
+          id: programDayId,
+          title: item.programName,
+          body: '${_body(item.dayNumber)} ($_catchUpReason)',
+          notificationDetails: _notificationDetails(),
+          payload: programDayId.toString(),
+        );
+        await log?.markShown(programDayId, now);
+        logNotificationIssue(
+          'Показано пропущенное напоминание дня $programDayId '
+          '(плановое время $due)',
+        );
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось показать пропущенное напоминание дня $programDayId',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+  }
+
+  /// Плановое время сегодняшнего напоминания, если его пора показывать, —
+  /// иначе null.
+  ///
+  /// Отдельная чистая функция (как [nextInstance]): правило «сегодня, тот же
+  /// день недели и просрочено дольше [catchUpGrace]» обязано проверяться
+  /// детерминированно, а не гонкой с системными часами.
+  @visibleForTesting
+  static tz.TZDateTime? catchUpDueTime(
+    tz.TZDateTime now, {
+    required int? dayOfWeek,
+    required int hour,
+    required int minute,
+  }) {
+    if (dayOfWeek == null || dayOfWeek != now.weekday) {
+      return null;
+    }
+    final due = tz.TZDateTime(
+      now.location,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    return now.difference(due) >= catchUpGrace ? due : null;
+  }
+
+  /// Идентификаторы уведомлений, которые сейчас висят в трее.
+  ///
+  /// Пустое множество при любой ошибке: догон лишь подстраховывается, ломать
+  /// из-за недоступности системного списка нельзя.
+  Future<Set<int>> _activeNotificationIds() async {
+    try {
+      final active = await _plugin.getActiveNotifications();
+      return {for (final notification in active) notification.id ?? -1};
+    } catch (e, st) {
+      logNotificationIssue(
+        'Не удалось прочитать активные уведомления',
+        error: e,
+        stackTrace: st,
+      );
+      return <int>{};
+    }
+  }
+
+  /// Описание уведомления с текущими настройками звука.
+  NotificationDetails _notificationDetails() => NotificationDetails(
+    android: AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: _soundEnabled,
+      sound: _androidSound,
+    ),
+    iOS: const DarwinNotificationDetails(),
+    macOS: const DarwinNotificationDetails(),
+  );
+
+  static String _body(int dayNumber) => 'Тренировка: день $dayNumber';
+
+  /// Пояснение к пропущенному напоминанию.
+  static const String _catchUpReason = 'напоминание задержано системой';
 
   /// Отменяет уведомление дня по [programDayId].
   Future<void> cancel(int programDayId) async {
