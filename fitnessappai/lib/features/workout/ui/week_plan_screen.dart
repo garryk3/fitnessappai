@@ -4,32 +4,31 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
-import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/ui/status_badge.dart';
-import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/quick_start_bar.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
-/// Экран «План»: сетка недели или календарь месяца с тренировочными днями.
+/// Экран «План»: сетка недели с тренировочными днями.
+///
+/// Вид «Месяц» и переход на прошлые недели убраны в 47.10: доступны
+/// текущая и следующая недели.
 class WeekPlanScreen extends StatefulWidget {
   const WeekPlanScreen({
     super.key,
     this.programRepository,
     this.workoutRepository,
-    this.planViewSettingsRepository,
     this.planScheduleRepository,
     this.clock,
   });
 
   final ProgramRepository? programRepository;
   final WorkoutRepository? workoutRepository;
-  final PlanViewSettingsRepository? planViewSettingsRepository;
   final PlanScheduleRepository? planScheduleRepository;
 
   /// Часы для детерминированных тестов: «сегодня» внутри экрана.
@@ -41,14 +40,10 @@ class WeekPlanScreen extends StatefulWidget {
 
 class _WeekPlanScreenState extends State<WeekPlanScreen> {
   late final WeekPlanController _controller;
-  late final PlanViewSettingsRepository _viewSettings;
 
   @override
   void initState() {
     super.initState();
-    _viewSettings =
-        widget.planViewSettingsRepository ??
-        locator.get<PlanViewSettingsRepository>();
     _controller = WeekPlanController(
       programRepository:
           widget.programRepository ?? locator.get<ProgramRepository>(),
@@ -59,25 +54,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           locator.get<PlanScheduleRepository>(),
       clock: widget.clock,
     );
-    _restoreViewMode();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  Future<void> _restoreViewMode() async {
-    final mode = await _viewSettings.getViewMode();
-    if (mode != PlanViewMode.week) {
-      await _controller.setViewMode(mode);
-    }
-  }
-
-  Future<void> _onModeChanged(PlanViewMode mode) async {
-    await _viewSettings.setViewMode(mode);
-    await _controller.setViewMode(mode);
   }
 
   Future<void> _skip(WeekPlanItem item) => _controller.markSkipped(item);
@@ -132,37 +114,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   Widget _buildBody(BuildContext context) {
     final controller = _controller;
     final l10n = AppLocalizations.of(context);
-    final mode = controller.viewMode.value;
     final today = controller.selectedDate.value;
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-          child: SegmentedButton<PlanViewMode>(
-            segments: [
-              ButtonSegment(
-                value: PlanViewMode.week,
-                label: Text(l10n.weekPlanViewWeek),
-              ),
-              ButtonSegment(
-                value: PlanViewMode.month,
-                label: Text(l10n.weekPlanViewMonth),
-              ),
-            ],
-            selected: {mode},
-            onSelectionChanged: (selection) => _onModeChanged(selection.first),
-          ),
-        ),
-        if (mode == PlanViewMode.month)
-          _buildMonthSwitcher(context, controller, l10n)
-        else
-          _buildWeekSwitcher(context, controller, l10n),
-        Expanded(
-          child: mode == PlanViewMode.month
-              ? _buildMonthContent(context, controller, l10n, today)
-              : _buildWeekContent(context, controller, l10n, today),
-        ),
+        _buildWeekSwitcher(context, controller, l10n),
+        Expanded(child: _buildWeekContent(context, controller, l10n, today)),
       ],
     );
   }
@@ -176,7 +133,6 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     return _WeekSwitcher(
       label: _weekRangeLabel(days.first, days.last, l10n),
-      onPrev: controller.canGoPrevWeek ? () => controller.shiftWeek(-1) : null,
       onNext: controller.canGoNextWeek ? () => controller.shiftWeek(1) : null,
     );
   }
@@ -228,80 +184,6 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     );
   }
 
-  Widget _buildMonthSwitcher(
-    BuildContext context,
-    WeekPlanController controller,
-    AppLocalizations l10n,
-  ) {
-    return MonthSwitcher(
-      label: monthTitle(controller.monthStart.value),
-      onPrevious: controller.canGoPrevMonth
-          ? () => controller.shiftMonth(-1)
-          : null,
-      onNext: controller.canGoNextMonth ? () => controller.shiftMonth(1) : null,
-    );
-  }
-
-  Widget _buildMonthContent(
-    BuildContext context,
-    WeekPlanController controller,
-    AppLocalizations l10n,
-    DateTime today,
-  ) {
-    final items = controller.items.value;
-    if (controller.isLoading.value && items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return MonthGridView(
-      monthStart: controller.monthStart.value,
-      today: today,
-      onPrevious: controller.canGoPrevMonth
-          ? () => controller.shiftMonth(-1)
-          : null,
-      onNext: controller.canGoNextMonth ? () => controller.shiftMonth(1) : null,
-      cellBuilder: (context, date) => _buildMonthCell(
-        context,
-        controller.monthStart.value,
-        items,
-        today,
-        date,
-        l10n,
-      ),
-    );
-  }
-
-  Widget _buildMonthCell(
-    BuildContext context,
-    DateTime monthStart,
-    List<WeekPlanItem> items,
-    DateTime today,
-    DateTime date,
-    AppLocalizations l10n,
-  ) {
-    if (date.month != monthStart.month || date.year != monthStart.year) {
-      return const SizedBox(height: 52);
-    }
-    final dayItems = _itemsForDay(items, date);
-    final isToday = _sameDay(date, today);
-    final theme = Theme.of(context);
-    final (background, foreground, border) = _monthCellStyle(
-      dayItems,
-      date,
-      theme.colorScheme,
-    );
-    final tooltip = dayItems.map((e) => e.programName).join(', ');
-    return MonthDayCell(
-      day: date.day,
-      background: background,
-      foreground: foreground,
-      border: isToday ? Border.all(color: theme.colorScheme.primary) : border,
-      tooltip: tooltip,
-      isToday: isToday,
-      showWorkoutIcon: dayItems.isNotEmpty,
-      onTap: () => _showDayActions(context, _controller, date, l10n),
-    );
-  }
-
   Future<void> _showDayActions(
     BuildContext context,
     WeekPlanController controller,
@@ -337,7 +219,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             ),
             const SizedBox(height: 8),
             for (final item in dayItems)
-              _MonthDayActionTile(
+              _DayActionTile(
                 item: item,
                 today: controller.selectedDate.value,
                 onStart: () {
@@ -380,14 +262,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 }
 
 class _WeekSwitcher extends StatelessWidget {
-  const _WeekSwitcher({
-    required this.label,
-    required this.onPrev,
-    required this.onNext,
-  });
+  const _WeekSwitcher({required this.label, required this.onNext});
 
   final String label;
-  final VoidCallback? onPrev;
   final VoidCallback? onNext;
 
   @override
@@ -398,11 +275,6 @@ class _WeekSwitcher extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
       child: Row(
         children: [
-          IconButton(
-            onPressed: onPrev,
-            tooltip: l10n.weekPlanPrevWeek,
-            icon: const Icon(Icons.chevron_left),
-          ),
           Expanded(
             child: Center(
               child: Text(label, style: theme.textTheme.titleMedium),
@@ -931,48 +803,8 @@ class _WeekEmpty extends StatelessWidget {
   }
 }
 
-(Color, Color, BoxBorder?) _monthCellStyle(
-  List<WeekPlanItem> dayItems,
-  DateTime date,
-  ColorScheme colorScheme,
-) {
-  if (dayItems.isEmpty) {
-    return (
-      colorScheme.surfaceContainerLow,
-      colorScheme.onSurfaceVariant,
-      null,
-    );
-  }
-  final anyPerformed = dayItems.any(
-    (e) => e.status == WeekPlanStatus.performed,
-  );
-  final anySkipped = dayItems.any((e) => e.status == WeekPlanStatus.skipped);
-  if (anyPerformed) {
-    return (colorScheme.primaryContainer, colorScheme.onPrimaryContainer, null);
-  }
-  if (_isPast(date) || anySkipped) {
-    // Прошедший день без выполнения или пропуск — нейтральная отмена
-    // (НЕ error; красный зарезервирован под ошибки, см. DESIGN.md).
-    return (
-      colorScheme.surfaceContainerHighest,
-      colorScheme.onSurfaceVariant,
-      Border.all(color: colorScheme.outline, width: 1),
-    );
-  }
-  return (
-    colorScheme.secondaryContainer,
-    colorScheme.onSecondaryContainer,
-    null,
-  );
-}
-
-bool _isPast(DateTime date) {
-  final now = _dateOnly(DateTime.now());
-  return date.isBefore(now);
-}
-
-class _MonthDayActionTile extends StatelessWidget {
-  const _MonthDayActionTile({
+class _DayActionTile extends StatelessWidget {
+  const _DayActionTile({
     required this.item,
     required this.today,
     required this.onStart,
@@ -1084,9 +916,6 @@ List<WeekPlanItem> _itemsForDay(List<WeekPlanItem> items, DateTime day) =>
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
-
-DateTime _dateOnly(DateTime value) =>
-    DateTime(value.year, value.month, value.day);
 
 String _weekdayLabel(AppLocalizations l10n, int weekday) => switch (weekday) {
   1 => l10n.weekdayMon,

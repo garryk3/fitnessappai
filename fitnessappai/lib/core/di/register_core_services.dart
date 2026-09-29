@@ -33,7 +33,6 @@ import 'package:fitnessappai/features/sync/data/local_file_sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
-import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
@@ -59,9 +58,6 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
   );
   sl.registerLazySingleton<ReminderSoundService>(
     () => AudioplayersSoundService(sl.get<ReminderSoundSettingsRepository>()),
-  );
-  sl.registerLazySingleton<PlanViewSettingsRepository>(
-    () => PlanViewSettingsRepository(sl.get<AppDatabase>()),
   );
   sl.registerLazySingleton<WakelockBannerRepository>(
     () => WakelockBannerRepository(sl.get<AppDatabase>()),

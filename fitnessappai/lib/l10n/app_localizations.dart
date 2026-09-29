@@ -634,12 +634,6 @@ abstract class AppLocalizations {
   /// **'Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане'**
   String get weekPlanHint;
 
-  /// No description provided for @weekPlanPrevWeek.
-  ///
-  /// In ru, this message translates to:
-  /// **'Предыдущая неделя'**
-  String get weekPlanPrevWeek;
-
   /// No description provided for @weekPlanNextWeek.
   ///
   /// In ru, this message translates to:
@@ -657,18 +651,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Следующий месяц'**
   String get weekPlanNextMonth;
-
-  /// No description provided for @weekPlanViewWeek.
-  ///
-  /// In ru, this message translates to:
-  /// **'Неделя'**
-  String get weekPlanViewWeek;
-
-  /// No description provided for @weekPlanViewMonth.
-  ///
-  /// In ru, this message translates to:
-  /// **'Месяц'**
-  String get weekPlanViewMonth;
 
   /// No description provided for @weekPlanQuickStart.
   ///

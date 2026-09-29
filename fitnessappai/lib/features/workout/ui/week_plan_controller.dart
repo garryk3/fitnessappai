@@ -10,8 +10,6 @@ import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Режим отображения плана тренировок: сетка недели или календарь месяца.
-enum PlanViewMode { week, month }
-
 /// Статус запланированного тренировочного дня на неделе.
 ///
 /// [pastSkipped] — невыполненная тренировка из истёкшей тренировочной недели:
@@ -85,7 +83,10 @@ Set<DayAction> dayActionsFor(WeekPlanItem item, DateTime today) {
   return {DayAction.reschedule};
 }
 
-/// Управляет планом тренировок: сетка недели/месяца, статусы, пропуски.
+/// Управляет планом тренировок: сетка недели, статусы, пропуски.
+///
+/// Вид «Месяц» и переход на прошлые недели убраны в 47.10: доступны
+/// текущая и следующая недели.
 class WeekPlanController {
   WeekPlanController({
     required this.programRepository,
@@ -97,7 +98,6 @@ class WeekPlanController {
     final today = _dateOnly(_now());
     weekStart.value = mondayOf(today);
     selectedDate.value = today;
-    monthStart.value = DateTime(today.year, today.month, 1);
     _reloadSubscription = ChangeReloadSubscription(
       changes: changes ?? appDataChanges,
       reload: _load,
@@ -117,14 +117,8 @@ class WeekPlanController {
   /// Понедельник отображаемой недели.
   final Signal<DateTime> weekStart = Signal(DateTime.now());
 
-  /// Первый день отображаемого месяца.
-  final Signal<DateTime> monthStart = Signal(DateTime.now());
-
   /// Сегодняшняя дата.
   final Signal<DateTime> selectedDate = Signal(DateTime.now());
-
-  /// Режим отображения: неделя или месяц.
-  final Signal<PlanViewMode> viewMode = Signal(PlanViewMode.week);
 
   Future<void> refresh() => _load();
 
@@ -153,52 +147,13 @@ class WeekPlanController {
     _load();
   }
 
-  /// Смещает отображаемый месяц на [delta] месяцев.
-  void shiftMonth(int delta) {
-    final month = monthStart.value;
-    monthStart.value = DateTime(month.year, month.month + delta, 1);
-    _load();
-  }
-
-  /// Можно ли сдвинуться ещё на неделю назад (ограничение навигации ±1).
-  bool get canGoPrevWeek => weekStart.value.isAfter(
-    mondayOf(_dateOnly(_now())).subtract(const Duration(days: 7)),
-  );
-
-  /// Можно ли сдвинуться ещё на неделю вперёд (ограничение навигации ±1).
+  /// Можно ли перейти на следующую неделю.
+  ///
+  /// План показывает только текущую и следующую недели (47.10): назад
+  /// переходить некуда, прошедшие дни скрыты.
   bool get canGoNextWeek => weekStart.value.isBefore(
     mondayOf(_dateOnly(_now())).add(const Duration(days: 7)),
   );
-
-  /// Можно ли сдвинуться ещё на месяц назад (ограничение навигации ±1).
-  bool get canGoPrevMonth {
-    final refMonth = _currentMonthStart();
-    return monthStart.value.isAfter(
-      DateTime(refMonth.year, refMonth.month - 1, 1),
-    );
-  }
-
-  /// Можно ли сдвинуться ещё на месяц вперёд (ограничение навигации ±1).
-  bool get canGoNextMonth {
-    final refMonth = _currentMonthStart();
-    return monthStart.value.isBefore(
-      DateTime(refMonth.year, refMonth.month + 1, 1),
-    );
-  }
-
-  DateTime _currentMonthStart() {
-    final today = _dateOnly(_now());
-    return DateTime(today.year, today.month, 1);
-  }
-
-  /// Переключает режим отображения [mode] и перезагружает план.
-  Future<void> setViewMode(PlanViewMode mode) async {
-    if (viewMode.value == mode) {
-      return;
-    }
-    viewMode.value = mode;
-    await _load();
-  }
 
   /// Проверяет, существует ли тренировочный день в базе.
   Future<bool> dayExists(int programDayId) async =>
@@ -255,14 +210,6 @@ class WeekPlanController {
   }
 
   Future<void> _load() async {
-    final mode = viewMode.value;
-    if (mode == PlanViewMode.month) {
-      final month = monthStart.value;
-      final rangeStart = DateTime(month.year, month.month, 1);
-      final rangeEnd = DateTime(month.year, month.month + 1, 0);
-      await _loadRange(rangeStart, rangeEnd);
-      return;
-    }
     final week = weekStart.value;
     await _loadRange(week, week.add(const Duration(days: 6)));
   }
