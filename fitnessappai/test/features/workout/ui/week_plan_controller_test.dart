@@ -74,8 +74,8 @@ void main() {
     final dayId = await createUnlinkedDay();
     await scheduleRepo.schedule(dayId, DateTime(2026, 8, 15));
 
-    controller.viewMode.value = PlanViewMode.month;
-    controller.monthStart.value = DateTime(2026, 8, 1);
+    // 15 августа 2026 — суббота недели 10–16.08 (47.10: месяца больше нет).
+    controller.weekStart.value = DateTime(2026, 8, 10);
     await controller.refresh();
 
     final items = controller.items.value;
@@ -90,8 +90,7 @@ void main() {
     final dayId = await createUnlinkedDay();
     await scheduleRepo.schedule(dayId, DateTime(2026, 8, 15));
 
-    controller.viewMode.value = PlanViewMode.month;
-    controller.monthStart.value = DateTime(2026, 8, 1);
+    controller.weekStart.value = DateTime(2026, 8, 10);
     await controller.refresh();
     expect(controller.items.value, isNotEmpty);
 
@@ -106,27 +105,18 @@ void main() {
   test('scheduleDay adds to items', () async {
     final dayId = await createUnlinkedDay();
 
-    controller.viewMode.value = PlanViewMode.month;
-    controller.monthStart.value = DateTime(2026, 9, 1);
+    controller.weekStart.value = DateTime(2026, 8, 10);
     await controller.refresh();
 
-    // Unlinked day shows on today (Aug 10), but not Sept 20.
+    // До назначения четверг 13.08 пуст.
     final beforeItems = controller.items.value
-        .where(
-          (i) =>
-              i.programDayId == dayId &&
-              i.scheduledDate.month == 9 &&
-              i.scheduledDate.day == 20,
-        )
+        .where((i) => i.programDayId == dayId && i.scheduledDate.day == 13)
         .toList();
     expect(beforeItems, isEmpty);
 
-    await controller.scheduleDay(dayId, DateTime(2026, 9, 20));
+    await controller.scheduleDay(dayId, DateTime(2026, 8, 13));
     final items = controller.items.value.where(
-      (i) =>
-          i.programDayId == dayId &&
-          i.scheduledDate.month == 9 &&
-          i.scheduledDate.day == 20,
+      (i) => i.programDayId == dayId && i.scheduledDate.day == 13,
     );
     expect(items, hasLength(1));
   });
@@ -138,7 +128,6 @@ void main() {
     // Manually schedule on the same date as the recurring.
     await scheduleRepo.schedule(dayId, DateTime(2026, 8, 10));
 
-    controller.viewMode.value = PlanViewMode.week;
     controller.weekStart.value = DateTime(2026, 8, 10);
     await controller.refresh();
 
@@ -151,142 +140,20 @@ void main() {
     expect(items, hasLength(1));
   });
 
-  test('навигация плана ограничена ±1 неделей и ±1 месяцем', () async {
+  test('навигация плана — только вперёд на следующую неделю (47.10)', () async {
     await controller.refresh();
-    // Текущий период — неделя с 10.08.2026, месяц август 2026.
-    expect(controller.canGoPrevWeek, isTrue);
+    // Сегодня — понедельник 10.08.2026, отображается текущая неделя.
+    expect(controller.weekStart.value, DateTime(2026, 8, 10));
     expect(controller.canGoNextWeek, isTrue);
-    expect(controller.canGoPrevMonth, isTrue);
-    expect(controller.canGoNextMonth, isTrue);
 
-    controller.weekStart.value = DateTime(2026, 8, 17);
-    controller.monthStart.value = DateTime(2026, 9, 1);
+    controller.shiftWeek(1);
+    expect(controller.weekStart.value, DateTime(2026, 8, 17));
     expect(controller.canGoNextWeek, isFalse);
-    expect(controller.canGoPrevWeek, isTrue);
-    expect(controller.canGoNextMonth, isFalse);
-    expect(controller.canGoPrevMonth, isTrue);
 
-    controller.weekStart.value = DateTime(2026, 8, 3);
-    controller.monthStart.value = DateTime(2026, 7, 1);
-    expect(controller.canGoPrevWeek, isFalse);
-    expect(controller.canGoNextWeek, isTrue);
-    expect(controller.canGoPrevMonth, isFalse);
-    expect(controller.canGoNextMonth, isTrue);
-
-    // Дальше границы нельзя: флаги остаются заблокированными.
-    controller.weekStart.value = DateTime(2026, 8, 24);
+    // Дальше вперёд нельзя: неделя не выходит за пределы текущей+следующей.
+    controller.shiftWeek(1);
+    expect(controller.weekStart.value, DateTime(2026, 8, 24));
     expect(controller.canGoNextWeek, isFalse);
-  });
-
-  group('набор действий дня (47.1)', () {
-    final today = DateTime(2026, 8, 10);
-
-    WeekPlanItem item({
-      required DateTime scheduledDate,
-      required WeekPlanStatus status,
-      int? dayOfWeek = 1,
-      bool isManual = false,
-    }) => WeekPlanItem(
-      programDayId: 1,
-      dayIndex: 0,
-      programName: 'База',
-      dayOfWeek: dayOfWeek,
-      scheduledDate: scheduledDate,
-      status: status,
-      isManual: isManual,
-    );
-
-    test('кастомное назначение — только удаление', () {
-      final scheduled = item(
-        scheduledDate: today,
-        status: WeekPlanStatus.pending,
-        dayOfWeek: null,
-        isManual: true,
-      );
-
-      expect(dayActionsFor(scheduled, today), {DayAction.remove});
-    });
-
-    test('кастомное назначение на будущий день — тоже только удаление', () {
-      final scheduled = item(
-        scheduledDate: DateTime(2026, 8, 13),
-        status: WeekPlanStatus.pending,
-        dayOfWeek: null,
-        isManual: true,
-      );
-
-      expect(dayActionsFor(scheduled, today), {DayAction.remove});
-    });
-
-    test(
-      'непривязанный день программы — не «кастомный», есть старт и пропуск',
-      () {
-        // Такой день показывается на «сегодня» автоматически, строки в
-        // plan_schedule не имеет — удалять его нечем.
-        final unlinked = item(
-          scheduledDate: today,
-          status: WeekPlanStatus.pending,
-          dayOfWeek: null,
-        );
-
-        expect(dayActionsFor(unlinked, today), {
-          DayAction.start,
-          DayAction.skip,
-        });
-      },
-    );
-
-    test('тренировка программы сегодня — старт и пропуск', () {
-      final scheduled = item(
-        scheduledDate: today,
-        status: WeekPlanStatus.pending,
-      );
-
-      expect(dayActionsFor(scheduled, today), {
-        DayAction.start,
-        DayAction.skip,
-      });
-    });
-
-    test(
-      'тренировка программы в другой день — только перенос, без пропуска',
-      () {
-        final scheduled = item(
-          scheduledDate: DateTime(2026, 8, 13),
-          status: WeekPlanStatus.pending,
-        );
-
-        expect(dayActionsFor(scheduled, today), {DayAction.reschedule});
-      },
-    );
-
-    test('пропуск тренировки сегодня отменяется, вчерашнего — нет', () {
-      final skippedToday = item(
-        scheduledDate: today,
-        status: WeekPlanStatus.skipped,
-      );
-      final skippedYesterday = item(
-        scheduledDate: DateTime(2026, 8, 9),
-        status: WeekPlanStatus.skipped,
-      );
-
-      expect(dayActionsFor(skippedToday, today), {DayAction.unskip});
-      expect(dayActionsFor(skippedYesterday, today), isEmpty);
-    });
-
-    test('выполненная и устаревшая тренировка действий не имеют', () {
-      for (final status in [
-        WeekPlanStatus.performed,
-        WeekPlanStatus.rescheduled,
-        WeekPlanStatus.pastSkipped,
-      ]) {
-        expect(
-          dayActionsFor(item(scheduledDate: today, status: status), today),
-          isEmpty,
-          reason: '$status',
-        );
-      }
-    });
   });
 
   test(

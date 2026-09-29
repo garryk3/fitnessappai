@@ -15,7 +15,6 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
-import 'package:fitnessappai/features/workout/data/plan_view_settings_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -134,7 +133,6 @@ void main() {
           builder: (context, state) => WeekPlanScreen(
             programRepository: programRepo,
             workoutRepository: workoutRepo,
-            planViewSettingsRepository: PlanViewSettingsRepository(db),
             planScheduleRepository: planScheduleRepo,
             clock: () => now ?? fixedNow,
           ),
@@ -203,11 +201,35 @@ void main() {
     expect(find.text('Нет запланированных тренировок'), findsOneWidget);
   });
 
-  testWidgets('тултипы переключения недели на русском', (tester) async {
+  testWidgets('переключение недели: только вперёд (47.10)', (tester) async {
     await pumpPlan(tester);
 
-    expect(find.byTooltip('Предыдущая неделя'), findsOneWidget);
     expect(find.byTooltip('Следующая неделя'), findsOneWidget);
+    // Вид «Месяц» и переход на прошлые недели убраны (47.10).
+    expect(find.byTooltip('Предыдущая неделя'), findsNothing);
+    expect(find.text('Месяц'), findsNothing);
+    // Сегмент «Неделя» тоже исчез: переключать режим больше нечем.
+    expect(find.text('Неделя'), findsNothing);
+  });
+
+  testWidgets('после перехода на следующую неделю стрелка исчезает (47.10)', (
+    tester,
+  ) async {
+    await pumpPlan(tester);
+
+    IconButton arrow(String tooltip) => tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byTooltip(tooltip),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(arrow('Следующая неделя').onPressed, isNotNull);
+
+    await tester.tap(find.byTooltip('Следующая неделя'));
+    await tester.pumpAndSettle();
+
+    expect(arrow('Следующая неделя').onPressed, isNull);
+    expect(find.byTooltip('Предыдущая неделя'), findsNothing);
   });
 
   testWidgets('показывает запланированный день со статусом и действиями', (
@@ -357,36 +379,6 @@ void main() {
     expect(find.text('Запланировано'), findsOneWidget);
     expect(find.text('Начать'), findsOneWidget);
   });
-
-  testWidgets(
-    'прошлая неделя: невыполненная тренировка без кнопок «Пропущено»',
-    (tester) async {
-      await createDay(fixedNow.weekday, name: 'Сплит');
-      await pumpPlan(tester);
-
-      // Текущая неделя: день сегодня — активен.
-      expect(find.text('Запланировано'), findsOneWidget);
-      expect(find.text('Начать'), findsOneWidget);
-
-      // Переходим на прошлую неделю — тренировка из истёкшей недели.
-      await tester.tap(find.byTooltip('Предыдущая неделя'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Пропущено'), findsOneWidget);
-      expect(find.text('Начать'), findsNothing);
-      expect(find.text('Перенести на сегодня'), findsNothing);
-      expect(find.text('Пропустить'), findsNothing);
-      expect(find.text('Отменить пропуск'), findsNothing);
-      // Пояснение, почему переноса нет (47.2).
-      expect(
-        find.text(
-          'Пропущенная тренировка — перенести можно только в рамках '
-          'тренировочной недели',
-        ),
-        findsOneWidget,
-      );
-    },
-  );
 
   testWidgets('прошедший день своей недели: перенос доступен (47.2)', (
     tester,
@@ -552,192 +544,6 @@ void main() {
       expect((border! as Border).top.color, cs.outline);
     });
   }
-
-  group('режим «Месяц»', () {
-    testWidgets('тумблер переключает на месяц и показывает сетку', (
-      tester,
-    ) async {
-      await pumpPlan(tester);
-
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Август 2026'), findsOneWidget);
-      // Дни месяца видны в сетке даже без тренировок.
-      expect(find.text('10'), findsWidgets);
-    });
-
-    testWidgets('тап по дню с тренировкой открывает попап', (tester) async {
-      await createDay(fixedNow.weekday, name: 'Сплит');
-      await pumpPlan(tester);
-
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('10'));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Сплит'), findsWidgets);
-      expect(find.text('Начать'), findsOneWidget);
-    });
-
-    testWidgets('имя программы в попапе ограничено двумя строками', (
-      tester,
-    ) async {
-      await createDay(
-        fixedNow.weekday,
-        name:
-            'Очень длинное название тренировочной программы для проверки переноса',
-      );
-      await pumpPlan(tester);
-
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('10'));
-      await tester.pumpAndSettle();
-
-      final title = tester.widget<Text>(
-        find.textContaining('Очень длинное название').first,
-      );
-      expect(title.maxLines, 2);
-      expect(title.overflow, TextOverflow.ellipsis);
-    });
-
-    testWidgets('день без тренировки открывает лист планирования', (
-      tester,
-    ) async {
-      await pumpPlan(tester);
-
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-
-      // «15» августа — выходной без тренировки: тап открывает schedule sheet.
-      await tester.tap(find.text('15'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(BottomSheet), findsOneWidget);
-    });
-
-    testWidgets('выбор «Месяц» сохраняется между открытиями', (tester) async {
-      await pumpPlan(tester);
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-      expect(find.text('Август 2026'), findsOneWidget);
-
-      await pumpPlan(tester);
-      await tester.pumpAndSettle();
-      expect(find.text('Август 2026'), findsOneWidget);
-    });
-
-    testWidgets('после +1 недели стрелка вперёд отключается', (tester) async {
-      await pumpPlan(tester);
-
-      IconButton arrow(String tooltip) => tester.widget<IconButton>(
-        find.ancestor(
-          of: find.byTooltip(tooltip),
-          matching: find.byType(IconButton),
-        ),
-      );
-      expect(arrow('Следующая неделя').onPressed, isNotNull);
-
-      await tester.tap(find.byTooltip('Следующая неделя'));
-      await tester.pumpAndSettle();
-
-      expect(arrow('Следующая неделя').onPressed, isNull);
-      expect(find.byTooltip('Предыдущая неделя'), findsOneWidget);
-    });
-
-    testWidgets('свайп вправо открывает предыдущий месяц', (tester) async {
-      await pumpPlan(tester);
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-      expect(find.text('Август 2026'), findsOneWidget);
-
-      await tester.drag(find.text('10'), const Offset(150, 0));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Июль 2026'), findsOneWidget);
-    });
-
-    testWidgets('свайп влево открывает следующий месяц', (tester) async {
-      await pumpPlan(tester);
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-
-      await tester.drag(find.text('10'), const Offset(-150, 0));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Сентябрь 2026'), findsOneWidget);
-    });
-
-    testWidgets('свайп за предел ±1 месяц не срабатывает', (tester) async {
-      await pumpPlan(tester);
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-
-      // Вперёд до предела (сентябрь).
-      await tester.drag(find.text('10'), const Offset(-150, 0));
-      await tester.pumpAndSettle();
-      expect(find.text('Сентябрь 2026'), findsOneWidget);
-
-      // Дальше вперёд нельзя: свайп влево ничего не меняет.
-      await tester.drag(find.text('1'), const Offset(-150, 0));
-      await tester.pumpAndSettle();
-      expect(find.text('Сентябрь 2026'), findsOneWidget);
-
-      // Назад до предела (июль).
-      await tester.drag(find.text('1'), const Offset(150, 0));
-      await tester.pumpAndSettle();
-      await tester.drag(find.text('1'), const Offset(150, 0));
-      await tester.pumpAndSettle();
-      expect(find.text('Июль 2026'), findsOneWidget);
-    });
-
-    testWidgets(
-      'будущий день в листе месяца: только «Перенести на сегодня» (47.1)',
-      (tester) async {
-        final weekday = _weekdayAfter(fixedNow.weekday);
-        final day = await createDay(weekday);
-        final scheduledDate = mondayOf(
-          fixedNow,
-        ).add(Duration(days: weekday - 1));
-        // «Чужая» сессия того же programDayId в текущей неделе (прошедший
-        // день): до 43.7 из-за неё пропуск будущей тренировки игнорировался.
-        await saveSession(workoutRepo, day, mondayOf(fixedNow));
-        await pumpPlan(tester);
-
-        await tester.tap(find.text('Месяц'));
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('${scheduledDate.day}'));
-        await tester.pumpAndSettle();
-        final sheet = find.byType(BottomSheet);
-        expect(sheet, findsOneWidget);
-        // Будущий день: перенос доступен, пропуск — только для текущего дня.
-        expect(
-          find.descendant(
-            of: sheet,
-            matching: find.text('Перенести на сегодня'),
-          ),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(of: sheet, matching: find.text('Пропустить')),
-          findsNothing,
-        );
-        expect(
-          find.descendant(of: sheet, matching: find.text('Начать')),
-          findsNothing,
-        );
-        // Удаление доступно только ручным назначениям.
-        expect(
-          find.descendant(of: sheet, matching: find.byIcon(Icons.close)),
-          findsNothing,
-        );
-      },
-    );
-  });
 
   testWidgets('текущий день в неделе выделен цветом', (tester) async {
     // Нужна хотя бы одна запись, чтобы недельная сетка отобразилась.
@@ -947,14 +753,13 @@ void main() {
     expect(dayCard.data, 'День 1 · 10 августа 2026');
   });
 
-  testWidgets('попап месяца показывает программу, день и дату', (tester) async {
+  testWidgets('попап дня недели показывает программу, день и дату', (
+    tester,
+  ) async {
     await createDay(fixedNow.weekday, name: 'Сплит');
     await pumpPlan(tester);
 
-    await tester.tap(find.text('Месяц'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('10'));
+    await tester.tap(find.text('10').last);
     await tester.pumpAndSettle();
 
     final sheet = find.byType(BottomSheet);
@@ -970,7 +775,7 @@ void main() {
   });
 
   testWidgets(
-    'узкий экран: попап месяца — дата и кнопки на своих строках, без вертикальной даты',
+    'узкий экран: попап дня — дата и кнопки на своих строках, без вертикальной даты',
     (tester) async {
       tester.view.physicalSize = const Size(320, 700);
       tester.view.devicePixelRatio = 1.0;
@@ -978,10 +783,7 @@ void main() {
       await createDay(fixedNow.weekday, name: 'Сплит');
       await pumpPlan(tester);
 
-      await tester.tap(find.text('Месяц'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('10'));
+      await tester.tap(find.text('10').last);
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -1022,32 +824,12 @@ void main() {
 
   testWidgets('запрет планирования на прошедшие даты (неделя)', (tester) async {
     await createDay(fixedNow.weekday, name: 'Сплит');
-    await pumpPlan(tester);
-
-    // Переходим на предыдущую неделю (3–9 августа — прошлые дни).
-    await tester.tap(find.byTooltip('Предыдущая неделя'));
-    await tester.pumpAndSettle();
+    // Сегодня — среда 12.08.2026, поэтому вторник 11 августа прошёл (47.10:
+    // прошлые недели недоступны, guard проверяем внутри текущей).
+    await pumpPlan(tester, now: DateTime(2026, 8, 12));
 
     // Прошедший пустой день — планирование не открывается, показывается SnackBar.
-    await tester.tap(find.text('5'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(BottomSheet), findsNothing);
-    expect(
-      find.text('Нельзя запланировать тренировку на прошедший день'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('запрет планирования на прошедшие даты (месяц)', (tester) async {
-    await createDay(fixedNow.weekday, name: 'Сплит');
-    await pumpPlan(tester);
-
-    await tester.tap(find.text('Месяц'));
-    await tester.pumpAndSettle();
-
-    // «1» августа — прошедший день при fixedNow = 10.08.2026.
-    await tester.tap(find.text('1'));
+    await tester.tap(find.text('11').last);
     await tester.pumpAndSettle();
 
     expect(find.byType(BottomSheet), findsNothing);
@@ -1060,14 +842,11 @@ void main() {
   testWidgets('занятый день на прошедшей дате всё же открывает действия дня', (
     tester,
   ) async {
-    await createDay(fixedNow.weekday, name: 'Сплит');
-    await pumpPlan(tester);
+    // Понедельник 10 августа с тренировкой, «сегодня» — среда 12.08.2026.
+    await createDay(1, name: 'Сплит');
+    await pumpPlan(tester, now: DateTime(2026, 8, 12));
 
-    // Прошедшая неделя: понедельник 3 августа с тренировкой.
-    await tester.tap(find.byTooltip('Предыдущая неделя'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('3').last);
+    await tester.tap(find.text('10').last);
     await tester.pumpAndSettle();
 
     expect(find.byType(BottomSheet), findsOneWidget);

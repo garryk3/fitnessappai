@@ -777,11 +777,12 @@ Future<void> expectWorkoutCount(WidgetTester tester, String count) async {
   expect(find.descendant(of: card, matching: find.text(count)), findsOneWidget);
 }
 
+/// Перечитывает план: экран плана загружает данные при создании, поэтому
+/// достаточно уйти на соседнюю вкладку и вернуться (перехода на прошлые недели
+/// больше нет — задача 47.10).
 Future<void> reloadWeekPlan(WidgetTester tester) async {
-  await tester.tap(find.byTooltip('Предыдущая неделя'));
-  await tester.pumpAndSettle();
-  await tester.tap(find.byTooltip('Следующая неделя'));
-  await tester.pumpAndSettle();
+  await goToTab(tester, Icons.fitness_center_outlined);
+  await goToTab(tester, Icons.event_note_outlined);
 }
 
 void main() {
