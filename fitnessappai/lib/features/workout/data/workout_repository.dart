@@ -183,6 +183,38 @@ class WorkoutRepository {
     _notify();
   }
 
+  /// Помечает день перенесённым на неделе [weekStart] (задача 47.3).
+  ///
+  /// Upsert по паре (день программы, неделя): если отметка уже была (например,
+  /// дневно — «Пропущено»), статус заменяется на [ScheduleMarkStatus.rescheduled],
+  /// чтобы день-источник стал пустым.
+  Future<void> markRescheduled(int programDayId, DateTime weekStart) async {
+    final weekStartMs = weekStart.millisecondsSinceEpoch;
+    final updated =
+        await (_db.update(_db.scheduleMarks)..where(
+              (t) =>
+                  t.programDayId.equals(programDayId) &
+                  t.weekStart.equals(weekStartMs),
+            ))
+            .write(
+              const ScheduleMarksCompanion(
+                status: Value(ScheduleMarkStatus.rescheduled),
+              ),
+            );
+    if (updated == 0) {
+      await _db
+          .into(_db.scheduleMarks)
+          .insert(
+            ScheduleMarksCompanion.insert(
+              programDayId: programDayId,
+              weekStart: weekStart,
+              status: ScheduleMarkStatus.rescheduled,
+            ),
+          );
+    }
+    _notify();
+  }
+
   /// Убирает отметку пропуска дня на неделе [weekStart].
   Future<void> clearSkip(int programDayId, DateTime weekStart) async {
     await (_db.delete(_db.scheduleMarks)..where(
@@ -194,8 +226,8 @@ class WorkoutRepository {
     _notify();
   }
 
-  /// Отметки пропусков за неделю с понедельником [weekStart].
-  Future<List<ScheduleMark>> getSkips(DateTime weekStart) async {
+  /// Отметки (пропуски и переносы) за неделю с понедельником [weekStart].
+  Future<List<ScheduleMark>> getMarks(DateTime weekStart) async {
     final startMs = weekStart.millisecondsSinceEpoch;
     final endMs = weekStart.add(const Duration(days: 7)).millisecondsSinceEpoch;
     final rows =

@@ -1175,22 +1175,19 @@ void main() {
     expect(find.text('Запланировано'), findsWidgets);
     expect(find.text('Пропущено'), findsNothing);
 
-    // Лист действий соседнего дня: только перенос, пропуска и удаления нет.
+    // День-источник переноса очищен (47.3): в соседнем дне тренировки нет,
+    // поэтому тап открывает лист планирования, а не действия дня.
+    expect(find.text('Перенести на сегодня'), findsNothing);
     await tester.tap(find.text('${otherDate.day}').last);
     await tester.pumpAndSettle();
     final sheet = find.byType(BottomSheet);
     expect(sheet, findsWidgets);
     expect(
-      find.descendant(of: sheet, matching: find.text('Перенести на сегодня')),
+      find.descendant(
+        of: sheet,
+        matching: find.text('Запланировать тренировку'),
+      ),
       findsOneWidget,
-    );
-    expect(
-      find.descendant(of: sheet, matching: find.text('Пропустить')),
-      findsNothing,
-    );
-    expect(
-      find.descendant(of: sheet, matching: find.text('Удалить назначение')),
-      findsNothing,
     );
 
     // Лист действий сегодняшнего дня: старт и пропуск, удаления нет.

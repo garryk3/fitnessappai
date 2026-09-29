@@ -84,8 +84,20 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   Future<void> _unskip(WeekPlanItem item) => _controller.clearSkip(item);
 
-  Future<void> _start(WeekPlanItem item) =>
-      startPlannedWorkout(context, _controller, item);
+  /// Запуск тренировки из плана.
+  ///
+  /// Для переноса («Перенести на сегодня») сначала ставится маркер: день-источник
+  /// в этой неделе становится пустым (задача 47.3).
+  Future<void> _start(WeekPlanItem item) async {
+    final actions = dayActionsFor(item, _controller.selectedDate.value);
+    if (actions.contains(DayAction.reschedule)) {
+      await _controller.markRescheduled(item);
+      if (!mounted) {
+        return;
+      }
+    }
+    await startPlannedWorkout(context, _controller, item);
+  }
 
   Future<void> _cancel(WeekPlanItem item) =>
       _controller.cancelSchedule(item.programDayId, item.scheduledDate);

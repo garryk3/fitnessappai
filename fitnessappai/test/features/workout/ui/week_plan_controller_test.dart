@@ -422,4 +422,138 @@ void main() {
       },
     );
   });
+
+  group('перенос очищает день-источник (47.3)', () {
+    // Программа из двух дней: понедельник и вторник одной недели.
+    Future<List<int>> createTwoDayProgram() async {
+      final program = await programRepo.create(
+        Program(
+          name: 'Два дня',
+          daysCount: 2,
+          createdAt: DateTime(2024, 1, 1),
+          updatedAt: DateTime(2024, 1, 1),
+          isActive: true,
+          activatedAt: DateTime(2024, 1, 1),
+        ),
+        [
+          ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: DateTime.monday),
+          ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: DateTime.tuesday),
+        ],
+      );
+      final days = await programRepo.getDays(program.id!);
+      return days.map((d) => d.id!).toList();
+    }
+
+    test('после переноса вторника понедельник остаётся в плане', () async {
+      final ids = await createTwoDayProgram();
+      controller.weekStart.value = DateTime(2026, 8, 10);
+      await controller.refresh();
+
+      final tuesday = controller.items.value.firstWhere(
+        (i) => i.programDayId == ids[1] && i.scheduledDate.day == 11,
+      );
+      await controller.markRescheduled(tuesday);
+
+      final visible = controller.items.value
+          .where((i) => i.scheduledDate.day == 11)
+          .toList();
+      expect(visible, isEmpty);
+      // Понедельник той же недели не тронут.
+      expect(
+        controller.items.value.any(
+          (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
+        ),
+        isTrue,
+      );
+    });
+
+    test('на следующей неделе тренировка снова в плане', () async {
+      final ids = await createTwoDayProgram();
+      controller.weekStart.value = DateTime(2026, 8, 10);
+      await controller.refresh();
+
+      final monday = controller.items.value.firstWhere(
+        (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
+      );
+      await controller.markRescheduled(monday);
+      expect(
+        controller.items.value.any(
+          (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
+        ),
+        isFalse,
+      );
+
+      controller.weekStart.value = DateTime(2026, 8, 17);
+      await controller.refresh();
+      expect(
+        controller.items.value.any(
+          (i) => i.programDayId == ids[0] && i.scheduledDate.day == 17,
+        ),
+        isTrue,
+      );
+    });
+
+    test('перенос скрывает только источник, а не весь день', () async {
+      // Два дня программы на вторник: один уходит в перенос, второй остаётся.
+      final program = await programRepo.create(
+        Program(
+          name: 'Два вторника',
+          daysCount: 2,
+          createdAt: DateTime(2024, 1, 1),
+          updatedAt: DateTime(2024, 1, 1),
+          isActive: true,
+          activatedAt: DateTime(2024, 1, 1),
+        ),
+        [
+          ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: DateTime.tuesday),
+          ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: DateTime.tuesday),
+        ],
+      );
+      final days = await programRepo.getDays(program.id!);
+      controller.weekStart.value = DateTime(2026, 8, 10);
+      await controller.refresh();
+
+      final tuesdayItems = controller.items.value
+          .where((i) => i.scheduledDate.day == 11)
+          .toList();
+      expect(tuesdayItems, hasLength(2));
+
+      await controller.markRescheduled(tuesdayItems.first);
+      final after = controller.items.value
+          .where((i) => i.scheduledDate.day == 11)
+          .toList();
+      expect(after, hasLength(1));
+      expect(after.single.programDayId, days.last.id);
+    });
+
+    test('маркер переноса не трогает пропуски', () async {
+      final ids = await createTwoDayProgram();
+      controller.weekStart.value = DateTime(2026, 8, 10);
+      await controller.refresh();
+
+      final monday = controller.items.value.firstWhere(
+        (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
+      );
+      await controller.markSkipped(monday);
+      expect(
+        controller.items.value
+            .firstWhere(
+              (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
+            )
+            .status,
+        WeekPlanStatus.skipped,
+      );
+
+      final tuesday = controller.items.value.firstWhere(
+        (i) => i.programDayId == ids[1] && i.scheduledDate.day == 11,
+      );
+      await controller.markRescheduled(tuesday);
+      expect(
+        controller.items.value.any(
+          (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
+        ),
+        isTrue,
+      );
+    });
+  });
 }
