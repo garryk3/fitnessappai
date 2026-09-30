@@ -7,7 +7,13 @@ plugins {
 android {
     namespace = "com.example.fitnessappai"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // NDK закреплён явно, чтобы версия не «плыла» вместе с `channel: stable`
+    // в .github/workflows/ci.yml: обновление Flutter в тулчейне подняло бы и
+    // требуемую версию NDK, и локальные сборки на машинах без неё. Значение
+    // совпадает с дефолтом Flutter 3.47.4 (FlutterExtension.kt: ndkVersion),
+    // то есть меняется источник истины, а не сам номер версии.
+    // См. PLAN.md 47.18: при обновлении Flutter сверить версию с дефолтом.
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
