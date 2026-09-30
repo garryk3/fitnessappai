@@ -1192,9 +1192,23 @@ void main() {
     );
 
     // Лист действий сегодняшнего дня: старт и пропуск, удаления нет.
-    await tester.tapAt(Offset.zero);
+    // Закрываем лист планирования тапом по самому барьеру: в широкой
+    // раскладке барьер не перекрывает NavigationRail, поэтому тап по
+    // Offset.zero попадал в рельс, лист оставался открытым, а следующий тап
+    // закрывал его вместо открытия действий дня (47.16).
+    final sheetBarrier = find.byType(ModalBarrier).hitTestable();
+    expect(sheetBarrier, findsOneWidget);
+    final barrierRect = tester.getRect(sheetBarrier);
+    await tester.tapAt(Offset(barrierRect.center.dx, barrierRect.top + 20));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('${now.day}').last);
+    expect(find.byType(BottomSheet), findsNothing);
+
+    // Тапаем по числу дня — в широкой раскладке это заголовок колонки, он же
+    // открывает лист действий. Прокручиваем к нему: сетка после прокрутки к
+    // кнопке переноса могла увести число за край.
+    final todayNumber = find.text('${now.day}').last;
+    await scrollUntilVisibleIn(tester, todayNumber);
+    await tester.tap(todayNumber);
     await tester.pumpAndSettle();
     expect(
       find.descendant(
@@ -1944,7 +1958,11 @@ void main() {
 
     await openSettings(tester);
 
-    final listenButton = find.byIcon(Icons.play_arrow);
+    // Кнопок прослушивания две: «Звук» (таймеры) и «Звук напоминаний» (47.5).
+    final listenButtons = find.byIcon(Icons.play_arrow);
+    expect(listenButtons, findsNWidgets(2));
+
+    final listenButton = listenButtons.first;
     await scrollUntilVisibleIn(tester, listenButton);
     await tester.ensureVisible(listenButton);
     await tester.pumpAndSettle();

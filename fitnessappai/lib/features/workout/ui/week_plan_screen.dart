@@ -423,7 +423,13 @@ class _DayColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final header = _DayHeader(date: date, isToday: isToday);
+    // Заголовок дня тапается в обоих случаях: у занятого дня он открывает
+    // лист действий, у пустого — планирование (47.16).
+    final header = GestureDetector(
+      onTap: onDayTap == null ? null : () => onDayTap!(date),
+      behavior: HitTestBehavior.opaque,
+      child: _DayHeader(date: date, isToday: isToday),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -447,14 +453,7 @@ class _DayColumn extends StatelessWidget {
             ),
           ),
         ] else
-          GestureDetector(
-            onTap: onDayTap == null ? null : () => onDayTap!(date),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: header,
-            ),
-          ),
+          Padding(padding: const EdgeInsets.only(bottom: 24), child: header),
       ],
     );
   }

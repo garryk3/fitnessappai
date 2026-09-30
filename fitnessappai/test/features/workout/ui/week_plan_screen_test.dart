@@ -851,6 +851,32 @@ void main() {
 
     expect(find.byType(BottomSheet), findsOneWidget);
   });
+
+  testWidgets(
+    'широкая раскладка: тап по занятому дню открывает действия дня (47.16)',
+    (tester) async {
+      // ≥ 840 px — сетка недели колонками, а не список карточек.
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('10').last);
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      expect(
+        find.descendant(of: sheet, matching: find.text('10 августа 2026')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('Начать')),
+        findsWidgets,
+      );
+    },
+  );
 }
 
 Future<void> saveSession(
