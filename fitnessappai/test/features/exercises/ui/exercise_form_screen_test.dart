@@ -823,4 +823,110 @@ void main() {
       isFalse,
     );
   });
+
+  group('дистанция не делится на стороны (48.5)', () {
+    /// Переключает тип на «Дистанция».
+    Future<void> switchToDistance(WidgetTester tester) async {
+      final scrollableFinder = find
+          .descendant(
+            of: find.byType(ExerciseFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      tester.state<ScrollableState>(scrollableFinder).position.jumpTo(0);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Силовые'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Дистанция').last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('чекбокс «выполнение по сторонам» скрыт', (tester) async {
+      await pumpForm(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Название *'),
+        'Бег 5 км',
+      );
+      await switchToDistance(tester);
+
+      expect(find.textContaining('Выполнение по сторонам'), findsNothing);
+      // Соседний чекбокс остаётся: правило только про стороны, не про всё
+      // необязательное.
+      await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
+      expect(find.textContaining('Фиксированный вес'), findsOneWidget);
+    });
+
+    testWidgets('у остальных типов чекбокс остаётся', (tester) async {
+      await pumpForm(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Название *'),
+        'С гантелями',
+      );
+      await scrollFormTo(tester, find.textContaining('Выполнение по сторонам'));
+
+      expect(find.textContaining('Выполнение по сторонам'), findsOneWidget);
+    });
+
+    testWidgets('смена типа на дистанцию сбрасывает флаг', (tester) async {
+      await pumpForm(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Название *'),
+        'Жим лёжа',
+      );
+      await scrollFormTo(tester, find.textContaining('Выполнение по сторонам'));
+      await tester.tap(checkboxInRow('Выполнение по сторонам'));
+      await tester.pumpAndSettle();
+      expect(
+        (tester.widget<CheckboxListTile>(
+          checkboxInRow('Выполнение по сторонам'),
+        )).value,
+        isTrue,
+      );
+
+      await switchToDistance(tester);
+
+      // Флаг обнулился, а не остался «невидимым» — вернувшись к «Силовые»,
+      // чекбокс снова unchecked.
+      await tester.tap(find.text('Дистанция'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Силовые').last);
+      await tester.pumpAndSettle();
+      await scrollFormTo(tester, find.textContaining('Выполнение по сторонам'));
+      expect(
+        (tester.widget<CheckboxListTile>(
+          checkboxInRow('Выполнение по сторонам'),
+        )).value,
+        isFalse,
+      );
+    });
+
+    testWidgets('сохранение дистанции пишет perSide: false', (tester) async {
+      // Сценарий данных, созданных до 48.5: в форме флаг мог остаться включённым
+      // (упражнение-дистанция со старым `perSide: true` открывается на
+      // редактирование), и сохранение обязано его снять.
+      final legacy = await repository.create(
+        exercise('Велосипед', type: ExerciseType.distance, perSide: true),
+        const [],
+      );
+      await pumpForm(tester, exerciseId: legacy.id);
+
+      // Скроллить к скрытому элементу нельзя — его нет, и это уже проверка.
+      // Отдельно доскроллим до соседнего чекбокса, чтобы убедиться, что форма
+      // отрисовалась целиком, а findsNothing не случился из-за ошибки рендера.
+      expect(find.textContaining('Выполнение по сторонам'), findsNothing);
+      await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
+      expect(find.textContaining('Выполнение по сторонам'), findsNothing);
+
+      await selectChestMuscle(tester);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      final saved = (await repository.getAll()).single;
+      expect(saved.type, ExerciseType.distance);
+      expect(saved.perSide, isFalse);
+    });
+  });
 }

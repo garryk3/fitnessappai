@@ -62,6 +62,37 @@ void main() {
     expect(ExerciseType.distance.name, 'distance');
   });
 
+  group('tracksSides (48.5)', () {
+    test('дистанция не делится на стороны даже при сохранённом флаге', () {
+      expect(
+        build()
+            .copyWith(type: ExerciseType.distance, perSide: true)
+            .tracksSides,
+        isFalse,
+        reason: 'бег одной стороной — флаг из данных до 48.5 игнорируется',
+      );
+      expect(
+        build().copyWith(type: ExerciseType.distance).tracksSides,
+        isFalse,
+      );
+    });
+
+    test('остальные типы сохраняют флаг', () {
+      for (final type in [
+        ExerciseType.strength,
+        ExerciseType.bodyweight,
+        ExerciseType.plank,
+      ]) {
+        expect(
+          build().copyWith(type: type, perSide: true).tracksSides,
+          isTrue,
+          reason: '$type поддерживает стороны',
+        );
+        expect(build().copyWith(type: type).tracksSides, isFalse);
+      }
+    });
+  });
+
   group('exerciseTypeFromName (47.13)', () {
     test('актуальные имена разбираются как есть', () {
       for (final type in ExerciseType.values) {

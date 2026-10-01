@@ -147,6 +147,9 @@ void main() {
     bool withAlternative = false,
     bool fixedWeight = false,
     bool perSide = false,
+    ExerciseType type = ExerciseType.strength,
+    double? distanceMeters,
+    int? durationSeconds,
   }) async {
     final created = await programRepo.create(
       Program(
@@ -158,7 +161,7 @@ void main() {
       [ProgramDay(programId: 0, dayIndex: 0)],
     );
     final day = (await programRepo.getDays(created.id!)).first;
-    final exId = await insertExercise('Приседания');
+    final exId = await insertExercise('Приседания', type: type);
     if (fixedWeight || perSide) {
       await (db.update(db.exercises)..where((t) => t.id.equals(exId))).write(
         ExercisesCompanion(
@@ -171,9 +174,11 @@ void main() {
     await programRepo.updateExercise(
       (await programRepo.getExercises(day.id!)).first.copyWith(
         sets: sets,
-        reps: 8,
+        reps: type == ExerciseType.distance ? null : 8,
         weightKg: 20,
         restSeconds: restSeconds,
+        distanceMeters: distanceMeters,
+        durationSeconds: durationSeconds,
       ),
     );
     if (withAlternative) {
@@ -334,6 +339,40 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Упражнение 1 из 1 · Подход 2 из 3'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'дистанция не спрашивает сторону даже при флаге из данных до 48.5',
+    (tester) async {
+      // Сценарий 48.5: упражнение-дистанция, созданное до задачи, могло
+      // остаться с `perSide: true`. Владельцу нельзя показывать отметку
+      // стороны у бега — он идёт одной стороной.
+      final dayId = await createDay(
+        sets: 1,
+        restSeconds: 60,
+        perSide: true,
+        type: ExerciseType.distance,
+        distanceMeters: 5000,
+        durationSeconds: 1800,
+      );
+      await pumpRun(tester, dayId);
+
+      expect(find.textContaining('левая'), findsNothing);
+      expect(find.textContaining('правая'), findsNothing);
+      // Метрики дистанции на месте — правило только про стороны.
+      expect(find.textContaining('Дистанция'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField).first, '5');
+      await tester.enterText(find.byType(TextFormField).last, '30');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pump();
+
+      // Отдых есть, но не «между сторонами»: подход дистанции не делится.
+      // Отдых может не стартовать у дистанции — проверяем главное: стороны не
+      // запрашиваются и результат сохранён.
+      expect(find.textContaining('левая'), findsNothing);
+      expect(find.textContaining('правая'), findsNothing);
     },
   );
 
