@@ -44,10 +44,16 @@ class _RecordingSoundService implements SoundService {
 void main() {
   final startTime = DateTime(2026, 8, 9, 18, 0);
 
-  Exercise exercise(int id, String name, ExerciseType type) => Exercise(
+  Exercise exercise(
+    int id,
+    String name,
+    ExerciseType type, {
+    bool perSide = false,
+  }) => Exercise(
     id: id,
     name: name,
     type: type,
+    perSide: perSide,
     createdAt: startTime,
     updatedAt: startTime,
   );
@@ -83,6 +89,7 @@ void main() {
   WorkoutExercise distanceExercise({
     int? duration = 1800,
     double? distanceMeters = 5000,
+    bool perSide = false,
   }) => WorkoutExercise(
     position: ProgramDayExercise(
       dayId: 1,
@@ -91,7 +98,9 @@ void main() {
       durationSeconds: duration,
       distanceMeters: distanceMeters,
     ),
-    exercise: exercise(12, 'Бег', ExerciseType.distance),
+    // `perSide` у дистанции игнорируется: флаг мог остаться в данных,
+    // созданных до 48.5 (задача 48.5).
+    exercise: exercise(12, 'Бег', ExerciseType.distance, perSide: perSide),
   );
 
   WorkoutExercise bodyweightExercise({int sets = 3, int? reps = 15}) =>
@@ -913,6 +922,25 @@ void main() {
       controller.confirmSet();
       expect(controller.phase.value, WorkoutPhase.finished);
       expect(controller.results.value.map((r) => r.side), ['left', 'right']);
+      controller.dispose();
+    });
+  });
+
+  test('дистанция не пишет сторону даже при флаге из данных до 48.5', () {
+    fakeAsync((async) {
+      final controller = WorkoutController(clock: () => startTime);
+      // Упражнение-дистанция, созданное до 48.5: флаг мог остаться включённым.
+      controller.start([
+        distanceExercise(duration: 600, distanceMeters: 3000, perSide: true),
+      ]);
+      controller.setResult(
+        const WorkoutSetInput(durationSeconds: 600, distanceMeters: 3000),
+      );
+      controller.confirmSet();
+
+      expect(controller.phase.value, WorkoutPhase.finished);
+      expect(controller.results.value.single.side, isNull);
+      expect(controller.currentSide.value, isNull);
       controller.dispose();
     });
   });

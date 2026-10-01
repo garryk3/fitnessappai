@@ -248,7 +248,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         isCustom: _isCustom,
         hideOptional: _hideOptional,
         fixedWeight: _fixedWeight,
-        perSide: _perSide,
+        // Страховка от данных, созданных до 48.5: дистанция сохраняется без
+        // флага сторон даже если он остался в состоянии формы.
+        perSide: _type == ExerciseType.distance ? false : _perSide,
         createdAt: _createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -338,7 +340,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                     _fixedWeightField(l10n),
                     const SizedBox(height: 8),
                   ],
-                  _perSideField(l10n),
+                  // У дистанции стороны нет (бег не делится на левую и
+                  // правую), поэтому чекбокс скрыт — задача 48.5.
+                  if (_type != ExerciseType.distance) ...[_perSideField(l10n)],
                 ],
               ),
             ),
@@ -405,6 +409,11 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             _type = value;
             if (value == ExerciseType.bodyweight) {
               _fixedWeight = false;
+            }
+            // Скрытое поле не должно выживать как «невидимый» флаг: у
+            // дистанции чекбокса нет, значит и сохранять нечего (48.5).
+            if (value == ExerciseType.distance) {
+              _perSide = false;
             }
           });
         }

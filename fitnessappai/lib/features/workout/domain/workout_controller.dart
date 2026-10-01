@@ -318,8 +318,11 @@ class WorkoutController {
 
   /// Сторона текущего подхода: для упражнений «по сторонам» — первая
   /// (левая) или уже назначенная [currentSide]; для остальных — null.
+  ///
+  /// Проверка типа спрятана в [Exercise.tracksSides]: у дистанции стороны нет
+  /// даже при сохранённом ранее флаге (задача 48.5).
   String? _currentSideFor(WorkoutExercise exercise) {
-    if (!exercise.exercise.perSide) {
+    if (!exercise.exercise.tracksSides) {
       return null;
     }
     return currentSide.value ?? 'left';

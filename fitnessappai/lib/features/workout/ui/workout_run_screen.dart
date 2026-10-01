@@ -471,7 +471,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     final holdElapsed = workout.holdElapsedSeconds.value;
     final holdTarget = workout.holdTargetSeconds.value;
     final holdRunning = workout.holdRunning.value;
-    final effectiveSide = exercise.exercise.perSide
+    final effectiveSide = exercise.exercise.tracksSides
         ? (workout.currentSide.value ?? 'left')
         : null;
 
