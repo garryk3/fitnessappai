@@ -85,7 +85,7 @@ class _FakeReminderService extends ReminderService {
 }
 
 /// Хранилище настроек звука в памяти (47.5).
-class _FakeSoundStore implements SoundSettingsStore {
+class _FakeSoundStore extends SoundSettingsStore {
   bool enabled = true;
   String? filePath;
 
@@ -224,9 +224,10 @@ void main() {
       expect(find.text('Звук напоминаний'), findsOneWidget);
       expect(find.text('Звук уведомлений о тренировках'), findsOneWidget);
       expect(find.byType(SoundSettingsSection), findsNWidgets(2));
-      // Подсказка честно предупреждает об ограничении системного уведомления.
+      // Подсказка честно предупреждает, что при недоступном файле уведомления
+      // придут со стандартным сигналом (48.1).
       expect(
-        find.textContaining('на некоторых версиях Android'),
+        find.textContaining('со стандартным сигналом приложения'),
         findsOneWidget,
       );
     });

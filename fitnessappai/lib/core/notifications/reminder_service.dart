@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -91,6 +92,10 @@ class ReminderService {
   bool _soundEnabled = true;
   String? _soundFilePath;
 
+  /// Прочитает ли [_soundFilePath] системный процесс, играющий звук канала
+  /// (48.1). Пока неизвестно — считаем, что прочитает.
+  bool _soundFileSystemReadable = true;
+
   static const String _channelId = 'workout_reminders';
   static const String _channelName = 'Напоминания о тренировках';
   static const String _channelDescription =
@@ -99,6 +104,10 @@ class ReminderService {
   static const String _soundName = 'notification';
 
   bool _initialized = false;
+
+  /// Инициализация в процессе: параллельные вызовы [initialize] ждут её,
+  /// а не запускают вторую (см. [initialize]).
+  Future<void>? _initializing;
 
   void Function(int programDayId)? _onReminderTapped;
   int? _pendingProgramDayId;
@@ -209,10 +218,23 @@ class ReminderService {
   /// Разрешения (уведомления, точные будильники) при старте не запрашивает —
   /// это делается явно из экрана «Настройки», чтобы не открывать системные
   /// диалоги/экраны помимо воли пользователя.
-  Future<void> initialize() async {
-    if (_initialized) {
-      return;
+  Future<void> initialize() {
+    final inFlight = _initializing;
+    if (inFlight != null) {
+      return inFlight;
     }
+    if (_initialized) {
+      return Future.value();
+    }
+    // Параллельные вызовы ждут одну инициализацию: [_loadSoundSettings] может
+    // переносить файл звука, и два конкурентных переноса скопировали бы один
+    // файл в одну цель, а удалили бы исходник дважды (48.1).
+    return _initializing = _initialize().whenComplete(() {
+      _initializing = null;
+    });
+  }
+
+  Future<void> _initialize() async {
     await _initTimeZone();
     await _loadSoundSettings();
     const settings = InitializationSettings(
@@ -272,7 +294,12 @@ class ReminderService {
       return;
     }
     _soundEnabled = await settings.isEnabled();
+    // Файл, выбранный до 48.1, лежит в приватном хранилище и системе
+    // недоступен — репозиторий переносит его сам, владельцу перевыбирать файл
+    // не приходится.
+    await settings.ensureSoundFileReady();
     _soundFilePath = await settings.soundFilePath();
+    _soundFileSystemReadable = await settings.isSoundSystemReadable();
   }
 
   /// Применяет настройки звука напоминаний (задача 47.5).
@@ -283,9 +310,11 @@ class ReminderService {
   Future<void> applySoundSettings({
     required bool enabled,
     required String? filePath,
+    bool systemReadable = true,
   }) async {
     _soundEnabled = enabled;
     _soundFilePath = filePath;
+    _soundFileSystemReadable = systemReadable;
     await _recreateChannel();
     await rescheduleAll();
   }
@@ -319,17 +348,26 @@ class ReminderService {
   /// Звук уведомления: выбранный пользователем файл, если он есть и
   /// настройка включена; иначе встроенный raw-ресурс.
   ///
-  /// **Ограничение Android:** системный процесс воспроизводит звук канала
-  /// самостоятельно, поэтому файл должен быть ему доступен. Для файлов в
-  /// приватном хранилище приложения это выполняется не на всех прошивках —
-  /// в таком случае уведомление приходит без звука. Выбранный файл при этом
-  /// всегда используется для предпрослушивания в настройках.
+  /// **Ограничение Android:** звук канала воспроизводит системный процесс, а не
+  /// приложение, поэтому файл должен быть ему доступен для чтения. Выбранный
+  /// файл копируется во внешнюю директорию приложения именно поэтому (48.1);
+  /// если системе он недоступен (копирование не удалось, файл удалён
+  /// пользователем), канал получает встроенный raw-ресурс — уведомление
+  /// приходит со стандартным сигналом приложения, а не молчит.
   AndroidNotificationSound? get _androidSound {
     if (!_soundEnabled) {
       return null;
     }
     final file = _soundFilePath;
     if (file == null || file.isEmpty || !File(file).existsSync()) {
+      return const RawResourceAndroidNotificationSound(_soundName);
+    }
+    if (!_soundFileSystemReadable) {
+      developer.log(
+        'Файл звука напоминаний недоступен системе, канал использует '
+        'встроенный сигнал: $file',
+        name: 'ReminderService',
+      );
       return const RawResourceAndroidNotificationSound(_soundName);
     }
     return UriAndroidNotificationSound(Uri.file(file).toString());

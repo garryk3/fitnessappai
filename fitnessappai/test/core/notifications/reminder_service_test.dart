@@ -1157,6 +1157,63 @@ void main() {
       },
     );
 
+    test('файл, недоступный системе, не уходит в канал (48.1)', () async {
+      // Звук канала играет системный процесс: файл из приватного хранилища он
+      // не прочитает и подменит стандартным сигналом. Поэтому канал должен
+      // получить встроенный ресурс, а не недоступный URI.
+      final file = await soundFile();
+
+      await service.applySoundSettings(
+        enabled: true,
+        filePath: file.path,
+        systemReadable: false,
+      );
+
+      final sound = createdChannel().sound;
+      expect(sound, isA<RawResourceAndroidNotificationSound>());
+      expect(
+        (sound! as RawResourceAndroidNotificationSound).sound,
+        'notification',
+      );
+    });
+
+    test(
+      'при загрузке настроек файл готовится, а флаг читается (48.1)',
+      () async {
+        registerFallbackValue(const InitializationSettings());
+        when(
+          () => plugin.initialize(
+            settings: any(named: 'settings'),
+            onDidReceiveNotificationResponse: any(
+              named: 'onDidReceiveNotificationResponse',
+            ),
+          ),
+        ).thenAnswer((_) async => true);
+        when(
+          () => plugin.getNotificationAppLaunchDetails(),
+        ).thenAnswer((_) async => null);
+        final file = await soundFile();
+        final settings = _FakeSoundSettings()
+          ..filePath = file.path
+          ..systemReadable = false;
+        final withSound = ReminderService(
+          repository: repository,
+          plugin: plugin,
+          soundSettings: settings,
+        );
+
+        await withSound.initialize();
+
+        // Подготовка вызвана — репозиторий успел перенести файл в доступное
+        // системе хранилище; флаг прочитан и учтён в канале.
+        expect(settings.ensureCalls, 1);
+        expect(
+          createdChannel().sound,
+          isA<RawResourceAndroidNotificationSound>(),
+        );
+      },
+    );
+
     test('выключенный звук оставляет канал без звука', () async {
       await service.applySoundSettings(enabled: false, filePath: null);
 
@@ -1617,9 +1674,15 @@ void main() {
 }
 
 /// Хранилище настроек звука напоминаний для [ReminderService] (47.5).
-class _FakeSoundSettings implements SoundSettingsStore {
+class _FakeSoundSettings extends SoundSettingsStore {
   bool enabled = true;
   String? filePath;
+
+  /// Доступен ли файл системному процессу (48.1).
+  bool systemReadable = true;
+
+  /// Сколько раз вызывалась подготовка файла при загрузке настроек (48.1).
+  int ensureCalls = 0;
 
   @override
   Future<bool> isEnabled() async => enabled;
@@ -1632,6 +1695,12 @@ class _FakeSoundSettings implements SoundSettingsStore {
 
   @override
   Future<void> setSoundFile(String? path) async => filePath = path;
+
+  @override
+  Future<bool> isSoundSystemReadable() async => systemReadable;
+
+  @override
+  Future<void> ensureSoundFileReady() async => ensureCalls++;
 }
 
 /// Журнал догона пропущенных напоминаний в памяти (47.6).

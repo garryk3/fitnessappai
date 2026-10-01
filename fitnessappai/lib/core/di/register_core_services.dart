@@ -57,7 +57,12 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
     () => ReminderSoundSettingsRepository(sl.get<AppDatabase>()),
   );
   sl.registerLazySingleton<ReminderSoundService>(
-    () => AudioplayersSoundService(sl.get<ReminderSoundSettingsRepository>()),
+    // Свой встроенный сигнал: без него предпрослушивание в настройках играло
+    // бы звук таймера вместо сигнала уведомлений (48.1).
+    () => AudioplayersSoundService(
+      sl.get<ReminderSoundSettingsRepository>(),
+      defaultAssetPath: AudioplayersSoundService.notificationAssetPath,
+    ),
   );
   sl.registerLazySingleton<WakelockBannerRepository>(
     () => WakelockBannerRepository(sl.get<AppDatabase>()),

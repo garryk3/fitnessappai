@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:audio_session/audio_session.dart' hide AndroidAudioFocus;
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 
@@ -34,16 +35,23 @@ abstract class SoundService {
 }
 
 /// Реализация [SoundService] на `audioplayers` + `audio_session`: встроенный
-/// ассет (звук окончания таймера) или выбранный пользователем файл из настроек.
+/// ассет или выбранный пользователем файл из настроек.
 ///
 /// Экземпляр работает с любым [SoundSettingsStore], поэтому тем же классом
-/// проигрывается предпрослушивание сигнала напоминаний (задача 47.5).
+/// проигрывается предпрослушивание сигнала напоминаний (задача 47.5). Встроенный
+/// сигнал задаётся параметром `defaultAssetPath`: у таймеров и у напоминаний он
+/// разный, иначе предпрослушивание в настройках звучало бы не тем, что услышит
+/// владелец (задача 48.1).
 ///
 /// Аудио-фокус управляется через [AudioSession] с типом `gainTransientMayDuck`
 /// (приглушение чужой музыки вместо полной остановки), поэтому `audioplayers`
 /// не запрашивает фокус сам (`audioFocus: none`).
 class AudioplayersSoundService implements SoundService {
-  AudioplayersSoundService(this._repository) {
+  AudioplayersSoundService(
+    this._repository, {
+    String defaultAssetPath = timerAssetPath,
+    // ignore: prefer_initializing_formals -- имя параметра публичное.
+  }) : _defaultAssetPath = defaultAssetPath {
     _player.onPlayerStateChanged.listen((state) {
       final playing = state == PlayerState.playing;
       _isPlaying = playing;
@@ -54,9 +62,23 @@ class AudioplayersSoundService implements SoundService {
     });
   }
 
-  static const String defaultAssetPath = 'sounds/timer.mp3';
+  /// Встроенный сигнал окончания таймеров — дефолт этого класса.
+  static const String timerAssetPath = 'sounds/timer.mp3';
+
+  /// Встроенный сигнал напоминаний о тренировках.
+  ///
+  /// Побайтовая копия `android/app/src/main/res/raw/notification.mp3` — того же
+  /// raw-ресурса, которым настроен канал уведомлений. Ассет нужен потому, что
+  /// raw-ресурс из Dart недоступен, а предпрослушивание в настройках обязано
+  /// звучать так же, как настоящее напоминание (задача 48.1). Менять файл надо
+  /// в обоих местах сразу.
+  static const String notificationAssetPath = 'sounds/notification.mp3';
 
   final SoundSettingsStore _repository;
+
+  /// Встроенный сигнал этого экземпляра: таймеры и напоминания звучат по
+  /// умолчанию по-разному (48.1).
+  final String _defaultAssetPath;
   final AudioPlayer _player = AudioPlayer();
   AudioSession? _session;
   bool _isPlaying = false;
@@ -134,12 +156,7 @@ class AudioplayersSoundService implements SoundService {
     }
     try {
       await _activateFocus();
-      final filePath = await repository.soundFilePath();
-      if (filePath != null && filePath.isNotEmpty) {
-        await _player.play(DeviceFileSource(filePath));
-      } else {
-        await _player.play(AssetSource(defaultAssetPath));
-      }
+      await _player.play(resolveSource(await repository.soundFilePath()));
     } catch (e) {
       log('Не удалось воспроизвести звук таймера', error: e);
     }
@@ -149,15 +166,28 @@ class AudioplayersSoundService implements SoundService {
   Future<void> preview() async {
     try {
       await _activateFocus();
-      final filePath = await _repository.soundFilePath();
-      if (filePath != null && filePath.isNotEmpty) {
-        await _player.play(DeviceFileSource(filePath));
-      } else {
-        await _player.play(AssetSource(defaultAssetPath));
-      }
+      await _player.play(resolveSource(await _repository.soundFilePath()));
     } catch (e) {
       log('Не удалось воспроизвести звук (preview)', error: e);
     }
+  }
+
+  /// Источник звука этого экземпляра: файл из настроек, если он выбран, иначе
+  /// его встроенный сигнал.
+  Source resolveSource(String? filePath) =>
+      resolveSourceFor(filePath, _defaultAssetPath);
+
+  /// Выбор источника звука по правилу «файл важнее встроенного сигнала».
+  ///
+  /// Статический метод, а не метод экземпляра: конструктор создаёт
+  /// `AudioPlayer`, а тот на тестовой платформе требует платформенного канала.
+  /// Проверять нужно правило выбора, а не воспроизведение.
+  @visibleForTesting
+  static Source resolveSourceFor(String? filePath, String defaultAssetPath) {
+    if (filePath != null && filePath.isNotEmpty) {
+      return DeviceFileSource(filePath);
+    }
+    return AssetSource(defaultAssetPath);
   }
 
   @override

@@ -44,6 +44,7 @@ class SoundSettingsController {
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> enabled = Signal(true);
   final Signal<String?> soundFilePath = Signal(null);
+  final Signal<bool> soundSystemReadable = Signal(true);
   final Signal<String?> statusText = Signal(null);
   final Signal<bool> hasError = Signal(false);
   final Signal<bool> isPlaying = Signal(false);
@@ -52,7 +53,7 @@ class SoundSettingsController {
   Future<void> load() async {
     try {
       enabled.value = await _repository.isEnabled();
-      soundFilePath.value = await _repository.soundFilePath();
+      await _reloadFile();
     } finally {
       isLoading.value = false;
     }
@@ -84,8 +85,8 @@ class SoundSettingsController {
       soundFilePath.value = path;
       await _repository.setSoundFile(path);
       // Путь мог измениться: репозиторий копирует файл в постоянное хранилище.
-      soundFilePath.value = await _repository.soundFilePath() ?? path;
-      statusText.value = 'Звук сохранён';
+      await _reloadFile();
+      statusText.value = _savedStatus();
       await _notifyChanged();
       hasError.value = false;
     } catch (error) {
@@ -96,11 +97,29 @@ class SoundSettingsController {
 
   /// Сбрасывает выбор на встроенный сигнал.
   Future<void> resetSoundFile() async {
-    soundFilePath.value = null;
     await _repository.setSoundFile(null);
+    // Путь и читаемость перечитываем: после сброса файла нет, а значит и
+    // вопроса о его доступности системе тоже (48.1).
+    await _reloadFile();
     statusText.value = 'Стандартный сигнал';
     hasError.value = false;
     await _notifyChanged();
+  }
+
+  /// Перечитывает путь и читаемость файла из хранилища.
+  Future<void> _reloadFile() async {
+    soundFilePath.value = await _repository.soundFilePath();
+    soundSystemReadable.value = await _repository.isSoundSystemReadable();
+  }
+
+  /// Статус после сохранения файла: предупреждаем, если системное уведомление
+  /// не сможет использовать выбранный файл (48.1).
+  String _savedStatus() {
+    if (soundFilePath.value == null || soundSystemReadable.value) {
+      return 'Звук сохранён';
+    }
+    return 'Звук сохранён, но системе недоступен — уведомления будут '
+        'со стандартным сигналом';
   }
 
   /// Сообщает подписчику об изменившихся настройках.
@@ -109,6 +128,7 @@ class SoundSettingsController {
       SoundSettingsSnapshot(
         enabled: enabled.value,
         filePath: soundFilePath.value,
+        systemReadable: soundSystemReadable.value,
       ),
     );
   }
