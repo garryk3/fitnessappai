@@ -7,7 +7,7 @@ import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 
 /// Хранилище-заглушка: держит настройки в памяти.
-class _FakeStore implements SoundSettingsStore {
+class _FakeStore extends SoundSettingsStore {
   bool enabled = true;
   String? filePath;
 
@@ -164,10 +164,98 @@ void main() {
     expect(controller.hasError.value, isTrue);
     expect(controller.statusText.value, contains('Ошибка выбора звука'));
   });
+
+  group('читаемость файла системой (48.1)', () {
+    test('файл, доступный системе, подтверждается обычным статусом', () async {
+      final readable = _ReadabilityStore(systemReadable: true);
+      controller = SoundSettingsController(
+        repository: readable,
+        pickFile: () async => '/cache/picked.mp3',
+        onChanged: (snapshot) async => applied.add(snapshot),
+      );
+
+      await controller.pickSoundFile();
+
+      expect(controller.soundSystemReadable.value, isTrue);
+      expect(controller.statusText.value, 'Звук сохранён');
+      expect(applied.single.systemReadable, isTrue);
+    });
+
+    test('недоступный системе файл попадает в статус и в снимок', () async {
+      // Канал уведомлений такой файл не воспроизведёт — молчаливый стандартный
+      // сигнал вводил владельца в заблуждение (48.1).
+      final private = _ReadabilityStore(systemReadable: false);
+      controller = SoundSettingsController(
+        repository: private,
+        pickFile: () async => '/cache/picked.mp3',
+        onChanged: (snapshot) async => applied.add(snapshot),
+      );
+
+      await controller.pickSoundFile();
+
+      expect(controller.soundSystemReadable.value, isFalse);
+      expect(controller.statusText.value, contains('системе недоступен'));
+      expect(applied.single.systemReadable, isFalse);
+    });
+
+    test('состояние читаемости подхватывается при загрузке', () async {
+      final private = _ReadabilityStore(systemReadable: false)
+        ..filePath = '/x.mp3';
+
+      controller = SoundSettingsController(repository: private);
+      await controller.load();
+
+      expect(controller.soundFilePath.value, '/x.mp3');
+      expect(controller.soundSystemReadable.value, isFalse);
+    });
+
+    test('сброс файла оставляет читаемость включённой', () async {
+      final private = _ReadabilityStore(systemReadable: false);
+      controller = SoundSettingsController(
+        repository: private,
+        onChanged: (snapshot) async => applied.add(snapshot),
+      );
+      await controller.load();
+
+      await controller.resetSoundFile();
+
+      expect(controller.soundSystemReadable.value, isTrue);
+      expect(applied.single.systemReadable, isTrue);
+    });
+  });
+}
+
+/// Хранилище с управляемой читаемостью файла для системного процесса.
+class _ReadabilityStore extends SoundSettingsStore {
+  _ReadabilityStore({required this.systemReadable});
+
+  bool systemReadable;
+  String? filePath;
+
+  @override
+  Future<bool> isEnabled() async => true;
+
+  @override
+  Future<String?> soundFilePath() async => filePath;
+
+  @override
+  Future<void> setEnabled(bool enabled) async {}
+
+  @override
+  Future<void> setSoundFile(String? path) async {
+    filePath = path;
+    // Сброс на встроенный сигнал: читаемость больше не про файл.
+    if (path == null) {
+      systemReadable = true;
+    }
+  }
+
+  @override
+  Future<bool> isSoundSystemReadable() async => systemReadable;
 }
 
 /// Хранилище, копирующее файл (как [ReminderSoundSettingsRepository]).
-class _CopyingStore implements SoundSettingsStore {
+class _CopyingStore extends SoundSettingsStore {
   String? filePath;
 
   @override

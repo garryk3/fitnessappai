@@ -105,6 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onChanged: (snapshot) => reminders.applySoundSettings(
             enabled: snapshot.enabled,
             filePath: snapshot.filePath,
+            systemReadable: snapshot.systemReadable,
           ),
         );
       } catch (_) {

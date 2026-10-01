@@ -289,7 +289,7 @@ abstract class AppLocalizations {
   /// No description provided for @reminderSoundHint.
   ///
   /// In ru, this message translates to:
-  /// **'Выбранный файл проигрывается при проверке в приложении. Системное уведомление использует его, только если система может прочитать файл — на некоторых версиях Android уведомление приходит без звука.'**
+  /// **'Выбранный файл проигрывается при проверке в приложении и используется в уведомлениях о тренировках. Если системе не удаётся прочитать файл, уведомления приходят со стандартным сигналом приложения.'**
   String get reminderSoundHint;
 
   /// No description provided for @soundDefaultLabel.

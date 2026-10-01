@@ -4,7 +4,7 @@ import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 
 /// Хранилище настроек звуковых сигналов в таблице `app_meta`.
-class SoundSettingsRepository implements SoundSettingsStore {
+class SoundSettingsRepository extends SoundSettingsStore {
   SoundSettingsRepository(this._db);
 
   static const String enabledKey = 'sound_enabled';
