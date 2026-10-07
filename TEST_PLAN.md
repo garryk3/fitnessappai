@@ -105,6 +105,7 @@
 | TC-099 | План (неделя) | Широкая раскладка (планшет/десктоп): тап по заголовку дня с тренировкой открывает лист действий (47.16) | | |
 | TC-100 | Напоминания / logcat | Нет двойного показа: после тапа по уведомлению догон не срабатывает, «разблокировка без открытия» закрывается проверкой трея, неактивные программы не перевзводятся (48.8) | | |
 | TC-101 | Настройки / уведомления | Исключение из оптимизации батареи по кнопке: системный диалог, статус в плитке, выдача через dumpsys; лог разрешений на старте (48.7) | | |
+| TC-102 | Сборка / обновление | Подпись release-ключом, обновление версии поверх без удаления, сохранность данных, установка APK из релиза (48.6) | | |
 
 ## Статусы
 
@@ -1899,3 +1900,29 @@ adb -s emulator-5554 logcat -d | grep -E "ReminderService|\[bootstrap\]|\[SyncSe
 - **Статус:**
 - **Дата:**
 - **Заметки:** реализация 48.7 — `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` вернулся в манифест, но как **запрашиваемое по кнопке** исключение (сознательный размен против 46.7, где мёртвое разрешение убрали). Плитка живёт в `_NotificationsSection`, статус и запрос идут через `BatteryOptimizationGateway` (`lib/core/notifications/battery_optimization.dart`) — свой `MethodChannel('com.example.fitnessappai/battery')` в `MainActivity.kt`, потому что `flutter_local_notifications` 22.3 API оптимизации батареи не имеет. На не-Android платформах шлюз возвращает `null` и плитка не показывается. Покрыто `manifest_permissions_test`, `settings_screen_test` (статус неизвестен/включена/узкий экран/сбой запроса), `reminder_service_test` (лог разрешений на старте + сбой чтения не роняет инициализацию). **Проверено на эмуляторе `Pixel_10_Pro` (Android 16) 2026-10-07:** `USE_EXACT_ALARM: granted=true`, `SCHEDULE_EXACT_ALARM` — `default mode: default` (операций нет), `POST_NOTIFICATIONS: granted=true` — то есть на AOSP всё выдано и задержка могла бы быть только от Doze/OEM; системный диалог открывается и «Allow» даёт запись в `deviceidle whitelist`; цепочка «кнопка → диалог → `onActivityResult` → `true` в Dart» прогнана временным интеграционным тестом на эмуляторе (перед удалением). Устройство владельца (Xiaomi) не проверялось — эмулятор даёт «всё хорошо», реальную причину задержки нужно снять на телефоне (см. рабочий план п.1).
+
+## TC-102 — Подпись APK и обновление версии без ручного удаления (48.6)
+
+- **Экран/область:** сборка (`flutter build apk --release`), «Настройки → Загрузить новую версию», системная установка APK, `adb`
+- **Предусловия:** Android 12+ (эмулятор `Pixel_10_Pro`, Android 16) или физическое устройство; `adb` доступен; в репозитории лежат `fitnessappai/android/key.properties` и `fitnessappai/android/app/upload-keystore.jks` (временный ключ `TEMP_KEY`).
+- **Шаги:**
+  1. Собрать `flutter build apk --release` и проверить подпись: `apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk`. DN — `CN=fitnessappai temporary release key (TEMP_KEY), O=fitnessappai, C=RU`, SHA-256 `5cd0ac2dd4c5c2c68919811a23a316e052a2213b5c96654db07e38d3485839c2` (в отчёте — фактический, он должен совпасть с таблицей отпечатков в PLAN.md, раздел 48.6 п.6).
+  2. Проверить откат: временно убрать `android/key.properties`, повторить сборку — она должна пройти и подписать APK debug-ключом (`C=US, O=Android, CN=Android Debug`); вернуть файл на место.
+  3. Установить релиз-сборку с малым номером версии: `flutter build apk --release --build-number=1000`, `adb install -r`. Зафиксировать `adb shell dumpsys package com.example.fitnessappai | grep -E "versionCode=|firstInstallTime"`.
+  4. Собрать ту же сборку с `--build-number=1001` и поставить `adb install -r` поверх (без `-d`).
+  5. Проверить сохранность данных: на отладочной паре (например, `1002 → 1003` через `flutter build apk --debug --build-number=…`) перед обновлением записать маркер в данные приложения (`adb shell "run-as com.example.fitnessappai sh -c 'echo marker > files_marker.txt'"`) и запомнить `stat app_flutter/fitnessappai.sqlite`; после `install -r` прочитать маркер и `stat` ещё раз.
+  6. Запустить обновлённое приложение (`adb shell am start -n com.example.fitnessappai/.MainActivity`), снять `adb logcat -d | grep ReminderService`.
+  7. Ограничение смены подписи: установить APK с другой подписью поверх текущего (`adb install -r app-debug.apk` поверх release-сборки или наоборот) — ожидается отказ системы.
+  8. Сценарий обновления из приложения: на устройствах, где стоит версия со **старой (debug) подписью**, новую установить нельзя без удаления — показать владельцу. На устройствах, где уже стоит версия с новым ключом: «Настройки → Загрузить новую версию» → браузер скачивает `releases/latest/download/app-release.apk` → системный диалог установки → «Обновить» (не «Удалить»).
+- **Ожидаемый результат:**
+  1. Подпись — `TEMP_KEY`, не `CN=Android Debug`.
+  2. Без `key.properties` сборка не падает, подписывается debug.
+  3–4. `install -r` проходит: `versionCode` вырос, **`firstInstallTime` не изменился** (обновление на месте, без удаления), `lastUpdateTime` обновился.
+  5. Маркер и `app_flutter/fitnessappai.sqlite` (180224 байт) на месте с прежним mtime — данные пережили обновление.
+  6. Приложение стартует и работает с прежними данными (`[ReminderService] …` в logcat), вылетов нет.
+  7. Отказ `INSTALL_FAILED_UPDATE_INCOMPATIBLE: … signatures do not match` — корректный отказ, а не баг.
+  8. Обновление из приложения ставит APK поверх (кнопка «Обновить»), приложение после обновления запускается без ручного удаления старой версии.
+- **Фактический результат:** (заполняется после прогона)
+- **Статус:**
+- **Дата:**
+- **Заметки:** реализация 48.6 — временный (не секретный) ключ `upload-keystore.jks` + `key.properties` лежат в git намеренно, `build.gradle.kts` читает их и откатывается на debug без файла; CI (`release.yml`) секретов не требует. Пароль `keyPassword` обязан совпадать с `storePassword` (PKCS12). В PLAN.md 48.6 п.6 — таблица SHA-256 отпечатков трёх подписей (опубликованный debug `v1.0.25-beta`, локальный debug, новый release). Шаги 1–7 выполнены на эмуляторе 2026-10-07 до публикации; шаг 8 — после публикации `v1.0.26-beta`.
