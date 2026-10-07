@@ -38,8 +38,9 @@ class ActiveProgramInfo {
   /// Статус тренировки на сегодня, если ближайший день совпадает с сегодняшним.
   final WeekPlanStatus? todayStatus;
 
-  /// Процент выполнения программы на текущей неделе: выполненные/
-  /// закреплённые дни недели (0..100), `null` — закреплённых дней нет.
+  /// Процент выполнения программы на текущей неделе; для программы с
+  /// непривязанными днями (48.2) — доля сессий недели от всех дней программы
+  /// и поэтому может превышать 100; `null` — у программы нет дней.
   final int? weeklyProgressPercent;
 }
 
@@ -66,6 +67,11 @@ class HomeController {
   final DateTime Function() _now;
   late final ChangeReloadSubscription _reloadSubscription;
 
+  /// Сессии текущей недели, выгружаются лениво и живут в рамках одного
+  /// [_load] (задача 48.2): в цикле по активным программам запрос к БД один,
+  /// а не по одному на программу.
+  List<WorkoutSession>? _weekSessions;
+
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> hasPrograms = Signal(false);
 
@@ -79,6 +85,7 @@ class HomeController {
 
   Future<void> _load() async {
     isLoading.value = true;
+    _weekSessions = null;
     try {
       final allActive = await programRepository.getActivePrograms();
       hasPrograms.value =
@@ -96,7 +103,11 @@ class HomeController {
         }
         final upcomingDay = _findUpcomingDay(detail.days, todayWeekday);
         final exerciseNames = await _exerciseNamesOf(detail, upcomingDay);
-        final progress = await _weeklyProgress(detail.days, weekStart);
+        final progress = await _weeklyProgress(
+          detail.days,
+          weekStart,
+          program.id!,
+        );
 
         // Вычисляем статус тренировки на сегодня.
         WeekPlanStatus? todayStatus;
@@ -171,18 +182,43 @@ class HomeController {
     return null;
   }
 
-  /// Доля выполненных закреплённых дней недели: для каждого дня программы с
-  /// [ProgramDay.dayOfWeek] ищем сессию за текущую неделю [weekStart].
+  /// Доля выполнения программы за текущую неделю [weekStart].
+  ///
+  /// Два правила (задача 48.2):
+  ///
+  /// - **Программа с непривязанными днями** (`dayOfWeek == null`, появились в
+  ///   47.1): дни не привязаны к дням недели, поэтому «сколько из них
+  ///   выполнено» по расписанию посчитать нельзя — знаменатель равен числу
+  ///   дней программы, а числитель — число выполненных за неделю **сессий**
+  ///   этой программы. Числитель считается по `programId`, а не по
+  ///   `programDayId`: сессия пережит удаление дня, и по `programId` одна и
+  ///   та же тренировка не удваивается. Значение может превысить 100 %
+  ///   (сделал больше, чем дней в программе) — это осмысленно, кольцо
+  ///   ограничивает только саму дугу.
+  /// - **Полностью привязанная программа:** прежнее правило — доля
+  ///   выполненных закреплённых дней из числа закреплённых.
   Future<int?> _weeklyProgress(
     List<ProgramDayDetail> days,
     DateTime weekStart,
+    int programId,
   ) async {
-    final assigned = days.where((d) => d.day.dayOfWeek != null).toList();
-    if (assigned.isEmpty) {
+    if (days.isEmpty) {
       return null;
     }
+    if (days.any((d) => d.day.dayOfWeek == null)) {
+      final sessions = _weekSessions ??= await workoutRepository
+          .getSessionsBetween(
+            weekStart,
+            weekStart.add(const Duration(days: 7)),
+          );
+      final performed = sessions.where((s) => s.programId == programId).length;
+      return weeklyProgressPercent(
+        performedDays: performed,
+        assignedDays: days.length,
+      );
+    }
     var performed = 0;
-    for (final detail in assigned) {
+    for (final detail in days) {
       final id = detail.day.id;
       if (id == null) {
         // День без id не мог иметь сессий.
@@ -195,7 +231,7 @@ class HomeController {
     }
     return weeklyProgressPercent(
       performedDays: performed,
-      assignedDays: assigned.length,
+      assignedDays: days.length,
     );
   }
 
@@ -234,8 +270,15 @@ DateTime _dateOnly(DateTime value) =>
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
-/// Процент выполнения программы за неделю: [performedDays] выполненных
-/// закреплённых дней из [assignedDays]. `null`, если закреплённых дней нет.
+/// Процент выполнения программы за неделю: [performedDays] выполненных из
+/// [assignedDays].
+///
+/// `assignedDays` — знаменатель правила из [_weeklyProgress]: число дней
+/// программы для программы с непривязанными днями, число закреплённых дней
+/// для полностью привязанной. `null` — знаменатель пуст.
+///
+/// Значение **не ограничено сверху**: для программы с непривязанными днями
+/// выполнить можно больше, чем дней в программе (48.2).
 int? weeklyProgressPercent({
   required int performedDays,
   required int assignedDays,

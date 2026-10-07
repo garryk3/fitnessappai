@@ -578,16 +578,62 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('без закреплённых дней кольцо прогресса не показывается', (
+  testWidgets('48.2: программа с непривязанными днями — кольцо показывается', (
     WidgetTester tester,
   ) async {
-    final (program, _) = await createProgramWithDays('Без дней', [null]);
+    final (program, _) = await createProgramWithDays('Без дней', [null, null]);
     await programRepo.setActive(program.id!);
 
     await pumpHome(tester);
 
     expect(find.text('Без дней'), findsOneWidget);
-    expect(find.textContaining('%'), findsNothing);
+    expect(find.text('0%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('48.2: сессии недели по непривязанной программе → доля дней', (
+    WidgetTester tester,
+  ) async {
+    final (program, days) = await createProgramWithDays('Свободная', [
+      null,
+      null,
+      null,
+    ]);
+    await programRepo.setActive(program.id!);
+    // Две сессии за неделю при трёх днях программы.
+    for (var i = 0; i < 2; i++) {
+      await saveDaySession(
+        program.id!,
+        'Свободная',
+        days[i].id!,
+        DateTime(2026, 8, 10),
+      );
+    }
+
+    await pumpHome(tester);
+
+    expect(find.text('67%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('48.2: больше 100 % — дуга ограничена, подпись реальная', (
+    WidgetTester tester,
+  ) async {
+    final (program, days) = await createProgramWithDays('Частая', [null, null]);
+    await programRepo.setActive(program.id!);
+    // Три сессии за неделю при двух днях программы.
+    for (var i = 0; i < 3; i++) {
+      await saveDaySession(
+        program.id!,
+        'Частая',
+        days.first.id!,
+        DateTime(2026, 8, 10 + i),
+      );
+    }
+
+    await pumpHome(tester);
+
+    expect(find.text('150%'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

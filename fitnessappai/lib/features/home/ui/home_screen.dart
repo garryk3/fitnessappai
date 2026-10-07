@@ -194,8 +194,9 @@ class _ActiveProgramCard extends StatelessWidget {
   final VoidCallback? onStart;
   final WeekPlanStatus? todayStatus;
 
-  /// Процент выполнения программы за неделю (0..100) или `null`, когда
-  /// закреплённых дней нет — тогда кольцо прогресса не показывается.
+  /// Процент выполнения программы за неделю или `null`, когда считать нечего
+  /// (у программы нет дней). Значение может быть больше 100 — так считается
+  /// прогресс программы с непривязанными днями (48.2).
   final int? weeklyProgressPercent;
 
   @override
@@ -404,7 +405,9 @@ class _EmptyHint extends StatelessWidget {
 class _ProgressRing extends StatelessWidget {
   const _ProgressRing({required this.percent, required this.label});
 
-  /// Процент выполнения 0..100.
+  /// Процент выполнения: для полностью привязанной программы 0..100, для
+  /// программы с непривязанными днями — больше 100 (48.2). Дуга ниже
+  /// клампится в полный оборот, подпись показывает реальное значение.
   final int percent;
 
   /// А11y-подпись кольца.
@@ -423,7 +426,10 @@ class _ProgressRing extends StatelessWidget {
           children: [
             CustomPaint(
               painter: _RingPainter(
-                progress: percent / 100,
+                // Процент может превышать 100 (программа с непривязанными
+                // днями, 48.2): дуга кольца ограничена полным оборотом, а
+                // подпись и aria-label показывают реальное значение.
+                progress: (percent / 100).clamp(0.0, 1.0),
                 trackColor: theme.colorScheme.surfaceContainerHighest,
                 progressColor: theme.colorScheme.primary,
                 strokeWidth: 5,
