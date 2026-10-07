@@ -114,6 +114,7 @@
   "weekPlanEmpty": "Нет запланированных тренировок",
   "weekPlanHint": "Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане",
   "weekPlanNextWeek": "Следующая неделя",
+  "weekPlanPrevWeek": "Предыдущая неделя",
   "weekPlanPrevMonth": "Предыдущий месяц",
   "weekPlanNextMonth": "Следующий месяц",
   "weekPlanQuickStart": "Быстрый старт",

@@ -778,8 +778,8 @@ Future<void> expectWorkoutCount(WidgetTester tester, String count) async {
 }
 
 /// Перечитывает план: экран плана загружает данные при создании, поэтому
-/// достаточно уйти на соседнюю вкладку и вернуться (перехода на прошлые недели
-/// больше нет — задача 47.10).
+/// достаточно уйти на соседнюю вкладку и вернуться (стрелки недель не трогаем,
+/// от них ничего не зависит — 47.10, 48.3).
 Future<void> reloadWeekPlan(WidgetTester tester) async {
   await goToTab(tester, Icons.fitness_center_outlined);
   await goToTab(tester, Icons.event_note_outlined);
@@ -1141,6 +1141,25 @@ void main() {
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
+
+    // Переход недель туда-обратно (48.3): вперёд до следующей, назад на
+    // текущую — стрелка «назад» включается, как только неделя не текущая.
+    String weekLabel() => tester
+        .widgetList<Text>(
+          find.byWidgetPredicate(
+            (w) => w is Text && (w.data?.contains('–') ?? false),
+          ),
+        )
+        .first
+        .data!;
+    final initialWeek = weekLabel();
+    await tester.tap(find.byTooltip('Следующая неделя'));
+    await tester.pumpAndSettle();
+    expect(weekLabel(), isNot(initialWeek));
+    await tester.tap(find.byTooltip('Предыдущая неделя'));
+    await tester.pumpAndSettle();
+    expect(weekLabel(), initialWeek);
+
     // Сегодня: старт и пропуск. Соседний день: только перенос. Удаления у дня
     // программы нет (47.1).
     expect(find.text('Начать'), findsOneWidget);

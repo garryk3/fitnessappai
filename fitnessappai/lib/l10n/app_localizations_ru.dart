@@ -306,6 +306,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanNextWeek => 'Следующая неделя';
 
   @override
+  String get weekPlanPrevWeek => 'Предыдущая неделя';
+
+  @override
   String get weekPlanPrevMonth => 'Предыдущий месяц';
 
   @override

@@ -152,20 +152,73 @@ void main() {
     expect(items, hasLength(1));
   });
 
-  test('навигация плана — только вперёд на следующую неделю (47.10)', () async {
+  test(
+    'навигация плана: вперёд до следующей, назад — по границе (47.10, 48.3)',
+    () async {
+      await controller.refresh();
+      // Сегодня — понедельник 10.08.2026, отображается текущая неделя.
+      expect(controller.weekStart.value, DateTime(2026, 8, 10));
+      expect(controller.canGoNextWeek, isTrue);
+      // Активных программ и сессий нет — смотреть прошлое нечего.
+      expect(controller.canGoPrevWeek, isFalse);
+
+      controller.shiftWeek(1);
+      expect(controller.weekStart.value, DateTime(2026, 8, 17));
+      expect(controller.canGoNextWeek, isFalse);
+      // Даже без истории из будущей недели можно вернуться на текущую.
+      expect(controller.canGoPrevWeek, isTrue);
+
+      // Дальше вперёд нельзя: неделя не выходит за пределы текущей+следующей.
+      controller.shiftWeek(1);
+      expect(controller.weekStart.value, DateTime(2026, 8, 24));
+      expect(controller.canGoNextWeek, isFalse);
+      expect(controller.canGoPrevWeek, isTrue);
+    },
+  );
+
+  test('назад — до недели активации программы, дальше нельзя (48.3)', () async {
+    // Программа активирована 01.01.2024 (понедельник) — это и есть граница.
+    await createLinkedDay(DateTime.monday);
     await controller.refresh();
-    // Сегодня — понедельник 10.08.2026, отображается текущая неделя.
-    expect(controller.weekStart.value, DateTime(2026, 8, 10));
-    expect(controller.canGoNextWeek, isTrue);
 
-    controller.shiftWeek(1);
-    expect(controller.weekStart.value, DateTime(2026, 8, 17));
-    expect(controller.canGoNextWeek, isFalse);
+    expect(controller.canGoPrevWeek, isTrue);
+    controller.shiftWeek(-1);
+    expect(controller.weekStart.value, DateTime(2026, 8, 3));
+    expect(controller.canGoPrevWeek, isTrue);
 
-    // Дальше вперёд нельзя: неделя не выходит за пределы текущей+следующей.
-    controller.shiftWeek(1);
-    expect(controller.weekStart.value, DateTime(2026, 8, 24));
-    expect(controller.canGoNextWeek, isFalse);
+    // Граница достижима, но перейти за неё нельзя.
+    controller.weekStart.value = DateTime(2024, 1, 8);
+    await controller.refresh();
+    expect(controller.canGoPrevWeek, isTrue);
+
+    controller.weekStart.value = DateTime(2024, 1, 1);
+    await controller.refresh();
+    expect(controller.canGoPrevWeek, isFalse);
+  });
+
+  test('нижняя граница назад учитывает и первую сессию (48.3)', () async {
+    // Программ нет, есть одна разовая сессия 06.07.2026 (понедельник).
+    await WorkoutRepository(db).saveSession(
+      WorkoutSession(
+        programName: 'Разовая',
+        dayIndex: 0,
+        performedDate: DateTime(2026, 7, 6),
+        startedAt: DateTime(2026, 7, 6, 18),
+        endedAt: DateTime(2026, 7, 6, 18, 40),
+      ),
+      const [],
+    );
+    await controller.refresh();
+
+    expect(controller.canGoPrevWeek, isTrue);
+
+    controller.weekStart.value = DateTime(2026, 7, 13);
+    await controller.refresh();
+    expect(controller.canGoPrevWeek, isTrue);
+
+    controller.weekStart.value = DateTime(2026, 7, 6);
+    await controller.refresh();
+    expect(controller.canGoPrevWeek, isFalse);
   });
 
   test(
