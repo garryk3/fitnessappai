@@ -640,6 +640,12 @@ abstract class AppLocalizations {
   /// **'Следующая неделя'**
   String get weekPlanNextWeek;
 
+  /// No description provided for @weekPlanPrevWeek.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предыдущая неделя'**
+  String get weekPlanPrevWeek;
+
   /// No description provided for @weekPlanPrevMonth.
   ///
   /// In ru, this message translates to:

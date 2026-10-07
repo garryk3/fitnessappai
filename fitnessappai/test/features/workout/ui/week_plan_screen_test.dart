@@ -201,36 +201,83 @@ void main() {
     expect(find.text('Нет запланированных тренировок'), findsOneWidget);
   });
 
-  testWidgets('переключение недели: только вперёд (47.10)', (tester) async {
+  testWidgets('переключение недели: назад есть, включается по границе (48.3)', (
+    tester,
+  ) async {
     await pumpPlan(tester);
 
     expect(find.byTooltip('Следующая неделя'), findsOneWidget);
-    // Вид «Месяц» и переход на прошлые недели убраны (47.10).
-    expect(find.byTooltip('Предыдущая неделя'), findsNothing);
+    // Кнопка «назад» есть всегда: на текущей неделе данных для просмотра
+    // прошлого нет (нет ни активной программы, ни сессий) — она выключена.
+    expect(find.byTooltip('Предыдущая неделя'), findsOneWidget);
+    expect(weekSwitcherArrow(tester, 'Предыдущая неделя').onPressed, isNull);
+    expect(find.text('10–16 августа'), findsOneWidget);
+    // Вид «Месяц» убран в 47.10 и не возвращается (48.3 возвращает только
+    // просмотр прошлых недель).
     expect(find.text('Месяц'), findsNothing);
     // Сегмент «Неделя» тоже исчез: переключать режим больше нечем.
     expect(find.text('Неделя'), findsNothing);
   });
 
-  testWidgets('после перехода на следующую неделю стрелка исчезает (47.10)', (
+  testWidgets('вперёд и назад: стрелки включаются по границам недели (48.3)', (
     tester,
   ) async {
     await pumpPlan(tester);
 
-    IconButton arrow(String tooltip) => tester.widget<IconButton>(
-      find.ancestor(
-        of: find.byTooltip(tooltip),
-        matching: find.byType(IconButton),
-      ),
-    );
-    expect(arrow('Следующая неделя').onPressed, isNotNull);
+    expect(weekSwitcherArrow(tester, 'Следующая неделя').onPressed, isNotNull);
+    expect(weekSwitcherArrow(tester, 'Предыдущая неделя').onPressed, isNull);
 
     await tester.tap(find.byTooltip('Следующая неделя'));
     await tester.pumpAndSettle();
 
-    expect(arrow('Следующая неделя').onPressed, isNull);
-    expect(find.byTooltip('Предыдущая неделя'), findsNothing);
+    expect(find.text('17–23 августа'), findsOneWidget);
+    // Дальше вперёд некуда (47.10), но назад — на текущую неделю — можно.
+    expect(weekSwitcherArrow(tester, 'Следующая неделя').onPressed, isNull);
+    expect(weekSwitcherArrow(tester, 'Предыдущая неделя').onPressed, isNotNull);
+
+    await tester.tap(find.byTooltip('Предыдущая неделя'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('10–16 августа'), findsOneWidget);
+    expect(weekSwitcherArrow(tester, 'Предыдущая неделя').onPressed, isNull);
+    expect(weekSwitcherArrow(tester, 'Следующая неделя').onPressed, isNotNull);
   });
+
+  testWidgets(
+    'прошлая неделя: только просмотр, действий и планирования нет (48.3)',
+    (tester) async {
+      // Программа активирована 01.01.2024 — нижняя граница навигации назад
+      // позволяет уйти на прошлую неделю.
+      await createDay(_weekdayAfter(fixedNow.weekday), name: 'Источник');
+      await pumpPlan(tester);
+
+      expect(
+        weekSwitcherArrow(tester, 'Предыдущая неделя').onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.byTooltip('Предыдущая неделя'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('3–9 августа'), findsOneWidget);
+
+      // Тренировка прошедшей недели видна, но её статус только для просмотра:
+      // кнопок «Начать»/«Перенести на сегодня» у неё нет.
+      expect(find.text('Источник'), findsOneWidget);
+      expect(find.text('Пропущено'), findsOneWidget);
+      expect(find.text('Перенести на сегодня'), findsNothing);
+      expect(find.text('Начать'), findsNothing);
+
+      // Пустой день прошлой недели не даёт запланировать тренировку.
+      await tester.tap(find.text('3').last);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(
+        find.text('Нельзя запланировать тренировку на прошедший день'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('показывает запланированный день со статусом и действиями', (
     tester,
@@ -854,8 +901,8 @@ void main() {
 
   testWidgets('запрет планирования на прошедшие даты (неделя)', (tester) async {
     await createDay(fixedNow.weekday, name: 'Сплит');
-    // Сегодня — среда 12.08.2026, поэтому вторник 11 августа прошёл (47.10:
-    // прошлые недели недоступны, guard проверяем внутри текущей).
+    // Сегодня — среда 12.08.2026, поэтому вторник 11 августа прошёл (guard
+    // действует и в текущей неделе, и в прошлых — 48.3).
     await pumpPlan(tester, now: DateTime(2026, 8, 12));
 
     // Прошедший пустой день — планирование не открывается, показывается SnackBar.
@@ -908,6 +955,14 @@ void main() {
     },
   );
 }
+
+IconButton weekSwitcherArrow(WidgetTester tester, String tooltip) =>
+    tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byTooltip(tooltip),
+        matching: find.byType(IconButton),
+      ),
+    );
 
 Future<void> saveSession(
   WorkoutRepository repo,

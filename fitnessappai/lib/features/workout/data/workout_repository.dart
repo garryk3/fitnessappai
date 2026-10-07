@@ -80,6 +80,21 @@ class WorkoutRepository {
     return rows.map(_toSession).toList();
   }
 
+  /// Дата первой сохранённой сессии или `null`, если тренировок не было.
+  ///
+  /// Нужна нижней границе навигации плана назад (задача 48.3).
+  Future<DateTime?> getEarliestSessionDate() async {
+    final row =
+        await (_db.select(_db.workoutSessions)
+              ..orderBy([
+                (t) => OrderingTerm.asc(t.performedDate),
+                (t) => OrderingTerm.asc(t.id),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
+    return row == null ? null : _toSession(row).performedDate;
+  }
+
   /// Все сессии в диапазоне дат `[start, end)`.
   Future<List<WorkoutSession>> getSessionsBetween(
     DateTime start,

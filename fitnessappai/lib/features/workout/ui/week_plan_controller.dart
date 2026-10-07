@@ -85,8 +85,9 @@ Set<DayAction> dayActionsFor(WeekPlanItem item, DateTime today) {
 
 /// Управляет планом тренировок: сетка недели, статусы, пропуски.
 ///
-/// Вид «Месяц» и переход на прошлые недели убраны в 47.10: доступны
-/// текущая и следующая недели.
+/// Вид «Месяц» убран в 47.10: доступны текущая и следующая недели, назад
+/// открыт переход только для просмотра (48.3) — до недели начала программы
+/// или первой выполненной тренировки.
 class WeekPlanController {
   WeekPlanController({
     required this.programRepository,
@@ -149,11 +150,32 @@ class WeekPlanController {
 
   /// Можно ли перейти на следующую неделю.
   ///
-  /// План показывает только текущую и следующую недели (47.10): назад
-  /// переходить некуда, прошедшие дни скрыты.
+  /// План показывает только текущую и следующую недели (47.10).
   bool get canGoNextWeek => weekStart.value.isBefore(
     mondayOf(_dateOnly(_now())).add(const Duration(days: 7)),
   );
+
+  /// Можно ли перейти на предыдущую неделю (задача 48.3).
+  ///
+  /// Нижняя граница — неделя начала активной программы или неделя первой
+  /// выполненной тренировки (что раньше, см. [_resolveEarliestWeekStart]);
+  /// «дальше» текущей недели уйти нельзя в любом случае — иначе из будущей
+  /// недели не было бы пути обратно.
+  ///
+  /// Прошлые недели открыты только для просмотра: у истёкших дней действий
+  /// нет (47.1), планирование на прошедшие даты запрещено (снекбар-гард),
+  /// очистку отметок 47.4 не меняли — там видны сессии из истории.
+  bool get canGoPrevWeek {
+    final currentWeek = mondayOf(_dateOnly(_now()));
+    final bound = _earliestWeekStart;
+    final limit = (bound == null || bound.isAfter(currentWeek))
+        ? currentWeek
+        : bound;
+    return weekStart.value.isAfter(limit);
+  }
+
+  /// Нижняя граница навигации назад — `null`, пока не вычислена (48.3).
+  DateTime? _earliestWeekStart;
 
   /// Проверяет, существует ли тренировочный день в базе.
   Future<bool> dayExists(int programDayId) async =>
@@ -349,11 +371,35 @@ class WeekPlanController {
           ),
         );
       }
+      // Нижняя граница навигации назад (48.3) считается вместе с загрузкой,
+      // чтобы стрелка «назад» не включалась по устаревшим данным.
+      _earliestWeekStart = await _resolveEarliestWeekStart(activePrograms);
       result.sort((a, b) => a.scheduledDate.compareTo(b.scheduledDate));
       items.value = result;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Нижняя граница навигации плана назад: неделя, в которой началась активная
+  /// программа, или неделя первой выполненной тренировки — что раньше.
+  ///
+  /// `null`, если определить не из чего (нет активных программ и сессий).
+  Future<DateTime?> _resolveEarliestWeekStart(
+    List<Program> activePrograms,
+  ) async {
+    final firstSession = await workoutRepository.getEarliestSessionDate();
+    final candidates = <DateTime>[
+      // Программа без явной активации активна «с самого начала»
+      // (_isProgramActiveOn) — её начало датируется созданием.
+      for (final program in activePrograms)
+        mondayOf(_dateOnly(program.activatedAt ?? program.createdAt)),
+      if (firstSession != null) mondayOf(_dateOnly(firstSession)),
+    ];
+    if (candidates.isEmpty) {
+      return null;
+    }
+    return candidates.reduce((a, b) => a.isBefore(b) ? a : b);
   }
 
   /// Собирает ключи отметок `programDayId|weekStartMs` за период, разделённые

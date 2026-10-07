@@ -139,6 +139,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     return _WeekSwitcher(
       label: _weekRangeLabel(days.first, days.last, l10n),
+      onPrev: controller.canGoPrevWeek ? () => controller.shiftWeek(-1) : null,
       onNext: controller.canGoNextWeek ? () => controller.shiftWeek(1) : null,
     );
   }
@@ -268,9 +269,14 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 }
 
 class _WeekSwitcher extends StatelessWidget {
-  const _WeekSwitcher({required this.label, required this.onNext});
+  const _WeekSwitcher({required this.label, this.onPrev, required this.onNext});
 
   final String label;
+
+  /// Переход на предыдущую неделю — только для просмотра (48.3); `null`,
+  /// если достигнута нижняя граница.
+  final VoidCallback? onPrev;
+
   final VoidCallback? onNext;
 
   @override
@@ -281,6 +287,11 @@ class _WeekSwitcher extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
       child: Row(
         children: [
+          IconButton(
+            onPressed: onPrev,
+            tooltip: l10n.weekPlanPrevWeek,
+            icon: const Icon(Icons.chevron_left),
+          ),
           Expanded(
             child: Center(
               child: Text(label, style: theme.textTheme.titleMedium),
