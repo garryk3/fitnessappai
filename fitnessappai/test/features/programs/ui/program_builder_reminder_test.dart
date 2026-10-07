@@ -146,7 +146,10 @@ void main() {
   }
 
   /// Создаёт программу на 1 день с основным упражнением (валидную для
-  /// сохранения) и возвращает её id.
+  /// сохранения), активирует её и возвращает id.
+  ///
+  /// Активна: `allScheduled()` отдаёт напоминания только активных программ
+  /// (48.8), поэтому проверки сохранённых настроек иначе не увидят дней.
   Future<int> createValidProgram() async {
     final exercise = await exerciseRepository.create(
       Exercise(
@@ -157,9 +160,10 @@ void main() {
       ),
       const [],
     );
-    final created = await repository.create(program('Сплит'), [
-      ProgramDay(programId: 0, dayIndex: 0),
-    ]);
+    final created = await repository.create(
+      program('Сплит').copyWith(isActive: true),
+      [ProgramDay(programId: 0, dayIndex: 0)],
+    );
     final day = (await repository.getDays(created.id!)).single;
     await repository.addExerciseToDay(day.id!, exercise.id!);
     return created.id!;

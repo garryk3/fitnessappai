@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/notifications/reminder_catch_up_log.dart';
+import 'package:fitnessappai/core/notifications/reminder_delivered_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 
@@ -1295,6 +1297,9 @@ void main() {
     /// Журнал догона в памяти.
     _FakeCatchUpLog? log;
 
+    /// Журнал системной доставки в памяти (48.8).
+    _FakeDeliveredLog? delivered;
+
     ReminderSchedule scheduleOf(
       int programDayId, {
       required bool enabled,
@@ -1328,6 +1333,7 @@ void main() {
 
     setUp(() {
       log = _FakeCatchUpLog();
+      delivered = _FakeDeliveredLog();
       when(
         () => plugin
             .resolvePlatformSpecificImplementation<
@@ -1356,6 +1362,7 @@ void main() {
         repository: repository,
         plugin: plugin,
         catchUpLog: log,
+        deliveredLog: delivered,
       );
     });
 
@@ -1555,6 +1562,130 @@ void main() {
       await service.catchUpMissed();
 
       expect(log!.marked, [11]);
+      expect(log!.shownToday, [11], reason: 'отметка неудачного дня снята');
+    });
+
+    test(
+      'день, открытый тапом по уведомлению, второй раз не показывается',
+      () async {
+        onlyOne(enabled: true, ago: const Duration(hours: 2));
+        // Система уже доставила напоминание: пользователь тапнул по нему и
+        // авто-снятие убрало уведомление из трея.
+        await delivered!.markDelivered(10, DateTime.now());
+
+        await service.catchUpMissed();
+
+        verifyNotShown();
+        expect(log!.marked, isEmpty);
+      },
+    );
+
+    test('отметка доставки другого дня программы показу не мешает', () async {
+      onlyOne(enabled: true, ago: const Duration(hours: 2));
+      await delivered!.markDelivered(11, DateTime.now());
+
+      await service.catchUpMissed();
+
+      expect(log!.marked, [10]);
+    });
+
+    test('неудачный показ снимает отметку, повторный догоняет день', () async {
+      onlyOne(enabled: true, ago: const Duration(hours: 2));
+      var first = true;
+      when(
+        () => plugin.show(
+          id: any(named: 'id'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          notificationDetails: any(named: 'notificationDetails'),
+          payload: any(named: 'payload'),
+        ),
+      ).thenAnswer((_) async {
+        if (first) {
+          first = false;
+          throw PlatformException(code: 'boom');
+        }
+      });
+
+      await service.catchUpMissed();
+
+      expect(
+        log!.marked,
+        isEmpty,
+        reason: 'после сбоя показа отметка снята — день не «сгорел»',
+      );
+
+      await service.catchUpMissed();
+
+      expect(log!.marked, [10], reason: 'следующий прогон повторяет показ');
+    });
+
+    test('трей читается прямо перед показом каждого дня (48.8)', () async {
+      final time = todayAt(const Duration(hours: 2));
+      final weekday = todayWeekday();
+      when(() => repository.allScheduled()).thenAnswer(
+        (_) async => [
+          for (final id in [10, 11])
+            scheduleOf(
+              id,
+              enabled: true,
+              dayOfWeek: weekday,
+              hour: time.hour,
+              minute: time.minute,
+            ),
+        ],
+      );
+      // Пока обрабатывается первый день, система «доставила» уведомление
+      // второго: старое поведение читало трей один раз до цикла и показало бы
+      // оба.
+      var reads = 0;
+      when(() => plugin.getActiveNotifications()).thenAnswer((_) async {
+        reads++;
+        return reads == 1
+            ? <ActiveNotification>[]
+            : const [
+                ActiveNotification(id: 11, channelId: 'workout_reminders'),
+              ];
+      });
+
+      await service.catchUpMissed();
+
+      expect(log!.marked, [10]);
+    });
+
+    test(
+      'параллельные вызовы догона схлопываются в один прогон (48.8)',
+      () async {
+        onlyOne(enabled: true, ago: const Duration(hours: 2));
+
+        await Future.wait<void>([
+          service.catchUpMissed(),
+          service.catchUpMissed(),
+        ]);
+
+        verify(() => repository.allScheduled()).called(1);
+        expect(log!.marked, [10]);
+      },
+    );
+
+    test('догон дожидается незавершённой отметки доставки (48.8)', () async {
+      onlyOne(enabled: true, ago: const Duration(hours: 2));
+      delivered!.gate = Completer<void>();
+      // Тап по уведомлению в фоне: отметка доставки ещё пишется в БД, а
+      // возврат из фона уже запускает догон.
+      final tap = service.handleNotificationResponse(
+        NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: '10',
+        ),
+      );
+      final catchUp = service.catchUpMissed();
+      delivered!.gate!.complete();
+      await Future.wait<void>([tap, catchUp]);
+
+      verifyNotShown();
+      expect(delivered!.delivered, [10]);
     });
   });
 
@@ -1719,5 +1850,34 @@ class _FakeCatchUpLog implements ReminderCatchUpLog {
   Future<void> markShown(int programDayId, DateTime at) async {
     shownToday.add(programDayId);
     marked.add(programDayId);
+  }
+
+  @override
+  Future<void> unmarkShown(int programDayId) async {
+    shownToday.remove(programDayId);
+    marked.remove(programDayId);
+  }
+}
+
+/// Журнал системной доставки в памяти (48.8).
+class _FakeDeliveredLog implements ReminderDeliveredLog {
+  /// Дни, по которым пришёл тап по системному уведомлению.
+  final Set<int> delivered = <int>{};
+
+  /// Если задан, запись отметки ждёт её — для проверки гонки
+  /// «тап в фоне ↔ догон при возврате».
+  Completer<void>? gate;
+
+  @override
+  Future<bool> wasDeliveredOn(int programDayId, DateTime day) async =>
+      delivered.contains(programDayId);
+
+  @override
+  Future<void> markDelivered(int programDayId, DateTime at) async {
+    final pending = gate;
+    if (pending != null && !pending.isCompleted) {
+      await pending.future;
+    }
+    delivered.add(programDayId);
   }
 }

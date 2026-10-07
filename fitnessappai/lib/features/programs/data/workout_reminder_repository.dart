@@ -128,8 +128,13 @@ class WorkoutReminderRepository {
     ];
   }
 
-  /// Все напоминания с днём недели и названием программы — для
-  /// перепланирования после импорта БД.
+  /// Напоминания дней **активных** программ с днём недели и названием
+  /// программы — для перепланирования после импорта БД и для догона.
+  ///
+  /// Фильтр по `programs.isActive` (задача 48.8): настройки дней сохраняются
+  /// и у неактивной программы, но её будильники не должны ни перевзводиться
+  /// при каждом возврате в приложение, ни догоняться — иначе напоминание
+  /// «неактивной» программы выглядит как сработавшее не там.
   Future<List<ReminderSchedule>> allScheduled() async {
     final query = _db.select(_db.workoutReminders).join([
       innerJoin(
@@ -140,7 +145,7 @@ class WorkoutReminderRepository {
         _db.programs,
         _db.programs.id.equalsExp(_db.programDays.programId),
       ),
-    ]);
+    ])..where(_db.programs.isActive.equals(true));
     final rows = await query.get();
     return [
       for (final row in rows)

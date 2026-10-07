@@ -12,6 +12,7 @@ import 'package:fitnessappai/app/sound/sound_settings_store.dart';
 import 'package:fitnessappai/core/domain/models/workout_reminder.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_catch_up_log.dart';
+import 'package:fitnessappai/core/notifications/reminder_delivered_log.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 
 /// Статус разрешений на уведомления.
@@ -56,11 +57,14 @@ class ReminderService {
     FlutterLocalNotificationsPlugin? plugin,
     SoundSettingsStore? soundSettings,
     ReminderCatchUpLog? catchUpLog,
+    ReminderDeliveredLog? deliveredLog,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
        // ignore: prefer_initializing_formals -- имя параметра публичное.
        _soundSettings = soundSettings,
        // ignore: prefer_initializing_formals -- имя параметра публичное.
-       _catchUpLog = catchUpLog;
+       _catchUpLog = catchUpLog,
+       // ignore: prefer_initializing_formals -- имя параметра публичное.
+       _deliveredLog = deliveredLog;
 
   final WorkoutReminderRepository _repository;
   final FlutterLocalNotificationsPlugin _plugin;
@@ -72,6 +76,24 @@ class ReminderService {
   /// Журнал показа «догоняющих» уведомлений; null — без защиты от повторов
   /// (тесты, окружения без зарегистрированного хранилища).
   final ReminderCatchUpLog? _catchUpLog;
+
+  /// Журнал системной доставки напоминаний (48.8); null — без отметок о
+  /// тапе по уведомлению (тесты, окружения без зарегистрированного
+  /// хранилища).
+  final ReminderDeliveredLog? _deliveredLog;
+
+  /// Незавершённые отметки системной доставки (48.8).
+  ///
+  /// Тап по уведомлению в фоне пишет отметку асинхронно, а вместе с тапом
+  /// приходит возврат из фона — и догон успевает стартовать раньше записи.
+  /// [catchUpMissed] ждёт эту цепочку, чтобы не принять свежий тап за
+  /// «система не доставила».
+  Future<void> _deliveryMarks = Future<void>.value();
+
+  /// Текущий прогон [catchUpMissed] (48.8): параллельные вызовы из
+  /// инициализации и обработчика lifecycle схлопываются в один, вместо двух
+  /// показов одного уведомления.
+  Future<void>? _catchUpRunning;
 
   /// Код ошибки плагина, когда точный режим недоступен: разрешение могли
   /// отозвать между проверкой и планированием, и `zonedSchedule` падает
@@ -158,8 +180,10 @@ class ReminderService {
   ///
   /// Системный диалог Android 13+ показывается лишь один раз; если после
   /// запроса уведомления всё ещё отключены, открывает системные настройки
-  /// уведомлений приложения. При выдаче разрешения перепланирует напоминания,
-  /// которые могли быть пропущены, пока уведомления были отключены.
+  /// уведомлений приложения. При выдаче разрешения перепланирует сохранённые
+  /// напоминания (они не планировались, пока уведомления были отключены);
+  /// показ того, что выпало за это время, — задача догоняющего
+  /// [catchUpMissed], который выполняется при старте и возврате в приложение.
   Future<NotificationPermissionStatus> requestNotificationsPermission() async {
     await _requestNotifications();
     final status = await checkPermissions();
@@ -283,7 +307,9 @@ class ReminderService {
     final launchResponse = launchDetails?.notificationResponse;
     if ((launchDetails?.didNotificationLaunchApp ?? false) &&
         launchResponse != null) {
-      handleNotificationResponse(launchResponse);
+      // await обязателен: до догона [catchUpMissed] отметка доставки должна
+      // успеть попасть в БД, иначе тапом открытый день показали бы второй раз.
+      await handleNotificationResponse(launchResponse);
     }
   }
 
@@ -375,23 +401,54 @@ class ReminderService {
 
   /// Разбирает нажатие на уведомление и передаёт `programDayId` обработчику.
   ///
+  /// Попутно фиксирует, что системное напоминание этого дня показано: тап
+  /// снимает уведомление из трея (`autoCancel`), поэтому догон его там уже
+  /// не увидит и показал бы второй раз (задача 48.8).
+  ///
   /// Открыт наружу (а не приватный метод) ради тестов: логика отложенной
   /// доставки payload'а — единственное, что отличает запуск тапом от обычного
   /// старта, и она обязана быть покрыта.
   @visibleForTesting
-  void handleNotificationResponse(NotificationResponse response) {
+  Future<void> handleNotificationResponse(NotificationResponse response) async {
     final programDayId = int.tryParse(response.payload ?? '');
     if (programDayId == null) {
       return;
     }
     final handler = _onReminderTapped;
     if (handler == null) {
-      // Приложение стартовало тапом по уведомлению: обработник появится
+      // Приложение стартовало тапом по уведомлению: обработчик появится
       // только после сборки UI, payload ждёт его.
       _pendingProgramDayId = programDayId;
+    } else {
+      handler(programDayId);
+    }
+    // Отметка доставки пишется после навигации — она не должна её ждать.
+    // Догон, в свою очередь, дожидается записи через [_deliveryMarks].
+    await _markDelivered(programDayId);
+  }
+
+  /// Запоминает, что системное напоминание дня показано (48.8).
+  ///
+  /// Сбой не роняет разбор payload'а: без отметки худший исход — прежнее
+  /// поведение, догон показал бы уведомление второй раз.
+  Future<void> _markDelivered(int programDayId) async {
+    final log = _deliveredLog;
+    if (log == null) {
       return;
     }
-    handler(programDayId);
+    final mark = () async {
+      try {
+        await log.markDelivered(programDayId, DateTime.now());
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось отметить доставку напоминания дня $programDayId',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }();
+    _deliveryMarks = _deliveryMarks.then((_) => mark);
+    await mark;
   }
 
   /// Планирует еженедельное уведомление для дня по [dayOfWeek].
@@ -484,7 +541,25 @@ class ReminderService {
   /// догон показывает пропуск в момент возврата в приложение, один раз в
   /// день на день программы ([catchUpGrace] отсекает штатную задержку
   /// inexact-будильника).
-  Future<void> catchUpMissed() async {
+  ///
+  /// Защита от двойного показа (задача 48.8): дни с отметкой системной
+  /// доставки ([ReminderDeliveredLog], пишется при тапе по уведомлению)
+  /// пропускаются, отметка догона ставится до показа (claim-before-show),
+  /// трей перечитывается прямо перед показом, а параллельные вызовы
+  /// схлопываются в один прогон.
+  Future<void> catchUpMissed() {
+    final running = _catchUpRunning;
+    if (running != null) {
+      // Уже идёт: второй вызов (инициализация при старте и возврат из фона)
+      // ждёт его, а не запускает свой прогон с тем же показом.
+      return running;
+    }
+    return _catchUpRunning = _catchUpMissed().whenComplete(() {
+      _catchUpRunning = null;
+    });
+  }
+
+  Future<void> _catchUpMissed() async {
     if (_plugin
             .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin
@@ -492,12 +567,15 @@ class ReminderService {
         null) {
       return;
     }
+    // Тап по уведомлению в фоне мог ещё писать отметку доставки.
+    await _deliveryMarks;
     final items = await _repository.allScheduled();
     if (items.isEmpty) {
       return;
     }
     final now = tz.TZDateTime.now(tz.local);
-    final active = await _activeNotificationIds();
+    final deliveredLog = _deliveredLog;
+    final log = _catchUpLog;
     for (final item in items) {
       if (!item.reminder.enabled) {
         continue;
@@ -512,23 +590,42 @@ class ReminderService {
       if (due == null) {
         continue;
       }
-      // Система уже показала напоминание и оно ещё в трее — догон не нужен.
-      if (active.contains(programDayId)) {
-        continue;
-      }
-      final log = _catchUpLog;
       try {
+        // Пользователь уже видел системное напоминание этого дня (открыл
+        // приложение тапом по нему) — второй показ не нужен, хотя уведомления
+        // в трее после `autoCancel` и нет (48.8, D1/D6).
+        if (deliveredLog != null &&
+            await deliveredLog.wasDeliveredOn(programDayId, now.toLocal())) {
+          continue;
+        }
+        // Напоминание показывали сегодня другим путём (догон на прошлом
+        // запуске) — повторный прогон молчит.
         if (log != null && await log.wasShownOn(programDayId, now)) {
           continue;
         }
-        await _plugin.show(
-          id: programDayId,
-          title: item.programName,
-          body: '${_body(item.dayNumber)} ($_catchUpReason)',
-          notificationDetails: _notificationDetails(),
-          payload: programDayId.toString(),
-        );
+        // Система могла доставить уведомление уже после начала прогона,
+        // поэтому трей читаем прямо перед показом, а не один раз до цикла
+        // (48.8, D2).
+        if ((await _activeNotificationIds()).contains(programDayId)) {
+          continue;
+        }
+        // Claim до показа: параллельный прогон увидит отметку и не
+        // продублирует уведомление (48.8, D3).
         await log?.markShown(programDayId, now);
+        try {
+          await _plugin.show(
+            id: programDayId,
+            title: item.programName,
+            body: '${_body(item.dayNumber)} ($_catchUpReason)',
+            notificationDetails: _notificationDetails(),
+            payload: programDayId.toString(),
+          );
+        } catch (_) {
+          // Показ не удался — снимаем отметку, иначе день навсегда остался
+          // бы «показанным» и догон не повторил бы попытку.
+          await _unmarkQuietly(log, programDayId);
+          rethrow;
+        }
         logNotificationIssue(
           'Показано пропущенное напоминание дня $programDayId '
           '(плановое время $due)',
@@ -540,6 +637,25 @@ class ReminderService {
           stackTrace: st,
         );
       }
+    }
+  }
+
+  /// Снимает отметку догона после неудачного показа (48.8, D3).
+  ///
+  /// Сбой здесь не затмевает исходную ошибку показа: он лишь пишется в
+  /// журнал.
+  Future<void> _unmarkQuietly(ReminderCatchUpLog? log, int programDayId) async {
+    if (log == null) {
+      return;
+    }
+    try {
+      await log.unmarkShown(programDayId);
+    } catch (e, st) {
+      logNotificationIssue(
+        'Не удалось снять отметку догона дня $programDayId',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
