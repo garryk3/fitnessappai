@@ -497,22 +497,86 @@ void main() {
     },
   );
 
-  test('weeklyProgressPercent: без закреплённых дней → null', () async {
-    await createProgram(name: 'Без дней', dayOfWeeks: [null]);
-    await programRepository.setActive(
-      (await programRepository.getPrograms()).single.program.id!,
+  group('48.2: программа с непривязанными днями', () {
+    test('без сессий за неделю → 0 %, а не null', () async {
+      await createProgram(name: 'Без привязок', dayOfWeeks: [null, null]);
+      await programRepository.setActive(
+        (await programRepository.getPrograms()).single.program.id!,
+      );
+
+      final controller = HomeController(
+        programRepository: programRepository,
+        exerciseRepository: exerciseRepository,
+        workoutRepository: workoutRepository,
+        clock: () => DateTime(2026, 8, 10),
+      );
+      addTearDown(controller.dispose);
+
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.activePrograms.value.first.weeklyProgressPercent, 0);
+    });
+
+    test(
+      'знаменатель — все дни программы, числитель — сессии недели',
+      () async {
+        final program = await createProgram(
+          name: 'Свободная',
+          dayOfWeeks: [null, null, null],
+        );
+        await programRepository.setActive(program.id!);
+
+        // Две сессии этой программы за текущую неделю (пн 2026-08-10).
+        final dayId = (await programRepository.getDays(program.id!)).first.id!;
+        WorkoutSession freeSession(DateTime performedDate) => WorkoutSession(
+          programId: program.id!,
+          programName: program.name,
+          programDayId: dayId,
+          dayIndex: 0,
+          performedDate: performedDate,
+          startedAt: performedDate.add(const Duration(hours: 18)),
+          endedAt: performedDate.add(const Duration(hours: 18, minutes: 40)),
+        );
+
+        await saveSession(freeSession(DateTime(2026, 8, 10)), ['Жим']);
+        await saveSession(freeSession(DateTime(2026, 8, 12)), ['Тяга']);
+        // Сессия вне недели в счёт не идёт.
+        await saveSession(freeSession(DateTime(2026, 8, 3)), ['Подтягивания']);
+
+        final controller = HomeController(
+          programRepository: programRepository,
+          exerciseRepository: exerciseRepository,
+          workoutRepository: workoutRepository,
+          clock: () => DateTime(2026, 8, 10),
+        );
+        addTearDown(controller.dispose);
+
+        await Future<void>.delayed(Duration.zero);
+
+        // 2 сессии из 3 дней = 67 %.
+        expect(controller.activePrograms.value.first.weeklyProgressPercent, 67);
+      },
     );
 
-    final controller = HomeController(
-      programRepository: programRepository,
-      exerciseRepository: exerciseRepository,
-      workoutRepository: workoutRepository,
-      clock: () => DateTime(2026, 8, 10),
-    );
-    addTearDown(controller.dispose);
+    test('полностью привязанная программа считает по-старому', () async {
+      final program = await createProgram(
+        name: 'Привязанная',
+        dayOfWeeks: [1, 4],
+      );
+      await programRepository.setActive(program.id!);
 
-    await Future<void>.delayed(Duration.zero);
+      final controller = HomeController(
+        programRepository: programRepository,
+        exerciseRepository: exerciseRepository,
+        workoutRepository: workoutRepository,
+        clock: () => DateTime(2026, 8, 10),
+      );
+      addTearDown(controller.dispose);
 
-    expect(controller.activePrograms.value.first.weeklyProgressPercent, isNull);
+      await Future<void>.delayed(Duration.zero);
+
+      // Оба дня привязаны, ни один не выполнен: 0 из 2.
+      expect(controller.activePrograms.value.first.weeklyProgressPercent, 0);
+    });
   });
 }
