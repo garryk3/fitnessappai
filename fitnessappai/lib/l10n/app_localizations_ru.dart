@@ -311,6 +311,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нельзя запланировать тренировку на прошедший день';
 
   @override
+  String get weekPlanAlreadyScheduled =>
+      'Этот день уже запланирован на эту дату';
+
+  @override
   String get weekPlanEmpty => 'Нет запланированных тренировок';
 
   @override

@@ -246,6 +246,28 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   controller.cancelSchedule(item.programDayId, date);
                 },
               ),
+            // 48.9: к действиям над существующими тренировками добавляем
+            // планирование ещё одной. Отдельным разделителем — иначе неотличимо
+            // от действия над чужой тренировкой.
+            const Divider(height: 24),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              leading: const Icon(Icons.edit_calendar),
+              title: Text(l10n.weekPlanScheduleTitle),
+              onTap: () {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.of(sheetContext).pop();
+                // Та же защита, что и у пустого дня: в прошедшей дате лист
+                // планирования молча ничего не сделал бы (48.9).
+                if (_isPast(date, controller.selectedDate.value)) {
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(l10n.weekPlanPastDateGuard)),
+                  );
+                  return;
+                }
+                _showScheduleSheet(context, controller, date, l10n);
+              },
+            ),
           ],
         ),
       ),
@@ -989,6 +1011,24 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   }
 
   void _schedule(int programDayId) {
+    // 48.9: день программы, уже назначенный на эту дату, schedule() принял бы
+    // молча (insertOrIgnore по уникальному ключу {programDayId, scheduledDate}).
+    // Решение владельца — не создавать ложное ожидание: показать «уже
+    // запланировано» и закрыть лист.
+    final alreadyScheduled = widget.controller.items.value.any(
+      (item) =>
+          item.programDayId == programDayId &&
+          _sameDay(item.scheduledDate, widget.date),
+    );
+    if (alreadyScheduled) {
+      final messenger = ScaffoldMessenger.of(context);
+      final l10n = AppLocalizations.of(context);
+      Navigator.of(context).pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.weekPlanAlreadyScheduled)),
+      );
+      return;
+    }
     widget.controller.scheduleDay(programDayId, widget.date);
     Navigator.of(context).pop();
   }
