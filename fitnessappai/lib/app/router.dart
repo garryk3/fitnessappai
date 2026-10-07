@@ -31,6 +31,24 @@ import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/core/domain/models/single_exercise_params.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 
+/// Понедельник недели-источника из query-параметра `rescheduleWeekStart`
+/// (миллисекунды эпохи) или `null`, если параметра нет.
+///
+/// Перенос тренировки («Перенести на сегодня», задача 48.4) пробрасывается по
+/// цепочке `prepare → warmup → run` именно этим параметром: отметка дня-
+/// источника ставится только после фактического сохранения сессии, поэтому
+/// флаг должен дожить до экрана выполнения. В чекпоинте хранится отдельно и
+/// возвращается через [AppRouter.create] при восстановлении после сбоя.
+///
+/// Значение — `DateTime.millisecondsSinceEpoch` локального понедельника:
+/// миллисекунды проходят round-trip без потерь часового пояса, в отличие от
+/// даты в ISO-строке.
+DateTime? rescheduleWeekStartOf(GoRouterState state) {
+  final raw = state.uri.queryParameters['rescheduleWeekStart'];
+  final ms = raw == null ? null : int.tryParse(raw);
+  return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+}
+
 /// Конфигурация маршрутов приложения.
 class AppRouter {
   /// Ключ навигатора для переходов из кода без [BuildContext] — из
@@ -57,7 +75,9 @@ class AppRouter {
               if (redirected) return null;
               if (state.matchedLocation == '/workout/run') return null;
               redirected = true;
-              return '/workout/run?programDayId=${checkpoint.programDayId}';
+              final reschedule = checkpoint.rescheduleWeekStart;
+              return '/workout/run?programDayId=${checkpoint.programDayId}'
+                  '${reschedule == null ? '' : '&rescheduleWeekStart=${reschedule.millisecondsSinceEpoch}'}';
             }
           : null,
       routes: [
@@ -186,6 +206,7 @@ class AppRouter {
           path: '/workout/prepare/:programDayId',
           builder: (context, state) => WorkoutPrepareScreen(
             programDayId: int.parse(state.pathParameters['programDayId']!),
+            rescheduleWeekStart: rescheduleWeekStartOf(state),
           ),
         ),
         GoRoute(
@@ -204,6 +225,7 @@ class AppRouter {
               programDayId: dayId,
               warmupSeconds: seconds,
               variant: variant,
+              rescheduleWeekStart: rescheduleWeekStartOf(state),
             );
           },
         ),
@@ -225,6 +247,7 @@ class AppRouter {
               programDayId: dayId,
               variant: dayId != null ? variant : null,
               exerciseId: exerciseId,
+              rescheduleWeekStart: rescheduleWeekStartOf(state),
               singleExerciseParams: SingleExerciseParams(
                 sets: int.tryParse(qp['sets'] ?? ''),
                 reps: int.tryParse(qp['reps'] ?? ''),

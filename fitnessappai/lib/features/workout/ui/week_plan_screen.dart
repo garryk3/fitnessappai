@@ -7,6 +7,7 @@ import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
+import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/ui/status_badge.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -68,17 +69,22 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   /// Запуск тренировки из плана.
   ///
-  /// Для переноса («Перенести на сегодня») сначала ставится маркер: день-источник
-  /// в этой неделе становится пустым (задача 47.3).
+  /// Для переноса («Перенести на сегодня») день-источник НЕ очищается сразу:
+  /// раньше он становился пустым ещё до выполнения тренировки, а выход без
+  /// завершения ничего не менял (задача 48.4). Вместо этого неделя-источник
+  /// пробрасывается до экрана выполнения, и отметка `rescheduled` ставится там
+  /// только после фактического сохранения сессии (задачи 47.3 и 48.4).
   Future<void> _start(WeekPlanItem item) async {
     final actions = dayActionsFor(item, _controller.selectedDate.value);
-    if (actions.contains(DayAction.reschedule)) {
-      await _controller.markRescheduled(item);
-      if (!mounted) {
-        return;
-      }
-    }
-    await startPlannedWorkout(context, _controller, item);
+    final rescheduleWeekStart = actions.contains(DayAction.reschedule)
+        ? mondayOf(item.scheduledDate)
+        : null;
+    await startPlannedWorkout(
+      context,
+      _controller,
+      item,
+      rescheduleWeekStart: rescheduleWeekStart,
+    );
   }
 
   Future<void> _cancel(WeekPlanItem item) =>

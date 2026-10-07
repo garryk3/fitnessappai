@@ -6,6 +6,7 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
@@ -37,6 +38,17 @@ void main() {
     controller.dispose();
     await db.close();
   });
+
+  /// Ставит отметку переноса так, как это теперь делает экран выполнения
+  /// (задача 48.4): напрямую в репозитории, а не из плана, — и перечитывает
+  /// план, потому что вне `WeekPlanController` уведомления об изменении данных
+  /// никто не ждёт.
+  Future<void> markRescheduled(WeekPlanItem item) async {
+    await WorkoutRepository(
+      db,
+    ).markRescheduled(item.programDayId, mondayOf(item.scheduledDate));
+    await controller.refresh();
+  }
 
   Future<int> createUnlinkedDay() async {
     final program = await programRepo.create(
@@ -319,7 +331,7 @@ void main() {
       final tuesday = controller.items.value.firstWhere(
         (i) => i.programDayId == ids[1] && i.scheduledDate.day == 11,
       );
-      await controller.markRescheduled(tuesday);
+      await markRescheduled(tuesday);
 
       final visible = controller.items.value
           .where((i) => i.scheduledDate.day == 11)
@@ -342,7 +354,7 @@ void main() {
       final monday = controller.items.value.firstWhere(
         (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
       );
-      await controller.markRescheduled(monday);
+      await markRescheduled(monday);
       expect(
         controller.items.value.any(
           (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
@@ -385,7 +397,7 @@ void main() {
           .toList();
       expect(tuesdayItems, hasLength(2));
 
-      await controller.markRescheduled(tuesdayItems.first);
+      await markRescheduled(tuesdayItems.first);
       final after = controller.items.value
           .where((i) => i.scheduledDate.day == 11)
           .toList();
@@ -414,7 +426,7 @@ void main() {
       final tuesday = controller.items.value.firstWhere(
         (i) => i.programDayId == ids[1] && i.scheduledDate.day == 11,
       );
-      await controller.markRescheduled(tuesday);
+      await markRescheduled(tuesday);
       expect(
         controller.items.value.any(
           (i) => i.programDayId == ids[0] && i.scheduledDate.day == 10,
@@ -448,4 +460,48 @@ void main() {
       isTrue,
     );
   });
+
+  test(
+    'статус «Перенесено» даёт сессия в другой день и без отметки (47.1, 48.4)',
+    () async {
+      // Отметку переноса теперь ставит экран выполнения (48.4), поэтому до
+      // неё статус источника должен вычисляться из самой сессии, как в 47.1.
+      final dayId = await createLinkedDay(DateTime.monday);
+
+      // Четверг13.08: понедельник10.08 той же недели уже прошёл.
+      final late = WeekPlanController(
+        programRepository: programRepo,
+        workoutRepository: WorkoutRepository(db),
+        planScheduleRepository: scheduleRepo,
+        clock: () => DateTime(2026, 8, 13),
+      );
+      addTearDown(() async {
+        await pumpEventQueue();
+        late.dispose();
+      });
+
+      await WorkoutRepository(db).saveSession(
+        WorkoutSession(
+          programName: 'По расписанию',
+          programDayId: dayId,
+          dayIndex: 0,
+          performedDate: DateTime(2026, 8, 13),
+          startedAt: DateTime(2026, 8, 13, 18),
+          endedAt: DateTime(2026, 8, 13, 18, 40),
+        ),
+        const [],
+      );
+      await late.refresh();
+
+      final source = late.items.value.firstWhere(
+        (i) => i.programDayId == dayId && i.scheduledDate.day == 10,
+      );
+      expect(source.status, WeekPlanStatus.rescheduled);
+      // Отметки ещё нет — день-источник остаётся в плане, только со статусом.
+      expect(
+        await WorkoutRepository(db).getMarks(DateTime(2026, 8, 10)),
+        isEmpty,
+      );
+    },
+  );
 }
