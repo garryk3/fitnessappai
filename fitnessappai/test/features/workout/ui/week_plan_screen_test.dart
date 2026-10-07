@@ -954,6 +954,208 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'занятый день: лист действий показывает и тренировку, и планирование новой (48.9)',
+    (tester) async {
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('10').last);
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      // Существующие действия дня (47.1) не тронуты.
+      expect(
+        find.descendant(of: sheet, matching: find.text('Начать')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('Пропустить')),
+        findsOneWidget,
+      );
+      // Новый пункт планирования — отдельным разделителем в конце списка.
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Запланировать тренировку'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'тап по «Запланировать тренировку» открывает лист выбора программы (48.9)',
+    (tester) async {
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      await createDay(_weekdayAfter(fixedNow.weekday), name: 'Гибкость');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('10').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Запланировать тренировку'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      // Лист действий закрыт, открылось привычное планирование.
+      expect(
+        find.descendant(of: sheet, matching: find.text('Начать')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('Выберите программу')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('Сплит')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('Гибкость')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'прошедший день: пункт планирования закрыт той же защитой, что и у пустого дня (48.9)',
+    (tester) async {
+      // Понедельник 10 августа с тренировкой, «сегодня» — среда 12.08.2026.
+      await createDay(1, name: 'Сплит');
+      await pumpPlan(tester, now: DateTime(2026, 8, 12));
+
+      await tester.tap(find.text('10').last);
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Запланировать тренировку'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Запланировать тренировку'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Лист закрывается, лист планирования не открывается, показывается guard.
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(
+        find.text('Нельзя запланировать тренировку на прошедший день'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'уже назначенный день: сообщение «запланировано» и без создания дубля (48.9)',
+    (tester) async {
+      // Единственная программа — лист планирования сразу показывает её дни.
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('10').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Запланировать тренировку'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('День 1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(
+        find.text('Этот день уже запланирован на эту дату'),
+        findsOneWidget,
+      );
+      // День и так показан по привязке к дню недели — строка не создаётся.
+      final rows = await planScheduleRepo.getForRange(fixedNow, fixedNow);
+      expect(rows, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'с нового пункта на занятый день назначается второй день программы (48.9)',
+    (tester) async {
+      await createDay(fixedNow.weekday, name: 'Сплит');
+      final other = await createDay(
+        _weekdayAfter(fixedNow.weekday),
+        name: 'Гибкость',
+      );
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('10').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Запланировать тренировку'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Две программы — лист выбора, авто-выбор не срабатывает.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Гибкость'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('День 1'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(BottomSheet), findsNothing);
+
+      // Назначение записано ровно один раз и привязано к нужному дню.
+      final rows = await planScheduleRepo.getForRange(fixedNow, fixedNow);
+      expect(rows, hasLength(1));
+      expect(rows.single.programDayId, other.id);
+
+      // Понедельник теперь показывает обе тренировки.
+      expect(
+        find.descendant(
+          of: dayColumn(tester, '10'),
+          matching: find.text('Гибкость'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }
 
 IconButton weekSwitcherArrow(WidgetTester tester, String tooltip) =>

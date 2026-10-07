@@ -115,6 +115,7 @@
   "weekPlanScheduleConfirm": "Запланировать",
   "weekPlanScheduleNoPrograms": "Нет программ для назначения",
   "weekPlanPastDateGuard": "Нельзя запланировать тренировку на прошедший день",
+  "weekPlanAlreadyScheduled": "Этот день уже запланирован на эту дату",
   "weekPlanEmpty": "Нет запланированных тренировок",
   "weekPlanHint": "Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане",
   "weekPlanNextWeek": "Следующая неделя",

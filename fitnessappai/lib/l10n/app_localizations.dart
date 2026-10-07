@@ -646,6 +646,12 @@ abstract class AppLocalizations {
   /// **'Нельзя запланировать тренировку на прошедший день'**
   String get weekPlanPastDateGuard;
 
+  /// No description provided for @weekPlanAlreadyScheduled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот день уже запланирован на эту дату'**
+  String get weekPlanAlreadyScheduled;
+
   /// No description provided for @weekPlanEmpty.
   ///
   /// In ru, this message translates to:
