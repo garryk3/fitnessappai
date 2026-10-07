@@ -13,6 +13,12 @@
     <!-- Фолбэк для Android 12 и старше, а также если пользователь отозвал
          точный режим: выдаётся вручную в настройках «Будильники и напоминания». -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Исключение из оптимизации батареи по кнопке в настройках (задача
+         48.7): без него Android 12+ не открывает диалог исключения, а OEM
+         (Xiaomi, Huawei, Samsung) откладывает фоновые будильники до выхода
+         приложения на экран. Запрашивается осознанно и только по кнопке —
+         разрешение не выдаётся при установке. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>

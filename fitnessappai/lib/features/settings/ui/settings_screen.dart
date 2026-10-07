@@ -417,6 +417,37 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
                   ),
                 ),
             ],
+            // Оптимизация батареи — оружие OEM против фоновых будильников:
+            // запрос только по кнопке и с пояснением, что это нужно не всем
+            // (задача 48.7). Статус `null` (не Android, канал не отвечает) —
+            // плитку не показываем, чтобы не врать.
+            if (controller.batteryOptimizationExempt.value != null) ...[
+              _PermissionTile(
+                title: controller.batteryOptimizationExempt.value!
+                    ? l10n.settingsNotificationsBatteryExempt
+                    : l10n.settingsNotificationsBatteryEnabled,
+                icon: Icons.battery_saver_outlined,
+                color: controller.batteryOptimizationExempt.value!
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.error,
+                onAction: controller.batteryOptimizationExempt.value!
+                    ? null
+                    : () => controller.requestBatteryOptimization(),
+                actionLabel: controller.batteryOptimizationExempt.value!
+                    ? null
+                    : l10n.settingsNotificationsBatteryRequest,
+              ),
+              if (!controller.batteryOptimizationExempt.value!)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    l10n.settingsNotificationsBatteryHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+            ],
             if (error != null) ...[
               const SizedBox(height: 8),
               Text(

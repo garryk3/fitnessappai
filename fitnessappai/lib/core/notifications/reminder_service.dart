@@ -284,6 +284,7 @@ class ReminderService {
       // запуске канал создаётся сразу с нужным звуком, а при смене настройки
       // пересоздаётся (см. [_recreateChannel]).
       await android.createNotificationChannel(_buildChannel());
+      await _logPermissionState(android);
     }
     _initialized = true;
     // Приложение могло быть запущено тапом по уведомлению: событие дошло до
@@ -310,6 +311,35 @@ class ReminderService {
       // await обязателен: до догона [catchUpMissed] отметка доставки должна
       // успеть попасть в БД, иначе тапом открытый день показали бы второй раз.
       await handleNotificationResponse(launchResponse);
+    }
+  }
+
+  /// Пишет в лог разрешения, с которыми стартовало приложение (задача 48.7).
+  ///
+  /// В 47.8 режим логируется только в момент постановки, поэтому по логу
+  /// нельзя отличить «будильник поставили в точном режиме, а разрешение
+  /// отозвали» от «система не доставила вовремя». Состояние читается один
+  /// раз за запуск; сбой чтения — только запись в журнал, инициализация
+  /// из-за него падать не должна.
+  Future<void> _logPermissionState(
+    AndroidFlutterLocalNotificationsPlugin android,
+  ) async {
+    try {
+      final notificationsEnabled =
+          await android.areNotificationsEnabled() ?? false;
+      final exactAlarmsEnabled =
+          await android.canScheduleExactNotifications() ?? false;
+      logNotificationIssue(
+        'Разрешения на старте: уведомления=$notificationsEnabled, '
+        'точные будильники=$exactAlarmsEnabled '
+        '(режим показа: ${exactAlarmsEnabled ? 'точный' : 'inexact'})',
+      );
+    } catch (e, st) {
+      logNotificationIssue(
+        'Не удалось прочитать разрешения на старте',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 

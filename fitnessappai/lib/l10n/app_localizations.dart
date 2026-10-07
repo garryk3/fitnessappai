@@ -409,8 +409,32 @@ abstract class AppLocalizations {
   /// No description provided for @settingsNotificationsExactHint.
   ///
   /// In ru, this message translates to:
-  /// **'Без точных будильников Android откладывает напоминание: обычно на минуты, при выключенном экране — на 15 минут и дольше, недельный будильник — до часа. Приложение покажет пропущенное напоминание, когда вы в него вернётесь.'**
+  /// **'Без точных будильников Android откладывает напоминание: обычно на минуты, при выключенном экране — на 15 минут и дольше, недельный будильник — до часа. На Xiaomi, Huawei и Samsung дополнительно включите автозапуск приложения и отключите для него оптимизацию батареи — иначе система отложит напоминание до открытия приложения. Приложение покажет пропущенное напоминание, когда вы в него вернётесь.'**
   String get settingsNotificationsExactHint;
+
+  /// No description provided for @settingsNotificationsBatteryEnabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оптимизация батареи включена'**
+  String get settingsNotificationsBatteryEnabled;
+
+  /// No description provided for @settingsNotificationsBatteryExempt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оптимизация батареи отключена для приложения'**
+  String get settingsNotificationsBatteryExempt;
+
+  /// No description provided for @settingsNotificationsBatteryRequest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отключить оптимизацию'**
+  String get settingsNotificationsBatteryRequest;
+
+  /// No description provided for @settingsNotificationsBatteryHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нужно не всем: на Xiaomi, Huawei и Samsung система откладывает фоновые напоминания, пока оптимизация батареи включена, и напоминание приходит только вместе с открытием приложения. Без исключения приложение покажет пропущенное при возврате.'**
+  String get settingsNotificationsBatteryHint;
 
   /// No description provided for @commonClose.
   ///

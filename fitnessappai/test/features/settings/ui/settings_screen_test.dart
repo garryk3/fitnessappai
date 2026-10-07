@@ -11,6 +11,7 @@ import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/notifications/battery_optimization.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/settings/domain/notification_settings_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
@@ -81,6 +82,32 @@ class _FakeReminderService extends ReminderService {
       exactAlarmsEnabled: true,
     );
     return _status;
+  }
+}
+
+/// Исключение из оптимизации батареи в памяти (задача 48.7).
+class _FakeBatteryOptimization implements BatteryOptimizationGateway {
+  _FakeBatteryOptimization({this.ignoring, this.failOnRequest = false});
+
+  bool? ignoring;
+  bool failOnRequest;
+  int isIgnoringCalls = 0;
+  int requestCalls = 0;
+
+  @override
+  Future<bool?> isIgnoring() async {
+    isIgnoringCalls++;
+    return ignoring;
+  }
+
+  @override
+  Future<bool?> request() async {
+    requestCalls++;
+    if (failOnRequest) {
+      throw Exception('диалог недоступен');
+    }
+    ignoring = true;
+    return ignoring;
   }
 }
 
@@ -760,6 +787,129 @@ void main() {
         find.textContaining('Без точных будильников Android откладывает'),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'оптимизация батареи: статус неизвестен — плитка не показывается (48.7)',
+    (tester) async {
+      final notificationController = NotificationSettingsController(
+        reminderService: _FakeReminderService(
+          repository: WorkoutReminderRepository(db),
+          status: const NotificationPermissionStatus(
+            notificationsEnabled: true,
+            exactAlarmsEnabled: true,
+          ),
+        ),
+        batteryOptimization: _FakeBatteryOptimization(ignoring: null),
+      );
+      await pumpScreen(tester, notificationController: notificationController);
+
+      expect(notificationController.batteryOptimizationExempt.value, isNull);
+      expect(find.text('Оптимизация батареи включена'), findsNothing);
+      expect(
+        find.text('Оптимизация батареи отключена для приложения'),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'оптимизация батареи: включена — кнопка запрашивает исключение (48.7)',
+    (tester) async {
+      final battery = _FakeBatteryOptimization(ignoring: false);
+      final reminder = _FakeReminderService(
+        repository: WorkoutReminderRepository(db),
+        status: const NotificationPermissionStatus(
+          notificationsEnabled: true,
+          exactAlarmsEnabled: true,
+        ),
+      );
+      await pumpScreen(
+        tester,
+        notificationController: NotificationSettingsController(
+          reminderService: reminder,
+          batteryOptimization: battery,
+        ),
+      );
+
+      expect(battery.isIgnoringCalls, 1);
+      expect(find.text('Оптимизация батареи включена'), findsOneWidget);
+      expect(find.textContaining('Нужно не всем'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Отключить оптимизацию'));
+      await tester.tap(find.text('Отключить оптимизацию'));
+      await tester.pumpAndSettle();
+
+      // Запрос отдельный: точные будильники и уведомления не трогаем.
+      expect(battery.requestCalls, 1);
+      expect(reminder.exactAlarmsCalls, 0);
+      expect(reminder.notificationsCalls, 0);
+      expect(
+        find.text('Оптимизация батареи отключена для приложения'),
+        findsOneWidget,
+      );
+      expect(find.text('Отключить оптимизацию'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('оптимизация батареи: узкий экран без переполнения (48.7)', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await pumpScreen(
+      tester,
+      notificationController: NotificationSettingsController(
+        reminderService: _FakeReminderService(
+          repository: WorkoutReminderRepository(db),
+          status: const NotificationPermissionStatus(
+            notificationsEnabled: false,
+            exactAlarmsEnabled: false,
+          ),
+        ),
+        batteryOptimization: _FakeBatteryOptimization(ignoring: false),
+      ),
+    );
+
+    await tester.ensureVisible(find.text('Отключить оптимизацию'));
+    expect(tester.takeException(), isNull);
+    expect(find.text('Оптимизация батареи включена'), findsOneWidget);
+  });
+
+  testWidgets(
+    'оптимизация батареи: сбой запроса показывается, а не глотается (48.7)',
+    (tester) async {
+      final battery = _FakeBatteryOptimization(
+        ignoring: false,
+        failOnRequest: true,
+      );
+      await pumpScreen(
+        tester,
+        notificationController: NotificationSettingsController(
+          reminderService: _FakeReminderService(
+            repository: WorkoutReminderRepository(db),
+            status: const NotificationPermissionStatus(
+              notificationsEnabled: true,
+              exactAlarmsEnabled: true,
+            ),
+          ),
+          batteryOptimization: battery,
+        ),
+      );
+
+      await tester.ensureVisible(find.text('Отключить оптимизацию'));
+      await tester.tap(find.text('Отключить оптимизацию'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Не удалось запросить исключение из оптимизации батареи'),
+        findsOneWidget,
+      );
+      expect(find.text('Оптимизация батареи включена'), findsOneWidget);
     },
   );
 }
