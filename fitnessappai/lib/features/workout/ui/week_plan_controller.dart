@@ -171,20 +171,6 @@ class WeekPlanController {
     await _load();
   }
 
-  /// Помечает тренировку [item] перенесённой: её день-источник в этой неделе
-  /// становится пустым (задача 47.3).
-  Future<void> markRescheduled(WeekPlanItem item) async {
-    if (!await dayExists(item.programDayId)) {
-      await _load();
-      return;
-    }
-    await workoutRepository.markRescheduled(
-      item.programDayId,
-      mondayOf(item.scheduledDate),
-    );
-    await _load();
-  }
-
   Future<void> clearSkip(WeekPlanItem item) async {
     if (!await dayExists(item.programDayId)) {
       await _load();

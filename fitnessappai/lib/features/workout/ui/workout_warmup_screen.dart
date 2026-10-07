@@ -20,12 +20,17 @@ class WorkoutWarmupScreen extends StatefulWidget {
     required this.programDayId,
     required this.warmupSeconds,
     this.variant = WorkoutVariant.main,
+    this.rescheduleWeekStart,
     this.soundService,
   });
 
   final int programDayId;
   final int warmupSeconds;
   final WorkoutVariant variant;
+
+  /// Понедельник недели-источника, если тренировка запущена как перенос
+  /// (задача 48.4) — пробрасывается на экран выполнения.
+  final DateTime? rescheduleWeekStart;
   final SoundService? soundService;
 
   @override
@@ -78,9 +83,11 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
     }
     _navigated = true;
     _soundService.stop();
+    final weekStart = widget.rescheduleWeekStart;
     context.push(
       '/workout/run?programDayId=${widget.programDayId}'
-      '&variant=${widget.variant.name}',
+      '&variant=${widget.variant.name}'
+      '${weekStart == null ? '' : '&rescheduleWeekStart=${weekStart.millisecondsSinceEpoch}'}',
     );
   }
 

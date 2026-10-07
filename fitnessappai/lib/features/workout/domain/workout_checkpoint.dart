@@ -27,6 +27,7 @@ class WorkoutCheckpoint {
     this.holdElapsedSeconds = 0,
     this.holdTargetSeconds,
     this.holdRunning = false,
+    this.rescheduleWeekStart,
   });
 
   factory WorkoutCheckpoint.fromJson(Map<String, dynamic> json) =>
@@ -50,6 +51,9 @@ class WorkoutCheckpoint {
         holdElapsedSeconds: json['holdElapsedSeconds'] as int? ?? 0,
         holdTargetSeconds: json['holdTargetSeconds'] as int?,
         holdRunning: json['holdRunning'] as bool? ?? false,
+        rescheduleWeekStart: json['rescheduleWeekStart'] == null
+            ? null
+            : DateTime.parse(json['rescheduleWeekStart'] as String),
       );
 
   final int programDayId;
@@ -79,6 +83,14 @@ class WorkoutCheckpoint {
   final int? holdTargetSeconds;
   final bool holdRunning;
 
+  /// Понедельник недели-источника, если сессия запущена как перенос
+  /// («Перенести на сегодня», задача 48.4).
+  ///
+  /// Нужен для восстановления после убийства процесса: query-параметр
+  /// перенаправления из этого снимка теряется, а отметка переноса ставится
+  /// только после фактического сохранения сессии.
+  final DateTime? rescheduleWeekStart;
+
   Map<String, dynamic> toJson() => {
     'programDayId': programDayId,
     'exerciseIndex': exerciseIndex,
@@ -97,6 +109,7 @@ class WorkoutCheckpoint {
     'holdElapsedSeconds': holdElapsedSeconds,
     'holdTargetSeconds': holdTargetSeconds,
     'holdRunning': holdRunning,
+    'rescheduleWeekStart': rescheduleWeekStart?.toIso8601String(),
   };
 
   static const _fileName = 'workout_checkpoint.json';

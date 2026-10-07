@@ -9,8 +9,9 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 Future<void> startPlannedWorkout(
   BuildContext context,
   WeekPlanController controller,
-  WeekPlanItem item,
-) async {
+  WeekPlanItem item, {
+  DateTime? rescheduleWeekStart,
+}) async {
   final exists = await controller.dayExists(item.programDayId);
   if (!context.mounted) {
     return;
@@ -24,5 +25,9 @@ Future<void> startPlannedWorkout(
     await controller.refresh();
     return;
   }
-  context.push('/workout/prepare/${item.programDayId}');
+  final weekStart = rescheduleWeekStart;
+  context.push(
+    '/workout/prepare/${item.programDayId}'
+    '${weekStart == null ? '' : '?rescheduleWeekStart=${weekStart.millisecondsSinceEpoch}'}',
+  );
 }

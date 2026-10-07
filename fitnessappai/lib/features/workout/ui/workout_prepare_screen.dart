@@ -18,12 +18,17 @@ class WorkoutPrepareScreen extends StatefulWidget {
   const WorkoutPrepareScreen({
     super.key,
     required this.programDayId,
+    this.rescheduleWeekStart,
     this.programRepository,
     this.exerciseRepository,
     this.profileRepository,
   });
 
   final int programDayId;
+
+  /// Понедельник недели-источника, если тренировка запущена как перенос
+  /// (задача 48.4) — пробрасывается дальше на warmup и run.
+  final DateTime? rescheduleWeekStart;
   final ProgramRepository? programRepository;
   final ExerciseRepository? exerciseRepository;
   final UserProfileRepository? profileRepository;
@@ -47,6 +52,14 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
       profileRepository:
           widget.profileRepository ?? locator.get<UserProfileRepository>(),
     );
+  }
+
+  /// Query-параметр переноса для следующих экранов (задача 48.4).
+  String get _rescheduleQuery {
+    final weekStart = widget.rescheduleWeekStart;
+    return weekStart == null
+        ? ''
+        : '&rescheduleWeekStart=${weekStart.millisecondsSinceEpoch}';
   }
 
   Future<void> _start() async {
@@ -76,13 +89,14 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
     if (warmup != null && warmup > 0) {
       context.push(
         '/workout/warmup?programDayId=${widget.programDayId}'
-        '&variant=${_controller.variant.value.name}&seconds=${warmup * 60}',
+        '&variant=${_controller.variant.value.name}&seconds=${warmup * 60}'
+        '$_rescheduleQuery',
       );
       return;
     }
     context.push(
       '/workout/run?programDayId=${widget.programDayId}'
-      '&variant=${_controller.variant.value.name}',
+      '&variant=${_controller.variant.value.name}$_rescheduleQuery',
     );
   }
 
