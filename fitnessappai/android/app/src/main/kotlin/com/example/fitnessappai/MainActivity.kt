@@ -1,7 +1,10 @@
 package com.example.fitnessappai
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -9,8 +12,12 @@ import java.io.File
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.fitnessappai/file_saver"
+
+    // Исключение из оптимизации батареи (задача 48.7).
+    private val BATTERY_CHANNEL = "com.example.fitnessappai/battery"
     private var pendingResult: MethodChannel.Result? = null
     private var pendingSourcePath: String? = null
+    private var pendingBatteryResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -36,6 +43,42 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BATTERY_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "isIgnoringBatteryOptimizations" ->
+                        result.success(isIgnoringBatteryOptimizations())
+
+                    "requestIgnoreBatteryOptimizations" -> {
+                        if (isIgnoringBatteryOptimizations()) {
+                            result.success(true)
+                            return@setMethodCallHandler
+                        }
+                        // Диалог «исключить приложение из оптимизации батареи»
+                        // закрывается сам: результат читаем в onActivityResult,
+                        // иначе статус в приложении устарел бы до ответа.
+                        val intent = Intent(
+                            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                            Uri.parse("package:$packageName"),
+                        )
+                        try {
+                            pendingBatteryResult = result
+                            startActivityForResult(intent, BATTERY_REQUEST)
+                        } catch (e: Exception) {
+                            pendingBatteryResult = null
+                            result.error("UNAVAILABLE", e.message, null)
+                        }
+                    }
+
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun isIgnoringBatteryOptimizations(): Boolean {
+        val power = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return power.isIgnoringBatteryOptimizations(packageName)
     }
 
     @Suppress("DEPRECATION")
@@ -62,9 +105,17 @@ class MainActivity : FlutterActivity() {
                 result?.success(false)
             }
         }
+        if (requestCode == BATTERY_REQUEST) {
+            // Системный диалог закрыт — возвращаем актуальный статус: он
+            // меняется только здесь, поэтому устаревать ему негде.
+            val batteryResult = pendingBatteryResult
+            pendingBatteryResult = null
+            batteryResult?.success(isIgnoringBatteryOptimizations())
+        }
     }
 
     companion object {
         private const val SAVE_FILE_REQUEST = 1001
+        private const val BATTERY_REQUEST = 1002
     }
 }

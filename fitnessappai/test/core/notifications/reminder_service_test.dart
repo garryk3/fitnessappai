@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -905,6 +906,82 @@ void main() {
       await afterRestart.initialize();
 
       expect(tapped, [42, 42]);
+    });
+  });
+
+  group('диагностика разрешений на старте (48.7)', () {
+    setUp(() {
+      registerFallbackValue(const InitializationSettings());
+      registerFallbackValue(
+        const AndroidNotificationChannel('workout_reminders', 'Канал'),
+      );
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.createNotificationChannel(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => plugin.initialize(
+          settings: any(named: 'settings'),
+          onDidReceiveNotificationResponse: any(
+            named: 'onDidReceiveNotificationResponse',
+          ),
+        ),
+      ).thenAnswer((_) async => true);
+      when(
+        () => plugin.getNotificationAppLaunchDetails(),
+      ).thenAnswer((_) async => NotificationAppLaunchDetails(false));
+    });
+
+    /// Перехватывает строки [debugPrint]: по логу на старте различаем
+    /// «режим показа inexact» (стройка была без точных будильников) и
+    /// «система не доставила» — читать его вручную негде, кроме logcat.
+    Future<List<String>> captureLogs(Future<void> Function() body) async {
+      final lines = <String>[];
+      final previous = debugPrint;
+      debugPrint = (message, {wrapWidth}) {
+        lines.add(message ?? '');
+      };
+      try {
+        await body();
+      } finally {
+        debugPrint = previous;
+      }
+      return lines;
+    }
+
+    test('логирует режим показа при запуске', () async {
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => false);
+
+      final lines = await captureLogs(service.initialize);
+
+      expect(
+        lines.any(
+          (l) =>
+              l.contains('Разрешения на старте: уведомления=true') &&
+              l.contains('точные будильники=false'),
+        ),
+        isTrue,
+        reason: 'по логу видно, что напоминание уйдёт с окном',
+      );
+      expect(lines.any((l) => l.contains('режим показа: inexact')), isTrue);
+    });
+
+    test('сбой чтения разрешений не роняет инициализацию', () async {
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenThrow(StateError('канал не отвечает'));
+
+      await expectLater(service.initialize(), completes);
     });
   });
 

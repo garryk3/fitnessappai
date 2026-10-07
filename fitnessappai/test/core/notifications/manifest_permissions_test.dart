@@ -32,6 +32,11 @@ void main() {
     expect(manifest, contains('android.permission.SCHEDULE_EXACT_ALARM'));
   });
 
+  test('REQUEST_IGNORE_BATTERY_OPTIMIZATIONS объявлен: диалог исключения '
+      'открывается по кнопке в настройках (48.7)', () {
+    expect(manifest, contains('android.permission.REQUEST_IGNORE_BATTERY'));
+  });
+
   test('разрешения уведомлений и перезапуска на месте', () {
     expect(manifest, contains('android.permission.POST_NOTIFICATIONS'));
     expect(manifest, contains('android.permission.RECEIVE_BOOT_COMPLETED'));
