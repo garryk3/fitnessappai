@@ -26,6 +26,8 @@ void main() {
         daysCount: 1,
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
+        // allScheduled отдаёт только активные программы (48.8).
+        isActive: true,
       ),
       [ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: dayOfWeek)],
     );
@@ -90,6 +92,7 @@ void main() {
           daysCount: 2,
           createdAt: DateTime(2024, 1, 1),
           updatedAt: DateTime(2024, 1, 1),
+          isActive: true,
         ),
         [
           ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),
@@ -121,6 +124,38 @@ void main() {
   );
 
   test(
+    'allScheduled не отдаёт напоминания неактивных программ (48.8)',
+    () async {
+      Future<int> programWithReminder(
+        String name, {
+        required bool isActive,
+      }) async {
+        final program = await programRepository.create(
+          Program(
+            name: name,
+            daysCount: 1,
+            createdAt: DateTime(2024, 1, 1),
+            updatedAt: DateTime(2024, 1, 1),
+            isActive: isActive,
+          ),
+          [ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2)],
+        );
+        final day = (await programRepository.getDays(program.id!)).single;
+        await repository.saveForDay(day.id!, hour: 9, minute: 0, enabled: true);
+        return program.id!;
+      }
+
+      await programWithReminder('Активная', isActive: true);
+      await programWithReminder('Черновик', isActive: false);
+
+      final scheduled = await repository.allScheduled();
+
+      expect(scheduled, hasLength(1));
+      expect(scheduled.single.programName, 'Активная');
+    },
+  );
+
+  test(
     'scheduledForDays возвращает напоминания только указанных дней (47.8, 2г)',
     () async {
       final program = await programRepository.create(
@@ -129,6 +164,7 @@ void main() {
           daysCount: 3,
           createdAt: DateTime(2024, 1, 1),
           updatedAt: DateTime(2024, 1, 1),
+          isActive: true,
         ),
         [
           ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 2),

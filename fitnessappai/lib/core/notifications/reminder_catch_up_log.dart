@@ -13,6 +13,12 @@ abstract class ReminderCatchUpLog {
 
   /// Запоминает, что для дня [programDayId] догон показали в [at].
   Future<void> markShown(int programDayId, DateTime at);
+
+  /// Снимает отметку дня [programDayId] (задача 48.8).
+  ///
+  /// Нужно, когда показ после отметки не состоялся: без снятия день навсегда
+  /// остался бы «показанным» и догон не повторил бы попытку.
+  Future<void> unmarkShown(int programDayId);
 }
 
 /// Хранилище отметок в таблице `app_meta`.
@@ -55,5 +61,12 @@ class AppMetaReminderCatchUpLog implements ReminderCatchUpLog {
             value: Value(formatDay(at)),
           ),
         );
+  }
+
+  @override
+  Future<void> unmarkShown(int programDayId) async {
+    await (_db.delete(
+      _db.appMeta,
+    )..where((t) => t.key.equals(_keyOf(programDayId)))).go();
   }
 }

@@ -53,6 +53,21 @@ void main() {
     expect(rows, hasLength(1));
   });
 
+  test('снятие отметки возвращает состояние до показа (48.8)', () async {
+    await log.markShown(12, DateTime(2026, 9, 29));
+    await log.unmarkShown(12);
+
+    expect(await log.wasShownOn(12, DateTime(2026, 9, 29)), isFalse);
+    expect(await db.select(db.appMeta).get(), isEmpty);
+  });
+
+  test('снятие отметки чужого дня свою не трогает (48.8)', () async {
+    await log.markShown(12, DateTime(2026, 9, 29));
+    await log.unmarkShown(13);
+
+    expect(await log.wasShownOn(12, DateTime(2026, 9, 29)), isTrue);
+  });
+
   group('formatDay', () {
     test('сортируется лексикографически и дополняется нулями', () {
       expect(

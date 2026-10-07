@@ -21,10 +21,16 @@ class _CountingReminderService extends ReminderService {
   _CountingReminderService({required super.repository});
 
   int rescheduleCalls = 0;
+  int catchUpCalls = 0;
 
   @override
   Future<void> rescheduleAll() async {
     rescheduleCalls++;
+  }
+
+  @override
+  Future<void> catchUpMissed() async {
+    catchUpCalls++;
   }
 }
 
@@ -41,16 +47,21 @@ void main() {
 
     await tester.pumpWidget(const FitnessAppAi());
     expect(reminders.rescheduleCalls, 0);
+    expect(reminders.catchUpCalls, 0);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(reminders.rescheduleCalls, 0, reason: 'на паузе не перепланируем');
+    expect(reminders.catchUpCalls, 0, reason: 'на паузе не догоняем');
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     await tester.pump();
 
     expect(reminders.rescheduleCalls, 1);
+    // Возврат из фона — тот же момент, что и разблокировка экрана: догон
+    // обязан выполняться и он (48.8, ранее не покрывался вовсе).
+    expect(reminders.catchUpCalls, 1, reason: 'догон при возврате из фона');
   });
 
   testWidgets('приложение стартует без зарегистрированных напоминаний', (
