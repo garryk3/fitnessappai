@@ -869,9 +869,7 @@ void main() {
     tester,
   ) async {
     final day = await createDay(fixedNow.weekday, name: 'Сплит');
-    await (programRepo as ProgramRepository).updateDay(
-      day.copyWith(title: 'Грудь'),
-    );
+    await (programRepo as dynamic).updateDay(day.copyWith(title: 'Грудь'));
     await pumpPlan(tester);
 
     final dayCard = tester.widget<Text>(find.textContaining('Грудь').first);
@@ -882,9 +880,7 @@ void main() {
     tester,
   ) async {
     final day = await createDay(fixedNow.weekday, name: 'Сплит');
-    await (programRepo as ProgramRepository).updateDay(
-      day.copyWith(title: 'Грудь'),
-    );
+    await (programRepo as dynamic).updateDay(day.copyWith(title: 'Грудь'));
     await pumpPlan(tester);
 
     await tester.tap(find.text('10').last);
