@@ -50,7 +50,7 @@ void main() {
     await controller.refresh();
   }
 
-  Future<int> createUnlinkedDay() async {
+  Future<int> createUnlinkedDay({String? title}) async {
     final program = await programRepo.create(
       Program(
         name: 'Без привязки',
@@ -60,13 +60,13 @@ void main() {
         isActive: true,
         activatedAt: DateTime(2024, 1, 1),
       ),
-      [const ProgramDay(programId: 0, dayIndex: 0)],
+      [ProgramDay(programId: 0, dayIndex: 0, title: title)],
     );
     final days = await programRepo.getDays(program.id!);
     return days.first.id!;
   }
 
-  Future<int> createLinkedDay(int dayOfWeek) async {
+  Future<int> createLinkedDay(int dayOfWeek, {String? title}) async {
     final program = await programRepo.create(
       Program(
         name: 'По расписанию',
@@ -76,11 +76,44 @@ void main() {
         isActive: true,
         activatedAt: DateTime(2024, 1, 1),
       ),
-      [ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: dayOfWeek)],
+      [
+        ProgramDay(
+          programId: 0,
+          dayIndex: 0,
+          dayOfWeek: dayOfWeek,
+          title: title,
+        ),
+      ],
     );
     final days = await programRepo.getDays(program.id!);
     return days.first.id!;
   }
+
+  test(
+    'кастомное название дня доходит до items из всех источников (48.12)',
+    () async {
+      final linked = await createLinkedDay(1, title: 'Грудь');
+      final unlinked = await createUnlinkedDay(title: 'Кардио');
+      final manual = await createUnlinkedDay(title: 'Ноги');
+      // 15 августа 2026 — суббота той же недели, что и fixedNow.
+      await scheduleRepo.schedule(manual, DateTime(2026, 8, 15));
+
+      controller.weekStart.value = DateTime(2026, 8, 10);
+      await controller.refresh();
+
+      String? titleOf(int dayId, int day) {
+        final matches = controller.items.value
+            .where((i) => i.programDayId == dayId && i.scheduledDate.day == day)
+            .toList();
+        expect(matches, hasLength(1), reason: 'item дня $dayId на $day');
+        return matches.single.dayTitle;
+      }
+
+      expect(titleOf(linked, 10), 'Грудь');
+      expect(titleOf(unlinked, 10), 'Кардио');
+      expect(titleOf(manual, 15), 'Ноги');
+    },
+  );
 
   test('manual schedule appears in items', () async {
     final dayId = await createUnlinkedDay();

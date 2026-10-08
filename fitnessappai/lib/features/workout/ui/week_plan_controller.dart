@@ -500,6 +500,9 @@ class WeekPlanController {
             dayIndex: item.dayIndex,
             programName: item.programName,
             imagePath: item.imagePath,
+            // Кастомное название дня (48.12): без переноса здесь карточка и
+            // лист действий всегда подставляли бы фолбэк «День N».
+            dayTitle: item.dayTitle,
             dayOfWeek: item.dayOfWeek,
             scheduledDate: item.scheduledDate,
             isManual: item.isManual,
