@@ -868,17 +868,23 @@ void main() {
   testWidgets('карточка планирования показывает программу, день и дату', (
     tester,
   ) async {
-    await createDay(fixedNow.weekday, name: 'Сплит');
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    await (programRepo as ProgramRepository).updateDay(
+      day.copyWith(title: 'Грудь'),
+    );
     await pumpPlan(tester);
 
-    final dayCard = tester.widget<Text>(find.textContaining('День 1').first);
-    expect(dayCard.data, 'День 1 · 10 августа 2026');
+    final dayCard = tester.widget<Text>(find.textContaining('Грудь').first);
+    expect(dayCard.data, 'Грудь · 10 августа 2026');
   });
 
   testWidgets('попап дня недели показывает программу, день и дату', (
     tester,
   ) async {
-    await createDay(fixedNow.weekday, name: 'Сплит');
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    await (programRepo as ProgramRepository).updateDay(
+      day.copyWith(title: 'Грудь'),
+    );
     await pumpPlan(tester);
 
     await tester.tap(find.text('10').last);
@@ -887,7 +893,7 @@ void main() {
     final sheet = find.byType(BottomSheet);
     expect(sheet, findsOneWidget);
     expect(
-      find.descendant(of: sheet, matching: find.text('Сплит → День 1')),
+      find.descendant(of: sheet, matching: find.text('Сплит → Грудь')),
       findsOneWidget,
     );
     expect(
