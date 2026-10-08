@@ -5,6 +5,8 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
@@ -12,8 +14,10 @@ import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart
 import 'package:fitnessappai/features/workout/ui/status_badge.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/quick_start_bar.dart';
+import 'package:fitnessappai/features/workout/ui/reminder_time_dialog.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран «План»: сетка недели с тренировочными днями.
 ///
@@ -53,8 +57,20 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       planScheduleRepository:
           widget.planScheduleRepository ??
           locator.get<PlanScheduleRepository>(),
+      reminders: _resolveReminders(),
       clock: widget.clock,
     );
+  }
+
+  /// Одноразовые напоминания (48.10) регистрируются не во всех окружениях:
+  /// в виджет-тестах контейнер может быть пустым, поэтому подключаем их
+  /// только когда сервис действительно есть — как в `main.dart`.
+  ReminderService? _resolveReminders() {
+    try {
+      return locator.get<ReminderService>();
+    } on StateError {
+      return null;
+    }
   }
 
   @override
@@ -89,6 +105,37 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   Future<void> _cancel(WeekPlanItem item) =>
       _controller.cancelSchedule(item.programDayId, item.scheduledDate);
+
+  /// Правка времени и напоминания уже назначенной тренировки (48.10).
+  ///
+  /// Прошедшая дата закрыта той же защитой, что и назначение (47.1/48.9):
+  /// напоминание всё равно не сработало бы, а строка назначения прошлой
+  /// недели на следующей загрузке удаляется (47.4).
+  Future<void> _editTime(WeekPlanItem item) async {
+    final l10n = AppLocalizations.of(context);
+    if (_isPast(item.scheduledDate, _controller.selectedDate.value)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.weekPlanPastDateGuard)));
+      return;
+    }
+    final result = await showReminderTimeDialog(
+      context,
+      hour: item.reminderHour,
+      minute: item.reminderMinute,
+      reminderEnabled: item.reminderEnabled,
+    );
+    if (result == null || !mounted) {
+      return;
+    }
+    await _controller.setReminder(
+      item.programDayId,
+      item.scheduledDate,
+      hour: result.hour,
+      minute: result.minute,
+      reminderEnabled: result.reminderEnabled,
+    );
+  }
 
   /// Обрабатывает тап по дню в сетке недели и календаре месяца.
   ///
@@ -174,6 +221,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             onSkip: _skip,
             onUnskip: _unskip,
             onCancel: _cancel,
+            onEditTime: _editTime,
             onDayTap: (date) => _onDayTap(context, controller, date, l10n),
           );
         }
@@ -185,6 +233,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           onSkip: _skip,
           onUnskip: _unskip,
           onCancel: _cancel,
+          onEditTime: _editTime,
           onDayTap: (date) => _onDayTap(context, controller, date, l10n),
         );
       },
@@ -240,6 +289,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                 onUnskip: () {
                   Navigator.of(sheetContext).pop();
                   _unskip(item);
+                },
+                // Пункт «Время и напоминание» (48.10): для дня, у которого
+                // времени ещё нет, это единственный способ его задать.
+                onEditTime: () {
+                  Navigator.of(sheetContext).pop();
+                  _editTime(item);
                 },
                 onCancel: () {
                   Navigator.of(sheetContext).pop();
@@ -341,6 +396,7 @@ class _WeekGrid extends StatelessWidget {
     required this.onSkip,
     required this.onUnskip,
     required this.onCancel,
+    required this.onEditTime,
     this.onDayTap,
   });
 
@@ -351,6 +407,9 @@ class _WeekGrid extends StatelessWidget {
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
   final _WorkoutAction onCancel;
+
+  /// Правка времени и напоминания тренировки (48.10).
+  final _WorkoutAction onEditTime;
 
   /// Тап по дню — открыть планирование или действия дня.
   final void Function(DateTime date)? onDayTap;
@@ -373,6 +432,7 @@ class _WeekGrid extends StatelessWidget {
                 onSkip: onSkip,
                 onUnskip: onUnskip,
                 onCancel: onCancel,
+                onEditTime: onEditTime,
                 onDayTap: onDayTap,
               ),
             ),
@@ -393,6 +453,7 @@ class _WeekList extends StatelessWidget {
     required this.onSkip,
     required this.onUnskip,
     required this.onCancel,
+    required this.onEditTime,
     this.onDayTap,
   });
 
@@ -403,6 +464,9 @@ class _WeekList extends StatelessWidget {
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
   final _WorkoutAction onCancel;
+
+  /// Правка времени и напоминания тренировки (48.10).
+  final _WorkoutAction onEditTime;
 
   /// Тап по дню — открыть планирование или действия дня.
   final void Function(DateTime date)? onDayTap;
@@ -425,6 +489,7 @@ class _WeekList extends StatelessWidget {
             onSkip: onSkip,
             onUnskip: onUnskip,
             onCancel: onCancel,
+            onEditTime: onEditTime,
             onDayTap: onDayTap,
           ),
         );
@@ -443,6 +508,7 @@ class _DayColumn extends StatelessWidget {
     required this.onSkip,
     required this.onUnskip,
     required this.onCancel,
+    required this.onEditTime,
     this.onDayTap,
   });
 
@@ -457,6 +523,9 @@ class _DayColumn extends StatelessWidget {
   final _WorkoutAction onUnskip;
   final _WorkoutAction onCancel;
 
+  /// Правка времени и напоминания тренировки (48.10).
+  final _WorkoutAction onEditTime;
+
   /// Тап по дню — открыть планирование или действия дня.
   final void Function(DateTime date)? onDayTap;
 
@@ -467,7 +536,11 @@ class _DayColumn extends StatelessWidget {
     final header = GestureDetector(
       onTap: onDayTap == null ? null : () => onDayTap!(date),
       behavior: HitTestBehavior.opaque,
-      child: _DayHeader(date: date, isToday: isToday),
+      child: _DayHeader(
+        date: date,
+        isToday: isToday,
+        times: _timeLabels(items),
+      ),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,6 +561,7 @@ class _DayColumn extends StatelessWidget {
                 onSkip: onSkip,
                 onUnskip: onUnskip,
                 onCancel: onCancel,
+                onEditTime: onEditTime,
               ),
             ),
           ),
@@ -508,6 +582,7 @@ class _DayCard extends StatelessWidget {
     required this.onSkip,
     required this.onUnskip,
     required this.onCancel,
+    required this.onEditTime,
     this.onDayTap,
   });
 
@@ -521,6 +596,9 @@ class _DayCard extends StatelessWidget {
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
   final _WorkoutAction onCancel;
+
+  /// Правка времени и напоминания тренировки (48.10).
+  final _WorkoutAction onEditTime;
 
   /// Тап по дню — открыть планирование или действия дня.
   final void Function(DateTime date)? onDayTap;
@@ -537,7 +615,11 @@ class _DayCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _DayHeader(date: date, isToday: isToday),
+              _DayHeader(
+                date: date,
+                isToday: isToday,
+                times: _timeLabels(items),
+              ),
               if (items.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 for (final item in items)
@@ -550,6 +632,7 @@ class _DayCard extends StatelessWidget {
                       onSkip: onSkip,
                       onUnskip: onUnskip,
                       onCancel: onCancel,
+                      onEditTime: onEditTime,
                     ),
                   ),
               ],
@@ -562,10 +645,20 @@ class _DayCard extends StatelessWidget {
 }
 
 class _DayHeader extends StatelessWidget {
-  const _DayHeader({required this.date, required this.isToday});
+  const _DayHeader({
+    required this.date,
+    required this.isToday,
+    this.times = const [],
+  });
 
   final DateTime date;
   final bool isToday;
+
+  /// Времена тренировок дня рядом с датой (48.10), по возрастанию.
+  ///
+  /// Пусто у дней без заданного времени — так и должно быть: время в плане
+  /// необязательно.
+  final List<String> times;
 
   @override
   Widget build(BuildContext context) {
@@ -607,6 +700,15 @@ class _DayHeader extends StatelessWidget {
             color: isToday ? colorScheme.primary : colorScheme.onSurfaceVariant,
           ),
         ),
+        if (times.isNotEmpty)
+          Text(
+            times.join(', '),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: isToday
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ),
       ],
     );
     if (!isToday) {
@@ -632,6 +734,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    required this.onEditTime,
     this.onCancel,
   });
 
@@ -643,6 +746,9 @@ class _PlannedWorkoutCard extends StatelessWidget {
   final _WorkoutAction onSkip;
   final _WorkoutAction onUnskip;
   final _WorkoutAction? onCancel;
+
+  /// Правка времени и напоминания (48.10) — тап по строке времени карточки.
+  final _WorkoutAction onEditTime;
 
   @override
   Widget build(BuildContext context) {
@@ -703,6 +809,40 @@ class _PlannedWorkoutCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (item.hasTime) ...[
+              const SizedBox(height: 4),
+              InkWell(
+                onTap: () => onEditTime(item),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.access_time, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        item.timeLabel!,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      if (item.reminderEnabled) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.notifications_active,
+                          size: 14,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
             if (status == WeekPlanStatus.pending) ...[
               const SizedBox(height: 8),
               Wrap(
@@ -848,6 +988,7 @@ class _DayActionTile extends StatelessWidget {
     required this.onStart,
     required this.onSkip,
     required this.onUnskip,
+    required this.onEditTime,
     this.onCancel,
   });
 
@@ -859,6 +1000,12 @@ class _DayActionTile extends StatelessWidget {
   final VoidCallback onSkip;
   final VoidCallback onUnskip;
   final VoidCallback? onCancel;
+
+  /// Правка времени и напоминания (48.10) — пункт «Время и напоминание».
+  ///
+  /// Для дня без времени это единственный способ его задать: на карточке
+  /// строки в этом случае нет.
+  final VoidCallback onEditTime;
 
   @override
   Widget build(BuildContext context) {
@@ -935,6 +1082,13 @@ class _DayActionTile extends StatelessWidget {
               child: _MissedWorkoutHint(),
             ),
           ],
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            leading: const Icon(Icons.access_time, size: 20),
+            title: Text(l10n.weekPlanTimeAction),
+            subtitle: Text(item.timeLabel ?? l10n.weekPlanNoTime),
+            onTap: onEditTime,
+          ),
         ],
       ),
     );
@@ -954,6 +1108,22 @@ List<WeekPlanItem> _itemsForDay(List<WeekPlanItem> items, DateTime day) =>
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Времена тренировок дня для заголовка — «09:00, 18:00» (48.10).
+///
+/// Порядок берётся из порядка списка (план сортирует карточки по возрастанию
+/// времени, см. `WeekPlanController._byDateThenTime`), дубли одного времени
+/// схлопываются.
+List<String> _timeLabels(List<WeekPlanItem> items) {
+  final labels = <String>{};
+  for (final item in items) {
+    final label = item.timeLabel;
+    if (label != null) {
+      labels.add(label);
+    }
+  }
+  return labels.toList();
+}
 
 String _weekdayLabel(AppLocalizations l10n, int weekday) => switch (weekday) {
   1 => l10n.weekdayMon,
@@ -980,6 +1150,15 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   ProgramSummary? _selectedProgram;
   ProgramDetail? _programDetail;
   bool _loading = true;
+
+  /// Шаг «время» (48.10): день выбран, осталось время и подтверждение.
+  ProgramDay? _selectedDay;
+
+  /// Время шага; `null` — без времени, назначение как раньше.
+  TimeOfDay? _time;
+
+  /// Галочка напоминания шага; включается только вместе со временем.
+  bool _reminderOn = false;
 
   @override
   void initState() {
@@ -1010,7 +1189,8 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
     });
   }
 
-  void _schedule(int programDayId) {
+  void _selectDay(ProgramDay day) {
+    final programDayId = day.id!;
     // 48.9: день программы, уже назначенный на эту дату, schedule() принял бы
     // молча (insertOrIgnore по уникальному ключу {programDayId, scheduledDate}).
     // Решение владельца — не создавать ложное ожидание: показать «уже
@@ -1029,7 +1209,32 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
       );
       return;
     }
-    widget.controller.scheduleDay(programDayId, widget.date);
+    // 48.10: перед назначением — шаг времени и напоминания.
+    setState(() {
+      _selectedDay = day;
+    });
+  }
+
+  /// Подтверждает назначение с выбранным временем (48.10).
+  ///
+  /// Время можно не задать: `hour`/`minute` тогда уходят в `null` и
+  /// назначение происходит ровно как до 48.10.
+  Future<void> _confirm() async {
+    final day = _selectedDay;
+    if (day == null) {
+      return;
+    }
+    final time = _time;
+    await widget.controller.scheduleDay(
+      day.id!,
+      widget.date,
+      hour: time?.hour,
+      minute: time?.minute,
+      reminderEnabled: time != null && _reminderOn,
+    );
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).pop();
   }
 
@@ -1058,6 +1263,8 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
             const SizedBox(height: 16),
             if (_loading)
               const Center(child: CircularProgressIndicator())
+            else if (_selectedDay != null)
+              _buildTimeStep(l10n, theme)
             else if (_selectedProgram == null)
               _buildProgramList(l10n)
             else
@@ -1144,8 +1351,66 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
                   : 'Без привязки',
             ),
             trailing: const Icon(Icons.add_circle_outline),
-            onTap: () => _schedule(day.day.id!),
+            onTap: () => _selectDay(day.day),
           ),
+      ],
+    );
+  }
+
+  /// Шаг «время и напоминание» перед назначением (48.10).
+  ///
+  /// Назначение подтверждается здесь: время необязательно, поэтому кнопка
+  /// активна всегда и без времени назначение происходит как раньше.
+  Widget _buildTimeStep(AppLocalizations l10n, ThemeData theme) {
+    final day = _selectedDay!;
+    final detail = _programDetail;
+    final dayTitle = day.title ?? l10n.programBuilderDay(day.dayIndex + 1);
+    final heading = detail == null
+        ? dayTitle
+        : '${detail.program.name} → $dayTitle';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => setState(() {
+                _selectedDay = null;
+              }),
+              icon: const Icon(Icons.arrow_back),
+            ),
+            Expanded(
+              child: Text(
+                heading,
+                style: theme.textTheme.labelLarge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(l10n.weekPlanTimeAction, style: theme.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        ReminderTimeFields(
+          time: _time,
+          reminderEnabled: _reminderOn,
+          onTimeChanged: (value) => setState(() {
+            _time = value;
+          }),
+          onReminderChanged: (value) => setState(() {
+            _reminderOn = value;
+          }),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: AppGradientButton(
+            label: l10n.weekPlanScheduleConfirm,
+            onPressed: _confirm,
+          ),
+        ),
       ],
     );
   }

@@ -135,6 +135,7 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
       soundSettings: sl.get<ReminderSoundSettingsRepository>(),
       catchUpLog: AppMetaReminderCatchUpLog(sl.get<AppDatabase>()),
       deliveredLog: AppMetaReminderDeliveredLog(sl.get<AppDatabase>()),
+      planSchedule: sl.get<PlanScheduleRepository>(),
     ),
   );
   sl.registerLazySingleton<SyncService>(

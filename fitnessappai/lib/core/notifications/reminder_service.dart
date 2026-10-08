@@ -14,6 +14,8 @@ import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_catch_up_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_delivered_log.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
+import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 
 /// Статус разрешений на уведомления.
 class NotificationPermissionStatus {
@@ -48,9 +50,16 @@ void resetLaunchDetailsForTests() => _launchDetailsRead = false;
 /// Управление еженедельными уведомлениями о тренировочных днях.
 ///
 /// Планирование через [FlutterLocalNotificationsPlugin] с повторением
-/// `dayOfWeekAndTime`. Идентификатор уведомления совпадает с
+/// `dayOfWeekAndTime`. Идентификатор еженедельного уведомления совпадает с
 /// [WorkoutReminder.programDayId], поэтому отмена и перепланирование
 /// выполняются по id дня.
+///
+/// Ручное назначение из плана (48.10) живёт в отдельной таблице и получает
+/// **одноразовое** уведомление в диапазоне id [manualReminderIdBase] —
+/// оно не повторяется по дню недели и не участвует в догоне
+/// ([catchUpMissed]): единственный его источник — прямой вызов
+/// [scheduleManualReminder], поэтому второй показ исключён самим фактом
+/// планирования.
 class ReminderService {
   ReminderService({
     required this._repository,
@@ -58,16 +67,24 @@ class ReminderService {
     SoundSettingsStore? soundSettings,
     ReminderCatchUpLog? catchUpLog,
     ReminderDeliveredLog? deliveredLog,
+    PlanScheduleRepository? planSchedule,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
        // ignore: prefer_initializing_formals -- имя параметра публичное.
        _soundSettings = soundSettings,
        // ignore: prefer_initializing_formals -- имя параметра публичное.
        _catchUpLog = catchUpLog,
        // ignore: prefer_initializing_formals -- имя параметра публичное.
-       _deliveredLog = deliveredLog;
+       _deliveredLog = deliveredLog,
+       // ignore: prefer_initializing_formals -- имя параметра публичное.
+       _planSchedule = planSchedule;
 
   final WorkoutReminderRepository _repository;
   final FlutterLocalNotificationsPlugin _plugin;
+
+  /// Ручные назначения с временем (48.10) — источник одноразовых
+  /// напоминаний; `null` — только еженедельные (тесты, окружения без
+  /// зарегистрированного репозитория).
+  final PlanScheduleRepository? _planSchedule;
 
   /// Настройки звука напоминаний; null — звук остаётся стандартным (тесты,
   /// окружения без зарегистрированного хранилища).
@@ -440,7 +457,19 @@ class ReminderService {
   /// старта, и она обязана быть покрыта.
   @visibleForTesting
   Future<void> handleNotificationResponse(NotificationResponse response) async {
-    final programDayId = int.tryParse(response.payload ?? '');
+    final payload = response.payload ?? '';
+    final isManual = payload.startsWith(_manualPayloadPrefix);
+    int? programDayId;
+    if (isManual) {
+      // Формат `m:<scheduleId>:<programDayId>`: строка назначения нужна, чтобы
+      // отличать уведомление от еженедельного; навигация идёт по дню.
+      final parts = payload.substring(_manualPayloadPrefix.length).split(':');
+      if (parts.length == 2) {
+        programDayId = int.tryParse(parts[1]);
+      }
+    } else {
+      programDayId = int.tryParse(payload);
+    }
     if (programDayId == null) {
       return;
     }
@@ -451,6 +480,12 @@ class ReminderService {
       _pendingProgramDayId = programDayId;
     } else {
       handler(programDayId);
+    }
+    if (isManual) {
+      // Отметка доставки (48.8) относится к еженедельным напоминаниям: тап по
+      // ручному уведомлению не доказывает, что недельное дошло вовремя, —
+      // записав её, мы заставили бы догон молча пропустить уведомление дня.
+      return;
     }
     // Отметка доставки пишется после навигации — она не должна её ждать.
     // Догон, в свою очередь, дожидается записи через [_deliveryMarks].
@@ -557,6 +592,219 @@ class ReminderService {
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         payload: reminder.programDayId.toString(),
       );
+    }
+  }
+
+  /// Базовый id уведомлений ручных назначений (48.10).
+  ///
+  /// id еженедельных напоминаний равен `programDayId` (автоинкремент
+  /// `program_days` — единицы и десятки), поэтому одноразовым назначениям
+  /// отведён собственный диапазон: отмена одного вида не задевает другой.
+  static const int manualReminderIdBase = 1000000;
+
+  /// Префикс payload'а ручного напоминания: `m:<scheduleId>:<programDayId>`.
+  ///
+  /// Еженедельные уведомления несут голый `programDayId`, и разбор по
+  /// префиксу не даёт тапу по ручному уведомлению записать отметку
+  /// доставки еженедельного дня ([_markDelivered], 48.8).
+  static const String _manualPayloadPrefix = 'm:';
+
+  /// Горизонт перепланирования одноразовых напоминаний (48.10).
+  ///
+  /// План показывает текущую и следующую недели, поэтому месяца с запасом
+  /// хватает, чтобы покрыть всё ещё не наступившее.
+  static const Duration manualHorizon = Duration(days: 30);
+
+  /// Id уведомления ручного назначения [scheduleId].
+  @visibleForTesting
+  static int manualReminderId(int scheduleId) =>
+      manualReminderIdBase + scheduleId;
+
+  /// Планирует одноразовое уведомление ручного назначения (48.10).
+  ///
+  /// В отличие от [schedule] не повторяется по дню недели: вспыхивает ровно
+  /// один раз — в дату и время назначения. На уже прошедшее время не
+  /// планируется, иначе Android показал бы уведомление сразу после
+  /// сохранения. Недельное напоминание того же дня при этом не отменяется:
+  /// это два независимых уведомления (решение владельца).
+  Future<void> scheduleManualReminder({
+    required int scheduleId,
+    required int programDayId,
+    required DateTime date,
+    required int hour,
+    required int minute,
+    required String programName,
+    required int dayNumber,
+  }) async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android == null) {
+      // Как и у еженедельных: локальные уведомления планируем только на
+      // Android (на Linux здесь завёлся бы датчиковый DBus-будильник, а на
+      // web упал бы MissingPluginException).
+      return;
+    }
+    final enabled = await android.areNotificationsEnabled() ?? false;
+    if (!enabled) {
+      logNotificationIssue(
+        'Уведомления отключены пользователем, пропуск планирования '
+        'назначения $scheduleId',
+      );
+      return;
+    }
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduled = tz.TZDateTime(
+      tz.local,
+      date.year,
+      date.month,
+      date.day,
+      hour,
+      minute,
+    );
+    if (!scheduled.isAfter(now)) {
+      logNotificationIssue(
+        'Время назначения $scheduleId уже прошло ($scheduled), пропуск',
+      );
+      return;
+    }
+    final canExact = await android.canScheduleExactNotifications() ?? false;
+    logNotificationIssue(
+      'Напоминание назначения $scheduleId запланировано на $scheduled '
+      '(${canExact ? 'exactAllowWhileIdle' : 'inexactAllowWhileIdle'})',
+    );
+    final details = _notificationDetails();
+    final payload = '$_manualPayloadPrefix$scheduleId:$programDayId';
+    try {
+      await _plugin.zonedSchedule(
+        id: manualReminderId(scheduleId),
+        title: programName,
+        body: _body(dayNumber),
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: canExact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: null,
+        payload: payload,
+      );
+    } on PlatformException catch (e) {
+      if (!canExact || e.code != _exactAlarmsNotPermitted) {
+        rethrow;
+      }
+      // Точное разрешение отозвали между проверкой и вызовом: лучше
+      // неточное уведомление с задержкой, чем никакого.
+      logNotificationIssue(
+        'Точный режим недоступен для назначения $scheduleId, '
+        'планирую inexactAllowWhileIdle',
+        error: e,
+      );
+      await _plugin.zonedSchedule(
+        id: manualReminderId(scheduleId),
+        title: programName,
+        body: _body(dayNumber),
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: null,
+        payload: payload,
+      );
+    }
+  }
+
+  /// Отменяет одноразовое уведомление назначения [scheduleId] (48.10).
+  ///
+  /// Идемпотентна: вызывается и когда напоминания не было (выключено),
+  /// и когда строки назначения уже нет.
+  Future<void> cancelManualReminder(int scheduleId) =>
+      _plugin.cancel(id: manualReminderId(scheduleId));
+
+  /// Ставит одноразовое уведомление одной строки назначения (48.10).
+  ///
+  /// Строки с датой в прошлом сервис пропускает сам — после импорта базы и
+  /// на горизонте перепланирования встречаются назначения, время которых
+  /// уже прошло.
+  Future<void> _scheduleManualItem(PlanScheduleReminder item) async {
+    await scheduleManualReminder(
+      scheduleId: item.scheduleId,
+      programDayId: item.programDayId,
+      date: item.scheduledDate,
+      hour: item.hour,
+      minute: item.minute,
+      programName: item.programName,
+      dayNumber: item.dayNumber,
+    );
+  }
+
+  /// Перепланировывает одноразовые напоминания всех дней [programDayIds] (48.10).
+  ///
+  /// Вызывается при активации программы вместе с недельными напоминаниями:
+  /// ручные назначения её дней должны перевзвестись так же.
+  Future<void> _rescheduleManualForDays(Iterable<int> programDayIds) async {
+    final rows =
+        await _planSchedule?.remindersForDays(programDayIds) ?? const [];
+    for (final item in rows) {
+      try {
+        await _scheduleManualItem(item);
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось перепланировать напоминание назначения '
+          '${item.scheduleId}',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+  }
+
+  /// Отменяет одноразовые напоминания дней [programDayIds] (48.10).
+  ///
+  /// Вызывается при деактивации программы: настройки дней и назначений в БД
+  /// остаются, а уведомления повторной активации будут поставлены заново.
+  Future<void> _cancelManualForDays(Iterable<int> programDayIds) async {
+    final rows =
+        await _planSchedule?.remindersForDays(programDayIds) ?? const [];
+    for (final item in rows) {
+      try {
+        await cancelManualReminder(item.scheduleId);
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось отменить напоминание назначения ${item.scheduleId}',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+  }
+
+  /// Перепланировывает все одноразовые напоминания в горизонте (48.10).
+  ///
+  /// Нужно после импорта базы (`cancelAll` снял их вместе со всеми) и при
+  /// возврате в приложение: система могла отозвать точные будильники, а
+  /// пользователь — сменить часовой пояс. Еженедельные напоминания при этом
+  /// не затрагиваются.
+  Future<void> _rescheduleManualAll() async {
+    final planSchedule = _planSchedule;
+    if (planSchedule == null) {
+      return;
+    }
+    final now = tz.TZDateTime.now(tz.local);
+    final rows = await planSchedule.remindersBetween(
+      now,
+      now.add(manualHorizon),
+    );
+    for (final item in rows) {
+      try {
+        await _scheduleManualItem(item);
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось перепланировать напоминание назначения '
+          '${item.scheduleId}',
+          error: e,
+          stackTrace: st,
+        );
+      }
     }
   }
 
@@ -795,6 +1043,9 @@ class ReminderService {
         );
       }
     }
+    // Ручные назначения дней (48.10) перевзвешиваются вместе с недельными:
+    // активация программы не должна оставить их уведомления без перепланировки.
+    await _rescheduleManualForDays(programDayIds);
   }
 
   /// Отменяет уведомления указанных дней, не удаляя их настройки из БД.
@@ -813,6 +1064,9 @@ class ReminderService {
         );
       }
     }
+    // Одноразовые напоминания ручных назначений (48.10): настройки строк
+    // остаются в БД, снимаются только запланированные уведомления.
+    await _cancelManualForDays(programDayIds);
   }
 
   /// Отменяет все запланированные уведомления.
@@ -861,6 +1115,10 @@ class ReminderService {
         );
       }
     }
+    // Ручные назначения с временем (48.10): `cancelAll` перед импортом снял
+    // их вместе со всеми уведомлениями, поэтому без этой строки назначения
+    // остались бы без напоминаний.
+    await _rescheduleManualAll();
   }
 
   /// Ближайшее будущее вхождение дня недели [dayOfWeek] в [hour]:[minute].

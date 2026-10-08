@@ -104,6 +104,16 @@ void main() {
   final DateTime fixedNow = DateTime(2026, 8, 10);
 
   setUp(() async {
+    // Русская локаль на устройствах даёт 24-часовой формат времени. Без него
+    // Material принимает в часах только 1–12 («18» — уже ошибка ввода), а план
+    // показывает HH:mm (48.10). Флаг ставится до сборки дерева: корневой View
+    // кэширует MediaQueryData и пересчитывает её не при каждой сборке, поэтому
+    // значение, выставленное после первого кадра, в дерево уже не попадает.
+    TestWidgetsFlutterBinding
+            .instance
+            .platformDispatcher
+            .alwaysUse24HourFormatTestValue =
+        true;
     db = AppDatabase(executor: NativeDatabase.memory());
     programRepo = ProgramRepository(db);
     workoutRepo = WorkoutRepository(db);
@@ -194,6 +204,41 @@ void main() {
   /// Карточка (колонка) дня недели с указанным номером.
   Finder dayColumn(WidgetTester tester, String dayNumber) =>
       find.ancestor(of: find.text(dayNumber), matching: find.byType(Card));
+
+  /// Вводит время в открытом `TimePickerDialog` и подтверждает (48.10).
+  ///
+  /// Стандартный путь через циферблат в тестах недетерминирован, поэтому
+  /// переключаемся в режим ручного ввода.
+  Future<void> enterTime(
+    WidgetTester tester, {
+    required String hour,
+    required String minute,
+  }) async {
+    final dialog = find.byType(TimePickerDialog);
+    expect(dialog, findsOneWidget);
+
+    await tester.tap(
+      find.descendant(
+        of: dialog,
+        matching: find.byIcon(Icons.keyboard_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final fields = find.descendant(
+      of: dialog,
+      matching: find.byType(TextField),
+    );
+    expect(fields, findsNWidgets(2), reason: 'часы и минуты');
+    await tester.enterText(fields.at(0), hour);
+    await tester.pumpAndSettle();
+    await tester.enterText(fields.at(1), minute);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.descendant(of: dialog, matching: find.text('ОК')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TimePickerDialog), findsNothing);
+  }
 
   testWidgets('показывает пустое состояние без программ', (tester) async {
     await pumpPlan(tester);
@@ -1138,6 +1183,23 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // 48.10: после выбора дня — шаг времени; время можно не задать,
+      // назначение подтверждается кнопкой.
+      expect(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Время и напоминание'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Запланировать'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
       expect(tester.takeException(), isNull);
       expect(find.byType(BottomSheet), findsNothing);
 
@@ -1156,6 +1218,334 @@ void main() {
       );
     },
   );
+
+  testWidgets('лист планирования: шаг времени перед назначением (48.10)', (
+    tester,
+  ) async {
+    // Программа привязана к понедельнику — вторник 11 пуст.
+    final day = await createDay(fixedNow.weekday, name: 'Постоянная');
+    await pumpPlan(tester);
+
+    await tester.tap(find.text('11'));
+    await tester.pumpAndSettle();
+
+    final sheet = find.byType(BottomSheet);
+    expect(sheet, findsOneWidget);
+    // Единственная программа выбрана сама — сразу список дней.
+    await tester.tap(find.descendant(of: sheet, matching: find.text('День 1')));
+    await tester.pumpAndSettle();
+
+    // Шаг времени: время можно не задать.
+    expect(
+      find.descendant(of: sheet, matching: find.text('Время и напоминание')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Время тренировки')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Время не задано')),
+      findsOneWidget,
+    );
+    final reminderSwitch = tester.widget<SwitchListTile>(
+      find.descendant(of: sheet, matching: find.byType(SwitchListTile)),
+    );
+    expect(reminderSwitch.value, isFalse);
+    expect(
+      reminderSwitch.onChanged,
+      isNull,
+      reason: 'без времени напоминание не включить',
+    );
+
+    // Стрелка назад возвращает к списку дней.
+    await tester.tap(
+      find.descendant(of: sheet, matching: find.byIcon(Icons.arrow_back)),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: sheet, matching: find.text('День 1')),
+      findsOneWidget,
+    );
+    await tester.tap(find.descendant(of: sheet, matching: find.text('День 1')));
+    await tester.pumpAndSettle();
+
+    // Назначение подтверждается и без времени — как до 48.10.
+    await tester.tap(
+      find.descendant(of: sheet, matching: find.text('Запланировать')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(BottomSheet), findsNothing);
+    final item = await planScheduleRepo.getFor(
+      day.id!,
+      fixedNow.add(const Duration(days: 1)),
+    );
+    expect(item, isNotNull);
+    expect(item!.hasTime, isFalse);
+    expect(item.reminderEnabled, isFalse);
+  });
+
+  testWidgets(
+    'назначение со временем: часы и напоминание сохраняются (48.10)',
+    (tester) async {
+      final day = await createDay(fixedNow.weekday, name: 'Постоянная');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('11'));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('День 1')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('Время тренировки')),
+      );
+      await tester.pumpAndSettle();
+      await enterTime(tester, hour: '18', minute: '30');
+
+      expect(
+        find.descendant(of: sheet, matching: find.text('18:30')),
+        findsOneWidget,
+      );
+      // С временем переключатель напоминания включается.
+      final switchTile = find.descendant(
+        of: sheet,
+        matching: find.byType(SwitchListTile),
+      );
+      await tester.tap(switchTile);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SwitchListTile>(switchTile).value, isTrue);
+
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('Запланировать')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(BottomSheet), findsNothing);
+      final item = await planScheduleRepo.getFor(
+        day.id!,
+        fixedNow.add(const Duration(days: 1)),
+      );
+      expect(item, isNotNull);
+      expect(item!.timeLabel, '18:30');
+      expect(item.reminderEnabled, isTrue);
+
+      // Карточка вторника: время в заголовке и на карточке + колокольчик.
+      expect(
+        find.descendant(
+          of: dayColumn(tester, '11'),
+          matching: find.text('18:30'),
+        ),
+        findsNWidgets(2),
+      );
+      expect(
+        find.descendant(
+          of: dayColumn(tester, '11'),
+          matching: find.byIcon(Icons.notifications_active),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'тап по строке времени карточки: диалог и «Убрать время» (48.10)',
+    (tester) async {
+      final day = await createDay(fixedNow.weekday, name: 'Сплит');
+      await planScheduleRepo.schedule(
+        day.id!,
+        fixedNow,
+        hour: 9,
+        minute: 0,
+        reminderEnabled: true,
+      );
+      await pumpPlan(tester);
+
+      await tester.tap(
+        find.descendant(
+          of: dayColumn(tester, '10'),
+          matching: find.byIcon(Icons.access_time),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dialog = find.byType(AlertDialog);
+      expect(dialog, findsOneWidget);
+      expect(
+        find.descendant(of: dialog, matching: find.text('Время и напоминание')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('09:00')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<SwitchListTile>(
+              find.descendant(
+                of: dialog,
+                matching: find.byType(SwitchListTile),
+              ),
+            )
+            .value,
+        isTrue,
+        reason: 'включённое напоминание переносится в диалог',
+      );
+
+      await tester.tap(
+        find.descendant(of: dialog, matching: find.text('Убрать время')),
+      );
+      await tester.pumpAndSettle();
+
+      final item = await planScheduleRepo.getFor(day.id!, fixedNow);
+      expect(item, isNotNull);
+      expect(item!.hasTime, isFalse);
+      expect(item.reminderEnabled, isFalse);
+      // Назначение не тронуто — убрано только время.
+      expect(await planScheduleRepo.isScheduled(day.id!, fixedNow), isTrue);
+      expect(
+        find.descendant(
+          of: dayColumn(tester, '10'),
+          matching: find.byIcon(Icons.access_time),
+        ),
+        findsNothing,
+        reason: 'строка времени на карточке исчезла',
+      );
+    },
+  );
+
+  testWidgets(
+    'пункт «Время и напоминание» задаёт время дню по привязке (48.10)',
+    (tester) async {
+      final day = await createDay(fixedNow.weekday, name: 'Сплит');
+      await pumpPlan(tester);
+
+      await tester.tap(find.text('10').last);
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(
+        find.descendant(of: sheet, matching: find.text('Время и напоминание')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('Время не задано')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('Время и напоминание')),
+      );
+      await tester.pumpAndSettle();
+
+      // Лист действий закрылся — открылся диалог правки.
+      expect(find.byType(BottomSheet), findsNothing);
+      final dialog = find.byType(AlertDialog);
+      expect(dialog, findsOneWidget);
+      await tester.tap(
+        find.descendant(of: dialog, matching: find.text('Время тренировки')),
+      );
+      await tester.pumpAndSettle();
+      await enterTime(tester, hour: '7', minute: '45');
+      await tester.tap(
+        find.descendant(of: dialog, matching: find.text('Сохранить')),
+      );
+      await tester.pumpAndSettle();
+
+      final item = await planScheduleRepo.getFor(day.id!, fixedNow);
+      expect(item, isNotNull);
+      expect(item!.timeLabel, '07:45');
+      expect(item.reminderEnabled, isFalse, reason: 'галочку не включали');
+
+      // Для дня по привязке создаётся строка plan_schedule, но крестика
+      // удаления и статуса ручного назначения не появляется (решение (2)).
+      expect(
+        find.descendant(
+          of: dayColumn(tester, '10'),
+          matching: find.byIcon(Icons.access_time),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: dayColumn(tester, '10'),
+          matching: find.byIcon(Icons.close),
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets('заголовок дня собирает времена всех тренировок (48.10)', (
+    tester,
+  ) async {
+    final morning = await createDay(fixedNow.weekday, name: 'Утренняя');
+    final evening = await createDay(fixedNow.weekday, name: 'Вечерняя');
+    await planScheduleRepo.schedule(morning.id!, fixedNow, hour: 18, minute: 0);
+    await planScheduleRepo.schedule(evening.id!, fixedNow, hour: 9, minute: 0);
+    await pumpPlan(tester);
+
+    // Сортировка по возрастанию времени, дублей в подписи нет.
+    expect(find.text('09:00, 18:00'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: dayColumn(tester, '10'),
+        matching: find.text('09:00'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: dayColumn(tester, '10'),
+        matching: find.text('18:00'),
+      ),
+      findsOneWidget,
+    );
+    // Обе карточки показывают время — у каждой строки плана своё.
+    expect(
+      find.descendant(
+        of: dayColumn(tester, '10'),
+        matching: find.byIcon(Icons.access_time),
+      ),
+      findsNWidgets(2),
+    );
+  });
+
+  testWidgets('правка времени на прошедшей дате закрыта защитой (48.10)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    await planScheduleRepo.schedule(
+      day.id!,
+      fixedNow,
+      hour: 9,
+      minute: 0,
+      reminderEnabled: true,
+    );
+    // Четверг 13.08: понедельник 10.08 в прошлом, но внутри недели.
+    await pumpPlan(tester, now: DateTime(2026, 8, 13));
+
+    await tester.tap(
+      find.descendant(
+        of: dayColumn(tester, '10'),
+        matching: find.byIcon(Icons.access_time),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(
+      find.text('Нельзя запланировать тренировку на прошедший день'),
+      findsOneWidget,
+    );
+    final item = await planScheduleRepo.getFor(day.id!, fixedNow);
+    expect(item!.timeLabel, '09:00', reason: 'время не изменилось');
+  });
 }
 
 IconButton weekSwitcherArrow(WidgetTester tester, String tooltip) =>

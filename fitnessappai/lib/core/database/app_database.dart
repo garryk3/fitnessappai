@@ -54,7 +54,7 @@ part 'app_database.g.dart';
 /// ascentMeters/descentMeters/avgPace/steps`.
 /// v15: без изменений схемы — данные: типы упражнений `running`/`bike`
 /// переписаны в `distance` (задача 47.13).
-const int appDatabaseSchemaVersion = 15;
+const int appDatabaseSchemaVersion = 16;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -166,9 +166,53 @@ class AppDatabase extends _$AppDatabase {
           "WHERE exercise_type IN ('running', 'bike')",
         );
       }
+      if (from < 16) {
+        // 48.10: время тренировки и одноразовое напоминание ручного
+        // назначения. Существующие строки получают NULL-время и выключенное
+        // напоминание — поведение уже назначенных тренировок не меняется.
+        //
+        // Состав таблицы проверяем, потому что [Migrator.addColumn] не
+        // проверяет ничего: ветка `from < 11` создаёт `plan_schedule`
+        // сразу в новом виде (createTable берёт текущее определение), а в
+        // тестовых частичных схемах таблицы может не быть вовсе.
+        final columns = await _planScheduleColumns(m);
+        if (columns == null) {
+          await m.createTable(planSchedule);
+        } else {
+          if (!columns.contains('reminder_hour')) {
+            await m.addColumn(planSchedule, planSchedule.reminderHour);
+          }
+          if (!columns.contains('reminder_minute')) {
+            await m.addColumn(planSchedule, planSchedule.reminderMinute);
+          }
+          if (!columns.contains('reminder_enabled')) {
+            await m.addColumn(planSchedule, planSchedule.reminderEnabled);
+          }
+        }
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Имена колонок `plan_schedule` или `null`, если таблицы нет.
+  ///
+  /// Нужно в миграции 15→16: `ALTER TABLE ... ADD COLUMN` падает и на
+  /// существующей колонке, и на отсутствующей таблице.
+  Future<Set<String>?> _planScheduleColumns(Migrator m) async {
+    final exists = await m.database
+        .customSelect(
+          "SELECT 1 FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'plan_schedule'",
+        )
+        .getSingleOrNull();
+    if (exists == null) {
+      return null;
+    }
+    final info = await m.database
+        .customSelect('PRAGMA table_info(plan_schedule)')
+        .get();
+    return {for (final row in info) row.read<String>('name')};
+  }
 }

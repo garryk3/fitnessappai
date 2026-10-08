@@ -8260,8 +8260,52 @@ class $PlanScheduleTable extends PlanSchedule
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
+  static const VerificationMeta _reminderHourMeta = const VerificationMeta(
+    'reminderHour',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, programDayId, scheduledDate];
+  late final GeneratedColumn<int> reminderHour = GeneratedColumn<int>(
+    'reminder_hour',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reminderMinuteMeta = const VerificationMeta(
+    'reminderMinute',
+  );
+  @override
+  late final GeneratedColumn<int> reminderMinute = GeneratedColumn<int>(
+    'reminder_minute',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reminderEnabledMeta = const VerificationMeta(
+    'reminderEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> reminderEnabled = GeneratedColumn<bool>(
+    'reminder_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("reminder_enabled" IN (0, 1))',
+    ),
+    defaultValue: Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    programDayId,
+    scheduledDate,
+    reminderHour,
+    reminderMinute,
+    reminderEnabled,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -8299,6 +8343,33 @@ class $PlanScheduleTable extends PlanSchedule
     } else if (isInserting) {
       context.missing(_scheduledDateMeta);
     }
+    if (data.containsKey('reminder_hour')) {
+      context.handle(
+        _reminderHourMeta,
+        reminderHour.isAcceptableOrUnknown(
+          data['reminder_hour']!,
+          _reminderHourMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reminder_minute')) {
+      context.handle(
+        _reminderMinuteMeta,
+        reminderMinute.isAcceptableOrUnknown(
+          data['reminder_minute']!,
+          _reminderMinuteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reminder_enabled')) {
+      context.handle(
+        _reminderEnabledMeta,
+        reminderEnabled.isAcceptableOrUnknown(
+          data['reminder_enabled']!,
+          _reminderEnabledMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -8324,6 +8395,18 @@ class $PlanScheduleTable extends PlanSchedule
         DriftSqlType.dateTime,
         data['${effectivePrefix}scheduled_date'],
       )!,
+      reminderHour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reminder_hour'],
+      ),
+      reminderMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reminder_minute'],
+      ),
+      reminderEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}reminder_enabled'],
+      )!,
     );
   }
 
@@ -8338,10 +8421,25 @@ class PlanScheduleData extends DataClass
   final int id;
   final int programDayId;
   final DateTime scheduledDate;
+
+  /// Время тренировки (48.10): час и минута задаются только вместе —
+  /// пара nullable-полей, а не два независимых значения с частичным
+  /// состоянием. `null` — времени нет.
+  final int? reminderHour;
+  final int? reminderMinute;
+
+  /// Включено ли одноразовое напоминание (48.10).
+  ///
+  /// Управляет только уведомлением: время показывается в плане всегда,
+  /// независимо от этого флага (решение владельца).
+  final bool reminderEnabled;
   const PlanScheduleData({
     required this.id,
     required this.programDayId,
     required this.scheduledDate,
+    this.reminderHour,
+    this.reminderMinute,
+    required this.reminderEnabled,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8349,6 +8447,13 @@ class PlanScheduleData extends DataClass
     map['id'] = Variable<int>(id);
     map['program_day_id'] = Variable<int>(programDayId);
     map['scheduled_date'] = Variable<DateTime>(scheduledDate);
+    if (!nullToAbsent || reminderHour != null) {
+      map['reminder_hour'] = Variable<int>(reminderHour);
+    }
+    if (!nullToAbsent || reminderMinute != null) {
+      map['reminder_minute'] = Variable<int>(reminderMinute);
+    }
+    map['reminder_enabled'] = Variable<bool>(reminderEnabled);
     return map;
   }
 
@@ -8357,6 +8462,13 @@ class PlanScheduleData extends DataClass
       id: Value(id),
       programDayId: Value(programDayId),
       scheduledDate: Value(scheduledDate),
+      reminderHour: reminderHour == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminderHour),
+      reminderMinute: reminderMinute == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminderMinute),
+      reminderEnabled: Value(reminderEnabled),
     );
   }
 
@@ -8369,6 +8481,9 @@ class PlanScheduleData extends DataClass
       id: serializer.fromJson<int>(json['id']),
       programDayId: serializer.fromJson<int>(json['programDayId']),
       scheduledDate: serializer.fromJson<DateTime>(json['scheduledDate']),
+      reminderHour: serializer.fromJson<int?>(json['reminderHour']),
+      reminderMinute: serializer.fromJson<int?>(json['reminderMinute']),
+      reminderEnabled: serializer.fromJson<bool>(json['reminderEnabled']),
     );
   }
   @override
@@ -8378,6 +8493,9 @@ class PlanScheduleData extends DataClass
       'id': serializer.toJson<int>(id),
       'programDayId': serializer.toJson<int>(programDayId),
       'scheduledDate': serializer.toJson<DateTime>(scheduledDate),
+      'reminderHour': serializer.toJson<int?>(reminderHour),
+      'reminderMinute': serializer.toJson<int?>(reminderMinute),
+      'reminderEnabled': serializer.toJson<bool>(reminderEnabled),
     };
   }
 
@@ -8385,10 +8503,18 @@ class PlanScheduleData extends DataClass
     int? id,
     int? programDayId,
     DateTime? scheduledDate,
+    Value<int?> reminderHour = const Value.absent(),
+    Value<int?> reminderMinute = const Value.absent(),
+    bool? reminderEnabled,
   }) => PlanScheduleData(
     id: id ?? this.id,
     programDayId: programDayId ?? this.programDayId,
     scheduledDate: scheduledDate ?? this.scheduledDate,
+    reminderHour: reminderHour.present ? reminderHour.value : this.reminderHour,
+    reminderMinute: reminderMinute.present
+        ? reminderMinute.value
+        : this.reminderMinute,
+    reminderEnabled: reminderEnabled ?? this.reminderEnabled,
   );
   PlanScheduleData copyWithCompanion(PlanScheduleCompanion data) {
     return PlanScheduleData(
@@ -8399,6 +8525,15 @@ class PlanScheduleData extends DataClass
       scheduledDate: data.scheduledDate.present
           ? data.scheduledDate.value
           : this.scheduledDate,
+      reminderHour: data.reminderHour.present
+          ? data.reminderHour.value
+          : this.reminderHour,
+      reminderMinute: data.reminderMinute.present
+          ? data.reminderMinute.value
+          : this.reminderMinute,
+      reminderEnabled: data.reminderEnabled.present
+          ? data.reminderEnabled.value
+          : this.reminderEnabled,
     );
   }
 
@@ -8407,46 +8542,74 @@ class PlanScheduleData extends DataClass
     return (StringBuffer('PlanScheduleData(')
           ..write('id: $id, ')
           ..write('programDayId: $programDayId, ')
-          ..write('scheduledDate: $scheduledDate')
+          ..write('scheduledDate: $scheduledDate, ')
+          ..write('reminderHour: $reminderHour, ')
+          ..write('reminderMinute: $reminderMinute, ')
+          ..write('reminderEnabled: $reminderEnabled')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, programDayId, scheduledDate);
+  int get hashCode => Object.hash(
+    id,
+    programDayId,
+    scheduledDate,
+    reminderHour,
+    reminderMinute,
+    reminderEnabled,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is PlanScheduleData &&
           other.id == this.id &&
           other.programDayId == this.programDayId &&
-          other.scheduledDate == this.scheduledDate);
+          other.scheduledDate == this.scheduledDate &&
+          other.reminderHour == this.reminderHour &&
+          other.reminderMinute == this.reminderMinute &&
+          other.reminderEnabled == this.reminderEnabled);
 }
 
 class PlanScheduleCompanion extends UpdateCompanion<PlanScheduleData> {
   final Value<int> id;
   final Value<int> programDayId;
   final Value<DateTime> scheduledDate;
+  final Value<int?> reminderHour;
+  final Value<int?> reminderMinute;
+  final Value<bool> reminderEnabled;
   const PlanScheduleCompanion({
     this.id = const Value.absent(),
     this.programDayId = const Value.absent(),
     this.scheduledDate = const Value.absent(),
+    this.reminderHour = const Value.absent(),
+    this.reminderMinute = const Value.absent(),
+    this.reminderEnabled = const Value.absent(),
   });
   PlanScheduleCompanion.insert({
     this.id = const Value.absent(),
     required int programDayId,
     required DateTime scheduledDate,
+    this.reminderHour = const Value.absent(),
+    this.reminderMinute = const Value.absent(),
+    this.reminderEnabled = const Value.absent(),
   }) : programDayId = Value(programDayId),
        scheduledDate = Value(scheduledDate);
   static Insertable<PlanScheduleData> custom({
     Expression<int>? id,
     Expression<int>? programDayId,
     Expression<DateTime>? scheduledDate,
+    Expression<int>? reminderHour,
+    Expression<int>? reminderMinute,
+    Expression<bool>? reminderEnabled,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (programDayId != null) 'program_day_id': programDayId,
       if (scheduledDate != null) 'scheduled_date': scheduledDate,
+      if (reminderHour != null) 'reminder_hour': reminderHour,
+      if (reminderMinute != null) 'reminder_minute': reminderMinute,
+      if (reminderEnabled != null) 'reminder_enabled': reminderEnabled,
     });
   }
 
@@ -8454,11 +8617,17 @@ class PlanScheduleCompanion extends UpdateCompanion<PlanScheduleData> {
     Value<int>? id,
     Value<int>? programDayId,
     Value<DateTime>? scheduledDate,
+    Value<int?>? reminderHour,
+    Value<int?>? reminderMinute,
+    Value<bool>? reminderEnabled,
   }) {
     return PlanScheduleCompanion(
       id: id ?? this.id,
       programDayId: programDayId ?? this.programDayId,
       scheduledDate: scheduledDate ?? this.scheduledDate,
+      reminderHour: reminderHour ?? this.reminderHour,
+      reminderMinute: reminderMinute ?? this.reminderMinute,
+      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
     );
   }
 
@@ -8474,6 +8643,15 @@ class PlanScheduleCompanion extends UpdateCompanion<PlanScheduleData> {
     if (scheduledDate.present) {
       map['scheduled_date'] = Variable<DateTime>(scheduledDate.value);
     }
+    if (reminderHour.present) {
+      map['reminder_hour'] = Variable<int>(reminderHour.value);
+    }
+    if (reminderMinute.present) {
+      map['reminder_minute'] = Variable<int>(reminderMinute.value);
+    }
+    if (reminderEnabled.present) {
+      map['reminder_enabled'] = Variable<bool>(reminderEnabled.value);
+    }
     return map;
   }
 
@@ -8482,7 +8660,10 @@ class PlanScheduleCompanion extends UpdateCompanion<PlanScheduleData> {
     return (StringBuffer('PlanScheduleCompanion(')
           ..write('id: $id, ')
           ..write('programDayId: $programDayId, ')
-          ..write('scheduledDate: $scheduledDate')
+          ..write('scheduledDate: $scheduledDate, ')
+          ..write('reminderHour: $reminderHour, ')
+          ..write('reminderMinute: $reminderMinute, ')
+          ..write('reminderEnabled: $reminderEnabled')
           ..write(')'))
         .toString();
   }
@@ -16534,12 +16715,18 @@ typedef $$PlanScheduleTableCreateCompanionBuilder =
       Value<int> id,
       required int programDayId,
       required DateTime scheduledDate,
+      Value<int?> reminderHour,
+      Value<int?> reminderMinute,
+      Value<bool> reminderEnabled,
     });
 typedef $$PlanScheduleTableUpdateCompanionBuilder =
     PlanScheduleCompanion Function({
       Value<int> id,
       Value<int> programDayId,
       Value<DateTime> scheduledDate,
+      Value<int?> reminderHour,
+      Value<int?> reminderMinute,
+      Value<bool> reminderEnabled,
     });
 
 final class $$PlanScheduleTableReferences
@@ -16582,6 +16769,21 @@ class $$PlanScheduleTableFilterComposer
 
   ColumnFilters<DateTime> get scheduledDate => $composableBuilder(
     column: $table.scheduledDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reminderHour => $composableBuilder(
+    column: $table.reminderHour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reminderMinute => $composableBuilder(
+    column: $table.reminderMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get reminderEnabled => $composableBuilder(
+    column: $table.reminderEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16628,6 +16830,21 @@ class $$PlanScheduleTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get reminderHour => $composableBuilder(
+    column: $table.reminderHour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get reminderMinute => $composableBuilder(
+    column: $table.reminderMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get reminderEnabled => $composableBuilder(
+    column: $table.reminderEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ProgramDaysTableOrderingComposer get programDayId {
     final $$ProgramDaysTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -16666,6 +16883,21 @@ class $$PlanScheduleTableAnnotationComposer
 
   GeneratedColumn<DateTime> get scheduledDate => $composableBuilder(
     column: $table.scheduledDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get reminderHour => $composableBuilder(
+    column: $table.reminderHour,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get reminderMinute => $composableBuilder(
+    column: $table.reminderMinute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get reminderEnabled => $composableBuilder(
+    column: $table.reminderEnabled,
     builder: (column) => column,
   );
 
@@ -16724,20 +16956,32 @@ class $$PlanScheduleTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> programDayId = const Value.absent(),
                 Value<DateTime> scheduledDate = const Value.absent(),
+                Value<int?> reminderHour = const Value.absent(),
+                Value<int?> reminderMinute = const Value.absent(),
+                Value<bool> reminderEnabled = const Value.absent(),
               }) => PlanScheduleCompanion(
                 id: id,
                 programDayId: programDayId,
                 scheduledDate: scheduledDate,
+                reminderHour: reminderHour,
+                reminderMinute: reminderMinute,
+                reminderEnabled: reminderEnabled,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required int programDayId,
                 required DateTime scheduledDate,
+                Value<int?> reminderHour = const Value.absent(),
+                Value<int?> reminderMinute = const Value.absent(),
+                Value<bool> reminderEnabled = const Value.absent(),
               }) => PlanScheduleCompanion.insert(
                 id: id,
                 programDayId: programDayId,
                 scheduledDate: scheduledDate,
+                reminderHour: reminderHour,
+                reminderMinute: reminderMinute,
+                reminderEnabled: reminderEnabled,
               ),
           withReferenceMapper: (p0) => p0
               .map(
