@@ -749,4 +749,77 @@ void main() {
     expect(results[0].distanceMeters, 5000);
     expect(results[1].distanceMeters, 20000);
   });
+
+  test('миграция 15→16 добавляет время и напоминание плана (48.10)', () async {
+    final sqlite = sqlite3.openInMemory();
+    // Схема v15: план назначений ещё без колонок времени.
+    sqlite.execute(
+      'CREATE TABLE programs ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'name TEXT NOT NULL, '
+      'description TEXT NOT NULL DEFAULT \'\', '
+      'days_count INTEGER NOT NULL DEFAULT 0, '
+      'created_at INTEGER NOT NULL, '
+      'updated_at INTEGER NOT NULL, '
+      'is_active INTEGER NOT NULL DEFAULT 0, '
+      'activated_at INTEGER NULL, '
+      'deactivated_at INTEGER NULL, '
+      'exercise_rest_seconds INTEGER NULL, '
+      'image_path TEXT NULL);',
+    );
+    sqlite.execute(
+      'CREATE TABLE program_days ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'program_id INTEGER NOT NULL REFERENCES programs (id) ON DELETE CASCADE, '
+      'day_index INTEGER NOT NULL CHECK (day_index BETWEEN 0 AND 6), '
+      'day_of_week INTEGER NULL CHECK (day_of_week BETWEEN 1 AND 7), '
+      'warmup_minutes INTEGER NULL, '
+      'title TEXT NULL);',
+    );
+    sqlite.execute(
+      'CREATE TABLE plan_schedule ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'program_day_id INTEGER NOT NULL REFERENCES program_days (id), '
+      'scheduled_date INTEGER NOT NULL, '
+      'UNIQUE ("program_day_id", "scheduled_date"));',
+    );
+    sqlite.execute(
+      'INSERT INTO programs (name, description, days_count, created_at, '
+      'updated_at) VALUES (\'База\', \'\', 1, 0, 0);',
+    );
+    sqlite.execute(
+      'INSERT INTO program_days (program_id, day_index) VALUES (1, 0);',
+    );
+    sqlite.execute(
+      'INSERT INTO plan_schedule (program_day_id, scheduled_date) '
+      'VALUES (1, 0);',
+    );
+    sqlite.execute('PRAGMA user_version = 15;');
+
+    final database = AppDatabase(executor: NativeDatabase.opened(sqlite));
+    addTearDown(database.close);
+
+    // Первый запрос к drift открывает БД и выполняет миграцию.
+    final items = await database.select(database.planSchedule).get();
+
+    expect(items, hasLength(1), reason: 'назначение пережило миграцию');
+    // У существующей строки времени не было: NULL и напоминание выключено.
+    expect(items.single.reminderHour, isNull);
+    expect(items.single.reminderMinute, isNull);
+    expect(items.single.reminderEnabled, isFalse);
+    // Новое назначение временем по умолчанию не создаётся.
+    final created = await database
+        .into(database.planSchedule)
+        .insert(
+          PlanScheduleCompanion.insert(
+            programDayId: 1,
+            scheduledDate: DateTime(2026, 10, 20),
+          ),
+        );
+    expect(created, 2);
+
+    final version =
+        sqlite.select('PRAGMA user_version;').single.columnAt(0) as int;
+    expect(version, appDatabaseSchemaVersion);
+  });
 }

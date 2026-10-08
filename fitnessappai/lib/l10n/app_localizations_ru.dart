@@ -337,6 +337,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanQuickStart => 'Быстрый старт';
 
   @override
+  String get weekPlanTimeAction => 'Время и напоминание';
+
+  @override
+  String get weekPlanTime => 'Время тренировки';
+
+  @override
+  String get weekPlanNoTime => 'Время не задано';
+
+  @override
+  String get weekPlanClearTime => 'Убрать время';
+
+  @override
   String get programBuilderDayOfWeek => 'Привязка к дню недели';
 
   @override

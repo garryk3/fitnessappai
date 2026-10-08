@@ -11,6 +11,18 @@ class PlanSchedule extends Table {
   IntColumn get programDayId => integer().references(ProgramDays, #id)();
   DateTimeColumn get scheduledDate => dateTime()();
 
+  /// Время тренировки (48.10): час и минута задаются только вместе —
+  /// пара nullable-полей, а не два независимых значения с частичным
+  /// состоянием. `null` — времени нет.
+  IntColumn get reminderHour => integer().nullable()();
+  IntColumn get reminderMinute => integer().nullable()();
+
+  /// Включено ли одноразовое напоминание (48.10).
+  ///
+  /// Управляет только уведомлением: время показывается в плане всегда,
+  /// независимо от этого флага (решение владельца).
+  BoolColumn get reminderEnabled => boolean().withDefault(Constant(false))();
+
   @override
   List<Set<Column>> get uniqueKeys => [
     {programDayId, scheduledDate},

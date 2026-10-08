@@ -694,6 +694,30 @@ abstract class AppLocalizations {
   /// **'Быстрый старт'**
   String get weekPlanQuickStart;
 
+  /// No description provided for @weekPlanTimeAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время и напоминание'**
+  String get weekPlanTimeAction;
+
+  /// No description provided for @weekPlanTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время тренировки'**
+  String get weekPlanTime;
+
+  /// No description provided for @weekPlanNoTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время не задано'**
+  String get weekPlanNoTime;
+
+  /// No description provided for @weekPlanClearTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать время'**
+  String get weekPlanClearTime;
+
   /// No description provided for @programBuilderDayOfWeek.
   ///
   /// In ru, this message translates to:

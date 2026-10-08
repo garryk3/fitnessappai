@@ -15,6 +15,8 @@ import 'package:fitnessappai/core/notifications/reminder_catch_up_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_delivered_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
+import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 
 class _MockNotificationsPlugin extends Mock
     implements FlutterLocalNotificationsPlugin {}
@@ -24,6 +26,9 @@ class _MockAndroidPlugin extends Mock
 
 class _MockReminderRepository extends Mock
     implements WorkoutReminderRepository {}
+
+class _MockPlanScheduleRepository extends Mock
+    implements PlanScheduleRepository {}
 
 void main() {
   // initialize() ходит в FlutterTimezone через method channel — нужен binding.
@@ -37,6 +42,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(tz.TZDateTime(tz.local, 2024, 1, 1));
+    registerFallbackValue(DateTime(2024, 1, 1));
     registerFallbackValue(const NotificationDetails());
     registerFallbackValue(AndroidScheduleMode.exact);
     registerFallbackValue('');
@@ -1879,6 +1885,213 @@ void main() {
       ]);
     },
   );
+
+  group('напоминания ручных назначений (48.10)', () {
+    late _MockPlanScheduleRepository planSchedule;
+    late ReminderService manual;
+
+    /// Назначение на дату в будущем с временем 18:30.
+    late DateTime futureDate;
+
+    /// Назначение для перепланирования: дата берётся от [futureDate],
+    /// иначе после наступления даты планирование молча пропустилось бы.
+    late PlanScheduleReminder item;
+
+    setUp(() {
+      final ahead = tz.TZDateTime.now(tz.local).add(const Duration(days: 3));
+      futureDate = DateTime(ahead.year, ahead.month, ahead.day);
+      item = PlanScheduleReminder(
+        scheduleId: 5,
+        programDayId: 42,
+        scheduledDate: futureDate,
+        hour: 18,
+        minute: 30,
+        programName: 'Тестовая',
+        dayNumber: 3,
+      );
+
+      planSchedule = _MockPlanScheduleRepository();
+      manual = ReminderService(
+        repository: repository,
+        plugin: plugin,
+        planSchedule: planSchedule,
+      );
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(
+        () => android.areNotificationsEnabled(),
+      ).thenAnswer((_) async => true);
+      when(
+        () => android.canScheduleExactNotifications(),
+      ).thenAnswer((_) async => true);
+    });
+
+    test('scheduleManualReminder планирует уведомление дня', () async {
+      await manual.scheduleManualReminder(
+        scheduleId: item.scheduleId,
+        programDayId: item.programDayId,
+        date: futureDate,
+        hour: 18,
+        minute: 30,
+        programName: item.programName,
+        dayNumber: item.dayNumber,
+      );
+
+      verify(
+        () => plugin.zonedSchedule(
+          id: ReminderService.manualReminderIdBase + 5,
+          title: 'Тестовая',
+          body: 'Тренировка: день 3',
+          scheduledDate: tz.TZDateTime(
+            tz.local,
+            futureDate.year,
+            futureDate.month,
+            futureDate.day,
+            18,
+            30,
+          ),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          // Одноразовое уведомление: без привязки к дню недели.
+          matchDateTimeComponents: null,
+          payload: 'm:5:42',
+        ),
+      ).called(1);
+    });
+
+    test('прошедшее время назначения не планируется', () async {
+      await manual.scheduleManualReminder(
+        scheduleId: item.scheduleId,
+        programDayId: item.programDayId,
+        date: DateTime(2020, 1, 1),
+        hour: 10,
+        minute: 0,
+        programName: item.programName,
+        dayNumber: item.dayNumber,
+      );
+
+      verifyNever(
+        () => plugin.zonedSchedule(
+          id: any(named: 'id'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      );
+    });
+
+    test('cancelManualReminder отменяет по id назначения', () async {
+      await manual.cancelManualReminder(item.scheduleId);
+
+      verify(
+        () => plugin.cancel(id: ReminderService.manualReminderIdBase + 5),
+      ).called(1);
+    });
+
+    test('rescheduleDays перевзвешивает ручные назначения дней', () async {
+      when(() => repository.scheduledForDays([42])).thenAnswer((_) async => []);
+      when(
+        () => planSchedule.remindersForDays([42]),
+      ).thenAnswer((_) async => [item]);
+
+      await manual.rescheduleDays([42]);
+
+      verify(
+        () => plugin.zonedSchedule(
+          id: ReminderService.manualReminderIdBase + 5,
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          scheduledDate: any(named: 'scheduledDate'),
+          notificationDetails: any(named: 'notificationDetails'),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+          payload: any(named: 'payload'),
+        ),
+      ).called(1);
+    });
+
+    test('cancelDays снимает ручные назначения дней', () async {
+      when(
+        () => planSchedule.remindersForDays([42]),
+      ).thenAnswer((_) async => [item]);
+
+      await manual.cancelDays([42]);
+
+      verify(
+        () => plugin.cancel(id: ReminderService.manualReminderIdBase + 5),
+      ).called(1);
+    });
+
+    test(
+      'rescheduleAll перевзвешивает ручные назначения в горизонте',
+      () async {
+        when(() => repository.allScheduled()).thenAnswer((_) async => []);
+        when(
+          () => planSchedule.remindersBetween(any(), any()),
+        ).thenAnswer((_) async => [item]);
+
+        await manual.rescheduleAll();
+
+        verify(
+          () => plugin.zonedSchedule(
+            id: ReminderService.manualReminderIdBase + 5,
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+            scheduledDate: any(named: 'scheduledDate'),
+            notificationDetails: any(named: 'notificationDetails'),
+            androidScheduleMode: any(named: 'androidScheduleMode'),
+            matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+            payload: any(named: 'payload'),
+          ),
+        ).called(1);
+      },
+    );
+
+    test('тап по ручному уведомлению не пишет отметку доставки', () async {
+      final deliveredLog = _FakeDeliveredLog();
+      final tapService = ReminderService(
+        repository: repository,
+        plugin: plugin,
+        deliveredLog: deliveredLog,
+      );
+      final tapped = <int>[];
+      tapService.onReminderTapped = tapped.add;
+
+      await tapService.handleNotificationResponse(
+        const NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: 'm:5:42',
+        ),
+      );
+
+      expect(tapped, [42]);
+      expect(
+        deliveredLog.delivered,
+        isEmpty,
+        reason: 'тап по ручному не доказывает показ еженедельного (48.8)',
+      );
+
+      // Контраст: голый payload еженедельного уведомления отметку ставит.
+      await tapService.handleNotificationResponse(
+        const NotificationResponse(
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: '42',
+        ),
+      );
+
+      expect(deliveredLog.delivered, contains(42));
+    });
+  });
 }
 
 /// Хранилище настроек звука напоминаний для [ReminderService] (47.5).

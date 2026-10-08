@@ -4,10 +4,12 @@ import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 
 /// Режим отображения плана тренировок: сетка недели или календарь месяца.
 /// Статус запланированного тренировочного дня на неделе.
@@ -33,6 +35,9 @@ class WeekPlanItem {
     this.imagePath,
     this.dayTitle,
     this.isManual = false,
+    this.reminderHour,
+    this.reminderMinute,
+    this.reminderEnabled = false,
   });
 
   final int programDayId;
@@ -56,6 +61,36 @@ class WeekPlanItem {
   /// тренировка. Дни программы (в т.ч. непривязанные, показываемые на
   /// «сегодня» автоматически) удалить из плана нельзя.
   final bool isManual;
+
+  /// Время тренировки (48.10); `null` — время не задано.
+  ///
+  /// Час и минута задаются только вместе. Берётся из строки `plan_schedule`
+  /// для этой даты, поэтому есть и у дня по привязке: строка создаётся, как
+  /// только пользователь задаёт время, но состояние карточки (`isManual`,
+  /// крестик удаления) от неё не меняется.
+  final int? reminderHour;
+  final int? reminderMinute;
+
+  /// Включено ли одноразовое напоминание (управляет только уведомлением).
+  final bool reminderEnabled;
+
+  /// Есть ли заданное время.
+  bool get hasTime => reminderHour != null && reminderMinute != null;
+
+  /// Время в формате `HH:mm`; `null`, если времени нет.
+  String? get timeLabel {
+    final hour = reminderHour;
+    final minute = reminderMinute;
+    if (hour == null || minute == null) {
+      return null;
+    }
+    return '${hour.toString().padLeft(2, '0')}:'
+        '${minute.toString().padLeft(2, '0')}';
+  }
+
+  /// Ключ строки `plan_schedule` для этой тренировки (`programDayId|дата`).
+  String get scheduleKey =>
+      '$programDayId|${_dateOnly(scheduledDate).millisecondsSinceEpoch}';
 }
 
 /// Набор действий дня для [item] на дату [today] (задача 47.1).
@@ -93,6 +128,7 @@ class WeekPlanController {
     required this.programRepository,
     required this.workoutRepository,
     this.planScheduleRepository,
+    this.reminders,
     DateTime Function()? clock,
     DataChangeNotifier? changes,
   }) : _now = clock ?? DateTime.now {
@@ -109,6 +145,11 @@ class WeekPlanController {
   final ProgramRepository programRepository;
   final WorkoutRepository workoutRepository;
   final PlanScheduleRepository? planScheduleRepository;
+
+  /// Одноразовые напоминания ручных назначений (48.10); `null` — без
+  /// уведомлений (виджет-тесты, окружения без зарегистрированного сервиса).
+  final ReminderService? reminders;
+
   final DateTime Function() _now;
   late final ChangeReloadSubscription _reloadSubscription;
 
@@ -205,16 +246,106 @@ class WeekPlanController {
     await _load();
   }
 
-  /// Назначает тренировочный день [programDayId] на [date].
-  Future<void> scheduleDay(int programDayId, DateTime date) async {
-    await planScheduleRepository?.schedule(programDayId, date);
+  /// Назначает тренировочный день [programDayId] на [date] с временем (48.10).
+  ///
+  /// Время необязательно: без него назначение происходит ровно как раньше.
+  Future<void> scheduleDay(
+    int programDayId,
+    DateTime date, {
+    int? hour,
+    int? minute,
+    bool reminderEnabled = false,
+  }) async {
+    final item = await planScheduleRepository?.schedule(
+      programDayId,
+      date,
+      hour: hour,
+      minute: minute,
+      reminderEnabled: reminderEnabled,
+    );
+    if (item != null) {
+      await _syncManualReminder(item, programDayId, date);
+    }
+    await _load();
+  }
+
+  /// Задаёт или меняет время и напоминание тренировки (48.10).
+  ///
+  /// Строку в `plan_schedule` создаёт при необходимости — так время можно
+  /// назначить дню по привязке к дню недели. Состояние карточки при этом не
+  /// меняется: дублей в плане не появляется, крестик удаления не добавляется.
+  ///
+  /// [hour] равен `null` — время убирается вместе с напоминанием.
+  Future<void> setReminder(
+    int programDayId,
+    DateTime date, {
+    required int? hour,
+    required int? minute,
+    required bool reminderEnabled,
+  }) async {
+    final item = await planScheduleRepository?.setReminder(
+      programDayId,
+      date,
+      hour: hour,
+      minute: minute,
+      reminderEnabled: reminderEnabled,
+    );
+    if (item != null) {
+      await _syncManualReminder(item, programDayId, date);
+    }
     await _load();
   }
 
   /// Отменяет ручное назначение тренировочного дня на дату.
+  ///
+  /// Одноразовое напоминание снимается вместе с назначением (48.10): иначе
+  /// уведомление пришло бы об удалённой из плана тренировке.
   Future<void> cancelSchedule(int programDayId, DateTime date) async {
+    final item = await planScheduleRepository?.getFor(programDayId, date);
     await planScheduleRepository?.cancel(programDayId, date);
+    if (item != null) {
+      await reminders?.cancelManualReminder(item.id);
+    }
     await _load();
+  }
+
+  /// Ставит или снимает одноразовое уведомление по свежей строке назначения
+  /// (48.10).
+  ///
+  /// Без включённого напоминания вызывается только отмена: снимать
+  /// нечего, а лишний вызов дешевле идемпотентен.
+  Future<void> _syncManualReminder(
+    PlanScheduleItem item,
+    int programDayId,
+    DateTime date,
+  ) async {
+    final service = reminders;
+    if (service == null) {
+      return;
+    }
+    final hour = item.reminderHour;
+    final minute = item.reminderMinute;
+    if (!item.reminderEnabled || hour == null || minute == null) {
+      await service.cancelManualReminder(item.id);
+      return;
+    }
+    final day = await programRepository.getDay(programDayId);
+    if (day == null) {
+      return;
+    }
+    final detail = await programRepository.getProgram(day.programId);
+    if (detail == null) {
+      return;
+    }
+    await service.scheduleManualReminder(
+      scheduleId: item.id,
+      programDayId: programDayId,
+      date: date,
+      hour: hour,
+      minute: minute,
+      programName: detail.program.name,
+      dayNumber: day.dayIndex + 1,
+    );
   }
 
   Future<void> _load() async {
@@ -293,10 +424,19 @@ class WeekPlanController {
       // Добавляем ручные назначения из plan_schedule.
       final manualSchedule =
           await planScheduleRepository?.getForRange(rangeStart, rangeEnd) ??
-          const <dynamic>[];
+          const <PlanScheduleItem>[];
       final existingKeys = <String>{
         for (final item in plannedItems)
           '${item.programDayId}|${_dateOnly(item.scheduledDate).millisecondsSinceEpoch}',
+      };
+      // Время показываем у всех тренировок на дату, включая дни по привязке:
+      // у них строки в plan_schedule может не быть (время ещё не задавали),
+      // а заданное — лежит в строке того же ключа {день, дата} и не создаёт
+      // дубля (48.10).
+      final timeByKey = <String, PlanScheduleItem>{
+        for (final entry in manualSchedule)
+          '${entry.programDayId}|${_dateOnly(entry.scheduledDate).millisecondsSinceEpoch}':
+              entry,
       };
       for (final entry in manualSchedule) {
         final key =
@@ -353,6 +493,7 @@ class WeekPlanController {
           continue;
         }
         final isSkipped = marks.skipped.contains(key);
+        final time = timeByKey[item.scheduleKey];
         result.add(
           WeekPlanItem(
             programDayId: item.programDayId,
@@ -362,6 +503,9 @@ class WeekPlanController {
             dayOfWeek: item.dayOfWeek,
             scheduledDate: item.scheduledDate,
             isManual: item.isManual,
+            reminderHour: time?.reminderHour,
+            reminderMinute: time?.reminderMinute,
+            reminderEnabled: time?.reminderEnabled ?? false,
             status: _statusOf(
               item,
               sessionsByDayId[item.programDayId] ?? const <WorkoutSession>[],
@@ -374,11 +518,40 @@ class WeekPlanController {
       // Нижняя граница навигации назад (48.3) считается вместе с загрузкой,
       // чтобы стрелка «назад» не включалась по устаревшим данным.
       _earliestWeekStart = await _resolveEarliestWeekStart(activePrograms);
-      result.sort((a, b) => a.scheduledDate.compareTo(b.scheduledDate));
+      result.sort(_byDateThenTime);
       items.value = result;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Порядок карточек в плане: по дате, внутри дня — тренировки со временем
+  /// по возрастанию, без времени — в конце (48.10).
+  ///
+  /// Равные даты раньше зависели от порядка обхода и могли «прыгать» между
+  /// перезагрузками; третья составляющая — `programDayId` — делает порядок
+  /// детерминированным полностью.
+  static int _byDateThenTime(WeekPlanItem a, WeekPlanItem b) {
+    final byDate = a.scheduledDate.compareTo(b.scheduledDate);
+    if (byDate != 0) {
+      return byDate;
+    }
+    final aTime = a.reminderHour == null || a.reminderMinute == null
+        ? null
+        : a.reminderHour! * 60 + a.reminderMinute!;
+    final bTime = b.reminderHour == null || b.reminderMinute == null
+        ? null
+        : b.reminderHour! * 60 + b.reminderMinute!;
+    if (aTime != bTime) {
+      if (aTime == null) {
+        return 1;
+      }
+      if (bTime == null) {
+        return -1;
+      }
+      return aTime.compareTo(bTime);
+    }
+    return a.programDayId.compareTo(b.programDayId);
   }
 
   /// Нижняя граница навигации плана назад: неделя, в которой началась активная
