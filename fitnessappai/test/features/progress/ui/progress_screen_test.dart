@@ -186,10 +186,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(
-        of: statCard('Время планки'),
-        matching: find.text('2 мин'),
-      ),
+      find.descendant(of: statCard('Время'), matching: find.text('17 мин')),
       findsOneWidget,
     );
 
@@ -221,9 +218,7 @@ void main() {
     expect(line.data.titlesData.bottomTitles.sideTitles.interval, 1);
   });
 
-  testWidgets('время планки с дробной частью: 90 с → «1.5 мин»', (
-    tester,
-  ) async {
+  testWidgets('время с дробной частью: 90 с → «1.5 мин»', (tester) async {
     final plank = await insertExercise('Планка', type: ExerciseType.plank);
 
     await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
@@ -239,10 +234,7 @@ void main() {
     await pumpProgress(tester);
 
     expect(
-      find.descendant(
-        of: statCard('Время планки'),
-        matching: find.text('1.5 мин'),
-      ),
+      find.descendant(of: statCard('Время'), matching: find.text('1.5 мин')),
       findsOneWidget,
     );
   });

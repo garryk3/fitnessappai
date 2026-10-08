@@ -977,7 +977,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get progressDistance => 'Дистанция';
 
   @override
-  String get progressPlankTime => 'Время планки';
+  String get progressTotalTime => 'Время';
 
   @override
   String get progressWorkoutsChart => 'Тренировки по срезам';

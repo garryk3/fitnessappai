@@ -1840,11 +1840,11 @@ abstract class AppLocalizations {
   /// **'Дистанция'**
   String get progressDistance;
 
-  /// No description provided for @progressPlankTime.
+  /// No description provided for @progressTotalTime.
   ///
   /// In ru, this message translates to:
-  /// **'Время планки'**
-  String get progressPlankTime;
+  /// **'Время'**
+  String get progressTotalTime;
 
   /// No description provided for @progressWorkoutsChart.
   ///
