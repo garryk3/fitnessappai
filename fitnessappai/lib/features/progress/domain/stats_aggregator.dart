@@ -139,14 +139,16 @@ class StatsAggregator {
     );
   }
 
-  /// Суммарное время планки.
-  Future<Duration> totalPlankTime(StatPeriod period) async {
+  /// Суммарное время подходов с временем (планка, дистанция).
+  ///
+  /// `durationSeconds` заполняется только там, где время вообще вводится:
+  /// у силовых и «свой вес» подходов фиксируются повторения и вес, поэтому
+  /// в сумму не попадают нули (48.11).
+  Future<Duration> totalExerciseTime(StatPeriod period) async {
     final results = await _results(period);
     final seconds = results.fold<int>(
       0,
-      (sum, r) => r.exerciseType == ExerciseType.plank
-          ? sum + (r.durationSeconds ?? 0)
-          : sum,
+      (sum, r) => sum + (r.durationSeconds ?? 0),
     );
     return Duration(seconds: seconds);
   }

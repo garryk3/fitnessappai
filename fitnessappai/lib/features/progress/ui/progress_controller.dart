@@ -27,7 +27,7 @@ class ProgressController {
   final Signal<bool> isLoading = Signal(true);
   final Signal<int> workoutCount = Signal(0);
   final Signal<double> totalDistanceMeters = Signal(0);
-  final Signal<Duration> plankTime = Signal(Duration.zero);
+  final Signal<Duration> exerciseTime = Signal(Duration.zero);
   final Signal<List<int>> countsPerSlice = Signal(const []);
   final Signal<List<MuscleGroupLoad>> muscleLoads = Signal(const []);
   final Signal<List<Exercise>> exercises = Signal(const []);
@@ -76,7 +76,7 @@ class ProgressController {
       final current = period.value;
       workoutCount.value = await statsAggregator.workoutCount(current);
       totalDistanceMeters.value = await statsAggregator.totalDistance(current);
-      plankTime.value = await statsAggregator.totalPlankTime(current);
+      exerciseTime.value = await statsAggregator.totalExerciseTime(current);
       countsPerSlice.value = await statsAggregator.workoutCountPerSlice(
         current,
       );

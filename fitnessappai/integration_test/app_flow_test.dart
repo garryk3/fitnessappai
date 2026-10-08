@@ -1386,7 +1386,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Тренировок'), findsOneWidget);
     expect(find.text('Дистанция'), findsOneWidget);
-    expect(find.text('Время планки'), findsOneWidget);
+    expect(find.text('Время'), findsOneWidget);
 
     await goToTab(tester, Icons.home_outlined);
     await tester.pumpAndSettle();

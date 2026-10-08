@@ -132,7 +132,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 }
 
-/// Карточки «Тренировок», «Дистанция», «Время планки».
+/// Карточки «Тренировок», «Дистанция», «Время».
 class _StatCards extends StatelessWidget {
   const _StatCards({required this.controller});
 
@@ -142,7 +142,7 @@ class _StatCards extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final distanceKm = controller.totalDistanceMeters.value / 1000;
-    final plankMinutes = _fmt(controller.plankTime.value.inSeconds / 60);
+    final exerciseMinutes = _fmt(controller.exerciseTime.value.inSeconds / 60);
     return Row(
       children: [
         Expanded(
@@ -164,9 +164,9 @@ class _StatCards extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: _StatCard(
-            label: l10n.progressPlankTime,
-            value: '$plankMinutes ${l10n.workoutUnitMinutes}',
-            icon: Icons.self_improvement,
+            label: l10n.progressTotalTime,
+            value: '$exerciseMinutes ${l10n.workoutUnitMinutes}',
+            icon: Icons.timer_outlined,
           ),
         ),
       ],

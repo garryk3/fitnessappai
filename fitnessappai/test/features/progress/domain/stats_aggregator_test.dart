@@ -166,7 +166,10 @@ void main() {
     test('пустой период даёт нули', () async {
       expect(await aggregator.workoutCount(StatPeriod.week), 0);
       expect(await aggregator.totalDistance(StatPeriod.week), 0);
-      expect(await aggregator.totalPlankTime(StatPeriod.week), Duration.zero);
+      expect(
+        await aggregator.totalExerciseTime(StatPeriod.week),
+        Duration.zero,
+      );
       expect(await aggregator.totalReps(1, StatPeriod.week), 0);
       expect(await aggregator.maxWeight(1, StatPeriod.week), isNull);
       expect(await aggregator.muscleLoadPercent(StatPeriod.week), isEmpty);
@@ -201,7 +204,8 @@ void main() {
       },
     );
 
-    test('totalPlankTime суммирует только планку', () async {
+    test('totalExerciseTime суммирует durationSeconds всех типов, '
+        'подходы без времени не дают нулей (48.11)', () async {
       await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
         setResult(
           type: ExerciseType.plank,
@@ -215,12 +219,19 @@ void main() {
           weightKg: null,
           durationSeconds: 60,
         ),
-        setResult(),
+        setResult(
+          type: ExerciseType.distance,
+          reps: null,
+          weightKg: null,
+          distanceMeters: 1500,
+          durationSeconds: 600,
+        ),
+        setResult(reps: 8, weightKg: 20),
       ]);
 
       expect(
-        await aggregator.totalPlankTime(StatPeriod.week),
-        const Duration(seconds: 90),
+        await aggregator.totalExerciseTime(StatPeriod.week),
+        const Duration(seconds: 690),
       );
     });
 
