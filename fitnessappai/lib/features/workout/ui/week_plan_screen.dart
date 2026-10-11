@@ -350,8 +350,8 @@ class _WeekSwitcher extends StatelessWidget {
 
   final String label;
 
-  /// Переход на предыдущую неделю — только для просмотра (48.3); `null`,
-  /// если достигнута нижняя граница.
+  /// Переход на предыдущую неделю; `null`, если показана текущая неделя —
+  /// из неё назад нельзя (нижняя граница навигации, 51.2).
   final VoidCallback? onPrev;
 
   final VoidCallback? onNext;
