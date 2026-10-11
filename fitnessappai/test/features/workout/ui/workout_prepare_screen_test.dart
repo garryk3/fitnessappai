@@ -26,9 +26,6 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 
 class _FakeWakelock implements WakelockService {
   @override
-  bool get isEnabled => true;
-
-  @override
   Future<void> enable() async {}
 
   @override

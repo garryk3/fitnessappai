@@ -18,7 +18,6 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
-import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
@@ -32,9 +31,6 @@ class _FakeWakelock implements WakelockService {
   int disableCalls = 0;
 
   @override
-  bool get isEnabled => enableCalls > 0 && enableCalls > disableCalls;
-
-  @override
   Future<void> enable() async {
     enableCalls++;
   }
@@ -42,18 +38,6 @@ class _FakeWakelock implements WakelockService {
   @override
   Future<void> disable() async {
     disableCalls++;
-  }
-}
-
-class _FakeWakelockBannerRepository implements WakelockBannerRepository {
-  bool dismissed = false;
-
-  @override
-  Future<bool> isDismissed() async => dismissed;
-
-  @override
-  Future<void> setDismissed() async {
-    dismissed = true;
   }
 }
 
@@ -179,7 +163,6 @@ void main() {
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
-            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(

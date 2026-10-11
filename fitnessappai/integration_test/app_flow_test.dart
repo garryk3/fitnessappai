@@ -107,7 +107,6 @@ Future<void> pumpApp(
   WidgetTester tester,
   AppDatabase db, {
   bool stubPlatformServices = false,
-  bool disableWakelock = false,
 }) async {
   locator.reset();
   registerCoreServices(locator, database: db);
@@ -115,11 +114,7 @@ Future<void> pumpApp(
   locator.registerLazySingleton<WorkoutForegroundService>(
     () => StubWorkoutForegroundService(),
   );
-  locator.registerLazySingleton<WakelockService>(
-    () => disableWakelock
-        ? _StubWakelockDisabledService()
-        : _StubWakelockService(),
-  );
+  locator.registerLazySingleton<WakelockService>(() => _StubWakelockService());
   if (stubPlatformServices) {
     locator.registerLazySingleton<UpdateService>(() => _StubUpdateService());
     locator.registerLazySingleton<SyncService>(() => _StubSyncService());
@@ -129,20 +124,6 @@ Future<void> pumpApp(
 }
 
 class _StubWakelockService implements WakelockService {
-  @override
-  bool get isEnabled => true;
-
-  @override
-  Future<void> enable() async {}
-
-  @override
-  Future<void> disable() async {}
-}
-
-class _StubWakelockDisabledService implements WakelockService {
-  @override
-  bool get isEnabled => false;
-
   @override
   Future<void> enable() async {}
 
@@ -2196,64 +2177,6 @@ void main() {
 
     await tester.pumpAndSettle();
     await pumpUntilFound(tester, find.text('Тренировка сохранена'));
-  });
-
-  testWidgets('предупреждение wake lock: ОК скрывает баннер на сессию', (
-    tester,
-  ) async {
-    final db = AppDatabase(executor: NativeDatabase.memory());
-    addTearDown(() => db.close());
-    await pumpApp(tester, db, disableWakelock: true);
-
-    await goToTab(tester, Icons.fitness_center_outlined);
-    await createExercise(tester, _squat, ExerciseType.strength);
-    await pullToRefreshExercises(tester);
-
-    final today = DateTime.now().weekday;
-
-    await goToTab(tester, Icons.calendar_month_outlined);
-    await tester.tap(find.byTooltip('Новая программа'));
-    await tester.pumpAndSettle();
-    await enterField(
-      tester,
-      find.widgetWithText(TextFormField, 'Название'),
-      _programName,
-    );
-
-    await configureDay(
-      tester,
-      1,
-      today,
-      mainSets: [
-        (
-          _squat,
-          {
-            'Подходы': '1',
-            'Повторения': '10',
-            'Вес (кг)': '40',
-            'Отдых (сек)': '10',
-          },
-        ),
-      ],
-      alternativeSets: const [],
-    );
-
-    await saveProgramBuilder(tester);
-    await pullToRefreshPrograms(tester);
-
-    await goToTab(tester, Icons.event_note_outlined);
-    await startWorkout(tester);
-
-    expect(find.byType(MaterialBanner), findsOneWidget);
-
-    await tester.tap(find.widgetWithText(TextButton, 'ОК'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(MaterialBanner), findsNothing);
-
-    await completeStrengthSet(tester, repeats: '10', weight: '40');
-    await skipRestIfShown(tester);
-    await finishAndGoProgress(tester);
   });
 
   testWidgets('привязка дня недели в конструкторе дня: создание → заполнение → '
