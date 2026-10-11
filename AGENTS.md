@@ -16,12 +16,13 @@
 - `.agents/` is the shared, version-controlled location for cross-tool agent assets:
   - `.agents/rules/FLUTTER.md` — style/state-mgmt rules (loaded via `opencode.json` `instructions`). Follow it: native-first state (signals, `ChangeNotifier`, `ValueNotifier`), no Riverpod/Bloc/GetX, MVVM, manual DI.
   - `.agents/skills/<name>/SKILL.md` — reusable agent skills (opencode + other tools).
-  - `.agents/agents/*.md` — reusable subagent definitions (`plan-review`, `release-manager`, `android-tester`), consumable by other agent solutions.
+  - `.agents/agents/*.md` — reusable subagent definitions (`task-reviewer`, `plan-review`, `release-manager`, `android-tester`), consumable by other agent solutions.
 - `opencode` loads its markdown agents only from `.opencode/agents/` (gitignored). Symlink them to `.agents/agents/` so opencode stays in sync with the committed definitions:
   ```sh
   # from repo root, if .opencode/agents is missing:
   mkdir -p .opencode/agents
-  ln -sf ../../.agents/agents/plan-review.md   .opencode/agents/plan-review.md
+  ln -sf ../../.agents/agents/task-reviewer.md  .opencode/agents/task-reviewer.md
+  ln -sf ../../.agents/agents/plan-review.md    .opencode/agents/plan-review.md
   ln -sf ../../.agents/agents/release-manager.md .opencode/agents/release-manager.md
   ln -sf ../../.agents/agents/android-tester.md  .opencode/agents/android-tester.md
   ```
@@ -54,7 +55,9 @@ flutter build apk --debug
 - **Before opening a pull request, ask the user whether to run the e2e tests** (`integration_test/app_flow_test.dart` via `flutter test integration_test -d linux`; 7+ min on a cold run per the measurement above, not in CI). The user may opt out; never run them silently or skip the question.
 - Each task = branch `task/<NN>-<slug>` from `main` → PR → green CI → squash merge, in dependency order.
 - **Update task branches with `git merge`, NOT `git rebase`.** Rebase rewrites history and has in this repo repeatedly dropped `PLAN.md` rows, broken `dart format`/l10n sync, and left the branch out of sync with `origin/main` — all invisible until CI/e2e failed. `git merge origin/main` keeps the shared `main` story intact and makes PR review (`git diff origin/main..HEAD`) deterministic. Remember: your real diff vs `main` is only the few files you actually changed (`git diff --name-status origin/main..HEAD`), the rest that differ are rebase fallout and must be reconciled, not committed.
-- **Before every commit, run the `plan-review` agent** to verify: (1) the task is recorded in `PLAN.md` with correct status `[x]` and completion date; (2) if a work plan was drafted for this task, it was written into `PLAN.md`. Block the commit if either check fails.
+- **После реализации задачи, перед коммитом/PR, запускайте агента `task-reviewer`** (`task-reviewer`) — ревью реализации: (1) соответствие требованиям — diff сверяется с рабочей планом задачи в `PLAN.md`; (2) архитектура — соответствие `.agents/rules/FLUTTER.md` и конвенциям репозитория (`lib/uikit/`, generated-код, l10n); (3) наличие ошибок (tier-система WILL BREAK / WILL COST / WILL ROT). При вердикте `DO NOT SHIP` коммит/PR блокируются.
+  - **Исключение:** задачи, которые **только** переносят пожелания из `TASKS.md` в `PLAN.md` (чистка ящика, рабочие планы, разбор развилок) и не меняют код, `task-reviewer` не запускают — проверять там нечего. На такие задачи агент всё равно смотрит сам: этап добавлен в таблицу, у каждой новой задачи есть раздел с планом, `TASKS.md` очищен по правилу ниже. Начиная с задач, где есть изменения в `lib/`, `test/`, `android/` или `pubspec.yaml`, правило действует в полном объёме.
+- **Перед релизом запускайте агента `plan-review`** — проверка `PLAN.md`: (1) задача записана в `PLAN.md` со статусом `[x]` и датой завершения; (2) если для задачи составлялся рабочий план, он записан в `PLAN.md`. При провале любой из проверок релиз блокируется. (Перенесено с «перед каждым коммитом» на релизный гейт 2026-10-11, задача 49.1.)
 - **After composing a work plan for a task, always write it into `PLAN.md`** before implementation begins — plan must exist in the file before code changes start.
 - Keep the `@DriftDatabase` annotation on the database class, NOT on a top-level `const` — drift_dev 2.34 fails to detect the DB otherwise.
 - If `build_runner` reports stale/skipped outputs after a schema change, `rm -rf .dart_tool/build` and rebuild.
