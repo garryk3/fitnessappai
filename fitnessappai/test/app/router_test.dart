@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
-import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
-import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
@@ -133,15 +131,11 @@ void main() {
     testWidgets(
       'восстановление тренировки: redirect одноразовый, выход не застревает',
       (WidgetTester tester) async {
-        final db = locator.get<AppDatabase>();
         locator.registerLazySingleton<WakelockService>(
           () => _StubWakelockService(),
         );
         locator.registerLazySingleton<WorkoutForegroundService>(
           () => _StubForegroundService(),
-        );
-        locator.registerLazySingleton<WakelockBannerRepository>(
-          () => WakelockBannerRepository(db),
         );
 
         final checkpoint = WorkoutCheckpoint(
@@ -175,9 +169,6 @@ void main() {
 }
 
 class _StubWakelockService implements WakelockService {
-  @override
-  bool get isEnabled => true;
-
   @override
   Future<void> enable() async {}
 

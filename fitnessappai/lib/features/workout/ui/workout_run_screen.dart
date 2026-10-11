@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,7 +17,6 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
-import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
@@ -33,28 +31,17 @@ abstract class WakelockService {
   Future<void> enable();
 
   Future<void> disable();
-
-  bool get isEnabled;
 }
 
 /// Реализация через плагин wakelock_plus.
 class WakelockPlusService implements WakelockService {
   WakelockPlusService();
 
-  bool _enabled = false;
-
-  @override
-  bool get isEnabled => _enabled;
-
   @override
   Future<void> enable() async {
     try {
       await WakelockPlus.enable();
-      _enabled = true;
     } catch (e) {
-      if (Platform.isAndroid) {
-        _enabled = true;
-      }
       log('Не удалось включить wakelock', error: e);
     }
   }
@@ -66,7 +53,6 @@ class WakelockPlusService implements WakelockService {
     } catch (e) {
       log('Не удалось выключить wakelock', error: e);
     }
-    _enabled = false;
   }
 }
 
@@ -91,7 +77,6 @@ class WorkoutRunScreen extends StatefulWidget {
     this.checkpointLoader,
     this.checkpointSaver,
     this.checkpointClearer,
-    this.wakelockBannerRepository,
   });
 
   final int? programDayId;
@@ -114,7 +99,6 @@ class WorkoutRunScreen extends StatefulWidget {
   final Future<WorkoutCheckpoint?> Function()? checkpointLoader;
   final Future<void> Function(WorkoutCheckpoint checkpoint)? checkpointSaver;
   final Future<void> Function()? checkpointClearer;
-  final WakelockBannerRepository? wakelockBannerRepository;
 
   @override
   State<WorkoutRunScreen> createState() => _WorkoutRunScreenState();
@@ -127,8 +111,6 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   late final WorkoutRepository _workoutRepository;
   late final WakelockService _wakelock;
   late final WorkoutForegroundService _foregroundService;
-  late final WakelockBannerRepository _wakelockBannerRepo;
-  bool _wakelockBannerDismissed = false;
   Timer? _checkpointTimer;
   void Function()? _disposeForegroundEffect;
 
@@ -158,14 +140,6 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     _wakelock = widget.wakelockService ?? locator.get<WakelockService>();
     _foregroundService =
         widget.foregroundService ?? locator.get<WorkoutForegroundService>();
-    _wakelockBannerRepo =
-        widget.wakelockBannerRepository ??
-        locator.get<WakelockBannerRepository>();
-    _wakelockBannerRepo.isDismissed().then((dismissed) {
-      if (dismissed && mounted) {
-        setState(() => _wakelockBannerDismissed = true);
-      }
-    });
     _wakelock.enable();
     _foregroundService.start(
       title: 'Личный тренер',
@@ -385,23 +359,6 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
           children: [
             Column(
               children: [
-                if (!_wakelock.isEnabled && !_wakelockBannerDismissed)
-                  MaterialBanner(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    content: Text(
-                      AppLocalizations.of(context).workoutWakelockWarning,
-                    ),
-                    leading: const Icon(Icons.warning_amber_rounded),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          setState(() => _wakelockBannerDismissed = true);
-                          _wakelockBannerRepo.setDismissed();
-                        },
-                        child: Text(AppLocalizations.of(context).commonOk),
-                      ),
-                    ],
-                  ),
                 Expanded(
                   child: SignalBuilder(builder: (_) => _buildBody(context)),
                 ),

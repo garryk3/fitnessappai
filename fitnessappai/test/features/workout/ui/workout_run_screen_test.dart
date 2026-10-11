@@ -23,7 +23,6 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
-import 'package:fitnessappai/features/workout/data/wakelock_banner_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
@@ -35,9 +34,6 @@ class _FakeWakelock implements WakelockService {
   int disableCalls = 0;
 
   @override
-  bool get isEnabled => enableCalls > 0 && enableCalls > disableCalls;
-
-  @override
   Future<void> enable() async {
     enableCalls++;
   }
@@ -46,17 +42,6 @@ class _FakeWakelock implements WakelockService {
   Future<void> disable() async {
     disableCalls++;
   }
-}
-
-class _DisabledWakelock implements WakelockService {
-  @override
-  bool get isEnabled => false;
-
-  @override
-  Future<void> enable() async {}
-
-  @override
-  Future<void> disable() async {}
 }
 
 class _ControllableSoundService implements SoundService {
@@ -84,18 +69,6 @@ class _ControllableSoundService implements SoundService {
 
   @override
   Future<void> dispose() async {}
-}
-
-class _FakeWakelockBannerRepository implements WakelockBannerRepository {
-  bool dismissed = false;
-
-  @override
-  Future<bool> isDismissed() async => dismissed;
-
-  @override
-  Future<void> setDismissed() async {
-    dismissed = true;
-  }
 }
 
 void main() {
@@ -206,7 +179,6 @@ void main() {
     WorkoutForegroundService? foregroundService,
     WakelockService? wakelockService,
     SoundService? soundService,
-    WakelockBannerRepository? wakelockBannerRepository,
   }) async {
     final rescheduleQuery = rescheduleWeekStart == null
         ? ''
@@ -247,8 +219,6 @@ void main() {
             checkpointLoader: checkpointLoader ?? () async => null,
             checkpointSaver: checkpointSaver ?? (_) async {},
             checkpointClearer: () async {},
-            wakelockBannerRepository:
-                wakelockBannerRepository ?? _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -753,7 +723,6 @@ void main() {
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
-            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -823,7 +792,6 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
-              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             );
           },
         ),
@@ -874,7 +842,6 @@ void main() {
             checkpointLoader: () async => null,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
-            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -967,7 +934,6 @@ void main() {
             checkpointLoader: () async => checkpoint,
             checkpointSaver: (_) async {},
             checkpointClearer: () async {},
-            wakelockBannerRepository: _FakeWakelockBannerRepository(),
           ),
         ),
         GoRoute(
@@ -1030,7 +996,6 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
-              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             ),
           ),
           GoRoute(
@@ -1162,58 +1127,6 @@ void main() {
     },
   );
 
-  testWidgets('баннер предупреждения wakelock виден, когда wakelock выключен', (
-    tester,
-  ) async {
-    final dayId = await createDay();
-    await pumpRun(tester, dayId, wakelockService: _DisabledWakelock());
-
-    expect(
-      find.textContaining('Экран может выключаться во время тренировки'),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.text('ОК'));
-    await tester.pumpAndSettle();
-    expect(
-      find.textContaining('Экран может выключаться во время тренировки'),
-      findsNothing,
-    );
-  });
-
-  testWidgets('баннер wakelock не повторяется после персистентного dismiss', (
-    tester,
-  ) async {
-    final dayId = await createDay();
-    final repo = _FakeWakelockBannerRepository();
-    // First visit: banner shown, tap OK → persisted.
-    await pumpRun(
-      tester,
-      dayId,
-      wakelockService: _DisabledWakelock(),
-      wakelockBannerRepository: repo,
-    );
-    expect(
-      find.textContaining('Экран может выключаться во время тренировки'),
-      findsOneWidget,
-    );
-    await tester.tap(find.text('ОК'));
-    await tester.pumpAndSettle();
-    expect(repo.dismissed, isTrue);
-
-    // Second visit: banner should not appear.
-    await pumpRun(
-      tester,
-      dayId,
-      wakelockService: _DisabledWakelock(),
-      wakelockBannerRepository: repo,
-    );
-    expect(
-      find.textContaining('Экран может выключаться во время тренировки'),
-      findsNothing,
-    );
-  });
-
   testWidgets(
     'плавающая кнопка остановки звука появляется при воспроизведении',
     (tester) async {
@@ -1308,7 +1221,6 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
-              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             );
           },
         ),
@@ -1356,7 +1268,6 @@ void main() {
               checkpointLoader: () async => null,
               checkpointSaver: (_) async {},
               checkpointClearer: () async {},
-              wakelockBannerRepository: _FakeWakelockBannerRepository(),
             );
           },
         ),
