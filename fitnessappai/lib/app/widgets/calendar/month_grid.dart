@@ -285,6 +285,11 @@ class _MonthGridViewState extends State<MonthGridView> {
           final maxHeight = constraints.maxHeight.isFinite
               ? constraints.maxHeight
               : double.infinity;
+          // Размер ячейки не должен зависеть от числа недель в конкретном
+          // месяце (4/5/6), иначе при переключении месяцев ячейки «прыгают»
+          // (фикс 51.5). Резервируем максимум 6 строк — бюджет одинаков для
+          // любого месяца, поэтому размер и ширина контейнера постоянны.
+          const int maxWeekRows = 6;
           // Доступно под сами ячейки после шапки названий дней и зазоров.
           final availableWidth = math.max(
             0.0,
@@ -292,20 +297,21 @@ class _MonthGridViewState extends State<MonthGridView> {
           );
           final availableHeight = math.max(
             0.0,
-            maxHeight - headerHeight - headerGap - (weekCount - 1) * rowGap,
+            maxHeight - headerHeight - headerGap - (maxWeekRows - 1) * rowGap,
           );
           // Квадратная ячейка: ограничиваем по меньшей из сторон сетки
-          // 7×weekCount. Так ячейки всегда квадратные, а при непропорцио-
-          // нальном сжатии режется только избыточная сторона.
+          // 7×maxWeekRows. Так ячейки всегда квадратные и одинакового размера
+          // в любом месяце, а при непропорциональном сжатии режется только
+          // избыточная сторона.
           final double cell;
           if (!availableWidth.isFinite && !availableHeight.isFinite) {
             cell = 52;
           } else if (!availableWidth.isFinite) {
-            cell = availableHeight / weekCount;
+            cell = availableHeight / maxWeekRows;
           } else if (!availableHeight.isFinite) {
             cell = availableWidth / 7;
           } else {
-            cell = math.min(availableWidth / 7, availableHeight / weekCount);
+            cell = math.min(availableWidth / 7, availableHeight / maxWeekRows);
           }
 
           final gridRowWidth = 7 * cell + 6 * columnGap;
