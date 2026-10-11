@@ -16,3 +16,43 @@ linter:
     avoid_print: true
     prefer_single_quotes: true
     always_use_package_imports: true
+
+# Этап 52: запрет сырых Material-виджетов вне lib/uikit/.
+#
+# Внешний виджет собирается только из компонентов lib/uikit/. Правила ниже
+# включаются по одному по мере миграции (см. PLAN.md, этап 52), чтобы CI
+# оставался зелёным на каждом шаге.
+#
+# ВАЖНО: гейт работает только через `dart analyze --fatal-infos lib` — `flutter analyze`
+# диагностику analyzer-плагинов не показывает вообще (проверено 2026-10-11).
+# Область гейта — `lib/`: `test/**` и `integration_test/**` в него не входят и
+# могут использовать сырые виджеты без подавлений (их ловит обычный `flutter analyze`).
+#
+# Точки, где сырые виджеты разрешены (подавление `// ignore_for_file: type=lint`):
+#   lib/uikit/**       — здесь и живут обёртки;
+#   lib/app/theme/**   — дизайн-токены (seed, ChartSeriesColors, chartGrid).
+# В любом другом файле `lib/` подавление запрещено (CI-шаг «Guard uikit exemptions»).
+# NB: `type=lint` глушит только lint-правила этих файлов; предупреждения
+# (unused_import, unused_local_variable и т.п.) и ошибки по-прежнему видны.
+plugins:
+  restrict_raw_flutter:
+    version: ^0.2.2
+    diagnostics:
+      ban_text_widget: false
+      ban_icon_widget: false
+      ban_container_widget: false
+      ban_card_widget: false
+      ban_scaffold_widget: false
+      ban_appbar_widget: false
+      ban_listview_widget: false
+      ban_gridview_widget: false
+      ban_image_widget: false
+      ban_textfield_widget: false
+      ban_textformfield_widget: false
+      ban_elevated_button_widget: false
+      ban_text_button_widget: false
+      ban_outlined_button_widget: false
+      ban_colors: false
+      ban_color: false
+      ban_inkwell_widget: false
+      ban_gesture_detector_widget: false

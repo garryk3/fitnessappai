@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 /// Пустое состояние UI-кита: иконка, заголовок, пояснение и действие.

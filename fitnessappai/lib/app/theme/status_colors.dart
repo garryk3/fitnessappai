@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 /// Дополнительные семантические роли поверх M3 ColorScheme.

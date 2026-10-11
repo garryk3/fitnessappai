@@ -20,7 +20,7 @@
 | Метрики тела | Рост, вес + 8 обхватов (шея, грудь, талия, бёдра, бицепс, предплечье, бедро, икра), всё опционально |
 | Напоминания | По тренировочным дням: своё время на день, задаётся пользователем, можно отключить |
 | Синхронизация | MVP: ручной экспорт/импорт файла БД; интерфейс `SyncService` для будущего облака |
-| CI | `flutter analyze` + `dart format --set-exit-if-changed` + `flutter test` + `flutter build apk --debug` |
+| CI | `dart format --set-exit-if-changed` + `flutter analyze --fatal-infos` + `dart analyze --fatal-infos lib` (правила `restrict_raw_flutter`) + `flutter test` + `flutter build apk --debug` |
 | Название / applicationId | FitnessAppAI / `com.example.fitnessappai`; `minSdk = 31` |
 
 ## 1. Окружение и блокеры (снимок на старте проекта, 2026-02; актуальное — в AGENTS.md)
@@ -39,12 +39,14 @@
 
 ## 3. CI workflow
 
-Авторитетно в `.github/workflows/ci.yml`. Один job `validate`: `dart format --set-exit-if-changed` → `flutter analyze --fatal-infos` → `flutter test` → `flutter build apk --debug`.
+Авторитетно в `.github/workflows/ci.yml`. Один job `validate`: `dart format --set-exit-if-changed` → `flutter analyze --fatal-infos` → `dart analyze --fatal-infos lib` → `flutter test` → `flutter build apk --debug`.
+
+`dart analyze --fatal-infos lib` добавлен этапом 52: **`flutter analyze` не показывает диагностику analyzer-плагинов вообще**, поэтому запрет сырых Material-виджетов (пакет `restrict_raw_flutter`, конфигурация — в `fitnessappai/analysis_options.yaml`) проверяется только через `dart analyze`, и только по `lib/` (`test/`, `integration_test/` в гейт не входят). Внутри `lib/` сырые виджеты разрешены лишь в `lib/uikit/**` (обёртки) и `lib/app/theme/**` (дизайн-токены) — там стоит `// ignore_for_file: type=lint` (у плагина нет исключения по путям); в остальном `lib/` такое подавление запрещено отдельным CI-шагом «Guard uikit exemptions».
 
 ## 4. Стек пакетов
 
 - **Runtime:** `drift`, `drift_flutter`, `signals`, `signals_flutter`, `go_router`, `fl_chart`, `intl`, `uuid`, `collection`, `path_provider`, `path`, `wakelock_plus`, `flutter_local_notifications`, `timezone`, `file_picker`, `share_plus`.
-- **Dev:** `drift_dev`, `build_runner`, `flutter_lints`, `mocktail`, `fake_async`, `integration_test` (SDK).
+- **Dev:** `drift_dev`, `build_runner`, `flutter_lints`, `mocktail`, `fake_async`, `integration_test` (SDK). (`restrict_raw_flutter` — analyzer-плагин этапа 52; объявлен только в `analysis_options.yaml`, в `pubspec.yaml` его нет.)
 - Анимированный WebP рендерится нативным кодеком Flutter (без пакетов). Схема мышц — CustomPainter (без пакетов).
 - `flutter_signals` на pub.dev — нерабочая заглушка; используем `signals` + `signals_flutter` (v7.x).
 
@@ -55,6 +57,10 @@ fitnessappai/
   lib/
     main.dart
     app/                # app.dart, router.dart, theme/, responsive/
+    uikit/              # UI-кит: единые компоненты интерфейса (AppText, AppCard,
+                        # AppButton, AppScaffold, …) — основной слой, где
+                        # разрешены сырые Material-виджеты (этап 52)
+                        # (плюс токены lib/app/theme/**)
     core/
       database/         # app_database.dart, tables/, converters/
       di/               # service_locator.dart

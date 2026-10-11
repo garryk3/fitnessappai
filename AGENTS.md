@@ -36,6 +36,7 @@
 flutter pub get
 dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze --fatal-infos
+dart analyze --fatal-infos lib   # гейт правил restrict_raw_flutter (этап 52): flutter analyze их НЕ видит, область — только lib/
 flutter test
 flutter build apk --debug
 ```
@@ -66,6 +67,7 @@ flutter build apk --debug
 - If `build_runner` reports stale/skipped outputs after a schema change, `rm -rf .dart_tool/build` and rebuild.
 - **After finishing a task with new functionality, run the `android-tester` subagent to APPEND test cases to `TEST_PLAN.md`** (короткий прогон: только добавить сценарии для нового функционала по протоколу — TC-<NNN>, шаги, ожидание). **Не запускать полный прогон всех сценариев** — полный QA-прогон стартует только по требованию пользователя или обязательно перед публикацией релиза.
 - **UI опирается на `lib/uikit/`** — единый источник базовых компонентов (`AppCard`, `AppSection`, `AppSectionHeader`, `AppGradientButton`, `AppStatCard`, `AppBadge`, `AppTile`, `AppThumbnail`, `AppEmptyState`). При создании нового или обновлении существующего UI отдавать приоритет компонентам uikit перед ручным дублированием: заголовки секций — `AppSectionHeader`/`AppSection` (не `Text(... titleMedium)`), primary CTA — `AppGradientButton`, карточки/списки — `AppCard`/`AppTile`. Контекстные виджеты — в `features/<feature>/ui/`. Исключения (delete-действия и т.п.) — осознанно, с пометкой в PR.
+- **Сырые Material-виджеты запрещены вне `lib/uikit/` (этап 52).** Пакет `restrict_raw_flutter` (analyzer-плагин, настроен в `fitnessappai/analysis_options.yaml`) запрещает `Text`, `Icon`, `Container`, `Card`, `Scaffold`, `AppBar`, `ListView`, `GridView`, `Image`, `TextField`, `TextFormField`, `TextButton`/`OutlinedButton`/`ElevatedButton`, `InkWell`, `GestureDetector`, а также `Colors.*`/`Color(...)`. Вместо них — обёртки uikit: `AppText`, `AppIcon`, `AppContainer`, `AppCard`, `AppScaffold`, `AppTopBar`, `AppListView`, `AppGridView`, `AppImage`, `AppTextField`, `AppTextFormField`, `AppTextButton`/`AppOutlinedButton`/`AppButton`, `AppInkWell`, `AppGestureDetector`, `AppColors`. **Проверяется только `dart analyze --fatal-infos lib`** (в CI отдельным шагом) — `flutter analyze` диагностику плагина не видит, а гейт ограничен `lib/` (`test/`, `integration_test/` вне запрета). Внутри `lib/` сырые виджеты разрешены лишь в `lib/uikit/**` и `lib/app/theme/**` (там `// ignore_for_file: type=lint` — у плагина нет исключений по путям); за пределами этих двух каталогов подавление запрещено CI-шагом «Guard uikit exemptions». Правила включаются по мере миграции (см. `PLAN.md`, этап 52).
 
 ## Работа с TASKS.md (входной ящик пользователя)
 

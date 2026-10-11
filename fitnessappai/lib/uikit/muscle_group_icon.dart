@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 /// Пиктограмма группы мышц на основе добавленных ассетов.
