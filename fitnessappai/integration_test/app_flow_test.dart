@@ -42,6 +42,67 @@ String weekdayLabel(int weekday) => switch (weekday) {
 int day2Weekday(int today) =>
     today == DateTime.sunday ? DateTime.saturday : today + 1;
 
+/// Реальный «следующий календарный день» (через сутки от сегодня).
+///
+/// В воскресенье он попадает в следующую неделю плана: программа,
+/// активированная сегодня, на прошлые даты не планируется (47.2), поэтому
+/// wrap `sunday → saturday` из [day2Weekday] в тестах переноса давал бы день,
+/// который вовсе не отображается. Используется вместе с [goToWeekOf].
+DateTime nextDay() => DateTime.now().add(const Duration(days: 1));
+
+/// Понедельник недели, содержащей [date].
+DateTime weekMonday(DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  return day.subtract(Duration(days: day.weekday - DateTime.monday));
+}
+
+/// Переводит план недели на неделю, содержащую [date].
+///
+/// Ориентируется на **отображаемую** неделю (по заголовку-диапазону), а не на
+/// «сегодня»: иначе возврат из следующей недели на текущую не срабатывал бы
+/// (недель от «сегодня» до «сегодня» — ноль). В воскресенье «завтра» — это
+/// следующий понедельник (48.3), тогда уходит на неделю вперёд; в остальные
+/// дни «завтра» — та же неделя, и вызов ничего не делает.
+Future<void> goToWeekOf(WidgetTester tester, DateTime date) async {
+  final targetDay = weekMonday(date).day;
+  final forward = weekMonday(date).isAfter(weekMonday(DateTime.now()));
+  final tooltip = forward ? 'Следующая неделя' : 'Предыдущая неделя';
+  for (var i = 0; i < 4 && _displayedWeekStartDay(tester) != targetDay; i++) {
+    await tester.tap(find.byTooltip(tooltip));
+    await tester.pumpAndSettle();
+  }
+}
+
+/// Заголовок-диапазон отображаемой недели — первый `Text`, содержащий «–»
+/// («5–11 октября» или «29 сентября – 5 октября»).
+String displayedWeekLabel(WidgetTester tester) => tester
+    .widgetList<Text>(
+      find.byWidgetPredicate(
+        (w) => w is Text && (w.data?.contains('–') ?? false),
+      ),
+    )
+    .first
+    .data!;
+
+/// День месяца понедельника отображаемой недели — первое число в заголовке
+/// диапазона (см. [displayedWeekLabel]).
+int _displayedWeekStartDay(WidgetTester tester) =>
+    int.parse(RegExp(r'\d+').firstMatch(displayedWeekLabel(tester))!.group(0)!);
+
+/// Кнопка «Перенести на сегодня» в карточке дня [dayNumber] плана недели.
+///
+/// Нужна там, где в одной неделе несколько pending-дней с переносом: например,
+/// в воскресенье на следующей неделе это и «сегодняшний» (день 1), и
+/// «завтрашний» (день 2) дни программы, поэтому `find.text('Перенести на
+/// сегодня')` даёт два совпадения. Карточка дня подписана «День N · <дата>».
+Finder weekRescheduleButtonForDay(int dayNumber) {
+  final card = find.ancestor(
+    of: find.textContaining('День $dayNumber ·'),
+    matching: find.byType(Card),
+  );
+  return find.descendant(of: card, matching: find.text('Перенести на сегодня'));
+}
+
 Future<void> pumpApp(
   WidgetTester tester,
   AppDatabase db, {
@@ -920,7 +981,8 @@ void main() {
     await pullToRefreshExercises(tester);
 
     final today = DateTime.now().weekday;
-    final tomorrow = day2Weekday(today);
+    final nextDay = DateTime.now().add(const Duration(days: 1));
+    final tomorrow = nextDay.weekday;
 
     await goToTab(tester, Icons.calendar_month_outlined);
     await tester.tap(find.byTooltip('Новая программа'));
@@ -980,10 +1042,13 @@ void main() {
 
     await goToTab(tester, Icons.event_note_outlined);
     expect(find.text('Начать'), findsOneWidget);
-    expect(find.text('Перенести на сегодня'), findsOneWidget);
-    final rescheduleBtn = find.text('Перенести на сегодня');
+    // Соседний день (завтра) в воскресенье — уже следующая неделя плана (48.3),
+    // поэтому перенос ищем после перехода на её неделю.
+    await goToWeekOf(tester, nextDay);
+    final rescheduleBtn = weekRescheduleButtonForDay(2);
+    expect(rescheduleBtn, findsOneWidget);
     await scrollUntilVisibleIn(tester, rescheduleBtn);
-    await tester.tap(rescheduleBtn.first);
+    await tester.tap(rescheduleBtn);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Альтернативный набор'));
@@ -1109,8 +1174,8 @@ void main() {
     // «завтра» уже в следующей неделе, поэтому второй день — пятница.
     final now = DateTime.now();
     final today = now.weekday;
-    final other = today == DateTime.sunday ? DateTime.friday : today + 1;
-    final otherDate = now.add(Duration(days: other - today));
+    final otherDate = nextDay();
+    final other = otherDate.weekday;
 
     await goToTab(tester, Icons.calendar_month_outlined);
     await tester.tap(find.byTooltip('Новая программа'));
@@ -1144,14 +1209,7 @@ void main() {
 
     // Переход недель туда-обратно (48.3): вперёд до следующей, назад на
     // текущую — стрелка «назад» включается, как только неделя не текущая.
-    String weekLabel() => tester
-        .widgetList<Text>(
-          find.byWidgetPredicate(
-            (w) => w is Text && (w.data?.contains('–') ?? false),
-          ),
-        )
-        .first
-        .data!;
+    String weekLabel() => displayedWeekLabel(tester);
     final initialWeek = weekLabel();
     await tester.tap(find.byTooltip('Следующая неделя'));
     await tester.pumpAndSettle();
@@ -1160,11 +1218,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(weekLabel(), initialWeek);
 
-    // Сегодня: старт и пропуск. Соседний день: только перенос. Удаления у дня
-    // программы нет (47.1).
+    // Сегодня: старт и пропуск (пропуск доступен только тренировке текущего
+    // дня). Соседний день (завтра): только перенос. Удаления у дня программы
+    // нет (47.1). «Завтра» в воскресенье — уже следующая неделя (48.3),
+    // поэтому перенос ищем после перехода на её неделю.
     expect(find.text('Начать'), findsOneWidget);
     expect(find.text('Пропустить'), findsOneWidget);
-    expect(find.text('Перенести на сегодня'), findsOneWidget);
 
     await tester.tap(find.text('Пропустить'));
     await tester.pumpAndSettle();
@@ -1177,9 +1236,11 @@ void main() {
     expect(find.text('Начать'), findsOneWidget);
     expect(find.text('Пропущено'), findsNothing);
 
-    final rescheduleBtn = find.text('Перенести на сегодня');
+    await goToWeekOf(tester, otherDate);
+    final rescheduleBtn = weekRescheduleButtonForDay(2);
+    expect(rescheduleBtn, findsOneWidget);
     await scrollUntilVisibleIn(tester, rescheduleBtn);
-    await tester.tap(rescheduleBtn.first);
+    await tester.tap(rescheduleBtn);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
@@ -1191,6 +1252,9 @@ void main() {
 
     await goToTab(tester, Icons.event_note_outlined);
     await reloadWeekPlan(tester);
+    // Возвращаемся на текущую неделю: «завтра» в воскресенье — уже следующая
+    // неделя, а проверки «Запланировано»/количества сессий живут на текущей.
+    await goToWeekOf(tester, DateTime.now());
     // Сегодняшний день программы не начинали — он остался «Запланировано».
     expect(find.text('Запланировано'), findsWidgets);
     expect(find.text('Пропущено'), findsNothing);
@@ -1198,6 +1262,7 @@ void main() {
     // День-источник переноса очищен (47.3): в соседнем дне тренировки нет,
     // поэтому тап открывает лист планирования, а не действия дня.
     expect(find.text('Перенести на сегодня'), findsNothing);
+    await goToWeekOf(tester, otherDate);
     await tester.tap(find.text('${otherDate.day}').last);
     await tester.pumpAndSettle();
     final sheet = find.byType(BottomSheet);
@@ -1221,6 +1286,10 @@ void main() {
     await tester.tapAt(Offset(barrierRect.center.dx, barrierRect.top + 20));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsNothing);
+
+    // Обратно на текущую неделю перед тапом по числу текущего дня
+    // («завтра» в воскресенье — следующая неделя).
+    await goToWeekOf(tester, DateTime.now());
 
     // Тапаем по числу дня — в широкой раскладке это заголовок колонки, он же
     // открывает лист действий. Прокручиваем к нему: сетка после прокрутки к
@@ -1750,7 +1819,7 @@ void main() {
     await configureDay(
       tester,
       2,
-      day2Weekday(today),
+      nextDay().weekday,
       mainSets: [
         (
           _squat,
@@ -1795,9 +1864,13 @@ void main() {
     await finishAndGoProgress(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    final rescheduleBtn2 = find.text('Перенести на сегодня');
+    // «Завтра» в воскресенье — уже следующая неделя плана (48.3), туда и идём
+    // за кнопкой переноса.
+    await goToWeekOf(tester, nextDay());
+    final rescheduleBtn2 = weekRescheduleButtonForDay(2);
+    expect(rescheduleBtn2, findsOneWidget);
     await scrollUntilVisibleIn(tester, rescheduleBtn2);
-    await tester.tap(rescheduleBtn2.first);
+    await tester.tap(rescheduleBtn2);
     await tester.pumpAndSettle();
     final startWorkoutBtn2 = find.widgetWithText(
       ElevatedButton,
