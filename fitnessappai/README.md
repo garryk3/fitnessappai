@@ -54,7 +54,7 @@ flutter build apk --debug       # сборка Android APK
 
 Скачать последнюю версию: [FitnessAppAI latest](https://github.com/garryk3/fitnessappai/releases).
 
-Полный план разработки с отслеживанием статусов — в [PLAN.md](../PLAN.md).
+Полный план разработки с отслеживанием статусов — в [PLAN.md](../PLAN.md) (индекс этапов и текущие задачи) и [PLAN_ARCHIVE.md](../PLAN_ARCHIVE.md) (архив завершённых этапов).
 
 Лицензия: [CC BY-NC-SA 4.0](../LICENSE) (только некоммерческое использование).
 
