@@ -190,11 +190,12 @@
 
 ### 51.6 — Тренировка: удалить баннер «блокировка сна недоступна»
 
-- **Статус:** [ ] открыта.
+- **Статус:** [x] выполнена (2026-10-11).
 - **Источник:** п.6 `TASKS.md`: «Удалить уведомление: блокировка сна недоступна на этой платформе».
-- **Разбор (2026-10-11):** это `MaterialBanner` с текстом `workoutWakelockWarning` в `workout_run_screen.dart:388`, показывается, когда `WakelockService` не включился, и запоминает «скрыт» через `WakelockBannerRepository`.
+- **Разбор (2026-10-11):** это `MaterialBanner` с текстом `workoutWakelockWarning` в `workout_run_screen.dart`, показывался, когда `WakelockService` не включился, и запоминал «скрыт» через `WakelockBannerRepository`.
 - **Рабочий план (полная чистка, решение владельца):**
   1. `workout_run_screen.dart`: убрать `MaterialBanner`, поле `_wakelockBannerDismissed`, конфигурацию и загрузку `_wakelockBannerRepo`.
   2. Удалить `lib/features/workout/data/wakelock_banner_repository.dart`, его регистрацию в DI и тесты.
   3. Удалить ключ `workoutWakelockWarning` из `lib/l10n/app_ru.arb`, прогнать `flutter gen-l10n`, закоммитить сгенерированное.
+- **Реализовано (2026-10-11):** баннер удалён из `workout_run_screen.dart` (вместе с полями `_wakelockBannerRepo`/`_wakelockBannerDismissed`, их инициализацией и параметром виджета `wakelockBannerRepository`); удалён файл `wakelock_banner_repository.dart`, его регистрация и импорт в `register_core_services.dart`; удалён ключ `workoutWakelockWarning` из `app_ru.arb` и перегенерены `app_localizations*.dart` (`flutter gen-l10n`). Заодно удалён ставший мёртвым геттер `WakelockService.isEnabled` (единственным потребителем был баннер) и поле `WakelockPlusService._enabled` — затронуты все реализации `WakelockService` (продовая + заглушки в тестах); удалён e2e-тест баннера и ненужный параметр `disableWakelock` с заглушкой `_StubWakelockDisabledService`. Тесты: `flutter analyze --fatal-infos` — 0 замечаний; полный `flutter test` — 1095 ✅.
 - **Проверка:** баннер не появляется ни при каком состоянии wakelock; `flutter analyze --fatal-infos`, `flutter test` зелёные; мёртвых ссылок на удалённый репозиторий/ключ нет.
