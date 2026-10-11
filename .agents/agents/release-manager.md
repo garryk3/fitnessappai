@@ -61,8 +61,18 @@ permission:
 - Определите последний релизный тег: `git tag -l --sort=-version:refname | head -1` (и/или `gh release list`).
 - Извлеките суффикс последнего тега (beta/gamma/alpha/пусто) и запомните его.
 - Поднимите **патч-версию**: `v1.0.11-beta` → `v1.0.12-beta` (суффикс сохраняется).
-- Обновите `version:` в `fitnessappai/pubspec.yaml` под новую версию (в формате `X.Y.Z+N`), сделайте отдельный коммит `release: поднять версию до vX.Y.Z`.
-- Создайте и запушьте аннотированный тег: `git tag -a vX.Y.Z-beta -m "vX.Y.Z-beta"` затем `git push origin vX.Y.Z-beta`.
+- Обновите `version:` в `fitnessappai/pubspec.yaml` под новую версию (в формате `X.Y.Z+N`), сделайте отдельный коммит `release: поднять версию до vX.Y.Z` **в `main`** и запушьте его в `origin/main` (`git push origin main`) **до** создания тега.
+- Создайте и запушьте аннотированный тег **на этот bump-коммит** (на текущий `HEAD` после пуша `main`):
+  ```sh
+  git rev-parse HEAD                        # SHA bump-коммита
+  git tag -a vX.Y.Z-beta -m "vX.Y.Z-beta"   # тег встаёт на HEAD
+  git push origin vX.Y.Z-beta
+  ```
+- **Обязательная проверка перед пушем тега** (иначе релиз соберётся со старой версией — рецидив `v1.0.26-beta`, где тег стоял на коммите с `pubspec.yaml` `1.0.25+1`, а bump-коммит был его ребёнком):
+  ```sh
+  git show vX.Y.Z-beta:fitnessappai/pubspec.yaml | grep 'version:'
+  ```
+  Строка обязана содержать новую версию; `git log -1 --format=%s vX.Y.Z-beta` должен быть `release: поднять версию до vX.Y.Z` (тег указывает на bump-коммит, а не на предшествующий merge-коммит).
 - Пуш тега запустит `.github/workflows/release.yml`, который соберёт и опубликует GitHub Release.
 
 ### 6. Подтверждение
