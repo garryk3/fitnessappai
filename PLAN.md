@@ -3889,3 +3889,60 @@ if (FlutterPluginUtils.shouldShrinkResources(project)) {   // по умолча�
   3. Тест экрана (`test/features/workout/ui/week_plan_screen_test.dart`): карточка дня показывает «Грудь · 10 августа 2026», лист действий — «Сплит → Грудь». День без названия обязан продолжать показывать «День 1» — существующие тесты это уже страхуют.
   4. Прогон `dart format`, `flutter analyze --fatal-infos`, `flutter test`; перед PR — вопрос владельцу о e2e (правило AGENTS.md).
 - **Тесты:** п.2–3 рабочего плана; отдельный **TC-105** в `TEST_PLAN.md` (сценарий с кастомным названием дня в плане).
+
+## Этап 49: Процесс ревью и релиза — `task-reviewer` на каждую задачу, `plan-review` перед релизом (обращение владельца в чате, 2026-10-11)
+
+> Источник задач — обращение владельца в чате 2026-10-11 (не через `TASKS.md`): «переделать процесс
+> релиза и работу агента plan-review — plan-review теперь запускать перед релизом, а не каждым
+> коммитом; нужен агент-ревьюер, который проверяет реализацию задачи на соответствие требованиям,
+> архитектуру и наличие ошибок». Реализация — одной веткой `task/49-review-and-release-process`
+> (задачи 49.1–49.2, тот же PR). Код приложения (`lib/`, `test/`, `android/`, `pubspec.yaml`) не
+> затрагивается — меняются только документы процесса и определения агентов, поэтому e2e не запускаются.
+
+| Задача | Название | Статус | Ветка | Дата завершения |
+|---|---|---|---|---|
+| 49.1 | Процесс: `plan-review` перенесён с каждого коммита на релиз; `task-reviewer` — на каждую задачу | [x] | task/49-review-and-release-process | 2026-10-11 |
+| 49.2 | Агент `task-reviewer`: ревью реализации задачи — требования, архитектура, ошибки | [x] | task/49-review-and-release-process | 2026-10-11 |
+
+### 49.1 — Процесс: `plan-review` перед релизом, `task-reviewer` на каждую задачу
+
+- **Статус:** [x] закрыта (2026-10-11; ветка `task/49-review-and-release-process`).
+- **Симптом владельца:** «давай переделаем процесс релиза и работу агента plan-review — plan-review теперь будем запускать перед релизом, а не каждым коммитом».
+- **Разбор (по текущим файлам, 2026-10-11).** Правило запускать `plan-review` перед каждым коммитом задано дважды: в `AGENTS.md` (раздел `## Workflow & conventions`, строки 57–58) и продублировано в `.agents/agents/release-manager.md` (строки 35 и 44, «перед каждым коммитом»). Сам `plan-review` проверяет только `PLAN.md` (статусы `[x]`, даты завершения, синхронность с diff) — это релизный гейт, а не полезная проверка на каждом коммите, тем более что проверки кода на каждой задаче теперь отдельный агент (49.2). Отдельная находка: `opencode debug agents` показывает в проекте загруженным только `plan-review` — симлинки `.opencode/agents/release-manager.md` и `.opencode/agents/android-tester.md`, описанные в `AGENTS.md` (строки 24–26), фактически отсутствуют, поэтому эти агенты недоступны.
+- **Рабочий план (2026-10-11):**
+  1. **`AGENTS.md`:** заменить правило «Before every commit, run the `plan-review` agent…» на два правила: (а) **после реализации задачи, перед коммитом/PR — запускать `task-reviewer`** (ревью реализации, 49.2); (б) **перед релизом — запускать `plan-review`** (проверка `PLAN.md`: статус `[x]`, дата завершения, наличие рабочего плана). Исключение про задачи, которые только переносят пожелания из `TASKS.md` в `PLAN.md`, сохранить, но привязать к `task-reviewer` (кода нет — проверять нечего).
+  2. **`AGENTS.md`:** в перечислении `.agents/agents/*.md` добавить `task-reviewer`; в блок `ln -sf` добавить строку для `task-reviewer` и восстановить отсутствующие симлинки `release-manager`/`android-tester`.
+  3. **`.agents/agents/release-manager.md`:** убрать требование «перед каждым коммитом» запускать `plan-review` (строки 35, 44); заменить на запуск `plan-review` **перед публикацией релиза** (в шаге про коммит/слияние) и пометить, что `task-reviewer` по задачам уже пройден на своих ветках.
+  4. Создать недостающие симлинки в `.opencode/agents/` (gitignored), чтобы `task-reviewer`, `release-manager`, `android-tester` реально загружались в opencode.
+- **Проверка:** `opencode debug agents` перечисляет `task-reviewer`, `release-manager`, `android-tester` в списке subagent'ов; в `AGENTS.md` и `.agents/agents/` не осталось действующих предписаний «перед каждым коммитом» (историческая пометка о переносе в `AGENTS.md` не в счёт).
+
+- **Реализовано (2026-10-11, ветка `task/49-review-and-release-process`):**
+  1. **`AGENTS.md`.** Правило «Before every commit, run the `plan-review` agent…» заменено на два: `task-reviewer` — после реализации задачи, перед коммитом/PR; `plan-review` — перед релизом. Исключение для задач-переносов `TASKS.md` привязано к `task-reviewer` (кода нет — проверять нечего). В перечень `.agents/agents/*.md` и в блок `ln -sf` добавлен `task-reviewer`.
+  2. **`.agents/agents/release-manager.md`.** Убрано «plan-review перед каждым коммитом» (строки 35, 44): теперь на коммите проверяется, что по задаче пройден `task-reviewer`; шаг 3 переименован в «Проверка тестов и PLAN.md» и в него добавлен прогон `plan-review` перед публикацией; frontmatter-описание обновлено.
+  3. **`.agents/agents/plan-review.md`.** Формулировки «перед коммитом» заменены на «перед релизом» (вступление и заголовок критических проблем).
+  4. **Симлинки.** Созданы `.opencode/agents/task-reviewer.md`, `.opencode/agents/release-manager.md`, `.opencode/agents/android-tester.md` — ранее отсутствовали, поэтому из четырёх агентов в opencode загружался только `plan-review`.
+- **Проверка (факт):** `opencode debug agents` теперь перечисляет `task-reviewer`, `plan-review`, `release-manager`, `android-tester` среди субагентов; действующих формулировок «перед каждым коммитом» в `AGENTS.md` и `.agents/agents/` не осталось.
+
+### 49.2 — Агент `task-reviewer`: ревью реализации задачи
+
+- **Статус:** [x] закрыта (2026-10-11; ветка `task/49-review-and-release-process`).
+- **Источник:** «нужен агент ревьюер, который будет проверять реализацию задачи на предмет соответствия требованиям, архитектуру, наличие ошибок — нужно найти нужные скиллы или готовые агенты в интернете».
+- **Разбор и основа (исследование в интернете, 2026-10-11):** взяты за образец готовые материалы — [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) (MIT): `code-reviewer`, `architect-reviewer`, `surgeon-reviewer` (tier-система WILL BREAK / WILL COST / WILL ROT + вердикт SHIP / SHIP WITH FIXES / DO NOT SHIP из [LucianFord/agent-pack](https://github.com/LucianFord/agent-pack), MIT); [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) `code-review-and-quality` (пятиосевое ревью: correctness, readability, architecture, security, performance); [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) `flutter-dart-code-review` (чеклист Flutter/Dart). Официальный [flutter/agent-plugins](https://github.com/flutter/agent-plugins) скилла code-review пока не содержит (открытый issue #70). Все три источника — с адаптацией под этот репозиторий, с атрибуцией в разделе «Источники» внутри агента.
+- **Рабочий план (2026-10-11):**
+  1. **Создать `.agents/agents/task-reviewer.md`:** `mode: subagent`, `temperature: 0.1`, read-only (`edit: deny`, `read: allow`), bash-whitelist только неразрушающими командами (`git diff/log/show/status/branch/rev-parse/describe`, `flutter analyze/test`, `dart format --output=none`/`dart analyze`, `cat/head/tail/wc/grep/ls`, остальное `ask`). Промпт — на русском, с явной ролью «старший ревьюер реализации задач этого репозитория».
+  2. **Три обязательные проверки:** (а) **соответствие требованиям** — найти рабочую план-секцию задачи в `PLAN.md` и сверить с `git diff` (всё заявленное реализовано, нет лишнего вне объёма); (б) **архитектура** — против `.agents/rules/FLUTTER.md` и конвенций репо (native-first state `signals`/`ChangeNotifier`/`ValueNotifier`, без Riverpod/Bloc/GetX, MVVM, manual DI; приоритет `lib/uikit/`; generated Drift/`l10n` коммитятся; тексты через `app_ru.arb`; `features/<feature>/ui/`); (в) **наличие ошибок** — tier-система (WILL BREAK / WILL COST / WILL ROT), каждое с `path:line`, диагнозом и следствием; стиль/нейминг/то, что ловит линтер, не репортить.
+  3. **Flutter/Dart-чеклист встроить в промпт:** async gaps и `context.mounted`, `mounted` перед `setState`, избыточный `!`, `catch` без `on`, `print` → `dart:developer log`, `const`/rebuild-оптимизации, локализация строк, покрытие тестами изменений (edge/error-пути), отсутствие бизнес-логики в виджетах.
+  4. **Формат отчёта:** статус, находки по tier'ам, отдельно «Соответствие требованиям», «Архитектура», вердикт **SHIP / SHIP WITH FIXES / DO NOT SHIP**; раздел «Источники» с MIT-атрибуцией и пометкой «адаптировано под FitnessAppAI».
+  5. Создать симлинк `.opencode/agents/task-reviewer.md` → `../../.agents/agents/task-reviewer.md` (см. 49.1).
+- **Проверка:** `opencode debug agents` показывает `task-reviewer` с ожидаемыми правами; пробный запуск на diff этой же задачи возвращает отчёт и вердикт без правок файлов.
+
+- **Реализовано (2026-10-11, ветка `task/49-review-and-release-process`):**
+  1. **Создан `.agents/agents/task-reviewer.md`** — `mode: subagent`, `temperature: 0.1`, read-only (`edit: deny`, `read: allow`), bash только неразрушающие команды (остальное `ask`). Проверено `opencode debug agents`: правила сливаются как «`shell * → ask`, затем точечные `allow`» (последнее совпадение побеждает), `edit * → deny`.
+  2. **Три оси ревью** описаны явно: (а) требования — сверка diff с рабочей планом в `PLAN.md`; (б) архитектура — по `.agents/rules/FLUTTER.md` и конвенциям репо; (в) ошибки — tier-система WILL BREAK / WILL COST / WILL ROT с правилом отсечения и правом опровергать гипотезы. Встроен Flutter/Dart-чеклист (async gaps/`context.mounted`, избыточный `!`, `catch` без `on`, `print`→`log`, rebuild/`const`, l10n, слои, тесты).
+  3. **Вердикт** SHIP / SHIP WITH FIXES / DO NOT SHIP и формат отчёта (требования, архитектура, находки по tier'ам, следующий шаг).
+  4. **Источники (MIT) с атрибуцией** внутри агента; отмечено, что официальный `flutter/agent-plugins` code-review-скилла пока не имеет (issue #70).
+  5. Симлинк `.opencode/agents/task-reviewer.md` создан (см. 49.1).
+- **Проверка (факт):** агент виден в `opencode debug agents` среди субагентов. Пробный прогон `task-reviewer` на diff этой же задачи вернул вердикт **SHIP WITH FIXES** без правок файлов; найденные замечания устранены в этой же ветке:
+  - WILL COST — в whitelist были записывающие команды (`dart format`, `flutter gen-l10n`, `flutter pub get`); убраны, оставлен неразрушающий `dart format --output=none`;
+  - WILL COST — `git status` без `*` не матчил `git status --porcelain`/`-s`; заменено на `git status*` (в `task-reviewer.md` и `plan-review.md`);
+  - WILL ROT — «Процесс проверки» в `plan-review.md` собирал diff текущего коммита (`git diff --cached`/`HEAD~1`); заменено на релизный `git diff origin/main...HEAD`.
