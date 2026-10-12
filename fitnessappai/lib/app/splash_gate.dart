@@ -4,6 +4,7 @@ import 'package:fitnessappai/app/bootstrap.dart';
 import 'package:fitnessappai/app/splash_video.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/main.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Стартовый экран: показывает видео-заставку, пока идёт инициализация,
 /// затем плавно переходит в [FitnessAppAi].
@@ -82,7 +83,7 @@ class _SplashGateState extends State<SplashGate>
     }
     return MaterialApp(
       theme: AppTheme.dark(),
-      home: Scaffold(
+      home: AppScaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: FadeTransition(opacity: _fade, child: widget.splashBody),
       ),

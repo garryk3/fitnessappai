@@ -103,8 +103,8 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: AppText(l10n.workoutPrepare)),
+    return AppScaffold(
+      appBar: AppTopBar(title: l10n.workoutPrepare),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
     );
   }

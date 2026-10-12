@@ -33,8 +33,8 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: AppText(l10n.contraindicationsTitle)),
+    return AppScaffold(
+      appBar: AppTopBar(title: l10n.contraindicationsTitle),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
   }

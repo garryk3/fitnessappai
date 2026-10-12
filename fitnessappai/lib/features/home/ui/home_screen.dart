@@ -67,11 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        leading: const AppMenuButton(),
-        title: AppText(l10n.navHome),
-      ),
+    return AppScaffold(
+      appBar: AppTopBar(leading: const AppMenuButton(), title: l10n.navHome),
       body: SignalBuilder(
         builder: (context) {
           final controller = _controller;

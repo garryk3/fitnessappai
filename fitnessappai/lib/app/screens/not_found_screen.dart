@@ -10,7 +10,7 @@ class NotFoundScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
+    return AppScaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

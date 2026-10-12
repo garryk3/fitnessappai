@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     super.key,
+    this.scaffoldKey,
     this.appBar,
     this.body,
     this.floatingActionButton,
@@ -30,6 +31,14 @@ class AppScaffold extends StatelessWidget {
     this.extendBodyBehindAppBar = false,
     this.drawerScrimColor,
   });
+
+  /// Ключ внутреннего [Scaffold] для программного управления им
+  /// (`scaffoldKey.currentState?.openDrawer()` и т.п.).
+  ///
+  /// [super.key] для этого не годится: он вешается на сам `AppScaffold`
+  /// (stateless-обёртку), и `GlobalKey<ScaffoldState>.currentState` у него
+  /// будет `null` — открытие drawer молча не сработает.
+  final GlobalKey<ScaffoldState>? scaffoldKey;
 
   final PreferredSizeWidget? appBar;
   final Widget? body;
@@ -55,6 +64,7 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: appBar,
       body: body,
       floatingActionButton: floatingActionButton,

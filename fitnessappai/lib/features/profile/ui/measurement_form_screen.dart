@@ -52,8 +52,8 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: AppText(l10n.measurementFormTitle)),
+    return AppScaffold(
+      appBar: AppTopBar(title: l10n.measurementFormTitle),
       body: Form(
         key: _formKey,
         child: ListView(

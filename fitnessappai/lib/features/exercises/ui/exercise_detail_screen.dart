@@ -154,9 +154,9 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       builder: (context) {
         final data = _controller.data.value;
         final canEdit = data?.exercise.isCustom ?? false;
-        return Scaffold(
-          appBar: AppBar(
-            title: AppText(l10n.exerciseDetail),
+        return AppScaffold(
+          appBar: AppTopBar(
+            title: l10n.exerciseDetail,
             actions: [
               if (canEdit)
                 IconButton(

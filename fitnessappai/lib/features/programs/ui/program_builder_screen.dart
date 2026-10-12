@@ -839,9 +839,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           Navigator.of(context).pop();
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: AppText(isEditing ? l10n.programEdit : l10n.programNew),
+      child: AppScaffold(
+        appBar: AppTopBar(
+          title: isEditing ? l10n.programEdit : l10n.programNew,
           actions: [
             if (isEditing && _days.length > 1)
               IconButton(

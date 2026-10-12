@@ -48,8 +48,8 @@ plugins:
       ban_icon_widget: true
       ban_container_widget: true
       ban_card_widget: true
-      ban_scaffold_widget: false
-      ban_appbar_widget: false
+      ban_scaffold_widget: true
+      ban_appbar_widget: true
       ban_listview_widget: false
       ban_gridview_widget: false
       ban_image_widget: false

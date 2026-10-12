@@ -145,8 +145,8 @@ class _SingleExerciseParamsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: AppText(l10n.exerciseParams)),
+    return AppScaffold(
+      appBar: AppTopBar(title: l10n.exerciseParams),
       body: _buildBody(),
       bottomNavigationBar: _loading
           ? null

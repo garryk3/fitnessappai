@@ -46,10 +46,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
+    return AppScaffold(
+      appBar: AppTopBar(
         leading: const AppMenuButton(),
-        title: AppText(l10n.navPrograms),
+        title: l10n.navPrograms,
       ),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
       floatingActionButton: FloatingActionButton(
