@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 /// Чип-бейдж UI-кита: компактная плашка с фоном, текстом и опциональной

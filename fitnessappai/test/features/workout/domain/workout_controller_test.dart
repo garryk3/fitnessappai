@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'dart:async';
 
 import 'package:fake_async/fake_async.dart';

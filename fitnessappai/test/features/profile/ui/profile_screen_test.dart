@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:drift/native.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';

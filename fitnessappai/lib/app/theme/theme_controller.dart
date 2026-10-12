@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';

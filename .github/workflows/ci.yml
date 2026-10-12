@@ -28,6 +28,29 @@ jobs:
       - name: Static analysis
         run: flutter analyze --fatal-infos
 
+      - name: Static analysis (analyzer plugins)
+        # Гарантированная точка проверки запрета сырых Material-виджетов
+        # (restrict_raw_flutter, этап 52). `flutter analyze` показывает такую
+        # диагностику не на всех версиях (3.47.4 — не показывает, 3.47.7 в CI —
+        # показывает; проверено 2026-10-12), поэтому дублирующий шаг обязателен.
+        # ВАЖНО: путь передавать НЕЛЬЗЯ — `dart analyze lib` плагины не грузит
+        # вообще (проверено 2026-10-12: 0 диагностик вместо 703), поэтому гейт
+        # идёт по всему пакету, а `test/` и `integration_test/` покрыты
+        # `// ignore_for_file: type=lint`.
+        run: dart analyze --fatal-infos
+
+      - name: Guard uikit exemptions
+        # `// ignore_for_file: type=lint` — это же и лазейка в обход запрета.
+        # Разрешаем её только в `lib/uikit/**` и `lib/app/theme/**`;
+        # generated-файлы (*.g.dart, l10n) исключены так же, как в analysis_options.
+        run: |
+          violations=$(git grep -n "ignore_for_file:.*type=lint" -- lib ':!lib/uikit' ':!lib/app/theme' ':!*.g.dart' ':!*.freezed.dart' ':!*.mocks.dart' ':!lib/l10n' || true)
+          if [ -n "$violations" ]; then
+            echo "$violations"
+            echo "::error::Подавление '// ignore_for_file: type=lint' разрешено только в lib/uikit/** и lib/app/theme/**"
+            exit 1
+          fi
+
       - name: Run tests
         run: flutter test
 

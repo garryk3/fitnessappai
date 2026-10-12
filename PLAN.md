@@ -64,7 +64,43 @@
 | 49 | Процесс ревью и релиза — `task-reviewer` на каждую задачу, `plan-review` перед релизом (обращение владельца в чате, 2026-10-11) | 49.1–49.2 | ✅ | 2026-10-11 |
 | 50 | Оптимизация PLAN.md (индекс + архив + `docs/PROJECT.md`) и правило актуализации ветки; фикс date-зависимых e2e переноса дня | 50.1–50.3 | ✅ | 2026-10-11 |
 | 51 | Задачи из `TASKS.md` (2026-10-11): версия в настройках, запрет прошлых недель, планирование на занятый день и время, размер ячеек календаря истории, баннер блокировки сна | 51.1–51.6 | ✅ | 2026-10-11 |
+| 52 | UI-кит 2.0 — полный запрет сырых Material-виджетов в UI (`restrict_raw_flutter`), весь UI через `lib/uikit/` | 52.1–52.10 | 🚧 | — |
 
 ## Незавершённые задачи
 
-Активного этапа нет — все задачи этапов 0–51 завершены и перенесены в `PLAN_ARCHIVE.md`. Новые этапы добавляются сюда по мере поступления из `TASKS.md` (см. `AGENTS.md`), с продолжением нумерации.
+### Этап 52 — UI-кит 2.0: полный запрет сырых Material-виджетов в UI (`restrict_raw_flutter`)
+
+**Инициатива владельца (чат, 2026-10-11).** Цель: весь UI строится на компонентах `lib/uikit/`; прямое использование сырых Material-виджетов и сырых цветов вне `lib/uikit/` запрещено анализатором и CI.
+
+**Инструмент:** пакет `restrict_raw_flutter` (`^0.2.2`, MIT, Dart ≥3.10, analyzer plugin). Подключается только в `analysis_options.yaml` (запись в `pubspec.yaml` не нужна). Альтернативу `verita_theme` (гибче, но `0.0.1` и требует `analyzer ^14`) отклонили — начнём с `restrict_raw_flutter`.
+
+**Проверено эмпирически (Flutter 3.47.4 / Dart 3.13.3):**
+
+- `flutter analyze` диагностику плагина показывает **не на всех версиях**: Flutter 3.47.4 (локально, замер 2026-10-11) — 0 issues, 3.47.7 (CI, 2026-10-12) — показывает. Надёжный гейт — `dart analyze --fatal-infos`; в CI оставлены оба шага.
+- `dart analyze` по умолчанию возвращает exit 0 даже при info-диагностиках; `dart analyze --fatal-infos` → exit 1. Нужен шаг в CI.
+- Подавление — только внутри файла: `// ignore_for_file: restrict_raw_flutter` целиком и `restrict_raw_flutter/*` **не работают**; работает перечисление правил (`restrict_raw_flutter/ban_text_widget, …`) либо `// ignore_for_file: type=lint`.
+- Nested `analysis_options.yaml` с `plugins:` анализатором запрещён (`plugins_in_inner_options`).
+- `dart analyze --fatal-infos` на текущем коде (без плагина) — чисто → добавление шага безопасно.
+- **Гейт нельзя скоупить путём (важно!): `dart analyze lib` плагин НЕ грузит вообще** — 0 диагностик вместо 904 при полном пакете (проверено 2026-10-12). `exclude_for_plugin` не поддерживается, `--options` у `dart analyze` нет → гейт обязан идти по всему пакету, а исключённые каталоги подавляются в самих файлах. Иначе CI молча зелёный без какой-либо проверки (это уже случилось в первой ревизии шага, поймано вручную).
+- **Негативный тест гейта в CI (2026-10-12):** временный коммит с `ban_gesture_detector_widget: true` сделал прогон красным (на шаге `Static analysis`, 2 нарушения в `month_grid.dart` и `week_plan_screen.dart`) → гейт реально работает, правило откатили. Попутно выяснилось, что `flutter analyze` на CI-версии Flutter 3.47.7 диагностику плагина показывает (на 3.47.4 — нет), поэтому в CI оба аналитических шага.
+
+**Baseline нарушений.** Плагин регистрирует **18** диагностик (README документирует 16; дополнительно `ban_inkwell_widget` и `ban_gesture_detector_widget`). После исключения `lib/uikit/**`, `lib/app/theme/**`, `test/**`, `integration_test/**` в `lib/` остаётся **703** нарушения в **37** файлах: `ban_text_widget` 385, `ban_icon_widget` 113, `ban_scaffold_widget` 27, `ban_container_widget` 24, `ban_text_button_widget` 24, `ban_listview_widget` 24, `ban_textformfield_widget` 23, `ban_appbar_widget` 23, `ban_card_widget` 22, `ban_inkwell_widget` 12, `ban_outlined_button_widget` 8, `ban_image_widget` 8, `ban_colors` 6, `ban_textfield_widget` 2, `ban_gesture_detector_widget` 2; `ban_color`/`ban_elevated_button_widget`/`ban_gridview_widget` — 0 (все их использования только в `uikit`/`theme`).
+
+**Исключения (сырые виджеты разрешены):** `lib/uikit/**` (там и живут обёртки), `lib/app/theme/**` (дизайн-токены: seed, `ChartSeriesColors`, `chartGrid`), `test/**`, `integration_test/**`. Механизм — `// ignore_for_file: type=lint` в этих файлах (перечень 18 правил нечитаем, а `restrict_raw_flutter`/`restrict_raw_flutter/*` целиком не игнорируются). Гейт идёт по всему пакету (см. п. выше про путь), поэтому тесты и без подавлений провалили бы его. За пределами четырёх исключённых каталогов подавление в `lib/` запрещено CI-шагом «Guard uikit exemptions» (`// ignore_for_file: type=lint` — это же и лазейка в обход запрета).
+
+**Контроль полноты исключений:** включить все 18 правил локально и убедиться, что `dart analyze --fatal-infos` даёт ровно 703 (647 в `lib/features/` + 56 в `lib/app/`, 0 в исключениях), после чего вернуть `false`.
+
+**Правила включаются по мере миграции** (флаги в `analysis_options.yaml`), чтобы CI был зелёным на каждом шаге.
+
+Порядок задач (каждая = ветка `task/52.N-…` → PR → зелёный CI → squash merge):
+
+- [x] **52.1 — Инфраструктура + обёртки uikit** (2026-10-11). Плагин подключён в `analysis_options.yaml` (все `diagnostics: false` — инфраструктура и гейт готовы, нарушений нет). Обёртки в `lib/uikit/`: `AppText` (+`AppText.rich`), `AppIcon`, `AppImage`, `AppContainer`, `AppScaffold`, `AppTopBar` (AppBar), `AppListView`, `AppGridView`, `AppButton` (filled), `AppTextButton`, `AppOutlinedButton`, `AppTextField`, `AppTextFormField`, `AppInkWell`, `AppGestureDetector`, `AppColors` (в т.ч. `transparent`); всё экспортируется из `uikit.dart`. Виджет-тесты обёрток (71). `// ignore_for_file: type=lint` в `lib/uikit/**`, `lib/app/theme/**`, `test/**`, `integration_test/**`. В CI добавлены `dart analyze --fatal-infos` (по всему пакету — см. путь-ловушку выше) и шаг «Guard uikit exemptions»; обновлены `AGENTS.md` (Commands) и `docs/PROJECT.md`.
+- [ ] **52.2 — Тексты (`Text` → `AppText`), 385 шт.** Включить `ban_text_widget`.
+- [ ] **52.3 — Иконки (`Icon` → `AppIcon`), 113 шт.** Включить `ban_icon_widget`.
+- [ ] **52.4 — Цвета (`Colors.*` → `AppColors`/роли темы), 6 шт.** Включить `ban_colors`, `ban_color`.
+- [ ] **52.5 — Карточки и контейнеры (`Card` → `AppCard`, `Container` → `AppContainer`), 46 шт.** Включить `ban_card_widget`, `ban_container_widget`.
+- [ ] **52.6 — Кнопки (`TextButton`/`OutlinedButton`/`ElevatedButton` → `AppTextButton`/`AppOutlinedButton`/`AppButton`), 32 шт.** Включить `ban_text_button_widget`, `ban_elevated_button_widget`, `ban_outlined_button_widget`.
+- [ ] **52.7 — Экран и AppBar (`Scaffold` → `AppScaffold`, `AppBar` → `AppTopBar`), 50 шт.** Включить `ban_scaffold_widget`, `ban_appbar_widget`.
+- [ ] **52.8 — Списки и изображения (`ListView` → `AppListView`, `GridView` → `AppGridView`, `Image` → `AppImage`), 32 шт.** Включить `ban_listview_widget`, `ban_gridview_widget`, `ban_image_widget`.
+- [ ] **52.9 — Поля ввода (`TextFormField`/`TextField` → `AppTextFormField`/`AppTextField`), 25 шт.** Включить `ban_textfield_widget`, `ban_textformfield_widget`.
+- [ ] **52.10 — Нажатия (`InkWell` → `AppInkWell`, `GestureDetector` → `AppGestureDetector`), 14 шт.** Включить `ban_inkwell_widget`, `ban_gesture_detector_widget`. Финал: все 18 правил `true`, `dart analyze --fatal-infos` чисто, `lib/uikit/` — единственная точка с сырыми виджетами.

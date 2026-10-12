@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 /// Карточка UI-кита: радиус 20 и мягкая тень.

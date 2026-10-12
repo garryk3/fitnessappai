@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 /// Миниатюра UI-кита: картинка по [image] с заглушкой, если изображения нет.

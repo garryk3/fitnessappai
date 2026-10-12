@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
 /// Строка UI-кита: ведущий элемент, заголовок, подзаголовок и хвостовой
