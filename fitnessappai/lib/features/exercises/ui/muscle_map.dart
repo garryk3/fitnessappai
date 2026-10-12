@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Интерактивная SVG-схема мускулатуры с подсветкой групп.
 ///
@@ -22,7 +23,7 @@ class MuscleMap extends StatelessWidget {
     this.primaryColor,
     this.bodyColor,
     this.outlineColor,
-    this.backgroundColor = Colors.transparent,
+    this.backgroundColor = AppColors.transparent,
   });
 
   /// Вид схемы: передний или задний.

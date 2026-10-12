@@ -158,12 +158,13 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
       maxY: maxY <= 0 ? 1 : maxY,
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
+          getTooltipColor: (_) => theme.colorScheme.inverseSurface,
           getTooltipItems: (spots) => [
             for (final spot in spots)
               LineTooltipItem(
                 '${DateFormat('d MMM', 'ru').format(_points[spot.x.toInt()].date)}\n'
                 '${_formatMetricValue(exercise.type, spot.y)}',
-                const TextStyle(color: Colors.white),
+                TextStyle(color: theme.colorScheme.onInverseSurface),
               ),
           ],
         ),
