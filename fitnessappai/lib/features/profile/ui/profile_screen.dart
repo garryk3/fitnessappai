@@ -52,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppMenuButton(),
-        title: Text(l10n.navProfile),
+        title: AppText(l10n.navProfile),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'profile-fab',
@@ -63,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         },
         icon: const Icon(Icons.add),
-        label: Text(l10n.profileAddMeasurement),
+        label: AppText(l10n.profileAddMeasurement),
       ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
@@ -91,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         _MetricChartCard(controller: _controller),
         const SizedBox(height: 16),
-        Text(
+        AppText(
           l10n.profileMeasurementsHistory,
           style: theme.textTheme.titleMedium,
         ),
@@ -100,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
-              child: Text(
+              child: AppText(
                 l10n.profileEmpty,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -121,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: TextButton.icon(
                 onPressed: _controller.loadMore,
                 icon: const Icon(Icons.expand_more),
-                label: Text(l10n.profileLoadMore),
+                label: AppText(l10n.profileLoadMore),
               ),
             ),
         ],
@@ -139,15 +139,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.profileDeleteMeasurementConfirm),
+        title: AppText(l10n.profileDeleteMeasurementConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
+            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.commonDelete),
+            child: AppText(l10n.commonDelete),
           ),
         ],
       ),
@@ -171,7 +171,7 @@ class _GenderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AppText(
             l10n.profileGender,
             style: Theme.of(context).textTheme.titleSmall,
           ),
@@ -180,11 +180,11 @@ class _GenderCard extends StatelessWidget {
             segments: [
               ButtonSegment(
                 value: Gender.male,
-                label: Text(l10n.profileGenderMale),
+                label: AppText(l10n.profileGenderMale),
               ),
               ButtonSegment(
                 value: Gender.female,
-                label: Text(l10n.profileGenderFemale),
+                label: AppText(l10n.profileGenderFemale),
               ),
             ],
             selected: {?controller.gender.value},
@@ -220,7 +220,10 @@ class _BmiCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(l10n.profileBmi, style: theme.textTheme.titleSmall),
+                child: AppText(
+                  l10n.profileBmi,
+                  style: theme.textTheme.titleSmall,
+                ),
               ),
               AppBadge(
                 label: _bmiCategoryLabel(l10n, category),
@@ -230,14 +233,14 @@ class _BmiCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
+          AppText(
             _fmt(value),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          AppText(
             l10n.profileBmiNormalRange(
               _fmt(normalBmiLowerBound(gender)),
               _fmt(normalBmiUpperBound(gender)),
@@ -355,7 +358,7 @@ class _BmiScale extends StatelessWidget {
               Positioned(
                 left: 0,
                 bottom: 0,
-                child: Text(
+                child: AppText(
                   l10n.profileBmiScaleLabel,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -406,7 +409,10 @@ class _SummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.profileCurrentValues, style: theme.textTheme.titleSmall),
+            AppText(
+              l10n.profileCurrentValues,
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -445,9 +451,9 @@ class _MetricChip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(metric.labelRu, style: theme.textTheme.labelSmall),
+          AppText(metric.labelRu, style: theme.textTheme.labelSmall),
           const SizedBox(height: 2),
-          Text(
+          AppText(
             value == null ? '—' : '${_fmt(value!)} $unit',
             style: theme.textTheme.bodyMedium,
           ),
@@ -478,7 +484,7 @@ class _MetricChartCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   l10n.profileMetricChart,
                   style: theme.textTheme.titleSmall,
                 ),
@@ -490,7 +496,7 @@ class _MetricChartCard extends StatelessWidget {
                     for (final metric in BodyMetric.values)
                       DropdownMenuItem(
                         value: metric,
-                        child: Text(metric.labelRu),
+                        child: AppText(metric.labelRu),
                       ),
                   ],
                   onChanged: (metric) {
@@ -504,7 +510,7 @@ class _MetricChartCard extends StatelessWidget {
                   SizedBox(
                     height: 120,
                     child: Center(
-                      child: Text(
+                      child: AppText(
                         l10n.profileChartEmpty,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -589,7 +595,7 @@ class _MetricLineChart extends StatelessWidget {
                 final label = _fmt(value);
                 return Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text(label, style: theme.textTheme.labelSmall),
+                  child: AppText(label, style: theme.textTheme.labelSmall),
                 );
               },
             ),
@@ -612,7 +618,7 @@ class _MetricLineChart extends StatelessWidget {
                   fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                   child: Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text(
+                    child: AppText(
                       labels[index],
                       style: theme.textTheme.labelSmall,
                       maxLines: 1,
@@ -666,8 +672,8 @@ class _HistoryTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(date, style: Theme.of(context).textTheme.bodyMedium),
-          subtitle: Text(
+          title: AppText(date, style: Theme.of(context).textTheme.bodyMedium),
+          subtitle: AppText(
             summary,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -693,7 +699,7 @@ class _LinksCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: ListTile(
         leading: const Icon(Icons.health_and_safety_outlined),
-        title: Text(l10n.contraindications),
+        title: AppText(l10n.contraindications),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => context.push('/contraindications'),
       ),

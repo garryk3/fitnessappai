@@ -176,9 +176,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         return;
       }
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.exerciseFormAnimationError)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: AppText(l10n.exerciseFormAnimationError)),
+      );
     }
   }
 
@@ -198,9 +198,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         return;
       }
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.exerciseFormAnimationError)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: AppText(l10n.exerciseFormAnimationError)),
+      );
     }
   }
 
@@ -306,7 +306,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     final isEditing = widget.exerciseId != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? l10n.exerciseEdit : l10n.exerciseNew),
+        title: AppText(isEditing ? l10n.exerciseEdit : l10n.exerciseNew),
       ),
       body: _allMuscles.isEmpty && widget.exerciseId != null
           ? const Center(child: CircularProgressIndicator())
@@ -369,7 +369,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         }
       },
       decoration: InputDecoration(
-        label: Text.rich(
+        label: AppText.rich(
           TextSpan(
             text: l10n.exerciseFormName,
             children: [
@@ -401,7 +401,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
       ),
       items: [
         for (final type in ExerciseType.values)
-          DropdownMenuItem(value: type, child: Text(_typeLabel(l10n, type))),
+          DropdownMenuItem(value: type, child: AppText(_typeLabel(l10n, type))),
       ],
       onChanged: (value) {
         if (value != null) {
@@ -476,7 +476,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 () => _mistakeControllers.add(TextEditingController()),
               ),
               icon: const Icon(Icons.add),
-              label: Text(l10n.exerciseFormMistakeAdd),
+              label: AppText(l10n.exerciseFormMistakeAdd),
             ),
           ),
         ],
@@ -510,7 +510,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           if (_musclesError != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text(
+              child: AppText(
                 _musclesError!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.error,
@@ -550,7 +550,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           child: Row(
             children: [
               Expanded(
-                child: Text(
+                child: AppText(
                   group[i].labelRu,
                   style: i == 0
                       ? null
@@ -592,7 +592,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   Widget _intensityChip(String label, MuscleIntensity intensity, int muscleId) {
     final selected = _muscleSelections[muscleId] == intensity;
     return FilterChip(
-      label: Text(label),
+      label: AppText(label),
       selected: selected,
       onSelected: (_) => setState(() {
         if (selected) {
@@ -614,7 +614,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         children: [
           for (final tag in _allTags)
             FilterChip(
-              label: Text(tag.labelRu),
+              label: AppText(tag.labelRu),
               selected: _selectedContraindicationIds.contains(tag.id),
               onSelected: (selected) => setState(() {
                 if (selected) {
@@ -660,7 +660,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _pickThumbnail,
                   icon: const Icon(Icons.image_outlined),
-                  label: Text(
+                  label: AppText(
                     l10n.exerciseFormThumbnailPick,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -680,7 +680,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
+          AppText(
             l10n.exerciseFormMediaInfo,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -722,7 +722,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _pickAnimation,
                   icon: const Icon(Icons.image_outlined),
-                  label: Text(
+                  label: AppText(
                     l10n.exerciseFormAnimationPick,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -742,7 +742,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
+          AppText(
             l10n.exerciseFormMediaInfo,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -757,8 +757,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     return CheckboxListTile(
       value: _hideOptional,
       onChanged: (value) => setState(() => _hideOptional = value ?? false),
-      title: Text(l10n.exerciseFormHideOptional),
-      subtitle: Text(l10n.exerciseFormHideOptionalHelp),
+      title: AppText(l10n.exerciseFormHideOptional),
+      subtitle: AppText(l10n.exerciseFormHideOptionalHelp),
       contentPadding: EdgeInsets.zero,
       controlAffinity: ListTileControlAffinity.leading,
     );
@@ -768,8 +768,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     return CheckboxListTile(
       value: _fixedWeight,
       onChanged: (value) => setState(() => _fixedWeight = value ?? false),
-      title: Text(l10n.exerciseFormFixedWeight),
-      subtitle: Text(l10n.exerciseFormFixedWeightHelp),
+      title: AppText(l10n.exerciseFormFixedWeight),
+      subtitle: AppText(l10n.exerciseFormFixedWeightHelp),
       contentPadding: EdgeInsets.zero,
       controlAffinity: ListTileControlAffinity.leading,
     );
@@ -779,8 +779,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     return CheckboxListTile(
       value: _perSide,
       onChanged: (value) => setState(() => _perSide = value ?? false),
-      title: Text(l10n.exerciseFormPerSide),
-      subtitle: Text(l10n.exerciseFormPerSideHelp),
+      title: AppText(l10n.exerciseFormPerSide),
+      subtitle: AppText(l10n.exerciseFormPerSideHelp),
       contentPadding: EdgeInsets.zero,
       controlAffinity: ListTileControlAffinity.leading,
     );
@@ -805,7 +805,7 @@ class _Section extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        AppText(title, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         child,
       ],

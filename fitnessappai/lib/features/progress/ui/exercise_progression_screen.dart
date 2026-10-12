@@ -10,6 +10,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран динамики упражнения: прогрессия метрики по датам тренировок.
 class ExerciseProgressionScreen extends StatefulWidget {
@@ -63,19 +64,21 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(_exercise?.name ?? l10n.progressProgression)),
+      appBar: AppBar(
+        title: AppText(_exercise?.name ?? l10n.progressProgression),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _exercise == null
           ? Center(
-              child: Text(
+              child: AppText(
                 l10n.exerciseDetailNotFound,
                 style: theme.textTheme.titleMedium,
               ),
             )
           : _points.isEmpty
           ? Center(
-              child: Text(
+              child: AppText(
                 l10n.progressProgressionEmpty,
                 style: theme.textTheme.titleMedium,
               ),
@@ -98,12 +101,12 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   l10n.progressMetricChart,
                   style: theme.textTheme.titleSmall,
                 ),
                 const SizedBox(height: 4),
-                Text(
+                AppText(
                   '${l10n.progressProgressionMax}: '
                   '${_formatMetric(l10n, exercise.type, maxPoint.metric)}',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -126,12 +129,12 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     DateFormat('d MMMM yyyy', 'ru').format(point.date),
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
-                Text(
+                AppText(
                   _formatMetric(l10n, exercise.type, point.metric),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.primary,
@@ -195,7 +198,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
               final title = _formatMetricValue(exercise.type, value);
               return Padding(
                 padding: const EdgeInsets.only(right: 4),
-                child: Text(
+                child: AppText(
                   title,
                   style: theme.textTheme.labelSmall,
                   textAlign: TextAlign.right,
@@ -218,7 +221,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
               }
               return Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text(
+                child: AppText(
                   DateFormat('d MMM', 'ru').format(_points[index].date),
                   style: theme.textTheme.labelSmall,
                 ),

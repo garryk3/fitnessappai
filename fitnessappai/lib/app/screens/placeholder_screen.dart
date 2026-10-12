@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Заглушка экрана в разработке.
 class PlaceholderScreen extends StatelessWidget {
@@ -11,9 +12,9 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(title: AppText(title)),
       body: Center(
-        child: Text(AppLocalizations.of(context).placeholderTab(title)),
+        child: AppText(AppLocalizations.of(context).placeholderTab(title)),
       ),
     );
   }

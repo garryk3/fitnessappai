@@ -146,7 +146,7 @@ class _SingleExerciseParamsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.exerciseParams)),
+      appBar: AppBar(title: AppText(l10n.exerciseParams)),
       body: _buildBody(),
       bottomNavigationBar: _loading
           ? null
@@ -169,14 +169,17 @@ class _SingleExerciseParamsScreenState
     final exercise = _exercise;
     final type = _type;
     if (exercise == null || type == null) {
-      return Center(child: Text(l10n.exerciseDetailNotFound));
+      return Center(child: AppText(l10n.exerciseDetailNotFound));
     }
     return Form(
       key: _formKey,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(exercise.name, style: Theme.of(context).textTheme.titleMedium),
+          AppText(
+            exercise.name,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 16),
           if (type != ExerciseType.distance)
             _buildNumberField(

@@ -768,15 +768,15 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.programActivatePrompt),
+        title: AppText(l10n.programActivatePrompt),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            child: AppText(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.programMakeActive),
+            child: AppText(l10n.programMakeActive),
           ),
         ],
       ),
@@ -793,14 +793,14 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     if (json == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.copyJsonNotFound)));
+      ).showSnackBar(SnackBar(content: AppText(l10n.copyJsonNotFound)));
       return;
     }
     await Clipboard.setData(ClipboardData(text: json));
     if (mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.copyJsonCopied)));
+      ).showSnackBar(SnackBar(content: AppText(l10n.copyJsonCopied)));
     }
   }
 
@@ -821,16 +821,16 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         final exit = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n.programBuilderExitTitle),
-            content: Text(l10n.programBuilderExitBody),
+            title: AppText(l10n.programBuilderExitTitle),
+            content: AppText(l10n.programBuilderExitBody),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l10n.commonCancel),
+                child: AppText(l10n.commonCancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: Text(l10n.commonExit),
+                child: AppText(l10n.commonExit),
               ),
             ],
           ),
@@ -841,7 +841,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(isEditing ? l10n.programEdit : l10n.programNew),
+          title: AppText(isEditing ? l10n.programEdit : l10n.programNew),
           actions: [
             if (isEditing && _days.length > 1)
               IconButton(
@@ -922,7 +922,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
             child: _deleteMode
                 ? FilledButton(
                     onPressed: _canDeleteSelected ? _deleteSelectedDays : null,
-                    child: Text(l10n.programBuilderDeleteSelected),
+                    child: AppText(l10n.programBuilderDeleteSelected),
                   )
                 : FilledButton(
                     onPressed: _saving
@@ -936,7 +936,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(
+                        : AppText(
                             nextDay == null
                                 ? l10n.programBuilderSave
                                 : l10n.programBuilderFillNextDay(nextDay + 1),
@@ -991,7 +991,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.programBuilderImageError)));
+      ).showSnackBar(SnackBar(content: AppText(l10n.programBuilderImageError)));
     }
   }
 
@@ -1033,7 +1033,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               child: OutlinedButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.image_outlined),
-                label: Text(
+                label: AppText(
                   l10n.programBuilderImagePick,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1050,7 +1050,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           ],
         ),
         const SizedBox(height: 4),
-        Text(
+        AppText(
           l10n.exerciseFormMediaInfo,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1069,7 +1069,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         SegmentedButton<int>(
           segments: [
             for (var count = 1; count <= 7; count++)
-              ButtonSegment(value: count, label: Text('$count')),
+              ButtonSegment(value: count, label: AppText('$count')),
           ],
           selected: {_days.length},
           showSelectedIcon: false,
@@ -1099,8 +1099,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                   index: index,
                   child: const Icon(Icons.drag_indicator),
                 ),
-          title: Text(day.title ?? l10n.programBuilderDay(index + 1)),
-          subtitle: Text(
+          title: AppText(day.title ?? l10n.programBuilderDay(index + 1)),
+          subtitle: AppText(
             _weekdayLabel(l10n, day.dayOfWeek) +
                 (_warmupMinutes != null
                     ? ' • ${l10n.programBuilderWarmupShort(_warmupMinutes!)}'
@@ -1173,7 +1173,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
     final l10n = AppLocalizations.of(context);
     final hasWeekday = _selected != null;
     return AlertDialog(
-      title: Text(l10n.programBuilderDaySettings),
+      title: AppText(l10n.programBuilderDaySettings),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1186,12 +1186,12 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
             items: [
               DropdownMenuItem(
                 value: null,
-                child: Text(l10n.programBuilderDayNoWeekday),
+                child: AppText(l10n.programBuilderDayNoWeekday),
               ),
               for (var day = 1; day <= 7; day++)
                 DropdownMenuItem(
                   value: day,
-                  child: Text(_weekdayLabel(l10n, day)),
+                  child: AppText(_weekdayLabel(l10n, day)),
                 ),
             ],
             onChanged: (value) => setState(() {
@@ -1204,7 +1204,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(l10n.reminderToggle),
+            title: AppText(l10n.reminderToggle),
             value: _remindEnabled,
             onChanged: hasWeekday
                 ? (value) => setState(() => _remindEnabled = value)
@@ -1213,8 +1213,8 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
           ListTile(
             enabled: _remindEnabled,
             leading: const Icon(Icons.access_time),
-            title: Text(l10n.reminderTime),
-            subtitle: Text(
+            title: AppText(l10n.reminderTime),
+            subtitle: AppText(
               MaterialLocalizations.of(
                 context,
               ).formatTimeOfDay(_time, alwaysUse24HourFormat: true),
@@ -1226,7 +1226,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
+          child: AppText(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
@@ -1242,7 +1242,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
                   : null,
             ),
           ),
-          child: Text(l10n.commonSave),
+          child: AppText(l10n.commonSave),
         ),
       ],
     );

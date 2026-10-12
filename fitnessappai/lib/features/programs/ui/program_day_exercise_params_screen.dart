@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран параметров упражнения в тренировочном дне.
 ///
@@ -147,7 +148,7 @@ class _ProgramDayExerciseParamsScreenState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.errors.first)));
+        ).showSnackBar(SnackBar(content: AppText(e.errors.first)));
       }
     } finally {
       if (mounted) {
@@ -185,7 +186,7 @@ class _ProgramDayExerciseParamsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.exerciseParams)),
+      appBar: AppBar(title: AppText(l10n.exerciseParams)),
       body: _buildBody(),
       bottomNavigationBar: _loading
           ? null
@@ -200,7 +201,7 @@ class _ProgramDayExerciseParamsScreenState
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(l10n.commonSave),
+                      : AppText(l10n.commonSave),
                 ),
               ),
             ),
@@ -214,14 +215,14 @@ class _ProgramDayExerciseParamsScreenState
     final item = _item;
     final type = _type;
     if (item == null || type == null) {
-      return Center(child: Text(l10n.exerciseDetailNotFound));
+      return Center(child: AppText(l10n.exerciseDetailNotFound));
     }
     return Form(
       key: _formKey,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          AppText(
             _exercise?.name ?? '',
             style: Theme.of(context).textTheme.titleMedium,
           ),

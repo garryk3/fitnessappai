@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Результат редактирования времени тренировки (48.10).
 class ReminderTimeResult {
@@ -84,7 +85,7 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
     final l10n = AppLocalizations.of(context);
     final time = _time;
     return AlertDialog(
-      title: Text(l10n.weekPlanTimeAction),
+      title: AppText(l10n.weekPlanTimeAction),
       content: ReminderTimeFields(
         time: time,
         reminderEnabled: _reminderOn,
@@ -100,11 +101,11 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
           TextButton(
             onPressed: () =>
                 Navigator.of(context).pop(const ReminderTimeResult.clear()),
-            child: Text(l10n.weekPlanClearTime),
+            child: AppText(l10n.weekPlanClearTime),
           ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
+          child: AppText(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
@@ -114,7 +115,7 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
               reminderEnabled: _reminderOn,
             ),
           ),
-          child: Text(l10n.commonSave),
+          child: AppText(l10n.commonSave),
         ),
       ],
     );
@@ -157,8 +158,8 @@ class ReminderTimeFields extends StatelessWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.access_time),
-          title: Text(l10n.weekPlanTime),
-          subtitle: Text(
+          title: AppText(l10n.weekPlanTime),
+          subtitle: AppText(
             time == null ? l10n.weekPlanNoTime : _formatTime(time),
           ),
           onTap: () async {
@@ -174,7 +175,7 @@ class ReminderTimeFields extends StatelessWidget {
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(l10n.reminderToggle),
+          title: AppText(l10n.reminderToggle),
           value: reminderEnabled && time != null,
           onChanged: time == null ? null : onReminderChanged,
         ),

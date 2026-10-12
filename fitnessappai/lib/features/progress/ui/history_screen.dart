@@ -20,6 +20,7 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран истории: месячный календарь с подсветкой дней тренировок.
 class HistoryScreen extends StatefulWidget {
@@ -87,7 +88,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppMenuButton(),
-        title: Text(l10n.history),
+        title: AppText(l10n.history),
         actions: [
           IconButton(
             tooltip: l10n.historyCopyJsonTooltip,
@@ -105,7 +106,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final json = await locator.get<LlmExportService>().historyToJson();
     await Clipboard.setData(ClipboardData(text: json));
-    messenger.showSnackBar(SnackBar(content: Text(l10n.copyJsonCopied)));
+    messenger.showSnackBar(SnackBar(content: AppText(l10n.copyJsonCopied)));
   }
 
   Widget _buildBody(BuildContext context) {
@@ -116,7 +117,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final dates = _controller.workoutDates.value;
     if (dates.isEmpty) {
       return Center(
-        child: Text(
+        child: AppText(
           l10n.historyEmpty,
           style: Theme.of(context).textTheme.titleMedium,
         ),
@@ -269,12 +270,12 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.historyDetail)),
+      appBar: AppBar(title: AppText(l10n.historyDetail)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _detail == null
           ? Center(
-              child: Text(
+              child: AppText(
                 l10n.historySessionNotFound,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
@@ -302,9 +303,12 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(session.programName, style: theme.textTheme.titleLarge),
+                  AppText(
+                    session.programName,
+                    style: theme.textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 4),
-                  Text(
+                  AppText(
                     [
                       date,
                       if (session.variant == WorkoutVariant.alternative)
@@ -338,7 +342,7 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
+                        child: AppText(
                           entry.key,
                           style: theme.textTheme.titleSmall,
                         ),
@@ -349,7 +353,7 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
                   for (final result in entry.value)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text(
+                      child: AppText(
                         _formatSet(l10n, result),
                         style: theme.textTheme.bodyMedium,
                       ),

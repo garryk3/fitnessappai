@@ -5,6 +5,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/profile/ui/contraindications_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран «Моё здоровье»: выбор противопоказаний из каталога тегов.
 class ContraindicationsScreen extends StatefulWidget {
@@ -33,7 +34,7 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.contraindicationsTitle)),
+      appBar: AppBar(title: AppText(l10n.contraindicationsTitle)),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
   }
@@ -50,7 +51,7 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
+        AppText(
           l10n.contraindicationsHint,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
@@ -64,8 +65,8 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
               for (final (index, tag) in tags.indexed) ...[
                 if (index > 0) const Divider(height: 1),
                 SwitchListTile(
-                  title: Text(tag.labelRu),
-                  subtitle: Text(_description(l10n, tag.key)),
+                  title: AppText(tag.labelRu),
+                  subtitle: AppText(_description(l10n, tag.key)),
                   value: selectedKeys.contains(tag.key),
                   onChanged: isSaving
                       ? null
@@ -86,7 +87,7 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.of(context).contraindicationsSaved),
+        content: AppText(AppLocalizations.of(context).contraindicationsSaved),
       ),
     );
   }

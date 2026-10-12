@@ -3,6 +3,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Секция настроек звука: переключатель, выбор файла, предпрослушивание.
 ///
@@ -40,7 +41,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
           children: [
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(widget.title),
+              title: AppText(widget.title),
               value: controller.enabled.value,
               onChanged: (value) => controller.setEnabled(value),
             ),
@@ -53,7 +54,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
                         ? () => controller.pickSoundFile()
                         : null,
                     icon: const Icon(Icons.audio_file_outlined),
-                    label: Text(l10n.soundPickFile),
+                    label: AppText(l10n.soundPickFile),
                   ),
                 ),
                 if (file != null) ...[
@@ -79,7 +80,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
+            AppText(
               file ?? l10n.soundDefaultLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -89,7 +90,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
             ),
             if (controller.statusText.value case final status?) ...[
               const SizedBox(height: 8),
-              Text(
+              AppText(
                 status,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: controller.hasError.value

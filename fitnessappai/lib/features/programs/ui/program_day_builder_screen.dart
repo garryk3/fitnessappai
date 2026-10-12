@@ -130,7 +130,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       builder: (dialogContext) {
         final dialogL10n = AppLocalizations.of(dialogContext);
         return AlertDialog(
-          title: Text(dialogL10n.programBuilderRenameDayTitle),
+          title: AppText(dialogL10n.programBuilderRenameDayTitle),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -143,7 +143,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(dialogL10n.commonCancel),
+              child: AppText(dialogL10n.commonCancel),
             ),
             AppGradientButton(
               onPressed: () =>
@@ -330,7 +330,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(SnackBar(content: AppText(message)));
   }
 
   AppLocalizations get l10n => AppLocalizations.of(context);
@@ -340,7 +340,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     final dayTitle = _currentDay?.day.title;
     return Scaffold(
       appBar: AppBar(
-        title: Text(dayTitle ?? l10n.programBuilderDay(widget.dayIndex + 1)),
+        title: AppText(dayTitle ?? l10n.programBuilderDay(widget.dayIndex + 1)),
         actions: [
           IconButton(
             tooltip: l10n.programBuilderRenameDay,
@@ -383,7 +383,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     final detail = _detail;
     final currentDay = _currentDay;
     if (detail == null || currentDay == null) {
-      return Center(child: Text(l10n.programBuilderEmptyDay));
+      return Center(child: AppText(l10n.programBuilderEmptyDay));
     }
     return Column(
       children: [
@@ -395,11 +395,11 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
             segments: [
               ButtonSegment(
                 value: false,
-                label: Text(l10n.programBuilderMainSet),
+                label: AppText(l10n.programBuilderMainSet),
               ),
               ButtonSegment(
                 value: true,
-                label: Text(l10n.programBuilderAlternativeSet),
+                label: AppText(l10n.programBuilderAlternativeSet),
               ),
             ],
             selected: {_isAlternative},
@@ -421,7 +421,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AppText(
             l10n.programBuilderDayProgress(filled, total),
             style: Theme.of(context).textTheme.labelMedium,
           ),
@@ -439,7 +439,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AppText(
             l10n.programBuilderDayOfWeek,
             style: Theme.of(context).textTheme.labelMedium,
           ),
@@ -457,7 +457,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
                 (7, l10n.weekdaySun),
               ])
                 ChoiceChip(
-                  label: Text(entry.$2),
+                  label: AppText(entry.$2),
                   selected: selected == entry.$1,
                   onSelected: (_) => _setDayOfWeek(day, entry.$1),
                 ),
@@ -498,7 +498,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               color: Theme.of(context).colorScheme.outline,
             ),
             const SizedBox(height: 12),
-            Text(l10n.programBuilderEmptyDay, textAlign: TextAlign.center),
+            AppText(l10n.programBuilderEmptyDay, textAlign: TextAlign.center),
           ],
         ),
       );
@@ -533,14 +533,14 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               ExerciseThumbnail(exercise: exercise, mediaCache: _mediaCache),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
+                child: AppText(
                   exercise?.name ?? '',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          subtitle: Text(
+          subtitle: AppText(
             _metricsSummary(item, type),
             style: type == null ? Theme.of(context).textTheme.bodySmall : null,
           ),
@@ -659,7 +659,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(l10n.programBuilderPickExercise),
+      title: AppText(l10n.programBuilderPickExercise),
       content: SizedBox(
         width: double.maxFinite,
         height: 360,
@@ -676,12 +676,12 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
               items: [
                 DropdownMenuItem<MuscleGroup?>(
                   value: null,
-                  child: Text(l10n.commonAll),
+                  child: AppText(l10n.commonAll),
                 ),
                 for (final group in widget.muscleGroups)
                   DropdownMenuItem<MuscleGroup?>(
                     value: group,
-                    child: Text(group.labelRu),
+                    child: AppText(group.labelRu),
                   ),
               ],
               onChanged: (value) => setState(() => _selectedGroup = value),
@@ -698,12 +698,12 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
               items: [
                 DropdownMenuItem<ExerciseType?>(
                   value: null,
-                  child: Text(l10n.commonAll),
+                  child: AppText(l10n.commonAll),
                 ),
                 for (final type in ExerciseType.values)
                   DropdownMenuItem<ExerciseType?>(
                     value: type,
-                    child: Text(_typeLabel(l10n, type)),
+                    child: AppText(_typeLabel(l10n, type)),
                   ),
               ],
               onChanged: (value) => setState(() => _selectedType = value),
@@ -711,14 +711,14 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
             SwitchListTile(
               value: _onlyCustom,
               onChanged: (value) => setState(() => _onlyCustom = value),
-              title: Text(l10n.exerciseListOnlyCustom),
+              title: AppText(l10n.exerciseListOnlyCustom),
               contentPadding: EdgeInsets.zero,
               dense: true,
             ),
             const SizedBox(height: 8),
             Expanded(
               child: _filtered.isEmpty
-                  ? Center(child: Text(l10n.exerciseListEmpty))
+                  ? Center(child: AppText(l10n.exerciseListEmpty))
                   : ListView.separated(
                       itemCount: _filtered.length,
                       separatorBuilder: (context, index) =>
@@ -728,8 +728,8 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
                         return ListTile(
                           dense: true,
                           leading: const Icon(Icons.fitness_center),
-                          title: Text(exercise.name),
-                          subtitle: Text(_typeLabel(l10n, exercise.type)),
+                          title: AppText(exercise.name),
+                          subtitle: AppText(_typeLabel(l10n, exercise.type)),
                           onTap: () => Navigator.of(context).pop(exercise),
                         );
                       },
@@ -741,7 +741,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
+          child: AppText(l10n.commonCancel),
         ),
       ],
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран 404.
 class NotFoundScreen extends StatelessWidget {
@@ -16,9 +17,9 @@ class NotFoundScreen extends StatelessWidget {
           children: [
             const Icon(Icons.search_off, size: 64),
             const SizedBox(height: 16),
-            Text('404', style: Theme.of(context).textTheme.headlineMedium),
+            AppText('404', style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
-            Text(l10n.errorNotFound),
+            AppText(l10n.errorNotFound),
           ],
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Запускает подготовку к тренировке [item]: при удалённом дне показывает
 /// SnackBar и обновляет план, иначе открывает экран подготовки.
@@ -19,7 +20,7 @@ Future<void> startPlannedWorkout(
   if (!exists) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.of(context).workoutPrepareNotFound),
+        content: AppText(AppLocalizations.of(context).workoutPrepareNotFound),
       ),
     );
     await controller.refresh();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fitnessappai/app/theme/status_colors.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Бейдж статуса тренировки: «Запланировано», «Выполнено», «Пропущено» и т.д.
 ///
@@ -57,7 +58,7 @@ class StatusBadge extends StatelessWidget {
             Icon(Icons.remove, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],
-          Text(
+          AppText(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: foreground,

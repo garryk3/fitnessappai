@@ -5,6 +5,7 @@ import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/app/widgets/profile_avatar.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Адаптивная оболочка навигации.
 ///
@@ -125,7 +126,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
         NavigationRailDestination(
           icon: Icon(byBranch[branch]!.icon),
           selectedIcon: Icon(byBranch[branch]!.selectedIcon),
-          label: Text(byBranch[branch]!.label),
+          label: AppText(byBranch[branch]!.label),
         ),
     ];
   }
@@ -181,7 +182,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                   ),
                 ),
               ),
-              Text(
+              AppText(
                 l10n.navProfile,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
@@ -274,7 +275,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
         selected: selected,
         selectedTileColor: scheme.secondaryContainer,
         leading: Icon(selected ? Icons.settings : Icons.settings_outlined),
-        title: Text(l10n.settings),
+        title: AppText(l10n.settings),
         onTap: _goToSettings,
       );
     }
@@ -357,7 +358,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                   children: [
                     const ProfileAvatar(radius: 12),
                     const SizedBox(width: 16),
-                    Text(
+                    AppText(
                       AppLocalizations.of(context).navProfile,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
@@ -379,7 +380,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                         Navigator.of(context).pop();
                         _goToBranch(item.branchIndex);
                       },
-                      title: Text(item.label),
+                      title: AppText(item.label),
                     ),
                 ],
               ),
@@ -389,7 +390,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
             ListTile(
               leading: const Icon(Icons.settings_outlined),
               selected: navigationShell.currentIndex == _settingsBranchIndex,
-              title: Text(AppLocalizations.of(context).settings),
+              title: AppText(AppLocalizations.of(context).settings),
               onTap: () {
                 Navigator.of(context).pop();
                 _goToBranch(_settingsBranchIndex);

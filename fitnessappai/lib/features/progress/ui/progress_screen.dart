@@ -16,6 +16,7 @@ import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/progress/ui/progress_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран прогресса: карточки метрик, графики и нагрузка на мышцы.
 class ProgressScreen extends StatefulWidget {
@@ -56,7 +57,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppMenuButton(),
-        title: Text(AppLocalizations.of(context).navProgress),
+        title: AppText(AppLocalizations.of(context).navProgress),
       ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
@@ -72,15 +73,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
       segments: [
         ButtonSegment(
           value: StatPeriod.week,
-          label: Text(l10n.progressPeriodWeek),
+          label: AppText(l10n.progressPeriodWeek),
         ),
         ButtonSegment(
           value: StatPeriod.month,
-          label: Text(l10n.progressPeriodMonth),
+          label: AppText(l10n.progressPeriodMonth),
         ),
         ButtonSegment(
           value: StatPeriod.year,
-          label: Text(l10n.progressPeriodYear),
+          label: AppText(l10n.progressPeriodYear),
         ),
       ],
       selected: {controller.period.value},
@@ -98,7 +99,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text(
+                  child: AppText(
                     l10n.progressEmpty,
                     style: Theme.of(context).textTheme.titleMedium,
                     textAlign: TextAlign.center,
@@ -207,14 +208,14 @@ class _StatCard extends StatelessWidget {
                     : theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: 6),
-              Text(
+              AppText(
                 value,
                 style: theme.textTheme.titleMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
-              Text(
+              AppText(
                 label,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -253,7 +254,10 @@ class _WorkoutsChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.progressWorkoutsChart, style: theme.textTheme.titleSmall),
+            AppText(
+              l10n.progressWorkoutsChart,
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: 12),
             SizedBox(
               height: 160,
@@ -341,7 +345,7 @@ class _WorkoutsChart extends StatelessWidget {
                           }
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Text(
+                            child: AppText(
                               labels[index],
                               style: theme.textTheme.labelSmall,
                             ),
@@ -427,7 +431,7 @@ class _MetricChart extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     l10n.progressMetricChart,
                     style: theme.textTheme.titleSmall,
                   ),
@@ -449,7 +453,10 @@ class _MetricChart extends StatelessWidget {
                 for (final exercise in exercises)
                   DropdownMenuItem(
                     value: exercise.id,
-                    child: Text(exercise.name, overflow: TextOverflow.ellipsis),
+                    child: AppText(
+                      exercise.name,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
               onChanged: (id) {
@@ -495,7 +502,7 @@ class _MetricChart extends StatelessWidget {
                         maxIncluded: false,
                         getTitlesWidget: (value, meta) {
                           final label = _yAxisLabel(value, unitSuffix);
-                          return Text(
+                          return AppText(
                             label,
                             style: theme.textTheme.labelSmall,
                             maxLines: 1,
@@ -521,7 +528,7 @@ class _MetricChart extends StatelessWidget {
                           }
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Text(
+                            child: AppText(
                               labels[index],
                               style: theme.textTheme.labelSmall,
                             ),
@@ -629,7 +636,7 @@ class _MuscleLoadPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.progressMuscleLoad, style: theme.textTheme.titleSmall),
+            AppText(l10n.progressMuscleLoad, style: theme.textTheme.titleSmall),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -673,14 +680,14 @@ class _MuscleGroupTile extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(
+                child: AppText(
                   load.muscleGroup.labelRu,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: hasChildren ? FontWeight.w600 : null,
                   ),
                 ),
               ),
-              Text(
+              AppText(
                 '${load.percent.toStringAsFixed(0)}%',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.primary,
@@ -696,12 +703,12 @@ class _MuscleGroupTile extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     child.muscleGroup.labelRu,
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
-                Text(
+                AppText(
                   '${child.percent.toStringAsFixed(0)}%',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.primary,

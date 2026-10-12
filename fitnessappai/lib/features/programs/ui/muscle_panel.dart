@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Панель схемы мускулатуры: спереди и сзади, иерархический список мышц с %.
 ///
@@ -38,7 +39,7 @@ class MusclePanel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title, style: theme.textTheme.titleSmall),
+        AppText(title, style: theme.textTheme.titleSmall),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -60,7 +61,7 @@ class MusclePanel extends StatelessWidget {
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(
+            child: AppText(
               'Задействованы',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.primary,
@@ -74,7 +75,7 @@ class MusclePanel extends StatelessWidget {
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(
+            child: AppText(
               'Не задействованы',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -88,7 +89,10 @@ class MusclePanel extends StatelessWidget {
             children: [
               for (final group in unused)
                 Chip(
-                  label: Text(group.labelRu, style: theme.textTheme.labelSmall),
+                  label: AppText(
+                    group.labelRu,
+                    style: theme.textTheme.labelSmall,
+                  ),
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -118,14 +122,14 @@ class _MuscleGroupTile extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(
+                child: AppText(
                   load.muscleGroup.labelRu,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: hasChildren ? FontWeight.w600 : null,
                   ),
                 ),
               ),
-              Text(
+              AppText(
                 '${load.percent.toStringAsFixed(0)}%',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.primary,
@@ -141,12 +145,12 @@ class _MuscleGroupTile extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     child.muscleGroup.labelRu,
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
-                Text(
+                AppText(
                   '${child.percent.toStringAsFixed(0)}%',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.primary,
