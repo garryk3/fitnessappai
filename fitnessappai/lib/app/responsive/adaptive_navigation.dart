@@ -438,8 +438,8 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     final colorScheme = Theme.of(context).colorScheme;
     return NavigationBarTheme(
       data: NavigationBarThemeData(
-        indicatorColor: Colors.transparent,
-        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        indicatorColor: AppColors.transparent,
+        overlayColor: const WidgetStatePropertyAll(AppColors.transparent),
         iconTheme: WidgetStatePropertyAll(
           IconThemeData(color: colorScheme.onSurfaceVariant),
         ),

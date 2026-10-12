@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Аватар профиля пользователя (картинка в `assets/images/`).
 class ProfileAvatar extends StatelessWidget {
@@ -11,7 +12,7 @@ class ProfileAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final avatar = CircleAvatar(
       radius: radius,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       backgroundImage: const AssetImage('assets/images/profile_avatar.jpg'),
     );
     if (onTap == null) {
