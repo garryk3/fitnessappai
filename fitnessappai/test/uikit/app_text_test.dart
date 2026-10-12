@@ -53,7 +53,10 @@ void main() {
           TextSpan(
             children: [
               TextSpan(text: 'Итого: '),
-              TextSpan(text: '75 кг', style: TextStyle(fontWeight: FontWeight.bold)),
+              TextSpan(
+                text: '75 кг',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ],
           ),
         ),
