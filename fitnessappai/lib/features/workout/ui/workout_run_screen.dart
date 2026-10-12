@@ -25,6 +25,7 @@ import 'package:fitnessappai/features/workout/domain/workout_foreground_service.
 import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Удержание экрана включённым во время тренировки.
 abstract class WakelockService {
@@ -284,39 +285,39 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < 350;
           return AlertDialog(
-            title: Text(l10n.workoutRunExitTitle),
-            content: Text(l10n.workoutRunExitBody),
+            title: AppText(l10n.workoutRunExitTitle),
+            content: AppText(l10n.workoutRunExitBody),
             actions: narrow
                 ? [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop('cancel'),
-                      child: Text(l10n.commonCancel),
+                      child: AppText(l10n.commonCancel),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop('save'),
-                      child: Text(l10n.workoutRunFinishEarly),
+                      child: AppText(l10n.workoutRunFinishEarly),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop('exit'),
-                      child: Text(l10n.workoutRunExit),
+                      child: AppText(l10n.workoutRunExit),
                     ),
                   ]
                 : [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop('cancel'),
-                      child: Text(l10n.commonCancel),
+                      child: AppText(l10n.commonCancel),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop('save'),
-                      child: Text(l10n.workoutRunFinishEarly),
+                      child: AppText(l10n.workoutRunFinishEarly),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop('exit'),
-                      child: Text(l10n.workoutRunExit),
+                      child: AppText(l10n.workoutRunExit),
                     ),
                   ],
           );
@@ -354,7 +355,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(AppLocalizations.of(context).workoutRun)),
+        appBar: AppBar(title: AppText(AppLocalizations.of(context).workoutRun)),
         body: Stack(
           children: [
             Column(
@@ -401,10 +402,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       return const Center(child: CircularProgressIndicator());
     }
     if (controller.notFound.value) {
-      return Center(child: Text(l10n.workoutPrepareNotFound));
+      return Center(child: AppText(l10n.workoutPrepareNotFound));
     }
     if (controller.emptyDay.value) {
-      return Center(child: Text(l10n.workoutRunEmpty));
+      return Center(child: AppText(l10n.workoutRunEmpty));
     }
     final workout = controller.workout;
     switch (workout.phase.value) {
@@ -451,7 +452,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             value: totalSets == 0 ? 0 : completed / totalSets,
           ),
           const SizedBox(height: 8),
-          Text(
+          AppText(
             '${l10n.workoutRunExerciseOf(index + 1, total)}'
             ' · ${l10n.workoutRunSetOf(currentSet, exercise.sets)}',
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -465,7 +466,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Flexible(
-                child: Text(
+                child: AppText(
                   exercise.name,
                   style: theme.textTheme.headlineSmall,
                   textAlign: TextAlign.center,
@@ -484,7 +485,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
           ),
           if (!exercise.exercise.hideOptional) ...[
             const SizedBox(height: 4),
-            Text(
+            AppText(
               _paramsSummary(l10n, exercise),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -530,11 +531,11 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(l10n.workoutRunRest, style: theme.textTheme.headlineMedium),
+          AppText(l10n.workoutRunRest, style: theme.textTheme.headlineMedium),
           if (sideRest != null) ...[
             const SizedBox(height: 8),
             Chip(
-              label: Text(l10n.workoutRunSideRest),
+              label: AppText(l10n.workoutRunSideRest),
               labelStyle: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSecondaryContainer,
               ),
@@ -543,7 +544,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             ),
           ],
           const SizedBox(height: 16),
-          Text(
+          AppText(
             '$remaining',
             style: theme.textTheme.displayLarge?.copyWith(
               color: theme.colorScheme.primary,
@@ -552,7 +553,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _skipRest,
-            child: Text(l10n.workoutRunSkipRest),
+            child: AppText(l10n.workoutRunSkipRest),
           ),
         ],
       ),
@@ -690,7 +691,7 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   l10n.workoutRunLastWorkout,
                   style: theme.textTheme.titleSmall,
                 ),
@@ -698,7 +699,7 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
                 for (final result in results)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 1),
-                    child: Text(
+                    child: AppText(
                       '${_sideLabel(result.setIndex, result.side)} '
                       '${_formatResult(l10n, result)}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -776,7 +777,7 @@ class _PlankHoldPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
+          AppText(
             l10n.workoutRunHold(elapsed),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
@@ -785,7 +786,7 @@ class _PlankHoldPanel extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          Text(
+          AppText(
             l10n.workoutRunHoldTarget(target),
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -797,7 +798,7 @@ class _PlankHoldPanel extends StatelessWidget {
             FilledButton.icon(
               onPressed: onStart,
               icon: const Icon(Icons.play_arrow),
-              label: Text(l10n.workoutRunHoldStart),
+              label: AppText(l10n.workoutRunHoldStart),
             ),
           ],
         ],
@@ -1092,7 +1093,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: const EdgeInsets.only(bottom: 12),
-                title: Text(
+                title: AppText(
                   l10n.exerciseParamsExtraMetrics,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1192,7 +1193,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _submit,
-            child: Text(l10n.workoutRunApproachDone),
+            child: AppText(l10n.workoutRunApproachDone),
           ),
         ],
       ),
@@ -1274,22 +1275,22 @@ class _FinishedViewState extends State<_FinishedView> {
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
-            Text(
+            AppText(
               l10n.workoutRunFinished,
               style: theme.textTheme.headlineMedium,
             ),
             if (programName.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(programName, style: theme.textTheme.titleMedium),
+              AppText(programName, style: theme.textTheme.titleMedium),
             ],
             const SizedBox(height: 16),
-            Text(l10n.workoutRunSetsCount(setsCount)),
-            Text(l10n.workoutRunTime(minutes)),
+            AppText(l10n.workoutRunSetsCount(setsCount)),
+            AppText(l10n.workoutRunTime(minutes)),
             if (exercises.isNotEmpty) ...[
               const SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
+                child: AppText(
                   l10n.workoutRunExercises,
                   style: theme.textTheme.titleSmall,
                 ),
@@ -1307,7 +1308,7 @@ class _FinishedViewState extends State<_FinishedView> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
+                        child: AppText(
                           we.exercise.name,
                           style: theme.textTheme.bodyMedium,
                         ),
@@ -1320,7 +1321,7 @@ class _FinishedViewState extends State<_FinishedView> {
               const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
+                child: AppText(
                   l10n.workoutRunMuscles,
                   style: theme.textTheme.titleSmall,
                 ),
@@ -1332,7 +1333,7 @@ class _FinishedViewState extends State<_FinishedView> {
                 children: [
                   for (final name in _muscleNames)
                     Chip(
-                      label: Text(name, style: theme.textTheme.labelSmall),
+                      label: AppText(name, style: theme.textTheme.labelSmall),
                       backgroundColor: theme.colorScheme.primaryContainer
                           .withValues(alpha: 0.5),
                       visualDensity: VisualDensity.compact,
@@ -1350,7 +1351,7 @@ class _FinishedViewState extends State<_FinishedView> {
               )
             else ...[
               if (widget.saved)
-                Text(
+                AppText(
                   l10n.workoutRunSaved,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: theme.colorScheme.primary,
@@ -1359,7 +1360,7 @@ class _FinishedViewState extends State<_FinishedView> {
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => context.go('/progress'),
-                child: Text(l10n.workoutRunGoProgress),
+                child: AppText(l10n.workoutRunGoProgress),
               ),
             ],
           ],

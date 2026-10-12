@@ -92,15 +92,15 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.exerciseDetailDeleteConfirm(data.exercise.name)),
+        title: AppText(l10n.exerciseDetailDeleteConfirm(data.exercise.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
+            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.commonDelete),
+            child: AppText(l10n.commonDelete),
           ),
         ],
       ),
@@ -123,15 +123,15 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.exerciseDetailDeleteBlocked(exerciseName)),
+        title: AppText(l10n.exerciseDetailDeleteBlocked(exerciseName)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.exerciseDetailDeleteBlockedHint),
+            AppText(l10n.exerciseDetailDeleteBlockedHint),
             const SizedBox(height: 8),
             for (final entry in referencedByProgram.entries)
-              Text(
+              AppText(
                 '• ${entry.key} → '
                 '${entry.value.map((d) => l10n.programBuilderDay(d + 1)).join(', ')}',
               ),
@@ -140,7 +140,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.commonOk),
+            child: AppText(l10n.commonOk),
           ),
         ],
       ),
@@ -156,7 +156,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         final canEdit = data?.exercise.isCustom ?? false;
         return Scaffold(
           appBar: AppBar(
-            title: Text(l10n.exerciseDetail),
+            title: AppText(l10n.exerciseDetail),
             actions: [
               if (canEdit)
                 IconButton(
@@ -179,7 +179,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (data == null) {
-                return Center(child: Text(l10n.exerciseDetailNotFound));
+                return Center(child: AppText(l10n.exerciseDetailNotFound));
               }
               return _buildContent(context, data);
             },
@@ -200,7 +200,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         ),
         const SizedBox(height: 12),
         Center(
-          child: Text(
+          child: AppText(
             exercise.name,
             style: Theme.of(context).textTheme.headlineMedium,
             textAlign: TextAlign.center,
@@ -212,14 +212,14 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           const SizedBox(height: 16),
           AppSection(
             title: l10n.exerciseDetailDescription,
-            child: Text(exercise.description),
+            child: AppText(exercise.description),
           ),
         ],
         if (!exercise.hideOptional && exercise.instructions.isNotEmpty) ...[
           const SizedBox(height: 16),
           AppSection(
             title: l10n.exerciseDetailTechnique,
-            child: Text(exercise.instructions),
+            child: AppText(exercise.instructions),
           ),
         ],
         if (!exercise.hideOptional && exercise.commonMistakes.isNotEmpty) ...[
@@ -235,8 +235,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('• '),
-                        Expanded(child: Text(mistake)),
+                        const AppText('• '),
+                        Expanded(child: AppText(mistake)),
                       ],
                     ),
                   ),
@@ -317,7 +317,7 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
+                child: AppText(
                   DateFormat('d MMMM yyyy', 'ru').format(date),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -327,7 +327,7 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
               for (final result in results)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 1),
-                  child: Text(
+                  child: AppText(
                     '${_sideLabel(result.setIndex, result.side)} '
                     '${_formatResult(l10n, result)}',
                     style: theme.textTheme.bodyMedium,
@@ -435,7 +435,7 @@ class _TypeBadge extends StatelessWidget {
         color: colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(
+      child: AppText(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: colorScheme.onSecondaryContainer,
@@ -481,7 +481,7 @@ class _MusclesSection extends StatelessWidget {
               for (final muscle in muscles)
                 Chip(
                   avatar: MuscleGroupIcon(muscleKey: muscle.key, size: 18),
-                  label: Text(muscle.labelRu),
+                  label: AppText(muscle.labelRu),
                 ),
             ],
           ),
@@ -517,7 +517,7 @@ class _ContraindicationsSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     l10n.contraindicationWarningForYou,
                     style: Theme.of(
                       context,
@@ -534,7 +534,7 @@ class _ContraindicationsSection extends StatelessWidget {
             children: [
               for (final tag in tags)
                 Chip(
-                  label: Text(tag.labelRu),
+                  label: AppText(tag.labelRu),
                   avatar: Icon(
                     Icons.warning_amber_rounded,
                     size: 18,

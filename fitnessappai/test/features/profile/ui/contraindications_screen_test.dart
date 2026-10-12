@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/profile/ui/contraindications_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 void main() {
   late AppDatabase db;
@@ -85,7 +86,7 @@ void main() {
         .widgetList<SwitchListTile>(find.byType(SwitchListTile))
         .toList();
     final valueByTitle = {
-      for (final tile in switches) (tile.title as Text).data: tile.value,
+      for (final tile in switches) (tile.title as AppText).data: tile.value,
     };
     expect(valueByTitle['Колени'], isTrue);
     expect(valueByTitle['Спина'], isTrue);

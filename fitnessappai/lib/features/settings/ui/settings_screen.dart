@@ -130,7 +130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppMenuButton(),
-        title: Text(l10n.settings),
+        title: AppText(l10n.settings),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -154,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: l10n.reminderSoundEnabled,
             ),
             const SizedBox(height: 8),
-            Text(
+            AppText(
               l10n.reminderSoundHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -176,12 +176,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ButtonSegment(
                   value: ThemeMode.dark,
                   icon: const Icon(Icons.dark_mode_outlined),
-                  label: Text(l10n.settingsThemeDark),
+                  label: AppText(l10n.settingsThemeDark),
                 ),
                 ButtonSegment(
                   value: ThemeMode.light,
                   icon: const Icon(Icons.light_mode_outlined),
-                  label: Text(l10n.settingsThemeLight),
+                  label: AppText(l10n.settingsThemeLight),
                 ),
               ],
               selected: {mode},
@@ -221,7 +221,7 @@ class _SyncSectionState extends State<_SyncSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            AppText(
               l10n.syncCloudHint,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -231,19 +231,19 @@ class _SyncSectionState extends State<_SyncSection> {
             OutlinedButton.icon(
               onPressed: busy ? null : _export,
               icon: const Icon(Icons.upload_outlined),
-              label: Text(l10n.syncShare),
+              label: AppText(l10n.syncShare),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: busy ? null : _exportToFile,
               icon: const Icon(Icons.save_alt_outlined),
-              label: Text(l10n.syncSaveFile),
+              label: AppText(l10n.syncSaveFile),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: busy ? null : _import,
               icon: const Icon(Icons.download_outlined),
-              label: Text(l10n.syncImport),
+              label: AppText(l10n.syncImport),
             ),
             if (status case final statusText?) ...[
               const SizedBox(height: 16),
@@ -258,7 +258,7 @@ class _SyncSectionState extends State<_SyncSection> {
                         ? theme.colorScheme.error
                         : theme.colorScheme.primary,
                   ),
-                  title: Text(statusText),
+                  title: AppText(statusText),
                 ),
               ),
             ],
@@ -272,7 +272,7 @@ class _SyncSectionState extends State<_SyncSection> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     l10n.syncCloudComing,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
@@ -300,16 +300,16 @@ class _SyncSectionState extends State<_SyncSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.syncImportWarningTitle),
-        content: Text(l10n.syncImportWarningBody),
+        title: AppText(l10n.syncImportWarningTitle),
+        content: AppText(l10n.syncImportWarningBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
+            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.syncImportConfirm),
+            child: AppText(l10n.syncImportConfirm),
           ),
         ],
       ),
@@ -325,12 +325,12 @@ class _SyncSectionState extends State<_SyncSection> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(l10n.syncImportSuccess),
-        content: Text(l10n.syncRestartHint),
+        title: AppText(l10n.syncImportSuccess),
+        content: AppText(l10n.syncRestartHint),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.commonOk),
+            child: AppText(l10n.commonOk),
           ),
         ],
       ),
@@ -409,7 +409,7 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
               if (!permissions.exactAlarmsEnabled)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(
+                  child: AppText(
                     l10n.settingsNotificationsExactHint,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
@@ -440,7 +440,7 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
               if (!controller.batteryOptimizationExempt.value!)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(
+                  child: AppText(
                     l10n.settingsNotificationsBatteryHint,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
@@ -450,7 +450,7 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
             ],
             if (error != null) ...[
               const SizedBox(height: 8),
-              Text(
+              AppText(
                 error,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.error,
@@ -490,7 +490,7 @@ class _PermissionTile extends StatelessWidget {
             Icon(icon, size: 20, color: color),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
+              child: AppText(
                 title,
                 style: theme.textTheme.bodyMedium,
                 maxLines: 1,
@@ -505,7 +505,7 @@ class _PermissionTile extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: FilledButton.tonal(
               onPressed: onAction,
-              child: Text(actionLabel!),
+              child: AppText(actionLabel!),
             ),
           ),
         ],
@@ -539,7 +539,7 @@ class _AboutSectionState extends State<_AboutSection> {
           children: [
             if (version case final versionText?) ...[
               const SizedBox(height: 8),
-              Text(
+              AppText(
                 '${l10n.settingsVersion} $versionText',
                 style: theme.textTheme.bodyMedium,
               ),
@@ -554,11 +554,11 @@ class _AboutSectionState extends State<_AboutSection> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.update),
-              label: Text(l10n.settingsCheckUpdate),
+              label: AppText(l10n.settingsCheckUpdate),
             ),
             if (status case final statusText?) ...[
               const SizedBox(height: 8),
-              Text(
+              AppText(
                 statusText,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: controller.hasError.value
@@ -583,16 +583,16 @@ class _AboutSectionState extends State<_AboutSection> {
     final open = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.settingsUpdateAvailable),
-        content: Text(l10n.settingsUpdateContent(version ?? '')),
+        title: AppText(l10n.settingsUpdateAvailable),
+        content: AppText(l10n.settingsUpdateContent(version ?? '')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.settingsUpdateLater),
+            child: AppText(l10n.settingsUpdateLater),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.settingsUpdateDownload),
+            child: AppText(l10n.settingsUpdateDownload),
           ),
         ],
       ),

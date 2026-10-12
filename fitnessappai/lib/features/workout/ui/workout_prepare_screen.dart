@@ -104,7 +104,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.workoutPrepare)),
+      appBar: AppBar(title: AppText(l10n.workoutPrepare)),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
     );
   }
@@ -116,7 +116,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (controller.notFound.value) {
-      return Center(child: Text(l10n.workoutPrepareNotFound));
+      return Center(child: AppText(l10n.workoutPrepareNotFound));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -126,12 +126,12 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText(
                 controller.programName.value,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 4),
-              Text(
+              AppText(
                 controller.dayTitle.value ??
                     l10n.programBuilderDay(controller.dayIndex.value + 1),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -150,7 +150,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
-                    Text(
+                    AppText(
                       l10n.programBuilderWarmupShort(minutes),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -169,11 +169,11 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
               segments: [
                 ButtonSegment(
                   value: WorkoutVariant.main,
-                  label: Text(l10n.programBuilderMainSet),
+                  label: AppText(l10n.programBuilderMainSet),
                 ),
                 ButtonSegment(
                   value: WorkoutVariant.alternative,
-                  label: Text(l10n.programBuilderAlternativeSet),
+                  label: AppText(l10n.programBuilderAlternativeSet),
                 ),
               ],
               selected: {controller.variant.value},
@@ -184,7 +184,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
         Expanded(
           child: controller.visibleItems.isEmpty
               ? Center(
-                  child: Text(
+                  child: AppText(
                     l10n.programBuilderEmptyDay,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -244,7 +244,7 @@ class _ExerciseCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText(
                       exercise.name,
                       style: theme.textTheme.titleSmall,
                       maxLines: 2,
@@ -252,7 +252,7 @@ class _ExerciseCard extends StatelessWidget {
                     ),
                     if (!exercise.hideOptional) ...[
                       const SizedBox(height: 4),
-                      Text(
+                      AppText(
                         _paramsSummary(l10n, exercise.type, item.params),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -265,7 +265,7 @@ class _ExerciseCard extends StatelessWidget {
               if (!exercise.hideOptional &&
                   item.params.restSeconds != null) ...[
                 const SizedBox(width: 8),
-                Text(
+                AppText(
                   l10n.workoutPrepareRest(item.params.restSeconds!),
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -370,17 +370,17 @@ class _WarningDialogState extends State<_WarningDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(l10n.workoutWarningsTitle),
+      title: AppText(l10n.workoutWarningsTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.workoutWarningsBody),
+          AppText(l10n.workoutWarningsBody),
           const SizedBox(height: 8),
           for (final warning in widget.warnings)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
+              child: AppText(
                 '• ${warning.exerciseName} — '
                 '${warning.tagLabels.join(', ')}',
               ),
@@ -391,7 +391,7 @@ class _WarningDialogState extends State<_WarningDialog> {
               onChanged: (value) => setState(() {
                 _dontShowAgain = value ?? false;
               }),
-              title: Text(l10n.workoutWarningsDontShow),
+              title: AppText(l10n.workoutWarningsDontShow),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
             ),
@@ -400,7 +400,7 @@ class _WarningDialogState extends State<_WarningDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: Text(l10n.commonCancel),
+          child: AppText(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () async {
@@ -410,7 +410,7 @@ class _WarningDialogState extends State<_WarningDialog> {
               await widget.onDismiss?.call();
             }
           },
-          child: Text(l10n.workoutWarningsProceed),
+          child: AppText(l10n.workoutWarningsProceed),
         ),
       ],
     );

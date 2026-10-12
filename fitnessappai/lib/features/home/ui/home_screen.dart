@@ -68,7 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(leading: const AppMenuButton(), title: Text(l10n.navHome)),
+      appBar: AppBar(
+        leading: const AppMenuButton(),
+        title: AppText(l10n.navHome),
+      ),
       body: SignalBuilder(
         builder: (context) {
           final controller = _controller;
@@ -221,7 +224,7 @@ class _ActiveProgramCard extends StatelessWidget {
               ProgramThumbnail(imagePath: imagePath),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
+                child: AppText(
                   programName,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -250,7 +253,7 @@ class _ActiveProgramCard extends StatelessWidget {
             if (todayStatus != null)
               StatusBadge(status: todayStatus!)
             else
-              Text(
+              AppText(
                 '${l10n.homeUpcomingDay}: '
                 '${_weekdayLabel(l10n, day!.dayOfWeek)}',
                 style: theme.textTheme.titleSmall?.copyWith(
@@ -268,7 +271,7 @@ class _ActiveProgramCard extends StatelessWidget {
                 for (final name in exerciseNames)
                   Chip(
                     avatar: const Icon(Icons.fitness_center, size: 14),
-                    label: Text(name, style: theme.textTheme.bodySmall),
+                    label: AppText(name, style: theme.textTheme.bodySmall),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: theme.colorScheme.surfaceContainerHigh,
                   ),
@@ -314,7 +317,7 @@ class _RecentWorkoutCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   session.programName,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -323,14 +326,14 @@ class _RecentWorkoutCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                Text(
+                AppText(
                   date,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                AppText(
                   '${l10n.historyExercisesCount(item.exercisesCount)}'
                   ' · ${l10n.historyDuration(minutes)}',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -374,13 +377,13 @@ class _EmptyHint extends StatelessWidget {
           children: [
             Icon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
-            Text(
+            AppText(
               title,
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
-            Text(
+            AppText(
               hint,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -391,7 +394,7 @@ class _EmptyHint extends StatelessWidget {
               const SizedBox(height: 12),
               FilledButton.tonal(
                 onPressed: onAction,
-                child: Text(actionLabel!),
+                child: AppText(actionLabel!),
               ),
             ],
           ],
@@ -436,7 +439,7 @@ class _ProgressRing extends StatelessWidget {
               ),
             ),
             Center(
-              child: Text(
+              child: AppText(
                 '$percent%',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,

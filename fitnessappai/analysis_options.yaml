@@ -44,7 +44,7 @@ plugins:
   restrict_raw_flutter:
     version: ^0.2.2
     diagnostics:
-      ban_text_widget: false
+      ban_text_widget: true
       ban_icon_widget: false
       ban_container_widget: false
       ban_card_widget: false

@@ -53,7 +53,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.measurementFormTitle)),
+      appBar: AppBar(title: AppText(l10n.measurementFormTitle)),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -63,7 +63,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
               margin: EdgeInsets.zero,
               child: ListTile(
                 leading: const Icon(Icons.calendar_today_outlined),
-                title: Text(DateFormat('d MMMM yyyy', 'ru').format(_date)),
+                title: AppText(DateFormat('d MMMM yyyy', 'ru').format(_date)),
                 trailing: const Icon(Icons.edit_outlined),
                 onTap: _pickDate,
               ),
@@ -124,7 +124,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
     if (!result.isValid) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(result.errors.join('\n'))));
+      ).showSnackBar(SnackBar(content: AppText(result.errors.join('\n'))));
       return;
     }
     await _repository.add(measurement);

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Боковой отступ сетки календаря от краёв контейнера.
 const double _sidePadding = 12;
@@ -42,7 +43,7 @@ class MonthSwitcher extends StatelessWidget {
           ),
           Expanded(
             child: Center(
-              child: Text(label, style: theme.textTheme.titleMedium),
+              child: AppText(label, style: theme.textTheme.titleMedium),
             ),
           ),
           IconButton(
@@ -115,7 +116,7 @@ class MonthDayCell extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(
+                  child: AppText(
                     '$day',
                     maxLines: 1,
                     style: theme.textTheme.labelMedium?.copyWith(
@@ -225,7 +226,7 @@ class _MonthGridViewState extends State<MonthGridView> {
       children: [
         for (final name in dayNames)
           Expanded(
-            child: Center(child: Text(name, style: _headerStyle(context))),
+            child: Center(child: AppText(name, style: _headerStyle(context))),
           ),
       ],
     );
@@ -323,7 +324,10 @@ class _MonthGridViewState extends State<MonthGridView> {
                   SizedBox(
                     width: cell,
                     child: Center(
-                      child: Text(dayNames[col], style: _headerStyle(context)),
+                      child: AppText(
+                        dayNames[col],
+                        style: _headerStyle(context),
+                      ),
                     ),
                   ),
                   if (col < 6) const SizedBox(width: columnGap),

@@ -118,7 +118,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.exerciseListDeleteTitle(selected.length)),
+        title: AppText(l10n.exerciseListDeleteTitle(selected.length)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +126,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             if (warning != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
+                child: AppText(
                   warning,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
@@ -134,24 +134,24 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             if (refsByName.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
+                child: AppText(
                   l10n.exerciseListDeleteBlockedHint,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
-            Text(l10n.exerciseListDeleteConfirm(selected.length)),
+            AppText(l10n.exerciseListDeleteConfirm(selected.length)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            child: AppText(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
           FilledButton(
             onPressed: refsByName.isEmpty
                 ? () => Navigator.of(context).pop(true)
                 : null,
-            child: Text(l10n.exerciseListDeleteButton),
+            child: AppText(l10n.exerciseListDeleteButton),
           ),
         ],
       ),
@@ -173,8 +173,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: _selectionMode
-            ? Text('${_selectedIds.length}')
-            : Text(l10n.navExercises),
+            ? AppText('${_selectedIds.length}')
+            : AppText(l10n.navExercises),
         leading: _selectionMode
             ? IconButton(
                 icon: const Icon(Icons.close),
@@ -204,7 +204,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           SignalBuilder(
             builder: (context) => SwitchListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              title: Text(l10n.exerciseListOnlyCustom),
+              title: AppText(l10n.exerciseListOnlyCustom),
               value: _controller.onlyCustom.value,
               onChanged: _controller.setOnlyCustom,
             ),
@@ -240,7 +240,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(
+                    label: AppText(
                       option == null
                           ? l10n.exerciseFilterAll
                           : _typeLabel(l10n, option),
@@ -269,7 +269,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 160),
-            Center(child: Text(l10n.exerciseListEmpty)),
+            Center(child: AppText(l10n.exerciseListEmpty)),
           ],
         ),
       );
@@ -361,7 +361,7 @@ class _ExerciseCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText(
                       exercise.name,
                       style: Theme.of(context).textTheme.titleMedium,
                       maxLines: 1,
@@ -391,7 +391,7 @@ class _ExerciseCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
+                            child: AppText(
                               item.muscles.map((m) => m.labelRu).join(', '),
                               style: Theme.of(context).textTheme.bodySmall,
                               maxLines: 1,
@@ -451,7 +451,7 @@ class _Badge extends StatelessWidget {
             Icon(icon, size: 13, color: foreground),
             const SizedBox(width: 3),
           ],
-          Text(
+          AppText(
             label,
             style: Theme.of(
               context,

@@ -116,7 +116,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     if (_isPast(item.scheduledDate, _controller.selectedDate.value)) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.weekPlanPastDateGuard)));
+      ).showSnackBar(SnackBar(content: AppText(l10n.weekPlanPastDateGuard)));
       return;
     }
     final result = await showReminderTimeDialog(
@@ -159,7 +159,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(leading: const AppMenuButton(), title: Text(l10n.navPlan)),
+      appBar: AppBar(
+        leading: const AppMenuButton(),
+        title: AppText(l10n.navPlan),
+      ),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
     );
   }
@@ -254,7 +257,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       if (_isPast(date, controller.selectedDate.value)) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(l10n.weekPlanPastDateGuard)));
+        ).showSnackBar(SnackBar(content: AppText(l10n.weekPlanPastDateGuard)));
         return Future.value();
       }
       return _showScheduleSheet(context, controller, date, l10n);
@@ -268,7 +271,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
+              child: AppText(
                 DateFormat('d MMMM yyyy', 'ru').format(date),
                 style: Theme.of(sheetContext).textTheme.titleMedium,
               ),
@@ -308,7 +311,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               leading: const Icon(Icons.edit_calendar),
-              title: Text(l10n.weekPlanScheduleTitle),
+              title: AppText(l10n.weekPlanScheduleTitle),
               onTap: () {
                 final messenger = ScaffoldMessenger.of(context);
                 Navigator.of(sheetContext).pop();
@@ -316,7 +319,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                 // планирования молча ничего не сделал бы (48.9).
                 if (_isPast(date, controller.selectedDate.value)) {
                   messenger.showSnackBar(
-                    SnackBar(content: Text(l10n.weekPlanPastDateGuard)),
+                    SnackBar(content: AppText(l10n.weekPlanPastDateGuard)),
                   );
                   return;
                 }
@@ -371,7 +374,7 @@ class _WeekSwitcher extends StatelessWidget {
           ),
           Expanded(
             child: Center(
-              child: Text(label, style: theme.textTheme.titleMedium),
+              child: AppText(label, style: theme.textTheme.titleMedium),
             ),
           ),
           IconButton(
@@ -670,7 +673,7 @@ class _DayHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
+            AppText(
               _weekdayLabel(l10n, date.weekday),
               style: theme.textTheme.labelLarge?.copyWith(
                 color: isToday ? colorScheme.primary : colorScheme.onSurface,
@@ -684,7 +687,7 @@ class _DayHeader extends StatelessWidget {
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(
+                child: AppText(
                   l10n.weekPlanToday,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: colorScheme.onPrimaryContainer,
@@ -694,14 +697,14 @@ class _DayHeader extends StatelessWidget {
             ],
           ],
         ),
-        Text(
+        AppText(
           '${date.day}',
           style: theme.textTheme.titleMedium?.copyWith(
             color: isToday ? colorScheme.primary : colorScheme.onSurfaceVariant,
           ),
         ),
         if (times.isNotEmpty)
-          Text(
+          AppText(
             times.join(', '),
             style: theme.textTheme.labelSmall?.copyWith(
               color: isToday
@@ -775,13 +778,13 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      AppText(
                         item.programName,
                         style: theme.textTheme.titleSmall,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      Text(
+                      AppText(
                         '${item.dayTitle ?? l10n.programBuilderDay(item.dayIndex + 1)} · '
                         '${DateFormat('d MMMM yyyy', 'ru').format(item.scheduledDate)}',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -824,7 +827,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.access_time, size: 14),
                       const SizedBox(width: 4),
-                      Text(
+                      AppText(
                         item.timeLabel!,
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: theme.colorScheme.primary,
@@ -853,7 +856,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                     FilledButton.tonalIcon(
                       onPressed: () => onStart(item),
                       icon: const Icon(Icons.play_arrow),
-                      label: Text(l10n.weekPlanStart),
+                      label: AppText(l10n.weekPlanStart),
                       style: FilledButton.styleFrom(
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -863,7 +866,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                     FilledButton.tonalIcon(
                       onPressed: () => onStart(item),
                       icon: const Icon(Icons.event_repeat_outlined),
-                      label: Text(l10n.weekPlanReschedule),
+                      label: AppText(l10n.weekPlanReschedule),
                       style: FilledButton.styleFrom(
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -872,7 +875,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   if (actions.contains(DayAction.skip))
                     TextButton(
                       onPressed: () => onSkip(item),
-                      child: Text(l10n.weekPlanSkip),
+                      child: AppText(l10n.weekPlanSkip),
                     ),
                 ],
               ),
@@ -883,7 +886,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () => onUnskip(item),
                   icon: const Icon(Icons.undo, size: 18),
-                  label: Text(l10n.weekPlanUnskip),
+                  label: AppText(l10n.weekPlanUnskip),
                 ),
               ),
             if (status == WeekPlanStatus.pastSkipped) ...[
@@ -919,7 +922,7 @@ class _MissedWorkoutHint extends StatelessWidget {
           Icon(Icons.info_outline, size: 16, color: color),
           const SizedBox(width: 6),
           Expanded(
-            child: Text(
+            child: AppText(
               AppLocalizations.of(context).weekPlanMissedHint,
               style: theme.textTheme.bodySmall?.copyWith(color: color),
             ),
@@ -952,13 +955,13 @@ class _WeekEmpty extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 16),
-          Text(
+          AppText(
             l10n.weekPlanEmpty,
             style: theme.textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          Text(
+          AppText(
             l10n.weekPlanHint,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -1012,7 +1015,7 @@ class _DayActionTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final status = item.status;
     final actions = dayActionsFor(item, today);
-    final title = Text(
+    final title = AppText(
       '${item.programName} → '
       '${item.dayTitle ?? l10n.programBuilderDay(item.dayIndex + 1)}',
       maxLines: 2,
@@ -1039,18 +1042,18 @@ class _DayActionTile extends StatelessWidget {
                     FilledButton.tonalIcon(
                       onPressed: onStart,
                       icon: const Icon(Icons.play_arrow),
-                      label: Text(l10n.weekPlanStart),
+                      label: AppText(l10n.weekPlanStart),
                     ),
                   if (actions.contains(DayAction.reschedule))
                     FilledButton.tonalIcon(
                       onPressed: onStart,
                       icon: const Icon(Icons.event_repeat_outlined),
-                      label: Text(l10n.weekPlanReschedule),
+                      label: AppText(l10n.weekPlanReschedule),
                     ),
                   if (actions.contains(DayAction.skip))
                     TextButton(
                       onPressed: onSkip,
-                      child: Text(l10n.weekPlanSkip),
+                      child: AppText(l10n.weekPlanSkip),
                     ),
                   // Удаление — единственное действие кастомного назначения,
                   // поэтому с подписью, а не голым крестиком.
@@ -1058,7 +1061,7 @@ class _DayActionTile extends StatelessWidget {
                     TextButton.icon(
                       onPressed: onCancel,
                       icon: const Icon(Icons.close, size: 18),
-                      label: Text(l10n.weekPlanRemove),
+                      label: AppText(l10n.weekPlanRemove),
                     ),
                 ],
               ),
@@ -1067,7 +1070,7 @@ class _DayActionTile extends StatelessWidget {
                     ? TextButton.icon(
                         onPressed: onUnskip,
                         icon: const Icon(Icons.undo, size: 18),
-                        label: Text(l10n.weekPlanUnskip),
+                        label: AppText(l10n.weekPlanUnskip),
                       )
                     : StatusBadge(status: status),
               WeekPlanStatus.performed ||
@@ -1085,8 +1088,8 @@ class _DayActionTile extends StatelessWidget {
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             leading: const Icon(Icons.access_time, size: 20),
-            title: Text(l10n.weekPlanTimeAction),
-            subtitle: Text(item.timeLabel ?? l10n.weekPlanNoTime),
+            title: AppText(l10n.weekPlanTimeAction),
+            subtitle: AppText(item.timeLabel ?? l10n.weekPlanNoTime),
             onTap: onEditTime,
           ),
         ],
@@ -1205,7 +1208,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
       final l10n = AppLocalizations.of(context);
       Navigator.of(context).pop();
       messenger.showSnackBar(
-        SnackBar(content: Text(l10n.weekPlanAlreadyScheduled)),
+        SnackBar(content: AppText(l10n.weekPlanAlreadyScheduled)),
       );
       return;
     }
@@ -1249,12 +1252,12 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            AppText(
               l10n.weekPlanScheduleTitle,
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
-            Text(
+            AppText(
               DateFormat('d MMMM yyyy', 'ru').format(widget.date),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1286,22 +1289,22 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
         if (programs.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: Text(l10n.weekPlanScheduleNoPrograms)),
+            child: Center(child: AppText(l10n.weekPlanScheduleNoPrograms)),
           );
         }
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            AppText(
               l10n.weekPlanScheduleSelectProgram,
               style: Theme.of(context).textTheme.labelLarge,
             ),
             const SizedBox(height: 8),
             for (final summary in programs)
               ListTile(
-                title: Text(summary.program.name),
-                subtitle: Text('${summary.exercisesCount} упражнений'),
+                title: AppText(summary.program.name),
+                subtitle: AppText('${summary.exercisesCount} упражнений'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _selectProgram(summary),
               ),
@@ -1330,7 +1333,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
               icon: const Icon(Icons.arrow_back),
             ),
             Expanded(
-              child: Text(
+              child: AppText(
                 detail.program.name,
                 style: theme.textTheme.labelLarge,
                 maxLines: 1,
@@ -1342,10 +1345,10 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
         const SizedBox(height: 8),
         for (final day in detail.days)
           ListTile(
-            title: Text(
+            title: AppText(
               day.day.title ?? l10n.programBuilderDay(day.day.dayIndex + 1),
             ),
-            subtitle: Text(
+            subtitle: AppText(
               day.day.dayOfWeek != null
                   ? _weekdayLabel(l10n, day.day.dayOfWeek!)
                   : 'Без привязки',
@@ -1381,7 +1384,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
               icon: const Icon(Icons.arrow_back),
             ),
             Expanded(
-              child: Text(
+              child: AppText(
                 heading,
                 style: theme.textTheme.labelLarge,
                 maxLines: 1,
@@ -1391,7 +1394,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
           ],
         ),
         const SizedBox(height: 8),
-        Text(l10n.weekPlanTimeAction, style: theme.textTheme.titleSmall),
+        AppText(l10n.weekPlanTimeAction, style: theme.textTheme.titleSmall),
         const SizedBox(height: 4),
         ReminderTimeFields(
           time: _time,

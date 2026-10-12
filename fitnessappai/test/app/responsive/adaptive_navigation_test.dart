@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/main.dart';
 import 'package:fitnessappai/app/widgets/profile_avatar.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 import '../../helpers/test_services.dart';
 
@@ -45,7 +46,7 @@ void main() {
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
       // 6 вкладок навигации; «Профиль» — пункт `leading`, а не направление.
       expect(rail.destinations, hasLength(6));
-      expect((rail.destinations.last.label as Text).data, 'История');
+      expect((rail.destinations.last.label as AppText).data, 'История');
       // «Профиль» в шапке rail (leading), а не среди иконок направлений.
       expect(
         find.descendant(
@@ -269,8 +270,8 @@ void main() {
         matching: find.byWidgetPredicate(
           (widget) =>
               widget is ListTile &&
-              widget.title is Text &&
-              (widget.title as Text).data == 'Профиль',
+              widget.title is AppText &&
+              (widget.title as AppText).data == 'Профиль',
         ),
       ),
       findsNothing,

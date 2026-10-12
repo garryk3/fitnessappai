@@ -9,6 +9,7 @@ import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран деталей дня из прогресса: сессии в диапазоне `[start, end)`.
 ///
@@ -102,12 +103,12 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(_title)),
+      appBar: AppBar(title: AppText(_title)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
           ? Center(
-              child: Text(
+              child: AppText(
                 l10n.progressDayEmpty,
                 style: theme.textTheme.titleMedium,
               ),
@@ -153,21 +154,21 @@ class _SessionCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        AppText(
                           session.programName,
                           style: theme.textTheme.titleSmall,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        AppText(
                           date,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        AppText(
                           '${l10n.historyExercisesCount(item.exercisesCount)}'
                           ' · ${l10n.historyDuration(minutes)}',
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -180,7 +181,7 @@ class _SessionCard extends StatelessWidget {
                   if (session.variant == WorkoutVariant.alternative)
                     Chip(
                       visualDensity: VisualDensity.compact,
-                      label: Text(
+                      label: AppText(
                         l10n.programBuilderAlternativeSet,
                         style: theme.textTheme.labelSmall,
                       ),

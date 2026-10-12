@@ -96,7 +96,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.workoutWarmup)),
+      appBar: AppBar(title: AppText(l10n.workoutWarmup)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -111,7 +111,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
                     : theme.colorScheme.secondary,
               ),
               const SizedBox(height: 24),
-              Text(
+              AppText(
                 _done ? l10n.workoutWarmupDone : _format(_remaining),
                 style: theme.textTheme.displayMedium?.copyWith(
                   color: theme.colorScheme.onSurface,
@@ -120,7 +120,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
               ),
               const SizedBox(height: 8),
               if (!_done)
-                Text(
+                AppText(
                   l10n.workoutWarmupSecondsLeft(_remaining),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -131,7 +131,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
               if (!_done)
                 OutlinedButton(
                   onPressed: _goToRun,
-                  child: Text(l10n.workoutWarmupSkip),
+                  child: AppText(l10n.workoutWarmupSkip),
                 )
               else
                 AppGradientButton(

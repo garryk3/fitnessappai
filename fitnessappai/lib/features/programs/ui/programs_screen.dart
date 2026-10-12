@@ -12,6 +12,7 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Экран списка программ: карточки с днями и упражнениями.
 class ProgramsScreen extends StatefulWidget {
@@ -48,7 +49,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppMenuButton(),
-        title: Text(l10n.navPrograms),
+        title: AppText(l10n.navPrograms),
       ),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
       floatingActionButton: FloatingActionButton(
@@ -75,7 +76,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
               SizedBox(
                 height: constraints.maxHeight,
                 child: Center(
-                  child: Text(AppLocalizations.of(context).programListEmpty),
+                  child: AppText(AppLocalizations.of(context).programListEmpty),
                 ),
               ),
             ],
@@ -126,11 +127,11 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
       program.id!,
     );
     if (json == null) {
-      messenger.showSnackBar(SnackBar(content: Text(l10n.copyJsonNotFound)));
+      messenger.showSnackBar(SnackBar(content: AppText(l10n.copyJsonNotFound)));
       return;
     }
     await Clipboard.setData(ClipboardData(text: json));
-    messenger.showSnackBar(SnackBar(content: Text(l10n.copyJsonCopied)));
+    messenger.showSnackBar(SnackBar(content: AppText(l10n.copyJsonCopied)));
   }
 
   Future<void> _confirmDelete(BuildContext context, Program program) async {
@@ -138,16 +139,16 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.commonDelete),
-        content: Text(l10n.programDeleteConfirm(program.name)),
+        title: AppText(l10n.commonDelete),
+        content: AppText(l10n.programDeleteConfirm(program.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
+            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.commonDelete),
+            child: AppText(l10n.commonDelete),
           ),
         ],
       ),
@@ -204,7 +205,7 @@ class _ProgramCard extends StatelessWidget {
                         Row(
                           children: [
                             Flexible(
-                              child: Text(
+                              child: AppText(
                                 program.name,
                                 style: theme.textTheme.titleMedium,
                                 maxLines: 1,
@@ -218,7 +219,7 @@ class _ProgramCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Text(
+                        AppText(
                           l10n.programDaysCount(program.daysCount),
                           style: theme.textTheme.bodySmall,
                         ),
@@ -238,7 +239,7 @@ class _ProgramCard extends StatelessWidget {
                         ],
                         if (item.exercisesCount > 0) ...[
                           const SizedBox(height: 6),
-                          Text(
+                          AppText(
                             l10n.programExercisesCount(item.exercisesCount),
                             style: theme.textTheme.bodySmall,
                           ),
@@ -264,24 +265,24 @@ class _ProgramCard extends StatelessWidget {
                       if (program.isActive)
                         PopupMenuItem(
                           value: 'deactivate',
-                          child: Text(l10n.programDeactivate),
+                          child: AppText(l10n.programDeactivate),
                         )
                       else
                         PopupMenuItem(
                           value: 'set-active',
-                          child: Text(l10n.programMakeActive),
+                          child: AppText(l10n.programMakeActive),
                         ),
                       PopupMenuItem(
                         value: 'edit',
-                        child: Text(l10n.commonEdit),
+                        child: AppText(l10n.commonEdit),
                       ),
                       PopupMenuItem(
                         value: 'copy-json',
-                        child: Text(l10n.programCopyJson),
+                        child: AppText(l10n.programCopyJson),
                       ),
                       PopupMenuItem(
                         value: 'delete',
-                        child: Text(l10n.commonDelete),
+                        child: AppText(l10n.commonDelete),
                       ),
                     ],
                   ),
@@ -294,7 +295,7 @@ class _ProgramCard extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onStart,
                     icon: const Icon(Icons.play_arrow),
-                    label: Text(l10n.weekPlanStart),
+                    label: AppText(l10n.weekPlanStart),
                   ),
                 ),
               ],
@@ -320,7 +321,7 @@ class _ActiveBadge extends StatelessWidget {
         color: colorScheme.primary,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
+      child: AppText(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: colorScheme.onPrimary,
@@ -345,7 +346,7 @@ class _DayBadge extends StatelessWidget {
         color: colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
+      child: AppText(
         label ?? '',
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: colorScheme.onSecondaryContainer,
