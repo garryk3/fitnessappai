@@ -141,9 +141,9 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
             ),
           ),
           actions: [
-            TextButton(
+            AppTextButton(
+              label: dialogL10n.commonCancel,
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: AppText(dialogL10n.commonCancel),
             ),
             AppGradientButton(
               onPressed: () =>
@@ -740,9 +740,9 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        AppTextButton(
+          label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
-          child: AppText(l10n.commonCancel),
         ),
       ],
     );

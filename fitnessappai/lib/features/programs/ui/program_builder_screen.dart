@@ -770,9 +770,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       builder: (context) => AlertDialog(
         title: AppText(l10n.programActivatePrompt),
         actions: [
-          TextButton(
+          AppTextButton(
+            label: MaterialLocalizations.of(context).cancelButtonLabel,
             onPressed: () => Navigator.of(context).pop(false),
-            child: AppText(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -824,9 +824,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
             title: AppText(l10n.programBuilderExitTitle),
             content: AppText(l10n.programBuilderExitBody),
             actions: [
-              TextButton(
+              AppTextButton(
+                label: l10n.commonCancel,
                 onPressed: () => Navigator.of(context).pop(false),
-                child: AppText(l10n.commonCancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
@@ -1032,13 +1032,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: AppOutlinedButton(
+                label: l10n.programBuilderImagePick,
                 onPressed: _pickImage,
-                icon: const AppIcon(Icons.image_outlined),
-                label: AppText(
-                  l10n.programBuilderImagePick,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                icon: Icons.image_outlined,
               ),
             ),
             if (_imagePath != null) ...[
@@ -1227,9 +1224,9 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        AppTextButton(
+          label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
-          child: AppText(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(

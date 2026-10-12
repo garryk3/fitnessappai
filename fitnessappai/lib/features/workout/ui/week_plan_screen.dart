@@ -873,9 +873,9 @@ class _PlannedWorkoutCard extends StatelessWidget {
                       ),
                     ),
                   if (actions.contains(DayAction.skip))
-                    TextButton(
+                    AppTextButton(
+                      label: l10n.weekPlanSkip,
                       onPressed: () => onSkip(item),
-                      child: AppText(l10n.weekPlanSkip),
                     ),
                 ],
               ),
@@ -883,10 +883,11 @@ class _PlannedWorkoutCard extends StatelessWidget {
             if (actions.contains(DayAction.unskip))
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton.icon(
+                child: AppTextButton(
+                  label: l10n.weekPlanUnskip,
                   onPressed: () => onUnskip(item),
-                  icon: const AppIcon(Icons.undo, size: 18),
-                  label: AppText(l10n.weekPlanUnskip),
+                  icon: Icons.undo,
+                  iconSize: 18,
                 ),
               ),
             if (status == WeekPlanStatus.pastSkipped) ...[
@@ -1051,26 +1052,25 @@ class _DayActionTile extends StatelessWidget {
                       label: AppText(l10n.weekPlanReschedule),
                     ),
                   if (actions.contains(DayAction.skip))
-                    TextButton(
-                      onPressed: onSkip,
-                      child: AppText(l10n.weekPlanSkip),
-                    ),
+                    AppTextButton(label: l10n.weekPlanSkip, onPressed: onSkip),
                   // Удаление — единственное действие кастомного назначения,
                   // поэтому с подписью, а не голым крестиком.
                   if (actions.contains(DayAction.remove) && onCancel != null)
-                    TextButton.icon(
+                    AppTextButton(
+                      label: l10n.weekPlanRemove,
                       onPressed: onCancel,
-                      icon: const AppIcon(Icons.close, size: 18),
-                      label: AppText(l10n.weekPlanRemove),
+                      icon: Icons.close,
+                      iconSize: 18,
                     ),
                 ],
               ),
               WeekPlanStatus.skipped =>
                 actions.contains(DayAction.unskip)
-                    ? TextButton.icon(
+                    ? AppTextButton(
+                        label: l10n.weekPlanUnskip,
                         onPressed: onUnskip,
-                        icon: const AppIcon(Icons.undo, size: 18),
-                        label: AppText(l10n.weekPlanUnskip),
+                        icon: Icons.undo,
+                        iconSize: 18,
                       )
                     : StatusBadge(status: status),
               WeekPlanStatus.performed ||

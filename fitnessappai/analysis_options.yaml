@@ -55,9 +55,9 @@ plugins:
       ban_image_widget: false
       ban_textfield_widget: false
       ban_textformfield_widget: false
-      ban_elevated_button_widget: false
-      ban_text_button_widget: false
-      ban_outlined_button_widget: false
+      ban_elevated_button_widget: true
+      ban_text_button_widget: true
+      ban_outlined_button_widget: true
       ban_colors: true
       ban_color: true
       ban_inkwell_widget: false

@@ -49,12 +49,12 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppOutlinedButton(
+                    label: l10n.soundPickFile,
                     onPressed: controller.enabled.value
                         ? () => controller.pickSoundFile()
                         : null,
-                    icon: const AppIcon(Icons.audio_file_outlined),
-                    label: AppText(l10n.soundPickFile),
+                    icon: Icons.audio_file_outlined,
                   ),
                 ),
                 if (file != null) ...[

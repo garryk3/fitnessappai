@@ -142,9 +142,9 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
         title: AppText(l10n.commonDelete),
         content: AppText(l10n.programDeleteConfirm(program.name)),
         actions: [
-          TextButton(
+          AppTextButton(
+            label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
-            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),

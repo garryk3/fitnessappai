@@ -15,6 +15,7 @@ class AppTextButton extends StatelessWidget {
     required this.label,
     this.onPressed,
     this.icon,
+    this.iconSize,
     this.busy = false,
     this.autofocus = false,
     this.tooltip,
@@ -28,6 +29,9 @@ class AppTextButton extends StatelessWidget {
 
   /// Необязательная иконка перед подписью.
   final IconData? icon;
+
+  /// Размер иконки; `null` — из окружного `IconTheme`.
+  final double? iconSize;
 
   /// `true` — спиннер вместо подписи, кнопка неактивна.
   final bool busy;
@@ -56,7 +60,7 @@ class AppTextButton extends StatelessWidget {
         : TextButton.icon(
             onPressed: effective,
             autofocus: autofocus,
-            icon: AppIcon(icon!),
+            icon: AppIcon(icon!, size: iconSize),
             label: labelWidget,
           );
 
