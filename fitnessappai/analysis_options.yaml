@@ -23,14 +23,16 @@ linter:
 # включаются по одному по мере миграции (см. PLAN.md, этап 52), чтобы CI
 # оставался зелёным на каждом шаге.
 #
-# ВАЖНО: гейт работает только через `dart analyze --fatal-infos lib` — `flutter analyze`
+# ВАЖНО: гейт работает только через `dart analyze --fatal-infos` — `flutter analyze`
 # диагностику analyzer-плагинов не показывает вообще (проверено 2026-10-11).
-# Область гейта — `lib/`: `test/**` и `integration_test/**` в него не входят и
-# могут использовать сырые виджеты без подавлений (их ловит обычный `flutter analyze`).
+# ВАЖНО 2: путь передавать НЕЛЬЗЯ — `dart analyze lib` плагины не грузит вообще
+# (проверено 2026-10-12), а `exclude_for_plugin`/`--options` у `dart analyze` нет.
+# Поэтому гейт идёт по всему пакету, а исключённые каталоги подавлены в файлах.
 #
 # Точки, где сырые виджеты разрешены (подавление `// ignore_for_file: type=lint`):
-#   lib/uikit/**       — здесь и живут обёртки;
-#   lib/app/theme/**   — дизайн-токены (seed, ChartSeriesColors, chartGrid).
+#   lib/uikit/**            — здесь и живут обёртки;
+#   lib/app/theme/**        — дизайн-токены (seed, ChartSeriesColors, chartGrid);
+#   test/**, integration_test/** — тестовые фикстуры.
 # В любом другом файле `lib/` подавление запрещено (CI-шаг «Guard uikit exemptions»).
 # NB: `type=lint` глушит только lint-правила этих файлов; предупреждения
 # (unused_import, unused_local_variable и т.п.) и ошибки по-прежнему видны.

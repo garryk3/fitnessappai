@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;

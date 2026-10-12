@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'dart:io';
 
 import 'package:audio_session/audio_session.dart' hide AndroidAudioFocus;

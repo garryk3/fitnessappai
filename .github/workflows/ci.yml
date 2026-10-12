@@ -30,11 +30,13 @@ jobs:
 
       - name: Static analysis (analyzer plugins)
         # `flutter analyze` не видит диагностику analyzer-плагинов, поэтому
-        # запрет сырых Material-виджетов вне lib/uikit (restrict_raw_flutter,
-        # этап 52) проверяется отдельным `dart analyze`. Область — только
-        # `lib/`: `test/` и `integration_test/` вне гейта и могут использовать
-        # сырые виджеты без подавлений.
-        run: dart analyze --fatal-infos lib
+        # запрет сырых Material-виджетов (restrict_raw_flutter, этап 52)
+        # проверяется отдельным `dart analyze`.
+        # ВАЖНО: путь передавать НЕЛЬЗЯ — `dart analyze lib` плагины не грузит
+        # вообще (проверено 2026-10-12: 0 диагностик вместо 703), поэтому гейт
+        # идёт по всему пакету, а `test/` и `integration_test/` покрыты
+        # `// ignore_for_file: type=lint`.
+        run: dart analyze --fatal-infos
 
       - name: Guard uikit exemptions
         # `// ignore_for_file: type=lint` — это же и лазейка в обход запрета.

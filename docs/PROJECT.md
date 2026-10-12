@@ -20,7 +20,7 @@
 | Метрики тела | Рост, вес + 8 обхватов (шея, грудь, талия, бёдра, бицепс, предплечье, бедро, икра), всё опционально |
 | Напоминания | По тренировочным дням: своё время на день, задаётся пользователем, можно отключить |
 | Синхронизация | MVP: ручной экспорт/импорт файла БД; интерфейс `SyncService` для будущего облака |
-| CI | `dart format --set-exit-if-changed` + `flutter analyze --fatal-infos` + `dart analyze --fatal-infos lib` (правила `restrict_raw_flutter`) + `flutter test` + `flutter build apk --debug` |
+| CI | `dart format --set-exit-if-changed` + `flutter analyze --fatal-infos` + `dart analyze --fatal-infos` (правила `restrict_raw_flutter`) + `flutter test` + `flutter build apk --debug` |
 | Название / applicationId | FitnessAppAI / `com.example.fitnessappai`; `minSdk = 31` |
 
 ## 1. Окружение и блокеры (снимок на старте проекта, 2026-02; актуальное — в AGENTS.md)
@@ -39,9 +39,9 @@
 
 ## 3. CI workflow
 
-Авторитетно в `.github/workflows/ci.yml`. Один job `validate`: `dart format --set-exit-if-changed` → `flutter analyze --fatal-infos` → `dart analyze --fatal-infos lib` → `flutter test` → `flutter build apk --debug`.
+Авторитетно в `.github/workflows/ci.yml`. Один job `validate`: `dart format --set-exit-if-changed` → `flutter analyze --fatal-infos` → `dart analyze --fatal-infos` → `flutter test` → `flutter build apk --debug`.
 
-`dart analyze --fatal-infos lib` добавлен этапом 52: **`flutter analyze` не показывает диагностику analyzer-плагинов вообще**, поэтому запрет сырых Material-виджетов (пакет `restrict_raw_flutter`, конфигурация — в `fitnessappai/analysis_options.yaml`) проверяется только через `dart analyze`, и только по `lib/` (`test/`, `integration_test/` в гейт не входят). Внутри `lib/` сырые виджеты разрешены лишь в `lib/uikit/**` (обёртки) и `lib/app/theme/**` (дизайн-токены) — там стоит `// ignore_for_file: type=lint` (у плагина нет исключения по путям); в остальном `lib/` такое подавление запрещено отдельным CI-шагом «Guard uikit exemptions».
+`dart analyze --fatal-infos` добавлен этапом 52: **`flutter analyze` не показывает диагностику analyzer-плагинов вообще**, поэтому запрет сырых Material-виджетов (пакет `restrict_raw_flutter`, конфигурация — в `fitnessappai/analysis_options.yaml`) проверяется только через `dart analyze`. **Путь аргументом передавать нельзя** — `dart analyze lib` плагин не грузит (проверено 2026-10-12: 0 диагностик вместо 703), а `exclude_for_plugin`/`--options` у `dart analyze` нет, поэтому гейт идёт по всему пакету, и сырые виджеты разрешены в `lib/uikit/**`, `lib/app/theme/**`, `test/**`, `integration_test/**` — там `// ignore_for_file: type=lint` (у плагина нет исключения по путям). В остальном `lib/` такое подавление запрещено отдельным CI-шагом «Guard uikit exemptions».
 
 ## 4. Стек пакетов
 

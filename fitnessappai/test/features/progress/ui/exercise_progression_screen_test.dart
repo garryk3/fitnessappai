@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';

@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'dart:convert';
 
 import 'package:drift/native.dart';

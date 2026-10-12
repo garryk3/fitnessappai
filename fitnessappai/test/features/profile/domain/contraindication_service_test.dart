@@ -1,3 +1,4 @@
+// ignore_for_file: type=lint
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/core/domain/models/contraindication_tag.dart';
