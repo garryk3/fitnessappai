@@ -57,4 +57,4 @@ plugins:
       ban_colors: false
       ban_color: false
       ban_inkwell_widget: false
-      ban_gesture_detector_widget: false
+      ban_gesture_detector_widget: true
