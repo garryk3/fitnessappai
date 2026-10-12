@@ -36,7 +36,7 @@
 flutter pub get
 dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze --fatal-infos
-dart analyze --fatal-infos   # гейт правил restrict_raw_flutter (этап 52): flutter analyze их НЕ видит. Путь НЕ передавать — `dart analyze lib` плагины не грузит
+dart analyze --fatal-infos   # гейт правил restrict_raw_flutter (этап 52). Путь НЕ передавать — `dart analyze lib` плагины не грузит; `flutter analyze` видит их не на всех версиях (3.47.4 — нет, 3.47.7 — да)
 flutter test
 flutter build apk --debug
 ```
