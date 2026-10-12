@@ -143,9 +143,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           ],
         ),
         actions: [
-          TextButton(
+          AppTextButton(
+            label: MaterialLocalizations.of(context).cancelButtonLabel,
             onPressed: () => Navigator.of(context).pop(false),
-            child: AppText(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
           FilledButton(
             onPressed: refsByName.isEmpty

@@ -228,22 +228,22 @@ class _SyncSectionState extends State<_SyncSection> {
               ),
             ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
+            AppOutlinedButton(
+              label: l10n.syncShare,
               onPressed: busy ? null : _export,
-              icon: const AppIcon(Icons.upload_outlined),
-              label: AppText(l10n.syncShare),
+              icon: Icons.upload_outlined,
             ),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
+            AppOutlinedButton(
+              label: l10n.syncSaveFile,
               onPressed: busy ? null : _exportToFile,
-              icon: const AppIcon(Icons.save_alt_outlined),
-              label: AppText(l10n.syncSaveFile),
+              icon: Icons.save_alt_outlined,
             ),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
+            AppOutlinedButton(
+              label: l10n.syncImport,
               onPressed: busy ? null : _import,
-              icon: const AppIcon(Icons.download_outlined),
-              label: AppText(l10n.syncImport),
+              icon: Icons.download_outlined,
             ),
             if (status case final statusText?) ...[
               const SizedBox(height: 16),
@@ -303,9 +303,9 @@ class _SyncSectionState extends State<_SyncSection> {
         title: AppText(l10n.syncImportWarningTitle),
         content: AppText(l10n.syncImportWarningBody),
         actions: [
-          TextButton(
+          AppTextButton(
+            label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
-            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -586,9 +586,9 @@ class _AboutSectionState extends State<_AboutSection> {
         title: AppText(l10n.settingsUpdateAvailable),
         content: AppText(l10n.settingsUpdateContent(version ?? '')),
         actions: [
-          TextButton(
+          AppTextButton(
+            label: l10n.settingsUpdateLater,
             onPressed: () => Navigator.of(context).pop(false),
-            child: AppText(l10n.settingsUpdateLater),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),

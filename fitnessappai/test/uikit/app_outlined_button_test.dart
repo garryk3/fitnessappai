@@ -32,5 +32,27 @@ void main() {
       final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
       expect(button.onPressed, isNull);
     });
+
+    testWidgets('iconSize задаёт размер иконки, без него — из IconTheme', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const AppOutlinedButton(
+          label: 'Отмена',
+          icon: Icons.close,
+          iconSize: 18,
+        ),
+      );
+
+      expect(tester.widget<Icon>(find.byType(Icon)).size, 18);
+
+      await _pump(
+        tester,
+        const AppOutlinedButton(label: 'Отмена', icon: Icons.close),
+      );
+
+      expect(tester.widget<Icon>(find.byType(Icon)).size, isNull);
+    });
   });
 }

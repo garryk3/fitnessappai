@@ -289,9 +289,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             content: AppText(l10n.workoutRunExitBody),
             actions: narrow
                 ? [
-                    TextButton(
+                    AppTextButton(
+                      label: l10n.commonCancel,
                       onPressed: () => Navigator.of(context).pop('cancel'),
-                      child: AppText(l10n.commonCancel),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
@@ -305,9 +305,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                     ),
                   ]
                 : [
-                    TextButton(
+                    AppTextButton(
+                      label: l10n.commonCancel,
                       onPressed: () => Navigator.of(context).pop('cancel'),
-                      child: AppText(l10n.commonCancel),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(

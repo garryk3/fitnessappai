@@ -94,9 +94,9 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       builder: (context) => AlertDialog(
         title: AppText(l10n.exerciseDetailDeleteConfirm(data.exercise.name)),
         actions: [
-          TextButton(
+          AppTextButton(
+            label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
-            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),

@@ -398,9 +398,9 @@ class _WarningDialogState extends State<_WarningDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        AppTextButton(
+          label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(false),
-          child: AppText(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () async {

@@ -25,5 +25,20 @@ void main() {
       final button = tester.widget<TextButton>(find.byType(TextButton));
       expect(button.onPressed, isNull);
     });
+
+    testWidgets('iconSize задаёт размер иконки, без него — из IconTheme', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const AppTextButton(label: 'Ещё', icon: Icons.add, iconSize: 18),
+      );
+
+      expect(tester.widget<Icon>(find.byType(Icon)).size, 18);
+
+      await _pump(tester, const AppTextButton(label: 'Ещё', icon: Icons.add));
+
+      expect(tester.widget<Icon>(find.byType(Icon)).size, isNull);
+    });
   });
 }

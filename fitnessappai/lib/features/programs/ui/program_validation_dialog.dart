@@ -38,9 +38,9 @@ Future<bool?> showProgramValidationDialog(
         ),
       ),
       actions: [
-        TextButton(
+        AppTextButton(
+          label: l10n.programValidationContinue,
           onPressed: () => Navigator.of(context).pop(false),
-          child: AppText(l10n.programValidationContinue),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),

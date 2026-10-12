@@ -118,10 +118,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
           if (_controller.hasMore.value)
             Center(
-              child: TextButton.icon(
+              child: AppTextButton(
+                label: l10n.profileLoadMore,
                 onPressed: _controller.loadMore,
-                icon: const AppIcon(Icons.expand_more),
-                label: AppText(l10n.profileLoadMore),
+                icon: Icons.expand_more,
               ),
             ),
         ],
@@ -141,9 +141,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) => AlertDialog(
         title: AppText(l10n.profileDeleteMeasurementConfirm),
         actions: [
-          TextButton(
+          AppTextButton(
+            label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
-            child: AppText(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),

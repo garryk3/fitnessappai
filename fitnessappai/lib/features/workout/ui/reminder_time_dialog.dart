@@ -98,14 +98,14 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
       ),
       actions: [
         if (time != null)
-          TextButton(
+          AppTextButton(
+            label: l10n.weekPlanClearTime,
             onPressed: () =>
                 Navigator.of(context).pop(const ReminderTimeResult.clear()),
-            child: AppText(l10n.weekPlanClearTime),
           ),
-        TextButton(
+        AppTextButton(
+          label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
-          child: AppText(l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(

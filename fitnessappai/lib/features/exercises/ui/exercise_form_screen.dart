@@ -471,12 +471,12 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             ),
           Align(
             alignment: Alignment.centerLeft,
-            child: TextButton.icon(
+            child: AppTextButton(
+              label: l10n.exerciseFormMistakeAdd,
               onPressed: () => setState(
                 () => _mistakeControllers.add(TextEditingController()),
               ),
-              icon: const AppIcon(Icons.add),
-              label: AppText(l10n.exerciseFormMistakeAdd),
+              icon: Icons.add,
             ),
           ),
         ],
@@ -659,13 +659,10 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: AppOutlinedButton(
+                  label: l10n.exerciseFormThumbnailPick,
                   onPressed: _pickThumbnail,
-                  icon: const AppIcon(Icons.image_outlined),
-                  label: AppText(
-                    l10n.exerciseFormThumbnailPick,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  icon: Icons.image_outlined,
                 ),
               ),
               if (_thumbnailPath != null || _thumbnailBlob != null) ...[
@@ -723,13 +720,10 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: AppOutlinedButton(
+                  label: l10n.exerciseFormAnimationPick,
                   onPressed: _pickAnimation,
-                  icon: const AppIcon(Icons.image_outlined),
-                  label: AppText(
-                    l10n.exerciseFormAnimationPick,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  icon: Icons.image_outlined,
                 ),
               ),
               if (_animationPath != null || _animationBlob != null) ...[

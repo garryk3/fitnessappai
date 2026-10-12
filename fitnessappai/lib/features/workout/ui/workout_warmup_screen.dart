@@ -129,9 +129,9 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
                 ),
               const SizedBox(height: 32),
               if (!_done)
-                OutlinedButton(
+                AppOutlinedButton(
+                  label: l10n.workoutWarmupSkip,
                   onPressed: _goToRun,
-                  child: AppText(l10n.workoutWarmupSkip),
                 )
               else
                 AppGradientButton(
