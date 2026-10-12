@@ -62,9 +62,9 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
             Card(
               margin: EdgeInsets.zero,
               child: ListTile(
-                leading: const Icon(Icons.calendar_today_outlined),
+                leading: const AppIcon(Icons.calendar_today_outlined),
                 title: AppText(DateFormat('d MMMM yyyy', 'ru').format(_date)),
-                trailing: const Icon(Icons.edit_outlined),
+                trailing: const AppIcon(Icons.edit_outlined),
                 onTap: _pickDate,
               ),
             ),

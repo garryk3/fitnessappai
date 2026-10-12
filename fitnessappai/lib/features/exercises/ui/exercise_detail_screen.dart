@@ -160,14 +160,14 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             actions: [
               if (canEdit)
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined),
+                  icon: const AppIcon(Icons.edit_outlined),
                   tooltip: l10n.commonEdit,
                   onPressed: () =>
                       context.push('/exercises/${widget.exerciseId}/edit'),
                 ),
               if (canEdit)
                 IconButton(
-                  icon: const Icon(Icons.delete_outline),
+                  icon: const AppIcon(Icons.delete_outline),
                   tooltip: l10n.commonDelete,
                   onPressed: _confirmDelete,
                 ),
@@ -405,7 +405,7 @@ class _ExercisePreview extends StatelessWidget {
         color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Icon(
+      child: AppIcon(
         Icons.fitness_center,
         size: 56,
         color: colorScheme.onSurfaceVariant,
@@ -510,7 +510,7 @@ class _ContraindicationsSection extends StatelessWidget {
           if (warnings.isNotEmpty) ...[
             Row(
               children: [
-                Icon(
+                AppIcon(
                   Icons.warning_amber_rounded,
                   size: 18,
                   color: colorScheme.error,
@@ -535,7 +535,7 @@ class _ContraindicationsSection extends StatelessWidget {
               for (final tag in tags)
                 Chip(
                   label: AppText(tag.labelRu),
-                  avatar: Icon(
+                  avatar: AppIcon(
                     Icons.warning_amber_rounded,
                     size: 18,
                     color: warningKeys.contains(tag.key)

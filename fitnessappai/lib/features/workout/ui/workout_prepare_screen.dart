@@ -144,7 +144,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    AppIcon(
                       Icons.timer,
                       size: 16,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -274,7 +274,7 @@ class _ExerciseCard extends StatelessWidget {
               ],
               if (exerciseId != null) ...[
                 const SizedBox(width: 4),
-                Icon(
+                AppIcon(
                   Icons.chevron_right,
                   size: 20,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -343,7 +343,7 @@ class _TypeIcon extends StatelessWidget {
         color: colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Icon(icon, size: 20, color: colorScheme.onSecondaryContainer),
+      child: AppIcon(icon, size: 20, color: colorScheme.onSecondaryContainer),
     );
   }
 }

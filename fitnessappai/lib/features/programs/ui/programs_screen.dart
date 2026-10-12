@@ -56,7 +56,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
         heroTag: 'programs-fab',
         onPressed: () => context.push('/programs/new'),
         tooltip: l10n.programListCreate,
-        child: const Icon(Icons.add),
+        child: const AppIcon(Icons.add),
       ),
     );
   }
@@ -294,7 +294,7 @@ class _ProgramCard extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: FilledButton.icon(
                     onPressed: onStart,
-                    icon: const Icon(Icons.play_arrow),
+                    icon: const AppIcon(Icons.play_arrow),
                     label: AppText(l10n.weekPlanStart),
                   ),
                 ),

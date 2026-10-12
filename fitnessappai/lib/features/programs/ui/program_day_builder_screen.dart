@@ -345,7 +345,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
           IconButton(
             tooltip: l10n.programBuilderRenameDay,
             onPressed: _currentDay == null ? null : _renameDay,
-            icon: const Icon(Icons.edit_outlined),
+            icon: const AppIcon(Icons.edit_outlined),
           ),
         ],
       ),
@@ -355,7 +355,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               heroTag: 'program-day-builder-fab',
               tooltip: l10n.programBuilderAddExercise,
               onPressed: _addExercise,
-              child: const Icon(Icons.add),
+              child: const AppIcon(Icons.add),
             ),
       body: _buildBody(),
       bottomNavigationBar: _loading
@@ -492,7 +492,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            AppIcon(
               Icons.fitness_center,
               size: 48,
               color: Theme.of(context).colorScheme.outline,
@@ -526,7 +526,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
           onTap: () => _openExerciseParams(draft),
           leading: ReorderableDragStartListener(
             index: index,
-            child: const Icon(Icons.drag_indicator),
+            child: const AppIcon(Icons.drag_indicator),
           ),
           title: Row(
             children: [
@@ -549,12 +549,12 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
             children: [
               IconButton(
                 tooltip: l10n.programBuilderPickExercise,
-                icon: const Icon(Icons.tune),
+                icon: const AppIcon(Icons.tune),
                 onPressed: () => _openExerciseParams(draft),
               ),
               IconButton(
                 tooltip: l10n.commonDelete,
-                icon: const Icon(Icons.delete_outline),
+                icon: const AppIcon(Icons.delete_outline),
                 onPressed: () => _removeItem(draft),
               ),
             ],
@@ -727,7 +727,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
                         final exercise = _filtered[index];
                         return ListTile(
                           dense: true,
-                          leading: const Icon(Icons.fitness_center),
+                          leading: const AppIcon(Icons.fitness_center),
                           title: AppText(exercise.name),
                           subtitle: AppText(_typeLabel(l10n, exercise.type)),
                           onTap: () => Navigator.of(context).pop(exercise),

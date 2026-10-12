@@ -310,7 +310,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             const Divider(height: 24),
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              leading: const Icon(Icons.edit_calendar),
+              leading: const AppIcon(Icons.edit_calendar),
               title: AppText(l10n.weekPlanScheduleTitle),
               onTap: () {
                 final messenger = ScaffoldMessenger.of(context);
@@ -370,7 +370,7 @@ class _WeekSwitcher extends StatelessWidget {
           IconButton(
             onPressed: onPrev,
             tooltip: l10n.weekPlanPrevWeek,
-            icon: const Icon(Icons.chevron_left),
+            icon: const AppIcon(Icons.chevron_left),
           ),
           Expanded(
             child: Center(
@@ -380,7 +380,7 @@ class _WeekSwitcher extends StatelessWidget {
           IconButton(
             onPressed: onNext,
             tooltip: l10n.weekPlanNextWeek,
-            icon: const Icon(Icons.chevron_right),
+            icon: const AppIcon(Icons.chevron_right),
           ),
         ],
       ),
@@ -801,7 +801,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                     onPressed: () => onCancel!(item),
                     tooltip: l10n.weekPlanRemove,
                     visualDensity: VisualDensity.compact,
-                    icon: const Icon(Icons.close, size: 18),
+                    icon: const AppIcon(Icons.close, size: 18),
                   ),
                 if (showCancel) const SizedBox(width: 4),
                 Flexible(
@@ -825,7 +825,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.access_time, size: 14),
+                      const AppIcon(Icons.access_time, size: 14),
                       const SizedBox(width: 4),
                       AppText(
                         item.timeLabel!,
@@ -835,7 +835,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                       ),
                       if (item.reminderEnabled) ...[
                         const SizedBox(width: 4),
-                        Icon(
+                        AppIcon(
                           Icons.notifications_active,
                           size: 14,
                           color: theme.colorScheme.primary,
@@ -855,7 +855,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   if (actions.contains(DayAction.start))
                     FilledButton.tonalIcon(
                       onPressed: () => onStart(item),
-                      icon: const Icon(Icons.play_arrow),
+                      icon: const AppIcon(Icons.play_arrow),
                       label: AppText(l10n.weekPlanStart),
                       style: FilledButton.styleFrom(
                         visualDensity: VisualDensity.compact,
@@ -865,7 +865,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   if (actions.contains(DayAction.reschedule))
                     FilledButton.tonalIcon(
                       onPressed: () => onStart(item),
-                      icon: const Icon(Icons.event_repeat_outlined),
+                      icon: const AppIcon(Icons.event_repeat_outlined),
                       label: AppText(l10n.weekPlanReschedule),
                       style: FilledButton.styleFrom(
                         visualDensity: VisualDensity.compact,
@@ -885,7 +885,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   onPressed: () => onUnskip(item),
-                  icon: const Icon(Icons.undo, size: 18),
+                  icon: const AppIcon(Icons.undo, size: 18),
                   label: AppText(l10n.weekPlanUnskip),
                 ),
               ),
@@ -919,7 +919,7 @@ class _MissedWorkoutHint extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 16, color: color),
+          AppIcon(Icons.info_outline, size: 16, color: color),
           const SizedBox(width: 6),
           Expanded(
             child: AppText(
@@ -949,7 +949,7 @@ class _WeekEmpty extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          AppIcon(
             Icons.event_note_outlined,
             size: 64,
             color: theme.colorScheme.onSurfaceVariant,
@@ -1041,13 +1041,13 @@ class _DayActionTile extends StatelessWidget {
                   if (actions.contains(DayAction.start))
                     FilledButton.tonalIcon(
                       onPressed: onStart,
-                      icon: const Icon(Icons.play_arrow),
+                      icon: const AppIcon(Icons.play_arrow),
                       label: AppText(l10n.weekPlanStart),
                     ),
                   if (actions.contains(DayAction.reschedule))
                     FilledButton.tonalIcon(
                       onPressed: onStart,
-                      icon: const Icon(Icons.event_repeat_outlined),
+                      icon: const AppIcon(Icons.event_repeat_outlined),
                       label: AppText(l10n.weekPlanReschedule),
                     ),
                   if (actions.contains(DayAction.skip))
@@ -1060,7 +1060,7 @@ class _DayActionTile extends StatelessWidget {
                   if (actions.contains(DayAction.remove) && onCancel != null)
                     TextButton.icon(
                       onPressed: onCancel,
-                      icon: const Icon(Icons.close, size: 18),
+                      icon: const AppIcon(Icons.close, size: 18),
                       label: AppText(l10n.weekPlanRemove),
                     ),
                 ],
@@ -1069,7 +1069,7 @@ class _DayActionTile extends StatelessWidget {
                 actions.contains(DayAction.unskip)
                     ? TextButton.icon(
                         onPressed: onUnskip,
-                        icon: const Icon(Icons.undo, size: 18),
+                        icon: const AppIcon(Icons.undo, size: 18),
                         label: AppText(l10n.weekPlanUnskip),
                       )
                     : StatusBadge(status: status),
@@ -1087,7 +1087,7 @@ class _DayActionTile extends StatelessWidget {
           ],
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            leading: const Icon(Icons.access_time, size: 20),
+            leading: const AppIcon(Icons.access_time, size: 20),
             title: AppText(l10n.weekPlanTimeAction),
             subtitle: AppText(item.timeLabel ?? l10n.weekPlanNoTime),
             onTap: onEditTime,
@@ -1305,7 +1305,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
               ListTile(
                 title: AppText(summary.program.name),
                 subtitle: AppText('${summary.exercisesCount} упражнений'),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const AppIcon(Icons.chevron_right),
                 onTap: () => _selectProgram(summary),
               ),
           ],
@@ -1330,7 +1330,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
                 _selectedProgram = null;
                 _programDetail = null;
               }),
-              icon: const Icon(Icons.arrow_back),
+              icon: const AppIcon(Icons.arrow_back),
             ),
             Expanded(
               child: AppText(
@@ -1353,7 +1353,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
                   ? _weekdayLabel(l10n, day.day.dayOfWeek!)
                   : 'Без привязки',
             ),
-            trailing: const Icon(Icons.add_circle_outline),
+            trailing: const AppIcon(Icons.add_circle_outline),
             onTap: () => _selectDay(day.day),
           ),
       ],
@@ -1381,7 +1381,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
               onPressed: () => setState(() {
                 _selectedDay = null;
               }),
-              icon: const Icon(Icons.arrow_back),
+              icon: const AppIcon(Icons.arrow_back),
             ),
             Expanded(
               child: AppText(

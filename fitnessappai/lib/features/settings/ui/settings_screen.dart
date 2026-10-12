@@ -175,12 +175,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               segments: [
                 ButtonSegment(
                   value: ThemeMode.dark,
-                  icon: const Icon(Icons.dark_mode_outlined),
+                  icon: const AppIcon(Icons.dark_mode_outlined),
                   label: AppText(l10n.settingsThemeDark),
                 ),
                 ButtonSegment(
                   value: ThemeMode.light,
-                  icon: const Icon(Icons.light_mode_outlined),
+                  icon: const AppIcon(Icons.light_mode_outlined),
                   label: AppText(l10n.settingsThemeLight),
                 ),
               ],
@@ -230,19 +230,19 @@ class _SyncSectionState extends State<_SyncSection> {
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: busy ? null : _export,
-              icon: const Icon(Icons.upload_outlined),
+              icon: const AppIcon(Icons.upload_outlined),
               label: AppText(l10n.syncShare),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: busy ? null : _exportToFile,
-              icon: const Icon(Icons.save_alt_outlined),
+              icon: const AppIcon(Icons.save_alt_outlined),
               label: AppText(l10n.syncSaveFile),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: busy ? null : _import,
-              icon: const Icon(Icons.download_outlined),
+              icon: const AppIcon(Icons.download_outlined),
               label: AppText(l10n.syncImport),
             ),
             if (status case final statusText?) ...[
@@ -250,7 +250,7 @@ class _SyncSectionState extends State<_SyncSection> {
               Card(
                 margin: EdgeInsets.zero,
                 child: ListTile(
-                  leading: Icon(
+                  leading: AppIcon(
                     widget.controller.hasError.value
                         ? Icons.error_outline
                         : Icons.check_circle_outline,
@@ -265,7 +265,7 @@ class _SyncSectionState extends State<_SyncSection> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Icon(
+                AppIcon(
                   Icons.cloud_outlined,
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -487,7 +487,7 @@ class _PermissionTile extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 20, color: color),
+            AppIcon(icon, size: 20, color: color),
             const SizedBox(width: 12),
             Expanded(
               child: AppText(
@@ -553,7 +553,7 @@ class _AboutSectionState extends State<_AboutSection> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.update),
+                  : const AppIcon(Icons.update),
               label: AppText(l10n.settingsCheckUpdate),
             ),
             if (status case final statusText?) ...[

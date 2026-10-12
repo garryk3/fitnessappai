@@ -200,7 +200,7 @@ class _StatCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Column(
             children: [
-              Icon(
+              AppIcon(
                 icon,
                 size: 20,
                 color: onTap != null
@@ -437,7 +437,7 @@ class _MetricChart extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.trending_up),
+                  icon: const AppIcon(Icons.trending_up),
                   tooltip: l10n.progressProgressionOpen,
                   onPressed: selectedId == null
                       ? null

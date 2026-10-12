@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Миниатюра упражнения: заглушка с иконкой, если нет изображения/анимации.
 class ExerciseThumbnail extends StatelessWidget {
@@ -51,7 +52,7 @@ class ExerciseThumbnail extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Icon(
+      child: AppIcon(
         Icons.fitness_center,
         size: size * 0.56,
         color: theme.colorScheme.onSurfaceVariant,

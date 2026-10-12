@@ -177,14 +177,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             : AppText(l10n.navExercises),
         leading: _selectionMode
             ? IconButton(
-                icon: const Icon(Icons.close),
+                icon: const AppIcon(Icons.close),
                 onPressed: _exitSelectionMode,
               )
             : const AppMenuButton(),
         actions: _selectionMode
             ? [
                 IconButton(
-                  icon: const Icon(Icons.delete),
+                  icon: const AppIcon(Icons.delete),
                   onPressed: _deleteSelected,
                 ),
               ]
@@ -196,7 +196,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: SearchBar(
               hintText: l10n.exerciseListHint,
-              leading: const Icon(Icons.search),
+              leading: const AppIcon(Icons.search),
               onChanged: _controller.setQuery,
             ),
           ),
@@ -218,7 +218,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         heroTag: 'exercises-fab',
         onPressed: () => context.push('/exercises/new'),
         tooltip: l10n.exerciseListCreate,
-        child: const Icon(Icons.add),
+        child: const AppIcon(Icons.add),
       ),
     );
   }
@@ -407,7 +407,7 @@ class _ExerciseCard extends StatelessWidget {
               if (onStart != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.play_circle_outline),
+                  icon: const AppIcon(Icons.play_circle_outline),
                   tooltip: AppLocalizations.of(
                     context,
                   ).exerciseListStartWorkout,
@@ -448,7 +448,7 @@ class _Badge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 13, color: foreground),
+            AppIcon(icon, size: 13, color: foreground),
             const SizedBox(width: 3),
           ],
           AppText(
@@ -501,7 +501,7 @@ class _Thumbnail extends StatelessWidget {
         color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(Icons.fitness_center, color: colorScheme.onSurfaceVariant),
+      child: AppIcon(Icons.fitness_center, color: colorScheme.onSurfaceVariant),
     );
   }
 }

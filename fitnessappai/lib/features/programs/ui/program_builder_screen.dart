@@ -846,13 +846,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
             if (isEditing && _days.length > 1)
               IconButton(
                 tooltip: l10n.programBuilderDeleteDays,
-                icon: Icon(_deleteMode ? Icons.close : Icons.delete_outline),
+                icon: AppIcon(_deleteMode ? Icons.close : Icons.delete_outline),
                 onPressed: _toggleDeleteMode,
               ),
             if (isEditing && nextDay == null)
               IconButton(
                 tooltip: l10n.programCopyJson,
-                icon: const Icon(Icons.copy_outlined),
+                icon: const AppIcon(Icons.copy_outlined),
                 onPressed: _copyProgramJson,
               ),
           ],
@@ -1021,7 +1021,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                 height: 120,
                 width: double.infinity,
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                child: const Center(child: Icon(Icons.broken_image_outlined)),
+                child: const Center(
+                  child: AppIcon(Icons.broken_image_outlined),
+                ),
               ),
             ),
           ),
@@ -1032,7 +1034,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: _pickImage,
-                icon: const Icon(Icons.image_outlined),
+                icon: const AppIcon(Icons.image_outlined),
                 label: AppText(
                   l10n.programBuilderImagePick,
                   overflow: TextOverflow.ellipsis,
@@ -1043,7 +1045,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               const SizedBox(width: 8),
               IconButton(
                 tooltip: l10n.programBuilderImageRemove,
-                icon: const Icon(Icons.delete_outline),
+                icon: const AppIcon(Icons.delete_outline),
                 onPressed: _removeImage,
               ),
             ],
@@ -1097,7 +1099,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                 )
               : ReorderableDragStartListener(
                   index: index,
-                  child: const Icon(Icons.drag_indicator),
+                  child: const AppIcon(Icons.drag_indicator),
                 ),
           title: AppText(day.title ?? l10n.programBuilderDay(index + 1)),
           subtitle: AppText(
@@ -1114,12 +1116,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                     if (_days.length < 7)
                       IconButton(
                         tooltip: l10n.programBuilderCopyDay,
-                        icon: const Icon(Icons.content_copy),
+                        icon: const AppIcon(Icons.content_copy),
                         onPressed: () => _copyDay(index),
                       ),
                     IconButton(
                       tooltip: l10n.programBuilderDaySettings,
-                      icon: const Icon(Icons.tune),
+                      icon: const AppIcon(Icons.tune),
                       onPressed: () => _openDaySettings(day),
                     ),
                   ],
@@ -1212,7 +1214,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
           ),
           ListTile(
             enabled: _remindEnabled,
-            leading: const Icon(Icons.access_time),
+            leading: const AppIcon(Icons.access_time),
             title: AppText(l10n.reminderTime),
             subtitle: AppText(
               MaterialLocalizations.of(

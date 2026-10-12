@@ -124,8 +124,8 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     return [
       for (final branch in _railBranchOrder)
         NavigationRailDestination(
-          icon: Icon(byBranch[branch]!.icon),
-          selectedIcon: Icon(byBranch[branch]!.selectedIcon),
+          icon: AppIcon(byBranch[branch]!.icon),
+          selectedIcon: AppIcon(byBranch[branch]!.selectedIcon),
           label: AppText(byBranch[branch]!.label),
         ),
     ];
@@ -230,7 +230,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                     ? Alignment.centerRight
                     : Alignment.center,
                 child: IconButton(
-                  icon: Icon(_railExtended ? Icons.menu_open : Icons.menu),
+                  icon: AppIcon(_railExtended ? Icons.menu_open : Icons.menu),
                   tooltip: _railExtended
                       ? l10n.navRailCollapse
                       : l10n.navRailExpand,
@@ -262,7 +262,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     Widget footer;
     if (!_railExtended) {
       footer = IconButton(
-        icon: Icon(
+        icon: AppIcon(
           selected ? Icons.settings : Icons.settings_outlined,
           color: selected ? scheme.primary : null,
         ),
@@ -274,7 +274,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
         dense: true,
         selected: selected,
         selectedTileColor: scheme.secondaryContainer,
-        leading: Icon(selected ? Icons.settings : Icons.settings_outlined),
+        leading: AppIcon(selected ? Icons.settings : Icons.settings_outlined),
         title: AppText(l10n.settings),
         onTap: _goToSettings,
       );
@@ -373,7 +373,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                 children: [
                   for (final item in items)
                     ListTile(
-                      leading: Icon(item.icon),
+                      leading: AppIcon(item.icon),
                       selected:
                           item.branchIndex == navigationShell.currentIndex,
                       onTap: () {
@@ -388,7 +388,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
             // «Настройки» прикреплены к низу меню, отделены divider-ом.
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.settings_outlined),
+              leading: const AppIcon(Icons.settings_outlined),
               selected: navigationShell.currentIndex == _settingsBranchIndex,
               title: AppText(AppLocalizations.of(context).settings),
               onTap: () {
@@ -426,8 +426,8 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
       destinations: [
         for (final item in items.take(4))
           NavigationDestination(
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.selectedIcon),
+            icon: AppIcon(item.icon),
+            selectedIcon: AppIcon(item.selectedIcon),
             label: item.label,
           ),
       ],

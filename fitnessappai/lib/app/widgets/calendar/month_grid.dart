@@ -39,7 +39,7 @@ class MonthSwitcher extends StatelessWidget {
           IconButton(
             onPressed: onPrevious,
             tooltip: l10n.weekPlanPrevMonth,
-            icon: const Icon(Icons.chevron_left),
+            icon: const AppIcon(Icons.chevron_left),
           ),
           Expanded(
             child: Center(
@@ -49,7 +49,7 @@ class MonthSwitcher extends StatelessWidget {
           IconButton(
             onPressed: onNext,
             tooltip: l10n.weekPlanNextMonth,
-            icon: const Icon(Icons.chevron_right),
+            icon: const AppIcon(Icons.chevron_right),
           ),
         ],
       ),
@@ -130,7 +130,7 @@ class MonthDayCell extends StatelessWidget {
                 Positioned(
                   bottom: 0,
                   right: 0,
-                  child: Icon(
+                  child: AppIcon(
                     Icons.fitness_center,
                     size: 14,
                     color: foreground,

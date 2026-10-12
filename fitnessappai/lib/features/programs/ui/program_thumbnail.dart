@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Миниатюра изображения программы: заглушка с иконкой, если изображения нет.
 class ProgramThumbnail extends StatelessWidget {
@@ -40,7 +41,7 @@ class ProgramThumbnail extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(
+      child: AppIcon(
         Icons.fitness_center,
         color: theme.colorScheme.onSurfaceVariant,
       ),

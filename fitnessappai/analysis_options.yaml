@@ -45,7 +45,7 @@ plugins:
     version: ^0.2.2
     diagnostics:
       ban_text_widget: true
-      ban_icon_widget: false
+      ban_icon_widget: true
       ban_container_widget: false
       ban_card_widget: false
       ban_scaffold_widget: false
