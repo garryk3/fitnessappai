@@ -354,8 +354,8 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
           _handlePopRequest();
         }
       },
-      child: Scaffold(
-        appBar: AppBar(title: AppText(AppLocalizations.of(context).workoutRun)),
+      child: AppScaffold(
+        appBar: AppTopBar(title: AppLocalizations.of(context).workoutRun),
         body: Stack(
           children: [
             Column(

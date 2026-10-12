@@ -338,9 +338,9 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
   @override
   Widget build(BuildContext context) {
     final dayTitle = _currentDay?.day.title;
-    return Scaffold(
-      appBar: AppBar(
-        title: AppText(dayTitle ?? l10n.programBuilderDay(widget.dayIndex + 1)),
+    return AppScaffold(
+      appBar: AppTopBar(
+        title: dayTitle ?? l10n.programBuilderDay(widget.dayIndex + 1),
         actions: [
           IconButton(
             tooltip: l10n.programBuilderRenameDay,

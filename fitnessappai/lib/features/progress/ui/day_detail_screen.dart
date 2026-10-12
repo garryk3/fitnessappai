@@ -102,8 +102,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(title: AppText(_title)),
+    return AppScaffold(
+      appBar: AppTopBar(title: _title),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty

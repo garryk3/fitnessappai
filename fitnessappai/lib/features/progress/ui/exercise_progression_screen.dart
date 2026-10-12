@@ -63,10 +63,8 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: AppText(_exercise?.name ?? l10n.progressProgression),
-      ),
+    return AppScaffold(
+      appBar: AppTopBar(title: _exercise?.name ?? l10n.progressProgression),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _exercise == null

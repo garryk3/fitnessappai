@@ -85,10 +85,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
+    return AppScaffold(
+      appBar: AppTopBar(
         leading: const AppMenuButton(),
-        title: AppText(l10n.history),
+        title: l10n.history,
         actions: [
           IconButton(
             tooltip: l10n.historyCopyJsonTooltip,
@@ -269,8 +269,8 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: AppText(l10n.historyDetail)),
+    return AppScaffold(
+      appBar: AppTopBar(title: l10n.historyDetail),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _detail == null

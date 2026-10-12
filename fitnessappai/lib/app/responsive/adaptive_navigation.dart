@@ -299,7 +299,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
         final items = _menuItems(context);
 
         final child = useRail
-            ? Scaffold(
+            ? AppScaffold(
                 body: Row(
                   children: [
                     NavigationRail(
@@ -316,8 +316,8 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                   ],
                 ),
               )
-            : Scaffold(
-                key: _scaffoldKey,
+            : AppScaffold(
+                scaffoldKey: _scaffoldKey,
                 body: navigationShell,
                 drawer: _buildDrawer(context, items),
                 bottomNavigationBar: _buildBottomBar(context, items),

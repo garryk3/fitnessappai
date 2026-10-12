@@ -304,9 +304,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isEditing = widget.exerciseId != null;
-    return Scaffold(
-      appBar: AppBar(
-        title: AppText(isEditing ? l10n.exerciseEdit : l10n.exerciseNew),
+    return AppScaffold(
+      appBar: AppTopBar(
+        title: isEditing ? l10n.exerciseEdit : l10n.exerciseNew,
       ),
       body: _allMuscles.isEmpty && widget.exerciseId != null
           ? const Center(child: CircularProgressIndicator())

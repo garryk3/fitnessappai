@@ -127,11 +127,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        leading: const AppMenuButton(),
-        title: AppText(l10n.settings),
-      ),
+    return AppScaffold(
+      appBar: AppTopBar(leading: const AppMenuButton(), title: l10n.settings),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

@@ -11,8 +11,8 @@ class PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: AppText(title)),
+    return AppScaffold(
+      appBar: AppTopBar(title: title),
       body: Center(
         child: AppText(AppLocalizations.of(context).placeholderTab(title)),
       ),

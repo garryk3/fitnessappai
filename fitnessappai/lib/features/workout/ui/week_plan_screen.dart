@@ -158,11 +158,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        leading: const AppMenuButton(),
-        title: AppText(l10n.navPlan),
-      ),
+    return AppScaffold(
+      appBar: AppTopBar(leading: const AppMenuButton(), title: l10n.navPlan),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
     );
   }

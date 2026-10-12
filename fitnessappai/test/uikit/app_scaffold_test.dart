@@ -20,5 +20,26 @@ void main() {
       expect(find.text('Тело'), findsOneWidget);
       expect(find.text('Экран'), findsOneWidget);
     });
+
+    testWidgets('scaffoldKey открывает drawer программно', (tester) async {
+      final scaffoldKey = GlobalKey<ScaffoldState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AppScaffold(
+            scaffoldKey: scaffoldKey,
+            drawer: const Drawer(child: Text('Меню')),
+            body: const Text('Тело'),
+          ),
+        ),
+      );
+
+      // Регресс (52.7): GlobalKey<ScaffoldState>, переданный в super.key,
+      // висел на stateless-обёртке и давал currentState == null — открытие
+      // drawer молча не работало.
+      expect(scaffoldKey.currentState, isNotNull);
+      scaffoldKey.currentState!.openDrawer();
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsOneWidget);
+    });
   });
 }

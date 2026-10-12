@@ -170,11 +170,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: _selectionMode
-            ? AppText('${_selectedIds.length}')
-            : AppText(l10n.navExercises),
+    return AppScaffold(
+      appBar: AppTopBar(
+        title: _selectionMode ? '${_selectedIds.length}' : l10n.navExercises,
         leading: _selectionMode
             ? IconButton(
                 icon: const AppIcon(Icons.close),

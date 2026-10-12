@@ -95,8 +95,8 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(title: AppText(l10n.workoutWarmup)),
+    return AppScaffold(
+      appBar: AppTopBar(title: l10n.workoutWarmup),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),

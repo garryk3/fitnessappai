@@ -54,10 +54,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return AppScaffold(
+      appBar: AppTopBar(
         leading: const AppMenuButton(),
-        title: AppText(AppLocalizations.of(context).navProgress),
+        title: AppLocalizations.of(context).navProgress,
       ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
