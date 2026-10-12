@@ -1017,7 +1017,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
               width: double.infinity,
               height: 120,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              errorBuilder: (_, _, _) => AppContainer(
                 height: 120,
                 width: double.infinity,
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -1086,7 +1086,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
     return Padding(
       key: ValueKey('day-${day.key}'),
       padding: const EdgeInsets.only(bottom: 8),
-      child: Card(
+      child: AppCard(
+        padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: ListTile(
           onTap: _deleteMode

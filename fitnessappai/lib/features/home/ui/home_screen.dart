@@ -300,7 +300,7 @@ class _RecentWorkoutCard extends StatelessWidget {
       onTap: () => context.push('/history/${session.id}'),
       child: Row(
         children: [
-          Container(
+          AppContainer(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),

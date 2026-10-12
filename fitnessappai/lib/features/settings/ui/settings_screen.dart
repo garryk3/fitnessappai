@@ -247,8 +247,8 @@ class _SyncSectionState extends State<_SyncSection> {
             ),
             if (status case final statusText?) ...[
               const SizedBox(height: 16),
-              Card(
-                margin: EdgeInsets.zero,
+              AppCard(
+                padding: EdgeInsets.zero,
                 child: ListTile(
                   leading: AppIcon(
                     widget.controller.hasError.value

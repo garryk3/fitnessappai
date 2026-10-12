@@ -26,6 +26,7 @@ import 'package:fitnessappai/features/progress/ui/exercise_progression_screen.da
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 void main() {
   /// Среда, 12 августа 2026 (понедельник недели — 10 августа).
@@ -108,7 +109,7 @@ void main() {
   );
 
   Finder statCard(String label) =>
-      find.ancestor(of: find.text(label), matching: find.byType(Card));
+      find.ancestor(of: find.text(label), matching: find.byType(AppCard));
 
   Future<void> pumpProgress(WidgetTester tester) async {
     await tester.pumpWidget(

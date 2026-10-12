@@ -96,7 +96,7 @@ class MonthDayCell extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
-        child: Container(
+        child: AppContainer(
           height: fillHeight ? double.infinity : 52,
           decoration: BoxDecoration(
             color: background,

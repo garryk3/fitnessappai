@@ -34,7 +34,7 @@ class ProgramThumbnail extends StatelessWidget {
   }
 
   Widget _placeholder(ThemeData theme) {
-    return Container(
+    return AppContainer(
       width: size,
       height: size,
       decoration: BoxDecoration(

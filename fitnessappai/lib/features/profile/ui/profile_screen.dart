@@ -342,7 +342,7 @@ class _BmiScale extends StatelessWidget {
               Positioned(
                 left: (width * fraction - 5).clamp(0.0, width - 10),
                 top: 0,
-                child: Container(
+                child: AppContainer(
                   width: 10,
                   height: 26,
                   decoration: BoxDecoration(
@@ -402,8 +402,8 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -442,7 +442,7 @@ class _MetricChip extends StatelessWidget {
     final unit = metric == BodyMetric.weight
         ? l10n.workoutUnitKg
         : l10n.profileUnitCm;
-    return Container(
+    return AppContainer(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
@@ -473,8 +473,8 @@ class _MetricChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: SignalBuilder(
         builder: (context) {
           final selectedMetric = controller.selectedMetric.value;
@@ -666,8 +666,8 @@ class _HistoryTile extends StatelessWidget {
     final summary = measurement.weightKg != null
         ? '${_fmt(measurement.weightKg!)} ${l10n.workoutUnitKg}'
         : '${values.length} ${l10n.profileUnitCm}';
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: ListTile(
@@ -695,8 +695,8 @@ class _LinksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: ListTile(
         leading: const AppIcon(Icons.health_and_safety_outlined),
         title: AppText(l10n.contraindications),

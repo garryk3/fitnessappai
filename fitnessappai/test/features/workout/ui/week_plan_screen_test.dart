@@ -19,6 +19,7 @@ import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 // 1×1 PNG (валидные байты для декодирования в тестах).
 final Uint8List _validPng = Uint8List.fromList(const [
@@ -204,7 +205,7 @@ void main() {
 
   /// Карточка (колонка) дня недели с указанным номером.
   Finder dayColumn(WidgetTester tester, String dayNumber) =>
-      find.ancestor(of: find.text(dayNumber), matching: find.byType(Card));
+      find.ancestor(of: find.text(dayNumber), matching: find.byType(AppCard));
 
   /// Вводит время в открытом `TimePickerDialog` и подтверждает (48.10).
   ///
@@ -328,7 +329,7 @@ void main() {
 
       final card = find.ancestor(
         of: find.text('Сплит'),
-        matching: find.byType(Card),
+        matching: find.byType(AppCard),
       );
       expect(
         find.descendant(of: card, matching: find.byType(Image)),
@@ -345,7 +346,7 @@ void main() {
 
     final card = find.ancestor(
       of: find.text('Сплит'),
-      matching: find.byType(Card),
+      matching: find.byType(AppCard),
     );
     expect(
       find.descendant(of: card, matching: find.byIcon(Icons.fitness_center)),

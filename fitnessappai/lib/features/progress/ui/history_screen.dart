@@ -326,8 +326,8 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
         ),
         const SizedBox(height: 16),
         for (final entry in groups.entries) ...[
-          Card(
-            margin: EdgeInsets.zero,
+          AppCard(
+            padding: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(

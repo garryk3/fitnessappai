@@ -191,8 +191,8 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -247,8 +247,8 @@ class _WorkoutsChart extends StatelessWidget {
     final maxY = counts.isEmpty
         ? 4.0
         : (counts.reduce((a, b) => a > b ? a : b) + 1).toDouble();
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -421,8 +421,8 @@ class _MetricChart extends StatelessWidget {
     final leftReserved = unitSuffix.isNotEmpty ? 48.0 : 32.0;
     final maxY = values.isEmpty ? 1.0 : values.reduce((a, b) => a > b ? a : b);
     final yInterval = niceInterval(maxY);
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -629,8 +629,8 @@ class _MuscleLoadPanel extends StatelessWidget {
           ? current
           : value;
     }
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

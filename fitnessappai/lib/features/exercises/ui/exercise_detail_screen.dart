@@ -398,7 +398,7 @@ class _ExercisePreview extends StatelessWidget {
 
   Widget _placeholder(BuildContext context, double height) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
+    return AppContainer(
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
@@ -429,7 +429,7 @@ class _TypeBadge extends StatelessWidget {
       ExerciseType.distance => l10n.exerciseTypeDistance,
     };
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
+    return AppContainer(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,

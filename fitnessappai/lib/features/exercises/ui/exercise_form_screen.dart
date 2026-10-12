@@ -644,7 +644,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 width: double.infinity,
                 height: 120,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
+                errorBuilder: (_, _, _) => AppContainer(
                   height: 120,
                   width: double.infinity,
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -708,7 +708,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 width: double.infinity,
                 height: 160,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
+                errorBuilder: (_, _, _) => AppContainer(
                   height: 160,
                   width: double.infinity,
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,

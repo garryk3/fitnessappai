@@ -627,7 +627,7 @@ class _ExerciseMedia extends StatelessWidget {
 
   Widget _mediaPlaceholder(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
+    return AppContainer(
       height: 180,
       width: double.infinity,
       decoration: BoxDecoration(
@@ -684,8 +684,8 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
         if (results == null || results.isEmpty) {
           return const SizedBox.shrink();
         }
-        return Card(
-          margin: EdgeInsets.zero,
+        return AppCard(
+          padding: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -766,7 +766,7 @@ class _PlankHoldPanel extends StatelessWidget {
     final counterColor = reached
         ? theme.colorScheme.tertiary
         : theme.colorScheme.primary;
-    return Container(
+    return AppContainer(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
       decoration: BoxDecoration(

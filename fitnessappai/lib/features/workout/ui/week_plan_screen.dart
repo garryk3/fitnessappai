@@ -608,8 +608,8 @@ class _DayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
         onTap: onDayTap == null ? null : () => onDayTap!(date),
         borderRadius: BorderRadius.circular(12),
@@ -681,7 +681,7 @@ class _DayHeader extends StatelessWidget {
             ),
             if (isToday) ...[
               const SizedBox(width: 6),
-              Container(
+              AppContainer(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: colorScheme.primaryContainer,
@@ -718,7 +718,7 @@ class _DayHeader extends StatelessWidget {
       return header;
     }
     // Текущий день выделяем цветным блоком для наглядности.
-    return Container(
+    return AppContainer(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -763,8 +763,8 @@ class _PlannedWorkoutCard extends StatelessWidget {
     // Крестик удаления — только для ручных назначений из plan_schedule.
     final showCancel = actions.contains(DayAction.remove) && onCancel != null;
 
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -909,7 +909,7 @@ class _MissedWorkoutHint extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = theme.colorScheme.onSurfaceVariant;
-    return Container(
+    return AppContainer(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,

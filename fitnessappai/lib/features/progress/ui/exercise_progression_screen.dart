@@ -94,8 +94,8 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Card(
-          margin: EdgeInsets.zero,
+        AppCard(
+          padding: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(

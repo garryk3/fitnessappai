@@ -59,8 +59,8 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Card(
-              margin: EdgeInsets.zero,
+            AppCard(
+              padding: EdgeInsets.zero,
               child: ListTile(
                 leading: const AppIcon(Icons.calendar_today_outlined),
                 title: AppText(DateFormat('d MMMM yyyy', 'ru').format(_date)),
