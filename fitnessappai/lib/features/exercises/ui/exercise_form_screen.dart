@@ -461,7 +461,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const AppIcon(Icons.close),
                   tooltip: l10n.commonDelete,
                   onPressed: () => setState(() {
                     _mistakeControllers.removeAt(i).dispose();
@@ -475,7 +475,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
               onPressed: () => setState(
                 () => _mistakeControllers.add(TextEditingController()),
               ),
-              icon: const Icon(Icons.add),
+              icon: const AppIcon(Icons.add),
               label: AppText(l10n.exerciseFormMistakeAdd),
             ),
           ),
@@ -648,7 +648,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   height: 120,
                   width: double.infinity,
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: const Center(child: Icon(Icons.broken_image_outlined)),
+                  child: const Center(
+                    child: AppIcon(Icons.broken_image_outlined),
+                  ),
                 ),
               ),
             ),
@@ -659,7 +661,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _pickThumbnail,
-                  icon: const Icon(Icons.image_outlined),
+                  icon: const AppIcon(Icons.image_outlined),
                   label: AppText(
                     l10n.exerciseFormThumbnailPick,
                     overflow: TextOverflow.ellipsis,
@@ -670,7 +672,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 const SizedBox(width: 8),
                 IconButton(
                   tooltip: l10n.exerciseFormThumbnailRemove,
-                  icon: const Icon(Icons.delete_outline),
+                  icon: const AppIcon(Icons.delete_outline),
                   onPressed: () => setState(() {
                     _thumbnailPath = null;
                     _thumbnailBlob = null;
@@ -710,7 +712,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   height: 160,
                   width: double.infinity,
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: const Center(child: Icon(Icons.broken_image_outlined)),
+                  child: const Center(
+                    child: AppIcon(Icons.broken_image_outlined),
+                  ),
                 ),
               ),
             ),
@@ -721,7 +725,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _pickAnimation,
-                  icon: const Icon(Icons.image_outlined),
+                  icon: const AppIcon(Icons.image_outlined),
                   label: AppText(
                     l10n.exerciseFormAnimationPick,
                     overflow: TextOverflow.ellipsis,
@@ -732,7 +736,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 const SizedBox(width: 8),
                 IconButton(
                   tooltip: l10n.exerciseFormAnimationRemove,
-                  icon: const Icon(Icons.delete_outline),
+                  icon: const AppIcon(Icons.delete_outline),
                   onPressed: () => setState(() {
                     _animationPath = null;
                     _animationBlob = null;

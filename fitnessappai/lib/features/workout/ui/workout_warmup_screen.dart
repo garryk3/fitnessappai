@@ -103,7 +103,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              AppIcon(
                 _done ? Icons.check_circle : Icons.timer,
                 size: 64,
                 color: _done

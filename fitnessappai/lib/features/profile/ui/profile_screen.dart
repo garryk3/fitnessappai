@@ -62,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             await _controller.reload();
           }
         },
-        icon: const Icon(Icons.add),
+        icon: const AppIcon(Icons.add),
         label: AppText(l10n.profileAddMeasurement),
       ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
@@ -120,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Center(
               child: TextButton.icon(
                 onPressed: _controller.loadMore,
-                icon: const Icon(Icons.expand_more),
+                icon: const AppIcon(Icons.expand_more),
                 label: AppText(l10n.profileLoadMore),
               ),
             ),
@@ -680,7 +680,7 @@ class _HistoryTile extends StatelessWidget {
             ),
           ),
           trailing: IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const AppIcon(Icons.delete_outline),
             tooltip: l10n.commonDelete,
             onPressed: onDelete,
           ),
@@ -698,9 +698,9 @@ class _LinksCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: ListTile(
-        leading: const Icon(Icons.health_and_safety_outlined),
+        leading: const AppIcon(Icons.health_and_safety_outlined),
         title: AppText(l10n.contraindications),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const AppIcon(Icons.chevron_right),
         onTap: () => context.push('/contraindications'),
       ),
     );

@@ -157,7 +157,7 @@ class ReminderTimeFields extends StatelessWidget {
       children: [
         ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.access_time),
+          leading: const AppIcon(Icons.access_time),
           title: AppText(l10n.weekPlanTime),
           subtitle: AppText(
             time == null ? l10n.weekPlanNoTime : _formatTime(time),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Область, предоставляющая пунктам навигации доступ к кнопке вызыва меню.
 ///
@@ -43,7 +44,7 @@ class AppMenuButton extends StatelessWidget {
     }
     final l10n = AppLocalizations.of(context);
     return IconButton(
-      icon: const Icon(Icons.menu),
+      icon: const AppIcon(Icons.menu),
       tooltip: l10n.navMenu,
       onPressed: opener.onOpenMenu,
     );

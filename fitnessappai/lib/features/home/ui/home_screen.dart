@@ -242,7 +242,7 @@ class _ActiveProgramCard extends StatelessWidget {
               ],
               if (onStart != null)
                 IconButton.filledTonal(
-                  icon: const Icon(Icons.play_arrow),
+                  icon: const AppIcon(Icons.play_arrow),
                   tooltip: l10n.weekPlanStart,
                   onPressed: onStart,
                 ),
@@ -270,7 +270,7 @@ class _ActiveProgramCard extends StatelessWidget {
               children: [
                 for (final name in exerciseNames)
                   Chip(
-                    avatar: const Icon(Icons.fitness_center, size: 14),
+                    avatar: const AppIcon(Icons.fitness_center, size: 14),
                     label: AppText(name, style: theme.textTheme.bodySmall),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: theme.colorScheme.surfaceContainerHigh,
@@ -306,7 +306,7 @@ class _RecentWorkoutCard extends StatelessWidget {
               color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
+            child: AppIcon(
               Icons.check_circle_outline,
               color: theme.colorScheme.primary,
               size: 24,
@@ -344,7 +344,10 @@ class _RecentWorkoutCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: theme.colorScheme.onSurfaceVariant),
+          AppIcon(
+            Icons.chevron_right,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ],
       ),
     );
@@ -375,7 +378,7 @@ class _EmptyHint extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
+            AppIcon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             AppText(
               title,

@@ -383,7 +383,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                       onPressed: isPlaying
                           ? _controller.workout.stopSound
                           : null,
-                      child: const Icon(Icons.stop_circle),
+                      child: const AppIcon(Icons.stop_circle),
                     ),
                   );
                 },
@@ -477,7 +477,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   tooltip: l10n.exerciseDetail,
-                  icon: const Icon(Icons.info_outline, size: 20),
+                  icon: const AppIcon(Icons.info_outline, size: 20),
                   onPressed: () => context.push('/exercises/${exercise.id}'),
                 ),
               ],
@@ -634,7 +634,7 @@ class _ExerciseMedia extends StatelessWidget {
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Icon(
+      child: AppIcon(
         switch (exercise.type) {
           ExerciseType.strength => Icons.fitness_center,
           ExerciseType.bodyweight => Icons.accessibility_new,
@@ -797,7 +797,7 @@ class _PlankHoldPanel extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: onStart,
-              icon: const Icon(Icons.play_arrow),
+              icon: const AppIcon(Icons.play_arrow),
               label: AppText(l10n.workoutRunHoldStart),
             ),
           ],
@@ -1269,7 +1269,7 @@ class _FinishedViewState extends State<_FinishedView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            AppIcon(
               Icons.check_circle,
               size: 64,
               color: theme.colorScheme.primary,
@@ -1301,7 +1301,7 @@ class _FinishedViewState extends State<_FinishedView> {
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Row(
                     children: [
-                      Icon(
+                      AppIcon(
                         _typeIcon(we.exercise.type),
                         size: 16,
                         color: theme.colorScheme.onSurfaceVariant,

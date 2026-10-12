@@ -53,7 +53,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
                     onPressed: controller.enabled.value
                         ? () => controller.pickSoundFile()
                         : null,
-                    icon: const Icon(Icons.audio_file_outlined),
+                    icon: const AppIcon(Icons.audio_file_outlined),
                     label: AppText(l10n.soundPickFile),
                   ),
                 ),
@@ -61,7 +61,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
                   const SizedBox(width: 8),
                   IconButton(
                     tooltip: l10n.soundReset,
-                    icon: const Icon(Icons.restart_alt),
+                    icon: const AppIcon(Icons.restart_alt),
                     onPressed: () => controller.resetSoundFile(),
                   ),
                 ],
@@ -70,7 +70,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
                   tooltip: controller.isPlaying.value
                       ? l10n.soundStop
                       : l10n.soundPreview,
-                  icon: Icon(
+                  icon: AppIcon(
                     controller.isPlaying.value ? Icons.stop : Icons.play_arrow,
                   ),
                   onPressed: controller.enabled.value

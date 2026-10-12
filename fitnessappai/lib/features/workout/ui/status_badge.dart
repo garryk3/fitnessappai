@@ -55,7 +55,7 @@ class StatusBadge extends StatelessWidget {
         children: [
           if (status == WeekPlanStatus.skipped ||
               status == WeekPlanStatus.pastSkipped) ...[
-            Icon(Icons.remove, size: 12, color: foreground),
+            AppIcon(Icons.remove, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],
           AppText(
