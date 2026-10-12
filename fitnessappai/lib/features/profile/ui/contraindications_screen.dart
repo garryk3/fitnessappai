@@ -58,8 +58,8 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Card(
-          margin: EdgeInsets.zero,
+        AppCard(
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               for (final (index, tag) in tags.indexed) ...[

@@ -168,7 +168,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
               SizedBox(
                 width: 80,
                 child: Center(
-                  child: Container(
+                  child: AppContainer(
                     width: 48,
                     height: 48,
                     alignment: Alignment.center,
@@ -196,7 +196,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     return SizedBox(
       height: 48,
       child: Center(
-        child: Container(
+        child: AppContainer(
           width: 48,
           height: 48,
           alignment: Alignment.center,

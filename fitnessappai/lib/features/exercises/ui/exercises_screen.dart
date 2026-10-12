@@ -340,7 +340,8 @@ class _ExerciseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final exercise = item.exercise;
-    return Card(
+    return AppCard(
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
       child: InkWell(
@@ -438,7 +439,7 @@ class _Badge extends StatelessWidget {
     final foreground = highlight
         ? colorScheme.onErrorContainer
         : colorScheme.onSecondaryContainer;
-    return Container(
+    return AppContainer(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: background,
@@ -494,7 +495,7 @@ class _Thumbnail extends StatelessWidget {
 
   Widget _placeholder(BuildContext context, double size) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
+    return AppContainer(
       width: size,
       height: size,
       decoration: BoxDecoration(

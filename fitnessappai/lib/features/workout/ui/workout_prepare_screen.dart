@@ -227,8 +227,8 @@ class _ExerciseCard extends StatelessWidget {
     final theme = Theme.of(context);
     final exercise = item.exercise;
     final exerciseId = exercise.id;
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: exerciseId == null
@@ -337,7 +337,7 @@ class _TypeIcon extends StatelessWidget {
       ExerciseType.plank => Icons.self_improvement,
       ExerciseType.distance => Icons.directions_run,
     };
-    return Container(
+    return AppContainer(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,

@@ -23,6 +23,7 @@ import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/main.dart' hide main;
 import 'package:fitnessappai/app/widgets/profile_avatar.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 const _programName = 'Тест Сплит';
 const _squat = 'Тест Приседания';
@@ -99,7 +100,7 @@ int _displayedWeekStartDay(WidgetTester tester) =>
 Finder weekRescheduleButtonForDay(int dayNumber) {
   final card = find.ancestor(
     of: find.textContaining('День $dayNumber ·'),
-    matching: find.byType(Card),
+    matching: find.byType(AppCard),
   );
   return find.descendant(of: card, matching: find.text('Перенести на сегодня'));
 }
@@ -530,7 +531,7 @@ Future<void> configureDay(
   await scrollUntilVisibleIn(tester, dayLabel);
   await tester.pumpAndSettle();
 
-  final dayCard = find.ancestor(of: dayLabel, matching: find.byType(Card));
+  final dayCard = find.ancestor(of: dayLabel, matching: find.byType(AppCard));
   if (weekday != null) {
     await tester.tap(
       find.descendant(of: dayCard, matching: find.byIcon(Icons.tune)),
@@ -814,7 +815,7 @@ Future<void> finishAndGoProgress(WidgetTester tester) async {
 Future<void> expectWorkoutCount(WidgetTester tester, String count) async {
   final card = find.ancestor(
     of: find.text('Тренировок'),
-    matching: find.byType(Card),
+    matching: find.byType(AppCard),
   );
   expect(card, findsOneWidget);
   expect(find.descendant(of: card, matching: find.text(count)), findsOneWidget);
@@ -1429,7 +1430,7 @@ void main() {
 
     final workoutsCard = find.ancestor(
       of: find.text('Тренировок'),
-      matching: find.byType(Card),
+      matching: find.byType(AppCard),
     );
     expect(workoutsCard, findsOneWidget);
 
@@ -2098,7 +2099,7 @@ void main() {
 
     final workoutsCard = find.ancestor(
       of: find.text('Тренировок'),
-      matching: find.byType(Card),
+      matching: find.byType(AppCard),
     );
     expect(workoutsCard, findsOneWidget);
 
@@ -2207,7 +2208,10 @@ void main() {
     await scrollUntilVisibleIn(tester, dayLabel1);
     await tester.pumpAndSettle();
 
-    final dayCard1 = find.ancestor(of: dayLabel1, matching: find.byType(Card));
+    final dayCard1 = find.ancestor(
+      of: dayLabel1,
+      matching: find.byType(AppCard),
+    );
     await tester.tap(dayLabel1);
     await tester.pumpAndSettle();
 

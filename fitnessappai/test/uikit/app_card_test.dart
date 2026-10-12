@@ -93,5 +93,39 @@ void main() {
       await tester.tap(find.text('Контент'));
       expect(tapped, isTrue);
     });
+
+    testWidgets('color переопределяет фон', (tester) async {
+      await _pump(
+        tester,
+        const AppCard(color: Colors.amber, child: Text('Контент')),
+      );
+
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.text('Контент'),
+          matching: find.byType(Container),
+        ),
+      );
+      final decoration = container.decoration! as BoxDecoration;
+      expect(decoration.color, Colors.amber);
+      expect(decoration.gradient, isNull);
+    });
+
+    testWidgets('clipBehavior пробрасывается во внешний Container', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const AppCard(clipBehavior: Clip.antiAlias, child: Text('Контент')),
+      );
+
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.text('Контент'),
+          matching: find.byType(Container),
+        ),
+      );
+      expect(container.clipBehavior, Clip.antiAlias);
+    });
   });
 }

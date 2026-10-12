@@ -24,6 +24,7 @@ import 'package:fitnessappai/features/progress/ui/day_detail_screen.dart';
 import 'package:fitnessappai/features/progress/ui/history_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 // 1×1 PNG (валидные байты для декодирования в тестах).
 final Uint8List _validPng = Uint8List.fromList(const [
@@ -241,7 +242,7 @@ void main() {
 
     final card = find.ancestor(
       of: find.text('База'),
-      matching: find.byType(Card),
+      matching: find.byType(AppCard),
     );
     expect(
       find.descendant(of: card, matching: find.byType(Image)),

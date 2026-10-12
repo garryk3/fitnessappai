@@ -520,7 +520,8 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     return Padding(
       key: ValueKey(draft.key),
       padding: const EdgeInsets.only(bottom: 8),
-      child: Card(
+      child: AppCard(
+        padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: ListTile(
           onTap: () => _openExerciseParams(draft),

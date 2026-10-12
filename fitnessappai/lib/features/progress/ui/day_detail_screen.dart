@@ -136,8 +136,8 @@ class _SessionCard extends StatelessWidget {
     final session = item.session;
     final date = DateFormat('d MMMM yyyy', 'ru').format(session.performedDate);
     final minutes = item.duration.inMinutes;
-    return Card(
-      margin: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => context.push('/history/${session.id}'),

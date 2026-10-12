@@ -43,7 +43,7 @@ class StatusBadge extends StatelessWidget {
         Border.all(color: colorScheme.statusSkippedOutline, width: 1.2),
       ),
     };
-    return Container(
+    return AppContainer(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color,
