@@ -23,10 +23,14 @@ linter:
 # включаются по одному по мере миграции (см. PLAN.md, этап 52), чтобы CI
 # оставался зелёным на каждом шаге.
 #
-# ВАЖНО: гейт работает только через `dart analyze --fatal-infos` — `flutter analyze`
-# диагностику analyzer-плагинов не показывает вообще (проверено 2026-10-11).
-# ВАЖНО 2: путь передавать НЕЛЬЗЯ — `dart analyze lib` плагины не грузит вообще
-# (проверено 2026-10-12), а `exclude_for_plugin`/`--options` у `dart analyze` нет.
+# ВАЖНО: гейт — `dart analyze --fatal-infos` по всему пакету (без путей).
+# Проверенные ловушки (2026-10-11/12):
+#   * `dart analyze <path>` (напр. `dart analyze lib`) плагины НЕ грузит вообще
+#     — 0 диагностик вместо 703; путь аргументом передавать нельзя;
+#   * `exclude_for_plugin` не поддерживается, `--options` у `dart analyze` нет;
+#   * `flutter analyze` диагностику плагина показывает не на всех версиях
+#     (Flutter 3.47.4 — не показывает, 3.47.7 в CI — показывает), поэтому
+#     в CI есть и шаг `dart analyze --fatal-infos`, и `flutter analyze`.
 # Поэтому гейт идёт по всему пакету, а исключённые каталоги подавлены в файлах.
 #
 # Точки, где сырые виджеты разрешены (подавление `// ignore_for_file: type=lint`):
@@ -57,4 +61,4 @@ plugins:
       ban_colors: false
       ban_color: false
       ban_inkwell_widget: false
-      ban_gesture_detector_widget: true
+      ban_gesture_detector_widget: false

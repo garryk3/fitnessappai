@@ -76,12 +76,13 @@
 
 **Проверено эмпирически (Flutter 3.47.4 / Dart 3.13.3):**
 
-- `flutter analyze` диагностику плагина **не показывает вообще** (0 issues) — гейт обязан идти через `dart analyze`.
+- `flutter analyze` диагностику плагина показывает **не на всех версиях**: Flutter 3.47.4 (локально, замер 2026-10-11) — 0 issues, 3.47.7 (CI, 2026-10-12) — показывает. Надёжный гейт — `dart analyze --fatal-infos`; в CI оставлены оба шага.
 - `dart analyze` по умолчанию возвращает exit 0 даже при info-диагностиках; `dart analyze --fatal-infos` → exit 1. Нужен шаг в CI.
 - Подавление — только внутри файла: `// ignore_for_file: restrict_raw_flutter` целиком и `restrict_raw_flutter/*` **не работают**; работает перечисление правил (`restrict_raw_flutter/ban_text_widget, …`) либо `// ignore_for_file: type=lint`.
 - Nested `analysis_options.yaml` с `plugins:` анализатором запрещён (`plugins_in_inner_options`).
 - `dart analyze --fatal-infos` на текущем коде (без плагина) — чисто → добавление шага безопасно.
 - **Гейт нельзя скоупить путём (важно!): `dart analyze lib` плагин НЕ грузит вообще** — 0 диагностик вместо 904 при полном пакете (проверено 2026-10-12). `exclude_for_plugin` не поддерживается, `--options` у `dart analyze` нет → гейт обязан идти по всему пакету, а исключённые каталоги подавляются в самих файлах. Иначе CI молча зелёный без какой-либо проверки (это уже случилось в первой ревизии шага, поймано вручную).
+- **Негативный тест гейта в CI (2026-10-12):** временный коммит с `ban_gesture_detector_widget: true` сделал прогон красным (на шаге `Static analysis`, 2 нарушения в `month_grid.dart` и `week_plan_screen.dart`) → гейт реально работает, правило откатили. Попутно выяснилось, что `flutter analyze` на CI-версии Flutter 3.47.7 диагностику плагина показывает (на 3.47.4 — нет), поэтому в CI оба аналитических шага.
 
 **Baseline нарушений.** Плагин регистрирует **18** диагностик (README документирует 16; дополнительно `ban_inkwell_widget` и `ban_gesture_detector_widget`). После исключения `lib/uikit/**`, `lib/app/theme/**`, `test/**`, `integration_test/**` в `lib/` остаётся **703** нарушения в **37** файлах: `ban_text_widget` 385, `ban_icon_widget` 113, `ban_scaffold_widget` 27, `ban_container_widget` 24, `ban_text_button_widget` 24, `ban_listview_widget` 24, `ban_textformfield_widget` 23, `ban_appbar_widget` 23, `ban_card_widget` 22, `ban_inkwell_widget` 12, `ban_outlined_button_widget` 8, `ban_image_widget` 8, `ban_colors` 6, `ban_textfield_widget` 2, `ban_gesture_detector_widget` 2; `ban_color`/`ban_elevated_button_widget`/`ban_gridview_widget` — 0 (все их использования только в `uikit`/`theme`).
 
