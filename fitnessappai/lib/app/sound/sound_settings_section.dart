@@ -36,6 +36,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
           return const SizedBox.shrink();
         }
         final file = controller.soundFilePath.value;
+        final soundStatus = controller.status.value;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -88,10 +89,10 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            if (controller.statusText.value case final status?) ...[
+            if (soundStatus != null) ...[
               const SizedBox(height: 8),
               AppText(
-                status,
+                soundStatusMessage(l10n, soundStatus),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: controller.hasError.value
                       ? Theme.of(context).colorScheme.error

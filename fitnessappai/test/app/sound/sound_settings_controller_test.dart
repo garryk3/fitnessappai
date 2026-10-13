@@ -163,7 +163,8 @@ void main() {
     await controller.pickSoundFile();
 
     expect(controller.hasError.value, isTrue);
-    expect(controller.statusText.value, contains('Ошибка выбора звука'));
+    expect(controller.status.value?.kind, SoundStatusKind.pickFailed);
+    expect(controller.status.value?.error, isA<Exception>());
   });
 
   group('читаемость файла системой (48.1)', () {
@@ -178,7 +179,7 @@ void main() {
       await controller.pickSoundFile();
 
       expect(controller.soundSystemReadable.value, isTrue);
-      expect(controller.statusText.value, 'Звук сохранён');
+      expect(controller.status.value?.kind, SoundStatusKind.saved);
       expect(applied.single.systemReadable, isTrue);
     });
 
@@ -195,7 +196,10 @@ void main() {
       await controller.pickSoundFile();
 
       expect(controller.soundSystemReadable.value, isFalse);
-      expect(controller.statusText.value, contains('системе недоступен'));
+      expect(
+        controller.status.value?.kind,
+        SoundStatusKind.savedSystemUnreadable,
+      );
       expect(applied.single.systemReadable, isFalse);
     });
 

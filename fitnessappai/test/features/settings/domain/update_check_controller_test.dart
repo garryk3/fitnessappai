@@ -84,7 +84,8 @@ void main() {
     expect(service.calls, 1);
     expect(controller.hasUpdate.value, isTrue);
     expect(controller.latestVersion.value, '1.1.0');
-    expect(controller.statusText.value, 'Доступна новая версия 1.1.0');
+    expect(controller.status.value?.kind, UpdateStatusKind.updateAvailable);
+    expect(controller.status.value?.version, '1.1.0');
     expect(controller.hasError.value, isFalse);
     expect(controller.isChecking.value, isFalse);
   });
@@ -96,7 +97,7 @@ void main() {
     await controller.checkForUpdates();
 
     expect(controller.hasUpdate.value, isFalse);
-    expect(controller.statusText.value, 'Установлена актуальная версия');
+    expect(controller.status.value?.kind, UpdateStatusKind.upToDate);
     expect(controller.hasError.value, isFalse);
   });
 
@@ -107,7 +108,7 @@ void main() {
     await controller.checkForUpdates();
 
     expect(controller.hasUpdate.value, isFalse);
-    expect(controller.statusText.value, 'Установлена актуальная версия');
+    expect(controller.status.value?.kind, UpdateStatusKind.upToDate);
   });
 
   test('без релизов — ошибка с сообщением', () async {
@@ -118,7 +119,7 @@ void main() {
 
     expect(controller.hasUpdate.value, isFalse);
     expect(controller.hasError.value, isTrue);
-    expect(controller.statusText.value, 'Релизы ещё не опубликованы');
+    expect(controller.status.value?.kind, UpdateStatusKind.noReleases);
   });
 
   test('ошибка сети — понятный текст ошибки', () async {
@@ -130,10 +131,7 @@ void main() {
 
     expect(controller.hasError.value, isTrue);
     expect(controller.hasUpdate.value, isFalse);
-    expect(
-      controller.statusText.value,
-      'Ошибка проверки версии. Проверьте подключение к интернету.',
-    );
+    expect(controller.status.value?.kind, UpdateStatusKind.networkError);
   });
 
   test('HttpException — понятный текст ошибки', () async {
@@ -144,10 +142,7 @@ void main() {
     await controller.checkForUpdates();
 
     expect(controller.hasError.value, isTrue);
-    expect(
-      controller.statusText.value,
-      'Ошибка проверки версии. Проверьте подключение к интернету.',
-    );
+    expect(controller.status.value?.kind, UpdateStatusKind.networkError);
   });
 
   test('прочая ошибка — общий текст ошибки', () async {
@@ -158,7 +153,7 @@ void main() {
     await controller.checkForUpdates();
 
     expect(controller.hasError.value, isTrue);
-    expect(controller.statusText.value, 'Ошибка проверки версии.');
+    expect(controller.status.value?.kind, UpdateStatusKind.checkFailed);
   });
 
   test('повторный вызов во время проверки игнорируется', () async {
@@ -218,7 +213,7 @@ void main() {
 
       expect(calls, ['https://example.com/release/1.1.0']);
       expect(controller.hasError.value, isFalse);
-      expect(controller.statusText.value, 'Доступна новая версия 1.1.0');
+      expect(controller.status.value?.kind, UpdateStatusKind.updateAvailable);
     },
   );
 
@@ -242,10 +237,7 @@ void main() {
       await controller.openUpdate();
 
       expect(controller.hasError.value, isTrue);
-      expect(
-        controller.statusText.value,
-        'Не удалось открыть ссылку на обновление.',
-      );
+      expect(controller.status.value?.kind, UpdateStatusKind.openFailed);
     },
   );
 
@@ -340,10 +332,7 @@ void main() {
       final fake = UrlLauncherPlatform.instance as _FakeUrlLauncherPlatform;
       expect(fake.launchedUrl, isNull);
       expect(controller.hasError.value, isTrue);
-      expect(
-        controller.statusText.value,
-        'Не удалось открыть ссылку на обновление.',
-      );
+      expect(controller.status.value?.kind, UpdateStatusKind.openFailed);
     },
   );
 }

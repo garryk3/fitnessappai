@@ -316,6 +316,60 @@ abstract class AppLocalizations {
   /// **'Светлая'**
   String get settingsThemeLight;
 
+  /// No description provided for @soundStatusSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук сохранён'**
+  String get soundStatusSaved;
+
+  /// No description provided for @soundStatusSystemUnreadable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук сохранён, но системе недоступен — уведомления будут со стандартным сигналом'**
+  String get soundStatusSystemUnreadable;
+
+  /// No description provided for @soundStatusPickFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка выбора звука'**
+  String get soundStatusPickFailed;
+
+  /// Статус проверки обновлений: доступна более новая версия
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступна новая версия {version}'**
+  String updateStatusAvailable(String version);
+
+  /// No description provided for @updateStatusUpToDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Установлена актуальная версия'**
+  String get updateStatusUpToDate;
+
+  /// No description provided for @updateStatusNoReleases.
+  ///
+  /// In ru, this message translates to:
+  /// **'Релизы ещё не опубликованы'**
+  String get updateStatusNoReleases;
+
+  /// No description provided for @updateStatusNetworkError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка проверки версии. Проверьте подключение к интернету.'**
+  String get updateStatusNetworkError;
+
+  /// No description provided for @updateStatusCheckFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка проверки версии.'**
+  String get updateStatusCheckFailed;
+
+  /// No description provided for @updateStatusOpenFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось открыть ссылку на обновление.'**
+  String get updateStatusOpenFailed;
+
   /// No description provided for @settingsAboutSection.
   ///
   /// In ru, this message translates to:

@@ -123,6 +123,38 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsThemeLight => 'Светлая';
 
   @override
+  String get soundStatusSaved => 'Звук сохранён';
+
+  @override
+  String get soundStatusSystemUnreadable =>
+      'Звук сохранён, но системе недоступен — уведомления будут со стандартным сигналом';
+
+  @override
+  String get soundStatusPickFailed => 'Ошибка выбора звука';
+
+  @override
+  String updateStatusAvailable(String version) {
+    return 'Доступна новая версия $version';
+  }
+
+  @override
+  String get updateStatusUpToDate => 'Установлена актуальная версия';
+
+  @override
+  String get updateStatusNoReleases => 'Релизы ещё не опубликованы';
+
+  @override
+  String get updateStatusNetworkError =>
+      'Ошибка проверки версии. Проверьте подключение к интернету.';
+
+  @override
+  String get updateStatusCheckFailed => 'Ошибка проверки версии.';
+
+  @override
+  String get updateStatusOpenFailed =>
+      'Не удалось открыть ссылку на обновление.';
+
+  @override
   String get settingsAboutSection => 'О приложении';
 
   @override
