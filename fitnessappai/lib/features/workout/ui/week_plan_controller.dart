@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
@@ -155,6 +157,12 @@ class WeekPlanController {
 
   final Signal<List<WeekPlanItem>> items = Signal(<WeekPlanItem>[]);
   final Signal<bool> isLoading = Signal(false);
+
+  /// Ошибка последней загрузки плана (53.3): без неё сбой чтения БД был
+  /// неотличим от пустой недели — пользователь с существующими тренировками
+  /// видел «Нет запланированных тренировок». Сбрасывается перед каждой
+  /// загрузкой; при успешной — остаётся `false`, данные важнее ошибки.
+  final Signal<bool> hasError = Signal(false);
 
   /// Понедельник отображаемой недели.
   final Signal<DateTime> weekStart = Signal(DateTime.now());
@@ -341,6 +349,7 @@ class WeekPlanController {
 
   Future<void> _loadRange(DateTime rangeStart, DateTime rangeEnd) async {
     isLoading.value = true;
+    hasError.value = false;
     try {
       final now = _dateOnly(_now());
       final activePrograms = await programRepository.getActivePrograms();
@@ -506,6 +515,11 @@ class WeekPlanController {
       }
       result.sort(_byDateThenTime);
       items.value = result;
+    } on Exception catch (e, s) {
+      // 53.3: ошибка чтения БД деградирует в явное состояние ошибки на экране
+      // (с повтором), а не в «пустую неделю». Error (не Exception) летит выше.
+      log('week plan load failed', error: e, stackTrace: s);
+      hasError.value = true;
     } finally {
       isLoading.value = false;
     }

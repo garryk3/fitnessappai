@@ -349,6 +349,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanClearTime => 'Убрать время';
 
   @override
+  String get weekPlanLoadError => 'Не удалось загрузить план недели';
+
+  @override
+  String get weekPlanScheduleLoadError =>
+      'Не удалось загрузить список программ';
+
+  @override
+  String get weekPlanRetry => 'Повторить';
+
+  @override
   String get programBuilderDayOfWeek => 'Привязка к дню недели';
 
   @override
