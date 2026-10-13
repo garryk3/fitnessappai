@@ -873,7 +873,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                       const SizedBox(height: 16),
                       _imageEditor(l10n),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      AppTextFormField(
                         controller: _warmupController,
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
@@ -886,7 +886,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      AppTextFormField(
                         controller: _exerciseRestController,
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
@@ -949,7 +949,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   }
 
   Widget _nameField(AppLocalizations l10n) {
-    return TextFormField(
+    return AppTextFormField(
       controller: _nameController,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
@@ -963,7 +963,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   }
 
   Widget _descriptionField(AppLocalizations l10n) {
-    return TextFormField(
+    return AppTextFormField(
       controller: _descriptionController,
       maxLines: 3,
       decoration: InputDecoration(

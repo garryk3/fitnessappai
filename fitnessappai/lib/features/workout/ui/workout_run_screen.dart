@@ -959,7 +959,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
         children: [
           ...switch (widget.exercise.type) {
             ExerciseType.strength => [
-              TextFormField(
+              AppTextFormField(
                 controller: _reps,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -979,7 +979,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextFormField(
                 controller: _weight,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -999,7 +999,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
               ),
             ],
             ExerciseType.bodyweight => [
-              TextFormField(
+              AppTextFormField(
                 controller: _reps,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1020,7 +1020,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
               ),
             ],
             ExerciseType.plank => [
-              TextFormField(
+              AppTextFormField(
                 controller: _duration,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1044,7 +1044,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
               ),
             ],
             ExerciseType.distance => [
-              TextFormField(
+              AppTextFormField(
                 controller: _distance,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -1066,7 +1066,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextFormField(
                 controller: _duration,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1100,7 +1100,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                   ),
                 ),
                 children: [
-                  TextFormField(
+                  AppTextFormField(
                     controller: _avgSpeed,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -1113,7 +1113,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                     validator: (value) => _validateOptionalDouble(value),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppTextFormField(
                     controller: _avgPace,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -1126,7 +1126,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                     validator: (value) => _validateOptionalDouble(value),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppTextFormField(
                     controller: _avgCadence,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -1139,7 +1139,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                     validator: (value) => _validateOptionalDouble(value),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppTextFormField(
                     controller: _avgPulse,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1150,7 +1150,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                     validator: (value) => _validateOptionalInt(value),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppTextFormField(
                     controller: _ascent,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -1163,7 +1163,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                     validator: (value) => _validateOptionalDouble(value),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppTextFormField(
                     controller: _descent,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -1176,7 +1176,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
                     validator: (value) => _validateOptionalDouble(value),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppTextFormField(
                     controller: _steps,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],

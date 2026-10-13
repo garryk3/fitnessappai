@@ -285,7 +285,7 @@ class _ProgramDayExerciseParamsScreenState
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
+      child: AppTextFormField(
         controller: controller,
         keyboardType: TextInputType.numberWithOptions(decimal: decimals),
         inputFormatters: [

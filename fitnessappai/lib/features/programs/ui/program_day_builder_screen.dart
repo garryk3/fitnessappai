@@ -131,7 +131,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
         final dialogL10n = AppLocalizations.of(dialogContext);
         return AlertDialog(
           title: AppText(dialogL10n.programBuilderRenameDayTitle),
-          content: TextField(
+          content: AppTextField(
             controller: controller,
             autofocus: true,
             maxLength: 32,
