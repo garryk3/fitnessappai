@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_map.dart';
 
@@ -135,7 +136,9 @@ class MuscleDiagramPainter extends CustomPainter {
       if (intensity > 0) {
         final glow = Paint()
           ..style = PaintingStyle.fill
-          ..color = highlightColor.withValues(alpha: 0.35 * intensity)
+          ..color = highlightColor.withValues(
+            alpha: AppTints.medium * intensity,
+          )
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
         canvas.drawRRect(
           RRect.fromRectAndRadius(rect.inflate(3), radius),

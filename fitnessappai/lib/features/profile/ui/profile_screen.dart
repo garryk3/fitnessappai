@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
+import 'package:fitnessappai/app/theme/status_colors.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
@@ -12,9 +13,11 @@ import 'package:fitnessappai/features/profile/domain/bmi.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/features/profile/domain/metric_point.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
+import 'package:fitnessappai/features/profile/ui/body_metric_label.dart';
 import 'package:fitnessappai/features/profile/ui/profile_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Экран профиля: текущие замеры, график динамики и история.
 class ProfileScreen extends StatefulWidget {
@@ -85,8 +88,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           _BmiCard(controller: _controller),
         ],
-        const SizedBox(height: 12),
-        _MetricChartCard(controller: _controller),
+        // Вложенная «пустая динамика» скрыта вместе с карточкой графика,
+        // если замеров нет вообще: под ней и так AppEmptyState истории —
+        // два последовательных «нет данных» подряд не показываем.
+        if (measurements.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _MetricChartCard(controller: _controller),
+        ],
         const SizedBox(height: 16),
         AppText(
           l10n.profileMeasurementsHistory,
@@ -94,16 +102,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 8),
         if (measurements.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: AppText(
-                l10n.profileEmpty,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
+          AppEmptyState(
+            icon: Icons.straighten_outlined,
+            title: l10n.profileEmpty,
+            hint: l10n.profileEmptyHint,
           )
         else ...[
           for (final measurement in measurements) ...[
@@ -224,7 +226,7 @@ class _BmiCard extends StatelessWidget {
               ),
               AppBadge(
                 label: _bmiCategoryLabel(l10n, category),
-                background: color.withValues(alpha: 0.15),
+                background: color.withValues(alpha: AppTints.faint),
                 foreground: color,
               ),
             ],
@@ -296,7 +298,7 @@ class _BmiScale extends StatelessWidget {
                 left: 0,
                 right: 0,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
                   child: SizedBox(
                     height: 10,
                     child: Row(
@@ -344,7 +346,7 @@ class _BmiScale extends StatelessWidget {
                   height: 26,
                   decoration: BoxDecoration(
                     color: accent,
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(AppRadii.xs),
                     border: Border.all(
                       color: theme.colorScheme.surface,
                       width: 2,
@@ -443,12 +445,15 @@ class _MetricChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(metric.labelRu, style: theme.textTheme.labelSmall),
+          AppText(
+            bodyMetricLabel(l10n, metric),
+            style: theme.textTheme.labelSmall,
+          ),
           const SizedBox(height: 2),
           AppText(
             value == null ? '—' : '${_fmt(value!)} $unit',
@@ -493,7 +498,7 @@ class _MetricChartCard extends StatelessWidget {
                     for (final metric in BodyMetric.values)
                       DropdownMenuItem(
                         value: metric,
-                        child: AppText(metric.labelRu),
+                        child: AppText(bodyMetricLabel(l10n, metric)),
                       ),
                   ],
                   onChanged: (metric) {
@@ -576,12 +581,8 @@ class _MetricLineChart extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: 1,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: Theme.of(
-              context,
-            ).colorScheme.outlineVariant.withValues(alpha: 0.3),
-            strokeWidth: 0.5,
-          ),
+          getDrawingHorizontalLine: (value) =>
+              FlLine(color: theme.colorScheme.chartGrid, strokeWidth: 0.5),
         ),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(

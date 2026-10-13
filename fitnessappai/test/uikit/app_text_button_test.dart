@@ -40,5 +40,17 @@ void main() {
 
       expect(tester.widget<Icon>(find.byType(Icon)).size, isNull);
     });
+    testWidgets('destructive: подпись в error-роли темы', (tester) async {
+      await _pump(
+        tester,
+        const AppTextButton(label: 'Выйти', destructive: true),
+      );
+
+      final button = tester.widget<TextButton>(find.byType(TextButton));
+      final theme = Theme.of(tester.element(find.byType(TextButton)));
+      final fg = button.style?.foregroundColor?.resolve(const {});
+      expect(fg, theme.colorScheme.error);
+      expect(fg, isNot(theme.colorScheme.primary));
+    });
   });
 }

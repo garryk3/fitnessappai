@@ -116,11 +116,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
     final dates = _controller.workoutDates.value;
     if (dates.isEmpty) {
-      return Center(
-        child: AppText(
-          l10n.historyEmpty,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+      return AppEmptyState(
+        icon: Icons.history_outlined,
+        title: l10n.historyEmpty,
+        hint: l10n.historyEmptyHint,
       );
     }
     return Column(
@@ -166,7 +165,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       foreground: hasWorkout
           ? colorScheme.onPrimaryContainer
           : colorScheme.onSurfaceVariant,
-      border: isToday ? Border.all(color: colorScheme.primary) : null,
+      border: isToday || hasWorkout
+          ? Border.all(
+              color: colorScheme.primary,
+              width: hasWorkout && isToday ? 1.5 : 1,
+            )
+          : null,
       isToday: isToday,
       showWorkoutIcon: hasWorkout,
       onTap: hasWorkout ? () => _openDay(context, date) : null,

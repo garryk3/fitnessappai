@@ -13,6 +13,7 @@ import 'package:fitnessappai/features/exercises/ui/exercise_list_item.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Экран списка упражнений: поиск, фильтр по типу, карточки.
 class ExercisesScreen extends StatefulWidget {
@@ -199,14 +200,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             ),
           ),
           _buildTypeFilters(context),
-          SignalBuilder(
-            builder: (context) => SwitchListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              title: AppText(l10n.exerciseListOnlyCustom),
-              value: _controller.onlyCustom.value,
-              onChanged: _controller.setOnlyCustom,
-            ),
-          ),
           Expanded(
             child: SignalBuilder(builder: (context) => _buildBody(context)),
           ),
@@ -247,6 +240,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     onSelected: (_) => _controller.setTypeFilter(option),
                   ),
                 ),
+              const SizedBox(width: 4),
+              SignalBuilder(
+                builder: (context) => FilterChip(
+                  label: AppText(l10n.exerciseListOnlyCustom),
+                  selected: _controller.onlyCustom.value,
+                  onSelected: _controller.setOnlyCustom,
+                ),
+              ),
             ],
           ),
         );
@@ -267,7 +268,11 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 160),
-            Center(child: AppText(l10n.exerciseListEmpty)),
+            AppEmptyState(
+              icon: Icons.fitness_center_outlined,
+              title: l10n.exerciseListEmpty,
+              hint: l10n.exerciseListEmptyHint,
+            ),
           ],
         ),
       );
@@ -441,7 +446,7 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -480,7 +485,7 @@ class _Thumbnail extends StatelessWidget {
       return _placeholder(context, size);
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadii.md),
       child: AppImage(
         image: provider,
         width: size,
@@ -498,7 +503,7 @@ class _Thumbnail extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: AppIcon(Icons.fitness_center, color: colorScheme.onSurfaceVariant),
     );

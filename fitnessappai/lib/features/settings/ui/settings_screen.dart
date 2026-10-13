@@ -214,7 +214,10 @@ class _SyncSectionState extends State<_SyncSection> {
     final busy = widget.controller.isBusy.value;
     return SignalBuilder(
       builder: (_) {
-        final status = widget.controller.statusText.value;
+        final validationError = widget.controller.importValidationError.value;
+        final status = validationError != null
+            ? syncValidationMessage(l10n, validationError)
+            : widget.controller.statusText.value;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

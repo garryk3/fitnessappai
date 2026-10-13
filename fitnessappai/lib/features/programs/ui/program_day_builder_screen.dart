@@ -383,7 +383,11 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     final detail = _detail;
     final currentDay = _currentDay;
     if (detail == null || currentDay == null) {
-      return Center(child: AppText(l10n.programBuilderEmptyDay));
+      return AppEmptyState(
+        icon: Icons.event_busy_outlined,
+        title: l10n.programBuilderEmptyDay,
+        hint: l10n.programBuilderEmptyDayHint,
+      );
     }
     return Column(
       children: [
@@ -444,8 +448,15 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
+          AppGridView.count(
+            // Фиксированная сетка вместо Wrap: ячейки не «прыгают»
+            // при смене выбранного дня (рефлоу строк).
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 6,
+            crossAxisSpacing: 6,
+            mainAxisExtent: 48,
             children: [
               for (final entry in [
                 (1, l10n.weekdayMon),
@@ -456,10 +467,15 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
                 (6, l10n.weekdaySat),
                 (7, l10n.weekdaySun),
               ])
-                ChoiceChip(
-                  label: AppText(entry.$2),
-                  selected: selected == entry.$1,
-                  onSelected: (_) => _setDayOfWeek(day, entry.$1),
+                Center(
+                  child: ChoiceChip(
+                    // 48dp-тап-зона на всех платформах (на десктопе
+                    // иначе остаётся 32dp из-за shrinkWrap).
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                    label: AppText(entry.$2),
+                    selected: selected == entry.$1,
+                    onSelected: (_) => _setDayOfWeek(day, entry.$1),
+                  ),
                 ),
             ],
           ),
@@ -488,19 +504,10 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
   Widget _buildItemsList() {
     if (_currentItems.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppIcon(
-              Icons.fitness_center,
-              size: 48,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 12),
-            AppText(l10n.programBuilderEmptyDay, textAlign: TextAlign.center),
-          ],
-        ),
+      return AppEmptyState(
+        icon: Icons.fitness_center,
+        title: l10n.programBuilderEmptyDay,
+        hint: l10n.programBuilderEmptyDayHint,
       );
     }
     return ReorderableListView.builder(
@@ -719,7 +726,11 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
             const SizedBox(height: 8),
             Expanded(
               child: _filtered.isEmpty
-                  ? Center(child: AppText(l10n.exerciseListEmpty))
+                  ? AppEmptyState(
+                      icon: Icons.filter_alt_off_outlined,
+                      title: l10n.exerciseListEmpty,
+                      hint: l10n.exercisePickerEmptyHint,
+                    )
                   : AppListView.separated(
                       itemCount: _filtered.length,
                       separatorBuilder: (context, index) =>

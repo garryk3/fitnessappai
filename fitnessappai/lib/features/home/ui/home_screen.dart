@@ -17,6 +17,7 @@ import 'package:fitnessappai/features/workout/ui/status_badge.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Домашний экран: активная программа и последние тренировки.
 class HomeScreen extends StatefulWidget {
@@ -93,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final controller = _controller;
 
     if (!controller.hasPrograms.value) {
-      return _EmptyHint(
+      return AppEmptyState(
         icon: Icons.fitness_center_outlined,
         title: l10n.homeNoProgramsTitle,
         hint: l10n.homeNoProgramsHint,
@@ -104,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final programs = controller.activePrograms.value;
     if (programs.isEmpty) {
-      return _EmptyHint(
+      return AppEmptyState(
         icon: Icons.star_outline,
         title: l10n.homeActiveProgram,
         hint: l10n.homeNoActiveProgramHint,
@@ -158,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 12),
         if (workouts.isEmpty)
-          _EmptyHint(
+          AppEmptyState(
             icon: Icons.history_outlined,
             title: l10n.homeRecentWorkouts,
             hint: l10n.homeNoWorkoutsHint,
@@ -207,7 +208,7 @@ class _ActiveProgramCard extends StatelessWidget {
       gradient: LinearGradient(
         colors: [
           theme.colorScheme.surfaceContainerLow,
-          theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+          theme.colorScheme.primaryContainer.withValues(alpha: AppTints.faint),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -300,8 +301,10 @@ class _RecentWorkoutCard extends StatelessWidget {
           AppContainer(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(12),
+              color: theme.colorScheme.primaryContainer.withValues(
+                alpha: AppTints.strong,
+              ),
+              borderRadius: BorderRadius.circular(AppRadii.md),
             ),
             child: AppIcon(
               Icons.check_circle_outline,
@@ -346,59 +349,6 @@ class _RecentWorkoutCard extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyHint extends StatelessWidget {
-  const _EmptyHint({
-    required this.icon,
-    required this.title,
-    required this.hint,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final IconData icon;
-  final String title;
-  final String hint;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppIcon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(height: 12),
-            AppText(
-              title,
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            AppText(
-              hint,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 12),
-              FilledButton.tonal(
-                onPressed: onAction,
-                child: AppText(actionLabel!),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Экран деталей дня из прогресса: сессии в диапазоне `[start, end)`.
 ///
@@ -101,17 +102,15 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return AppScaffold(
       appBar: AppTopBar(title: _title),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
-          ? Center(
-              child: AppText(
-                l10n.progressDayEmpty,
-                style: theme.textTheme.titleMedium,
-              ),
+          ? AppEmptyState(
+              icon: Icons.calendar_month_outlined,
+              title: l10n.progressDayEmpty,
+              hint: l10n.progressDayEmptyHint,
             )
           : AppListView.separated(
               padding: const EdgeInsets.all(16),
@@ -139,7 +138,7 @@ class _SessionCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       child: AppInkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         onTap: () => context.push('/history/${session.id}'),
         child: Padding(
           padding: const EdgeInsets.all(12),

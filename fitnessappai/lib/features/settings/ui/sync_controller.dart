@@ -8,6 +8,7 @@ import 'package:signals/signals.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
+import 'package:fitnessappai/l10n/app_localizations.dart';
 
 typedef SyncServiceFactory = SyncService Function();
 typedef SyncFilePicker = Future<String?> Function();
@@ -41,6 +42,23 @@ class SyncController {
   final Signal<String?> statusText = Signal(null);
   final Signal<bool> hasError = Signal(false);
 
+  /// Последняя ошибка валидации импорта (причина без текста): сообщение
+  /// локализуется на стороне экрана (`syncValidationMessage`), контроллер
+  /// не хранит русские строки мимо `app_ru.arb`.
+  final Signal<SyncValidationException?> importValidationError = Signal(null);
+
+  /// Единая точка обновления статуса: текст — для невалидационных операций,
+  /// [validationError] — для ошибок импорта (тогда текст не показывается).
+  void _setStatus(
+    String? text, {
+    required bool error,
+    SyncValidationException? validationError,
+  }) {
+    statusText.value = text;
+    hasError.value = error;
+    importValidationError.value = validationError;
+  }
+
   /// Экспортирует копию БД и делится файлом.
   Future<bool> exportDatabase() async {
     if (isBusy.value) {
@@ -50,12 +68,10 @@ class SyncController {
     try {
       final path = await _syncService.export();
       await _shareFile(path);
-      statusText.value = 'Резервная копия создана и отправлена';
-      hasError.value = false;
+      _setStatus('Резервная копия создана и отправлена', error: false);
       return true;
     } catch (error) {
-      statusText.value = _operationError('Ошибка экспорта', error);
-      hasError.value = true;
+      _setStatus(_operationError('Ошибка экспорта', error), error: true);
       return false;
     } finally {
       isBusy.value = false;
@@ -71,14 +87,13 @@ class SyncController {
     try {
       final path = await _syncService.export();
       final saved = await _saveFile(path);
-      statusText.value = saved
-          ? 'Резервная копия сохранена'
-          : 'Сохранение отменено';
-      hasError.value = false;
+      _setStatus(
+        saved ? 'Резервная копия сохранена' : 'Сохранение отменено',
+        error: false,
+      );
       return saved;
     } catch (error) {
-      statusText.value = _operationError('Ошибка экспорта', error);
-      hasError.value = true;
+      _setStatus(_operationError('Ошибка экспорта', error), error: true);
       return false;
     } finally {
       isBusy.value = false;
@@ -94,8 +109,7 @@ class SyncController {
     try {
       source = await _pickFile();
     } catch (error) {
-      statusText.value = _operationError('Ошибка импорта', error);
-      hasError.value = true;
+      _setStatus(_operationError('Ошибка импорта', error), error: true);
       return false;
     }
     if (source == null) {
@@ -104,16 +118,13 @@ class SyncController {
     isBusy.value = true;
     try {
       await _syncService.import(source);
-      statusText.value = 'База данных импортирована';
-      hasError.value = false;
+      _setStatus('База данных импортирована', error: false);
       return true;
     } on SyncValidationException catch (error) {
-      statusText.value = error.message;
-      hasError.value = true;
+      _setStatus(null, error: true, validationError: error);
       return false;
     } catch (error) {
-      statusText.value = _operationError('Ошибка импорта', error);
-      hasError.value = true;
+      _setStatus(_operationError('Ошибка импорта', error), error: true);
       return false;
     } finally {
       isBusy.value = false;
@@ -191,3 +202,18 @@ class SyncController {
     }
   }
 }
+
+/// Локализованное сообщение об ошибке валидации импорта.
+///
+/// Тексты — в `app_ru.arb` (`syncError*`); доменный слой хранит только причину.
+String syncValidationMessage(
+  AppLocalizations l10n,
+  SyncValidationException error,
+) => switch (error.reason) {
+  SyncValidationError.notADatabase => l10n.syncErrorNotDatabase,
+  SyncValidationError.corrupted => l10n.syncErrorCorrupted,
+  SyncValidationError.schemaNewer => l10n.syncErrorSchemaNewer(
+    error.installedVersion ?? 0,
+    error.schemaVersion ?? 0,
+  ),
+};

@@ -18,6 +18,7 @@ import 'package:fitnessappai/features/workout/ui/reminder_time_dialog.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Экран «План»: сетка недели с тренировочными днями.
 ///
@@ -636,7 +637,7 @@ class _DayCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: AppInkWell(
         onTap: onDayTap == null ? null : () => onDayTap!(date),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -709,7 +710,7 @@ class _DayHeader extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
                 child: AppText(
                   l10n.weekPlanToday,
@@ -747,7 +748,7 @@ class _DayHeader extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: header,
     );
@@ -840,7 +841,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
               const SizedBox(height: 4),
               AppInkWell(
                 onTap: () => onEditTime(item),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadii.sm),
                 // 53.3: единственный вход в «Время и напоминание» — тап-таргет
                 // поднят до минимума Material (48dp), контент центрируется.
                 child: ConstrainedBox(
@@ -944,7 +945,7 @@ class _MissedWorkoutHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadii.sm),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Row(
@@ -1017,7 +1018,7 @@ class _WeekEmpty extends StatelessWidget {
     return Center(
       child: AppInkWell(
         onTap: onSchedule,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         child: content,
       ),
     );

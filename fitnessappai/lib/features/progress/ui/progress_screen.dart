@@ -17,6 +17,7 @@ import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/progress/ui/progress_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Экран прогресса: карточки метрик, графики и нагрузка на мышцы.
 class ProgressScreen extends StatefulWidget {
@@ -96,15 +97,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
               child: period,
             ),
             Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: AppText(
-                    l10n.progressEmpty,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+              child: AppEmptyState(
+                icon: Icons.bar_chart_outlined,
+                title: l10n.progressEmpty,
+                hint: l10n.progressEmptyHint,
               ),
             ),
           ],
@@ -363,7 +359,7 @@ class _WorkoutsChart extends StatelessWidget {
                             toY: counts[i].toDouble(),
                             width: 12,
                             color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadii.xs),
                           ),
                         ],
                       ),
@@ -417,7 +413,7 @@ class _MetricChart extends StatelessWidget {
     final trimCount = _trailingZeroCount(rawValues);
     final values = rawValues.sublist(0, rawValues.length - trimCount);
     final labels = rawLabels.sublist(0, rawLabels.length - trimCount);
-    final unitSuffix = _unitSuffix(selected?.type);
+    final unitSuffix = _unitSuffix(l10n, selected?.type);
     final leftReserved = unitSuffix.isNotEmpty ? 48.0 : 32.0;
     final maxY = values.isEmpty ? 1.0 : values.reduce((a, b) => a > b ? a : b);
     final yInterval = niceInterval(maxY);
@@ -501,7 +497,11 @@ class _MetricChart extends StatelessWidget {
                         reservedSize: leftReserved,
                         maxIncluded: false,
                         getTitlesWidget: (value, meta) {
-                          final label = _yAxisLabel(value, unitSuffix);
+                          final label = _yAxisLabel(
+                            value,
+                            unitSuffix,
+                            yInterval,
+                          );
                           return AppText(
                             label,
                             style: theme.textTheme.labelSmall,
@@ -568,12 +568,13 @@ class _MetricChart extends StatelessWidget {
     };
   }
 
-  String _unitSuffix(ExerciseType? type) => switch (type) {
-    ExerciseType.plank => 'м',
-    ExerciseType.distance => 'км',
-    ExerciseType.bodyweight => 'повт',
-    ExerciseType.strength || null => 'кг',
-  };
+  String _unitSuffix(AppLocalizations l10n, ExerciseType? type) =>
+      switch (type) {
+        ExerciseType.plank => l10n.workoutUnitMinutes,
+        ExerciseType.distance => l10n.workoutUnitKm,
+        ExerciseType.bodyweight => l10n.workoutUnitReps,
+        ExerciseType.strength || null => l10n.workoutUnitKg,
+      };
 
   int _trailingZeroCount(List<double> values) {
     var count = 0;
@@ -583,10 +584,15 @@ class _MetricChart extends StatelessWidget {
     return count;
   }
 
-  String _yAxisLabel(double value, String suffix) {
-    final formatted = value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toStringAsFixed(1);
+  String _yAxisLabel(double value, String suffix, double interval) {
+    // Точность подписи — из интервала сетки: иначе деления меньше 0.1
+    // склеиваются при округлении до 1 знака («0.1, 0.1, 0.2, 0.2»).
+    final decimals = interval < 1
+        ? math.max(1, (-math.log(interval) / math.ln10).ceil())
+        : 0;
+    final formatted = decimals > 0
+        ? value.toStringAsFixed(decimals)
+        : value.round().toString();
     return '$formatted $suffix';
   }
 

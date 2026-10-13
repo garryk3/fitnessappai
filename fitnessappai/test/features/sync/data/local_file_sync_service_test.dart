@@ -111,9 +111,9 @@ void main() {
       service.import(badPath),
       throwsA(
         isA<SyncValidationException>().having(
-          (e) => e.message,
-          'message',
-          'Файл не является базой данных FitnessAppAI',
+          (e) => e.reason,
+          'reason',
+          SyncValidationError.notADatabase,
         ),
       ),
     );
@@ -133,9 +133,9 @@ void main() {
         service.import(badPath),
         throwsA(
           isA<SyncValidationException>().having(
-            (e) => e.message,
-            'message',
-            'Файл не является базой данных FitnessAppAI',
+            (e) => e.reason,
+            'reason',
+            SyncValidationError.notADatabase,
           ),
         ),
       );
@@ -149,7 +149,16 @@ void main() {
 
     await expectLater(
       service.import(sourcePath),
-      throwsA(isA<SyncValidationException>()),
+      throwsA(
+        isA<SyncValidationException>()
+            .having((e) => e.reason, 'reason', SyncValidationError.schemaNewer)
+            .having((e) => e.schemaVersion, 'schemaVersion', 99)
+            .having(
+              (e) => e.installedVersion,
+              'installedVersion',
+              appDatabaseSchemaVersion,
+            ),
+      ),
     );
 
     expect(importCalls, 0);

@@ -12,6 +12,7 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Экран подготовки к тренировке: список упражнений дня и выбор набора.
 class WorkoutPrepareScreen extends StatefulWidget {
@@ -341,7 +342,7 @@ class _TypeIcon extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: AppIcon(icon, size: 20, color: colorScheme.onSecondaryContainer),
     );

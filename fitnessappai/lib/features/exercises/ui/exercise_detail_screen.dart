@@ -18,6 +18,7 @@ import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Экран деталей упражнения: анимация, описание, техника, мышцы,
 /// противопоказания; редактирование и удаление для кастомных упражнений.
@@ -385,7 +386,7 @@ class _ExercisePreview extends StatelessWidget {
       return _placeholder(context, height);
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadii.lg),
       child: AppImage(
         image: provider,
         width: double.infinity,
@@ -403,7 +404,7 @@ class _ExercisePreview extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
       ),
       child: AppIcon(
         Icons.fitness_center,
@@ -433,7 +434,7 @@ class _TypeBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: AppText(
         label,

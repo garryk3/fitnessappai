@@ -490,6 +490,18 @@ abstract class AppLocalizations {
   /// **'Список упражнений пуст'**
   String get exerciseListEmpty;
 
+  /// No description provided for @exerciseListEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Потяните вниз, чтобы обновить список.'**
+  String get exerciseListEmptyHint;
+
+  /// No description provided for @exercisePickerEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снимите фильтр или выберите другой тип упражнения.'**
+  String get exercisePickerEmptyHint;
+
   /// No description provided for @exerciseFilterAll.
   ///
   /// In ru, this message translates to:
@@ -1402,6 +1414,12 @@ abstract class AppLocalizations {
   /// **'В этом дне пока нет упражнений'**
   String get programBuilderEmptyDay;
 
+  /// No description provided for @programBuilderEmptyDayHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите «+», чтобы добавить упражнение в этот день.'**
+  String get programBuilderEmptyDayHint;
+
   /// Прогресс наполнения программы упражнениями
   ///
   /// In ru, this message translates to:
@@ -1765,7 +1783,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutRunExitBody.
   ///
   /// In ru, this message translates to:
-  /// **'Тренировка не будет сохранена. Выйти?'**
+  /// **'Сохранится только по кнопке «Завершить и сохранить». Если выйти, прогресс этой тренировки потеряется.'**
   String get workoutRunExitBody;
 
   /// No description provided for @workoutRunExit.
@@ -1821,6 +1839,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'В этом дне нет упражнений'**
   String get workoutRunEmpty;
+
+  /// No description provided for @workoutRunEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте упражнения в этот день в конструкторе дня.'**
+  String get workoutRunEmptyHint;
+
+  /// No description provided for @workoutDayNotFoundHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернитесь назад и откройте день заново.'**
+  String get workoutDayNotFoundHint;
 
   /// No description provided for @progressPeriodWeek.
   ///
@@ -1882,6 +1912,12 @@ abstract class AppLocalizations {
   /// **'Нет тренировок за период'**
   String get progressEmpty;
 
+  /// No description provided for @progressEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Измените период — за него тренировок не было.'**
+  String get progressEmptyHint;
+
   /// No description provided for @progressProgression.
   ///
   /// In ru, this message translates to:
@@ -1900,6 +1936,12 @@ abstract class AppLocalizations {
   /// **'Ещё нет тренировок с этим упражнением'**
   String get progressProgressionEmpty;
 
+  /// No description provided for @progressProgressionEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выполните тренировку с этим упражнением — график появится здесь.'**
+  String get progressProgressionEmptyHint;
+
   /// No description provided for @progressProgressionMax.
   ///
   /// In ru, this message translates to:
@@ -1917,6 +1959,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Нет тренировок за этот день'**
   String get progressDayEmpty;
+
+  /// No description provided for @progressDayEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернитесь к календарю и выберите день с тренировкой.'**
+  String get progressDayEmptyHint;
 
   /// No description provided for @monthShortJan.
   ///
@@ -2007,6 +2055,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пока нет тренировок'**
   String get historyEmpty;
+
+  /// No description provided for @historyEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Завершённые тренировки появятся здесь.'**
+  String get historyEmptyHint;
 
   /// No description provided for @historySessionNotFound.
   ///
@@ -2176,6 +2230,24 @@ abstract class AppLocalizations {
   /// **'Согласен'**
   String get syncImportConfirm;
 
+  /// No description provided for @syncErrorNotDatabase.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл не является базой данных FitnessAppAI'**
+  String get syncErrorNotDatabase;
+
+  /// No description provided for @syncErrorCorrupted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл повреждён и не может быть импортирован'**
+  String get syncErrorCorrupted;
+
+  /// No description provided for @syncErrorSchemaNewer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия схемы {schemaVersion} новее установленной {installedVersion}. Обновите приложение.'**
+  String syncErrorSchemaNewer(Object installedVersion, Object schemaVersion);
+
   /// No description provided for @contraindications.
   ///
   /// In ru, this message translates to:
@@ -2284,6 +2356,66 @@ abstract class AppLocalizations {
   /// **'Текущие значения'**
   String get profileCurrentValues;
 
+  /// No description provided for @profileMetricHeight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рост'**
+  String get profileMetricHeight;
+
+  /// No description provided for @profileMetricWeight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес'**
+  String get profileMetricWeight;
+
+  /// No description provided for @profileMetricNeck.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шея'**
+  String get profileMetricNeck;
+
+  /// No description provided for @profileMetricChest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Грудь'**
+  String get profileMetricChest;
+
+  /// No description provided for @profileMetricWaist.
+  ///
+  /// In ru, this message translates to:
+  /// **'Талия'**
+  String get profileMetricWaist;
+
+  /// No description provided for @profileMetricHips.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бёдра'**
+  String get profileMetricHips;
+
+  /// No description provided for @profileMetricBiceps.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бицепс'**
+  String get profileMetricBiceps;
+
+  /// No description provided for @profileMetricForearm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предплечье'**
+  String get profileMetricForearm;
+
+  /// No description provided for @profileMetricThigh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бедро'**
+  String get profileMetricThigh;
+
+  /// No description provided for @profileMetricCalf.
+  ///
+  /// In ru, this message translates to:
+  /// **'Икра'**
+  String get profileMetricCalf;
+
   /// No description provided for @profileMetricChart.
   ///
   /// In ru, this message translates to:
@@ -2307,6 +2439,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пока нет замеров тела'**
   String get profileEmpty;
+
+  /// No description provided for @profileEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здесь появятся записи замеров тела.'**
+  String get profileEmptyHint;
 
   /// No description provided for @profileChartEmpty.
   ///

@@ -14,6 +14,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Форма создания и редактирования упражнения.
 ///
@@ -638,7 +639,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         children: [
           if (provider != null) ...[
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadii.md),
               child: AppImage(
                 image: provider,
                 width: double.infinity,
@@ -699,7 +700,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         children: [
           if (provider != null) ...[
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadii.md),
               child: AppImage(
                 image: provider,
                 width: double.infinity,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Миниатюра изображения программы: заглушка с иконкой, если изображения нет.
 class ProgramThumbnail extends StatelessWidget {
@@ -22,7 +23,7 @@ class ProgramThumbnail extends StatelessWidget {
       return _placeholder(theme);
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadii.md),
       child: AppImage(
         image: provider,
         width: size,
@@ -39,7 +40,7 @@ class ProgramThumbnail extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: AppIcon(
         Icons.fitness_center,

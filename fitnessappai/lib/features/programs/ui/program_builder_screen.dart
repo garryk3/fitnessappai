@@ -25,6 +25,7 @@ import 'package:fitnessappai/features/programs/ui/program_validation_dialog.dart
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Конструктор программы: параметры и тренировочные дни.
 ///
@@ -1011,7 +1012,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         const SizedBox(height: 8),
         if (provider != null) ...[
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadii.md),
             child: AppImage(
               image: provider,
               width: double.infinity,
