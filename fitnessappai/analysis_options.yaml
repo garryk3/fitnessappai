@@ -53,8 +53,8 @@ plugins:
       ban_listview_widget: true
       ban_gridview_widget: true
       ban_image_widget: true
-      ban_textfield_widget: false
-      ban_textformfield_widget: false
+      ban_textfield_widget: true
+      ban_textformfield_widget: true
       ban_elevated_button_widget: true
       ban_text_button_widget: true
       ban_outlined_button_widget: true

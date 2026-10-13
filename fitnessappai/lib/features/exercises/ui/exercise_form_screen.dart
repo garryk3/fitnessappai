@@ -360,7 +360,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _nameField(AppLocalizations l10n) {
-    return TextFormField(
+    return AppTextFormField(
       controller: _nameController,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       onChanged: (_) {
@@ -422,7 +422,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _descriptionField(AppLocalizations l10n) {
-    return TextFormField(
+    return AppTextFormField(
       controller: _descriptionController,
       maxLines: 3,
       decoration: InputDecoration(
@@ -433,7 +433,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _instructionsField(AppLocalizations l10n) {
-    return TextFormField(
+    return AppTextFormField(
       controller: _instructionsController,
       maxLines: 5,
       decoration: InputDecoration(
@@ -452,7 +452,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: AppTextField(
                     controller: _mistakeControllers[i],
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
