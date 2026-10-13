@@ -539,7 +539,10 @@ class _AboutSectionState extends State<_AboutSection> {
       builder: (_) {
         final controller = widget.controller;
         final version = controller.versionText.value;
-        final status = controller.statusText.value;
+        final updateStatus = controller.status.value;
+        final status = updateStatus == null
+            ? null
+            : updateStatusMessage(l10n, updateStatus);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

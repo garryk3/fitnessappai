@@ -6,9 +6,47 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:fitnessappai/features/settings/data/github_update_service.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
+import 'package:fitnessappai/l10n/app_localizations.dart';
 
 typedef VersionLoader = Future<String> Function();
 typedef ReleaseOpener = Future<void> Function(String url);
+
+/// Вид статуса проверки обновлений (без текста).
+///
+/// Текст локализуется на стороне экрана (`updateStatusMessage`), контроллер
+/// не хранит русские строки мимо `app_ru.arb`.
+enum UpdateStatusKind {
+  /// Доступна более новая версия (номер — в [UpdateStatus.version]).
+  updateAvailable,
+
+  /// Установлена актуальная версия.
+  upToDate,
+
+  /// Релизы ещё не опубликованы.
+  noReleases,
+
+  /// Ошибка проверки: нет подключения к интернету.
+  networkError,
+
+  /// Ошибка проверки (иная причина).
+  checkFailed,
+
+  /// Не удалось открыть ссылку на обновление.
+  openFailed,
+}
+
+/// Структурированный статус проверки обновлений.
+///
+/// Текст локализуется на рендере (`updateStatusMessage`); для
+/// [UpdateStatusKind.updateAvailable] несёт номер доступной версии.
+class UpdateStatus {
+  const UpdateStatus(this.kind, {this.version});
+
+  final UpdateStatusKind kind;
+
+  /// Номер доступной версии (только для `updateAvailable`).
+  final String? version;
+}
 
 /// Управляет проверкой обновлений: текущая версия, последний релиз из GitHub
 /// и открытие ссылки на скачивание новой версии.
@@ -33,7 +71,10 @@ class UpdateCheckController {
   /// Доступная версия из последнего релиза (без префикса `v`).
   final Signal<String?> latestVersion = Signal(null);
   final Signal<bool> isChecking = Signal(false);
-  final Signal<String?> statusText = Signal(null);
+
+  /// Последняя операция (структурированный статус): текст локализуется на
+  /// стороне экрана (`updateStatusMessage`), контроллер хранит только вид.
+  final Signal<UpdateStatus?> status = Signal(null);
   final Signal<bool> hasError = Signal(false);
   final Signal<bool> hasUpdate = Signal(false);
 
@@ -52,14 +93,14 @@ class UpdateCheckController {
       return;
     }
     isChecking.value = true;
-    statusText.value = null;
+    status.value = null;
     hasError.value = false;
     hasUpdate.value = false;
     latestVersion.value = null;
     try {
       final release = await _service.fetchLatestRelease();
       if (release == null) {
-        statusText.value = 'Релизы ещё не опубликованы';
+        status.value = const UpdateStatus(UpdateStatusKind.noReleases);
         hasError.value = true;
         return;
       }
@@ -67,17 +108,20 @@ class UpdateCheckController {
       final current = versionText.value ?? await _loadVersion();
       if (_isNewer(release.tagName, current)) {
         hasUpdate.value = true;
-        latestVersion.value = _cleanTag(release.tagName);
-        statusText.value = 'Доступна новая версия ${latestVersion.value}';
+        final version = _cleanTag(release.tagName);
+        latestVersion.value = version;
+        status.value = UpdateStatus(
+          UpdateStatusKind.updateAvailable,
+          version: version,
+        );
       } else {
-        statusText.value = 'Установлена актуальная версия';
+        status.value = const UpdateStatus(UpdateStatusKind.upToDate);
       }
     } catch (error) {
       if (error is SocketException || error is HttpException) {
-        statusText.value =
-            'Ошибка проверки версии. Проверьте подключение к интернету.';
+        status.value = const UpdateStatus(UpdateStatusKind.networkError);
       } else {
-        statusText.value = 'Ошибка проверки версии.';
+        status.value = const UpdateStatus(UpdateStatusKind.checkFailed);
       }
       hasError.value = true;
     } finally {
@@ -100,7 +144,7 @@ class UpdateCheckController {
     }
     final opened = await _openWithFallback(url, release.htmlUrl);
     if (!opened) {
-      statusText.value = 'Не удалось открыть ссылку на обновление.';
+      status.value = const UpdateStatus(UpdateStatusKind.openFailed);
       hasError.value = true;
     }
   }
@@ -182,3 +226,19 @@ class UpdateCheckController {
   static String _cleanTag(String tag) =>
       tag.replaceFirst(RegExp(r'^[vV]'), '').replaceFirst(RegExp(r'-.*'), '');
 }
+
+/// Локализованное сообщение статуса проверки обновлений.
+///
+/// Тексты — в `app_ru.arb` (`updateStatus*`); контроллер хранит только вид
+/// статуса.
+String updateStatusMessage(AppLocalizations l10n, UpdateStatus status) =>
+    switch (status.kind) {
+      UpdateStatusKind.updateAvailable => l10n.updateStatusAvailable(
+        status.version ?? '',
+      ),
+      UpdateStatusKind.upToDate => l10n.updateStatusUpToDate,
+      UpdateStatusKind.noReleases => l10n.updateStatusNoReleases,
+      UpdateStatusKind.networkError => l10n.updateStatusNetworkError,
+      UpdateStatusKind.checkFailed => l10n.updateStatusCheckFailed,
+      UpdateStatusKind.openFailed => l10n.updateStatusOpenFailed,
+    };

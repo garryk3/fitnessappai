@@ -45,6 +45,23 @@
   "settingsThemeSection": "Тема",
   "settingsThemeDark": "Тёмная",
   "settingsThemeLight": "Светлая",
+  "soundStatusSaved": "Звук сохранён",
+  "soundStatusSystemUnreadable": "Звук сохранён, но системе недоступен — уведомления будут со стандартным сигналом",
+  "soundStatusPickFailed": "Ошибка выбора звука",
+  "updateStatusAvailable": "Доступна новая версия {version}",
+  "@updateStatusAvailable": {
+    "description": "Статус проверки обновлений: доступна более новая версия",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateStatusUpToDate": "Установлена актуальная версия",
+  "updateStatusNoReleases": "Релизы ещё не опубликованы",
+  "updateStatusNetworkError": "Ошибка проверки версии. Проверьте подключение к интернету.",
+  "updateStatusCheckFailed": "Ошибка проверки версии.",
+  "updateStatusOpenFailed": "Не удалось открыть ссылку на обновление.",
   "settingsAboutSection": "О приложении",
   "settingsAboutHint": "Проверка обновлений выполняется через GitHub.",
   "settingsVersion": "Версия",

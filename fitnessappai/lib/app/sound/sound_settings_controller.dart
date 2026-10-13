@@ -6,6 +6,7 @@ import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/sound/sound_settings_store.dart';
+import 'package:fitnessappai/l10n/app_localizations.dart';
 
 typedef SoundFilePicker = Future<String?> Function();
 
@@ -13,6 +14,37 @@ typedef SoundFilePicker = Future<String?> Function();
 /// новый звук к каналу уведомлений (задача 47.5).
 typedef SoundSettingsChanged =
     Future<void> Function(SoundSettingsSnapshot snapshot);
+
+/// Вид статуса настроек звука (без текста).
+///
+/// Текст локализуется на стороне секции (`soundStatusMessage`), контроллер
+/// не хранит русские строки мимо `app_ru.arb`.
+enum SoundStatusKind {
+  /// Файл сохранён и доступен системе.
+  saved,
+
+  /// Файл сохранён, но системный процесс не сможет его воспроизвести (48.1).
+  savedSystemUnreadable,
+
+  /// Выбор сброшен на встроенный сигнал.
+  reset,
+
+  /// Ошибка выбора файла (детали — в [SoundStatus.error]).
+  pickFailed,
+}
+
+/// Структурированный статус настроек звука.
+///
+/// Для ошибки несёт исходный объект ошибки — человекочитаемая деталь
+/// составляется при локализации (`soundStatusMessage`).
+class SoundStatus {
+  const SoundStatus(this.kind, {this.error});
+
+  final SoundStatusKind kind;
+
+  /// Исходная ошибка (только для `pickFailed`, иначе `null`).
+  final Object? error;
+}
 
 /// Управляет настройками звуковых сигналов: переключатель, выбор файла
 /// и предпрослушивание.
@@ -45,7 +77,10 @@ class SoundSettingsController {
   final Signal<bool> enabled = Signal(true);
   final Signal<String?> soundFilePath = Signal(null);
   final Signal<bool> soundSystemReadable = Signal(true);
-  final Signal<String?> statusText = Signal(null);
+
+  /// Последняя операция (структурированный статус): текст локализуется на
+  /// стороне секции (`soundStatusMessage`), контроллер хранит только вид.
+  final Signal<SoundStatus?> status = Signal(null);
   final Signal<bool> hasError = Signal(false);
   final Signal<bool> isPlaying = Signal(false);
 
@@ -86,11 +121,11 @@ class SoundSettingsController {
       await _repository.setSoundFile(path);
       // Путь мог измениться: репозиторий копирует файл в постоянное хранилище.
       await _reloadFile();
-      statusText.value = _savedStatus();
+      status.value = _savedStatus();
       await _notifyChanged();
       hasError.value = false;
     } catch (error) {
-      statusText.value = 'Ошибка выбора звука: $error';
+      status.value = SoundStatus(SoundStatusKind.pickFailed, error: error);
       hasError.value = true;
     }
   }
@@ -101,7 +136,7 @@ class SoundSettingsController {
     // Путь и читаемость перечитываем: после сброса файла нет, а значит и
     // вопроса о его доступности системе тоже (48.1).
     await _reloadFile();
-    statusText.value = 'Стандартный сигнал';
+    status.value = const SoundStatus(SoundStatusKind.reset);
     hasError.value = false;
     await _notifyChanged();
   }
@@ -114,12 +149,11 @@ class SoundSettingsController {
 
   /// Статус после сохранения файла: предупреждаем, если системное уведомление
   /// не сможет использовать выбранный файл (48.1).
-  String _savedStatus() {
+  SoundStatus _savedStatus() {
     if (soundFilePath.value == null || soundSystemReadable.value) {
-      return 'Звук сохранён';
+      return const SoundStatus(SoundStatusKind.saved);
     }
-    return 'Звук сохранён, но системе недоступен — уведомления будут '
-        'со стандартным сигналом';
+    return const SoundStatus(SoundStatusKind.savedSystemUnreadable);
   }
 
   /// Сообщает подписчику об изменившихся настройках.
@@ -153,3 +187,16 @@ class SoundSettingsController {
     return path;
   }
 }
+
+/// Локализованное сообщение статуса настроек звука.
+///
+/// Тексты — в `app_ru.arb` (`soundStatus*`); контроллер хранит только вид
+/// статуса и исходный объект ошибки.
+String soundStatusMessage(AppLocalizations l10n, SoundStatus status) =>
+    switch (status.kind) {
+      SoundStatusKind.saved => l10n.soundStatusSaved,
+      SoundStatusKind.savedSystemUnreadable => l10n.soundStatusSystemUnreadable,
+      SoundStatusKind.reset => l10n.soundDefaultLabel,
+      SoundStatusKind.pickFailed =>
+        '${l10n.soundStatusPickFailed}: ${status.error}',
+    };
