@@ -65,7 +65,7 @@
 | 50 | Оптимизация PLAN.md (индекс + архив + `docs/PROJECT.md`) и правило актуализации ветки; фикс date-зависимых e2e переноса дня | 50.1–50.3 | ✅ | 2026-10-11 |
 | 51 | Задачи из `TASKS.md` (2026-10-11): версия в настройках, запрет прошлых недель, планирование на занятый день и время, размер ячеек календаря истории, баннер блокировки сна | 51.1–51.6 | ✅ | 2026-10-11 |
 | 52 | UI-кит 2.0 — полный запрет сырых Material-виджетов в UI (`restrict_raw_flutter`), весь UI через `lib/uikit/` | 52.1–52.10 | ✅ | 2026-10-13 |
-| 53 | Редизайн — подготовка: инфраструктура дизайн-ревью (скилы + агент `design-reviewer`) | 53.1–53.2 | в работе | — |
+| 53 | Редизайн — подготовка: инфраструктура дизайн-ревью (скилы + агент `design-reviewer`) | 53.1–53.6 | в работе | — |
 
 ## Незавершённые задачи
 
@@ -145,3 +145,41 @@
 - Тесты: +6 (`week_plan_screen_test.dart`): CTA-кнопка открывает лист; тап-таргет ≥48dp (по `AppInkWell` и явный `ConstrainedBox`); склонение «1 упражнение» (вторая программа отключает auto-select, иначе лист сам уходит в список дней — особенность, учтена); «Без привязки» через l10n; error-состояние плана с восстановлением по «Повторить» (`_FlakyProgramRepository`); error-состояние листа с повтором. Существующий тест «тап по пустому состоянию» поправлен: finder заголовка листа скоупнут через `find.descendant` (текст теперь и на CTA-кнопке).
 - Гейты: `dart format` 0, `flutter analyze --fatal-infos` 0, `dart analyze --fatal-infos` 0, `flutter test` **1148/1148** (+6).
 - `AGENTS.md`: правило запуска `design-reviewer` перед коммитом/PR при UI-изменениях — область ревью только изменённые/новые файлы задачи (дубль-уточнение в разделе «Как запустить дизайн-ревью»).
+
+### Задачи полного дизайн-ревью проекта (заказ владельца, 2026-10-13)
+
+**Контекст:** запущено полное дизайн-ревью всего UI через агента `design-reviewer` (эмулятор заранее поднят в терминале Orca, ~30 скриншотов; фаза A зафиксирована до фазы B). Итоговый вердикт — **APPROVE WITH FIXES**: 5 High, 6 Medium, 3 Low (кроме №14 — см. 53.5). Полный отчёт — в сессии ревью; здесь — план фиксов. Решение владельца: чинить всё до Low включительно в одной задаче 53.4.
+
+- [x] **53.4 — Фиксы полного дизайн-ревью (все находки ревьюера).** (2026-10-13, ветка `task/53.4-full-design-review-fixes`). Ветка `task/53.4-full-design-review-fixes` от `origin/main`.
+  - **High:**
+    1. `workout_run_screen.dart:282-327` — диалог выхода: текст `workoutRunExitBody` противоречит кнопке «Завершить заранее» (сохраняет), обе необратимые кнопки одинаковые → переписать строку (`app_ru.arb:441-443`), деструктивную кнопку подчинить визуально (`AppTextButton` с error-ролью или наоборот — одна кнопка визуально подчинена).
+    2. Голые `Center(AppText(...))` → `AppEmptyState` в 8 местах: `exercises_screen.dart:270`, `program_day_builder_screen.dart:386,501,722`, `workout_run_screen.dart:407-408`, `history_screen.dart:118-123`, `day_detail_screen.dart:110-115`, `exercise_progression_screen.dart:78-84`, `progress_screen.dart:99-107`, `profile_screen.dart:96-106` — icon/title/hint/action.
+    3. `progress_screen.dart:514-523,586-590` — дубли подписи оси Y: точность выводить из интервала (`decimals = max(0, -log10(interval).floor())`).
+    4. `progress_screen.dart:569-574` — юнит планки `'м'` → `l10n.workoutUnitMinutes` («мин»); `'кг'/'км'/'повт'` — через l10n-константы юнитов.
+    5. `profile_screen.dart:575-583` — сетка графика `outlineVariant.withValues(alpha: 0.3)` → `theme.colorScheme.chartGrid` (нарушение `DESIGN.md:162`).
+  - **Medium:**
+    6. `home_screen.dart:354-397` — удалить `_EmptyHint` (копия `AppEmptyState`), использовать компонент uikit.
+    7. `exercises_screen.dart:202-209` — `SwitchListTile` «Только свои» → паттерн `FilterChip` (единый фильтр).
+    8. `program_day_builder_screen.dart:455-465` — `ChoiceChip` дней: touch-зона ≥48dp (`MaterialTapTargetSize.padded`), фиксированный grid вместо рефлоу Wrap.
+    9. `history_screen.dart:126-150` — affordance тапабельных дней календаря (заливка/точка занятых дней).
+    10. `profile_screen.dart:96-106,511` — двойной пустой экран: вложенный пустой график → компактный hint внутри карточки.
+    11. Хардкод русских строк мимо l10n → `app_ru.arb`: `domain/body_metric.dart:5-14` (`labelRu`, виден в 3 экранах), `sync/data/local_file_sync_service.dart:86-118` (ошибки импорта).
+  - **Low (решение владельца — чиним):**
+    12. Тинты `withValues(alpha:)` вне токенов (`home_screen.dart:210,303`, `profile_screen.dart:227`, `exercise_progression_screen.dart:247`, `muscle_diagram.dart:138`) + разнобой радиусов `circular(4/5/6/10)` (`profile_screen.dart:299,347`, `week_plan_screen.dart:712,750`, `workout_prepare_screen.dart:344`, `progress_screen.dart:366`, `exercise_detail_screen.dart:436`) → токены в `DESIGN.md`/теме и единое применение.
+  - **Не входит:** Low №14 (двойное сохранение) → задача 53.5.
+  - **Проверки:** гейты (`dart format`, `flutter analyze --fatal-infos`, `dart analyze --fatal-infos`, `flutter test`), ревью `task-reviewer`, e2e — по вопросу владельца перед PR; после фиксов — повторный `design-reviewer` на изменённые файлы (правило AGENTS.md).
+
+**Реализовано (2026-10-13):** все 5 High, 6 Medium и Low №12 закрыты; гейты: `dart format` 0, оба анализатора 0, `flutter test` **1149/1149** (+1 тест error-роли кнопки); ревью — `task-reviewer` **SHIP**, повторный `design-reviewer` **APPROVE** (со скриншотов эмулятора `emulator-5554`, включая диалог выхода, фильтры упражнений, календарь History, пустые состояния):
+- **High 1:** строка `workoutRunExitBody` переписана (фактически точна: выход без сохранения); «Выйти» → `AppTextButton(destructive: true)` (error-роль, новый флаг uikit), «Завершить и сохранить» — доминирующий `FilledButton`.
+- **High 2 + Medium 6:** 14 голых пустых состояний → `AppEmptyState` (exercises, program_day_builder ×3, workout_run ×2, history, day_detail, exercise_progression, progress, profile, home ×3; `_EmptyHint` удалён), +10 hint-ключей в arb.
+- **High 3:** подписи оси Y — точность из интервала сетки (дубли «0.1, 0.1» устранены).
+- **High 4:** юниты графиков через `l10n.workoutUnit*` (планка `'м'` → «мин»).
+- **High 5:** сетка графика профиля → `chartGrid`.
+- **Medium 7:** `SwitchListTile` «Только свои» → `FilterChip` в общей строке фильтров.
+- **Medium 8:** чипы дней → `AppGridView.count(4, mainAxisExtent: 48)` + `MaterialTapTargetSize.padded` (тап-таргет 48dp, нет рефлоу); `AppGridView.count` расширен параметром `mainAxisExtent`.
+- **Medium 9:** занятые дни календаря History — primary-бордер (заливка/иконка уже были).
+- **Medium 10:** карточка графика профиля скрывается при `measurements.isEmpty` (нет двойного «нет данных»).
+- **Medium 11:** хардкод мимо l10n → `app_ru.arb`: `SyncValidationException` переведён на причину-enum (`SyncValidationError`: notADatabase/corrupted/schemaNewer + версии), сервис кидает причины, контроллер — `Signal<SyncValidationException?> importValidationError`, локализация на рендере (`syncValidationMessage`), +3 ключа `syncError*`; метрики BodyMetric → +10 ключей `profileMetric*` и исчерпывающий switch `bodyMetricLabel` в UI-сайтах (`labelRu` остаётся в домене для сообщения валидатора — осознанное отступление, задокументировано; остаток sync-статусов — задача 53.6).
+- **Low 12:** токены `lib/app/theme/app_tokens.dart` — `AppRadii` (4/8/12/16/20/24) и `AppTints` (0.15/0.35/0.4), секция в `DESIGN.md`; полная миграция feature-слоя: все `BorderRadius.circular(<число>)` и `withValues(alpha: <число>)` вне `lib/uikit` и `lib/app/theme` переведены на токены (16 файлов радиусов + 6 сайтов тинтов, значения сохранены).
+- [ ] **53.5 — Подозрение на двойное сохранение тренировки (находка ревьюера, Low №14).** В History после одной выполненной тренировки числится **две сессии за 13.10** — проверить `completeAndSave()` и путь записи сессии; воспроизвести, починить, покрыть регрессионным тестом. Ветка — отдельная, после 53.4.
+- [ ] **53.6 — Локализация sync-статусов в `sync_controller.dart` (находка повторного design-review 53.4, Low).** Остаток хардкода мимо `app_ru.arb` вне валидационных операций: статусы «Резервная копия создана и отправлена», «Резервная копия сохранена», «Сохранение отменено», «База данных импортирована», префиксы ошибок «Ошибка экспорта»/«Ошибка импорта» (`sync_controller.dart:71,74,91,96,112,121,127`), системный `dialogTitle: 'Сохранение резервной копии'` (`:177`). Контроллер не имеет l10n-контекста — по образцу `syncValidationMessage` структурированные статусы + локализация на рендере `settings_screen.dart`, либо иное решение по факту. Не блокирует (предсуществующее, вне объёма Medium-11).

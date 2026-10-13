@@ -460,7 +460,9 @@ void main() {
     tester,
   ) async {
     service.importError = const SyncValidationException(
-      'Несовместимая версия схемы: 99 (ожидается 1)',
+      SyncValidationError.schemaNewer,
+      schemaVersion: 99,
+      installedVersion: 1,
     );
     pickedPath = 'bad.sqlite';
     await pumpScreen(tester);
@@ -472,7 +474,7 @@ void main() {
 
     expect(service.importCalls, 1);
     expect(
-      find.text('Несовместимая версия схемы: 99 (ожидается 1)'),
+      find.text('Версия схемы 99 новее установленной 1. Обновите приложение.'),
       findsOneWidget,
     );
     expect(find.byIcon(Icons.error_outline), findsOneWidget);

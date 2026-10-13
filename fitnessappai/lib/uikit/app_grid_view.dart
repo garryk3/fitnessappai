@@ -24,7 +24,8 @@ class AppGridView extends StatelessWidget {
        crossAxisCount = null,
        mainAxisSpacing = 0,
        crossAxisSpacing = 0,
-       childAspectRatio = 1.0;
+       childAspectRatio = 1.0,
+       mainAxisExtent = null;
 
   const AppGridView.builder({
     super.key,
@@ -43,7 +44,8 @@ class AppGridView extends StatelessWidget {
        crossAxisCount = null,
        mainAxisSpacing = 0,
        crossAxisSpacing = 0,
-       childAspectRatio = 1.0;
+       childAspectRatio = 1.0,
+       mainAxisExtent = null;
 
   const AppGridView.count({
     super.key,
@@ -60,6 +62,7 @@ class AppGridView extends StatelessWidget {
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
     this.childAspectRatio = 1.0,
+    this.mainAxisExtent,
   }) : itemCount = null,
        itemBuilder = null,
        gridDelegate = null;
@@ -82,6 +85,11 @@ class AppGridView extends StatelessWidget {
   final double mainAxisSpacing;
   final double crossAxisSpacing;
   final double childAspectRatio;
+
+  /// Фиксированная высота ячейки (для [AppGridView.count]); взаимоисключимо
+  /// с [childAspectRatio] на стороне Flutter (`GridView.count` принимает
+  /// ровно одно из двух — второе должно быть `null`).
+  final double? mainAxisExtent;
 
   final EdgeInsetsGeometry? padding;
   final Axis scrollDirection;
@@ -107,7 +115,8 @@ class AppGridView extends StatelessWidget {
         crossAxisCount: count,
         mainAxisSpacing: mainAxisSpacing,
         crossAxisSpacing: crossAxisSpacing,
-        childAspectRatio: childAspectRatio,
+        childAspectRatio: mainAxisExtent == null ? childAspectRatio : 1.0,
+        mainAxisExtent: mainAxisExtent,
         children: children ?? const <Widget>[],
       );
     }

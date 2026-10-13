@@ -26,6 +26,7 @@ import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Удержание экрана включённым во время тренировки.
 abstract class WakelockService {
@@ -299,9 +300,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                       child: AppText(l10n.workoutRunFinishEarly),
                     ),
                     const SizedBox(height: 16),
-                    FilledButton(
+                    AppTextButton(
+                      label: l10n.workoutRunExit,
+                      destructive: true,
                       onPressed: () => Navigator.of(context).pop('exit'),
-                      child: AppText(l10n.workoutRunExit),
                     ),
                   ]
                 : [
@@ -315,9 +317,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                       child: AppText(l10n.workoutRunFinishEarly),
                     ),
                     const SizedBox(width: 8),
-                    FilledButton(
+                    AppTextButton(
+                      label: l10n.workoutRunExit,
+                      destructive: true,
                       onPressed: () => Navigator.of(context).pop('exit'),
-                      child: AppText(l10n.workoutRunExit),
                     ),
                   ],
           );
@@ -402,10 +405,18 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       return const Center(child: CircularProgressIndicator());
     }
     if (controller.notFound.value) {
-      return Center(child: AppText(l10n.workoutPrepareNotFound));
+      return AppEmptyState(
+        icon: Icons.search_off_outlined,
+        title: l10n.workoutPrepareNotFound,
+        hint: l10n.workoutDayNotFoundHint,
+      );
     }
     if (controller.emptyDay.value) {
-      return Center(child: AppText(l10n.workoutRunEmpty));
+      return AppEmptyState(
+        icon: Icons.fitness_center_outlined,
+        title: l10n.workoutRunEmpty,
+        hint: l10n.workoutRunEmptyHint,
+      );
     }
     final workout = controller.workout;
     switch (workout.phase.value) {
@@ -613,7 +624,7 @@ class _ExerciseMedia extends StatelessWidget {
       return _mediaPlaceholder(context);
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadii.lg),
       child: AppImage(
         image: provider,
         height: 180,
@@ -632,7 +643,7 @@ class _ExerciseMedia extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
       ),
       child: AppIcon(
         switch (exercise.type) {
@@ -773,7 +784,7 @@ class _PlankHoldPanel extends StatelessWidget {
         color: reached
             ? theme.colorScheme.tertiaryContainer
             : theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
       ),
       child: Column(
         children: [
@@ -1335,7 +1346,7 @@ class _FinishedViewState extends State<_FinishedView> {
                     Chip(
                       label: AppText(name, style: theme.textTheme.labelSmall),
                       backgroundColor: theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.5),
+                          .withValues(alpha: AppTints.strong),
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),

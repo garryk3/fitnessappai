@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 
 /// Боковой отступ сетки календаря от краёв контейнера.
 const double _sidePadding = 12;
@@ -94,13 +95,13 @@ class MonthDayCell extends StatelessWidget {
     final cell = Material(
       color: AppColors.transparent,
       child: AppInkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         onTap: onTap,
         child: AppContainer(
           height: fillHeight ? double.infinity : 52,
           decoration: BoxDecoration(
             color: background,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadii.md),
             border: border,
           ),
           padding: const EdgeInsets.all(6),

@@ -25,11 +25,11 @@ class _FakeSyncService implements SyncService {
 void main() {
   late SyncController controller;
 
-  test('импорт файла-не-БД показывает сообщение без краха', () async {
+  test('импорт файла-не-БД показывает причину без краха', () async {
     controller = SyncController(
       syncServiceFactory: () => _FakeSyncService(
         importError: const SyncValidationException(
-          'Файл не является базой данных FitnessAppAI',
+          SyncValidationError.notADatabase,
         ),
       ),
       pickFile: () async => 'random.sqlite',
@@ -39,18 +39,22 @@ void main() {
 
     expect(result, isFalse);
     expect(controller.hasError.value, isTrue);
+    // Текст локализуется на стороне экрана — контроллер несёт только причину.
+    expect(controller.statusText.value, isNull);
     expect(
-      controller.statusText.value,
-      'Файл не является базой данных FitnessAppAI',
+      controller.importValidationError.value?.reason,
+      SyncValidationError.notADatabase,
     );
     expect(controller.isBusy.value, isFalse);
   });
 
-  test('импорт некорректной версии схемы показывает сообщение', () async {
+  test('импорт некорректной версии схемы фиксирует причину и версии', () async {
     controller = SyncController(
       syncServiceFactory: () => _FakeSyncService(
         importError: const SyncValidationException(
-          'Несовместимая версия схемы: 99 (ожидается 6)',
+          SyncValidationError.schemaNewer,
+          schemaVersion: 99,
+          installedVersion: 6,
         ),
       ),
       pickFile: () async => 'old.sqlite',
@@ -60,10 +64,11 @@ void main() {
 
     expect(result, isFalse);
     expect(controller.hasError.value, isTrue);
-    expect(
-      controller.statusText.value,
-      'Несовместимая версия схемы: 99 (ожидается 6)',
-    );
+    expect(controller.statusText.value, isNull);
+    final error = controller.importValidationError.value;
+    expect(error?.reason, SyncValidationError.schemaNewer);
+    expect(error?.schemaVersion, 99);
+    expect(error?.installedVersion, 6);
   });
 
   test('успешный импорт не показывает ошибку', () async {
@@ -77,6 +82,7 @@ void main() {
     expect(result, isTrue);
     expect(controller.hasError.value, isFalse);
     expect(controller.statusText.value, 'База данных импортирована');
+    expect(controller.importValidationError.value, isNull);
   });
 
   test('отмена выбора файла ничего не делает', () async {

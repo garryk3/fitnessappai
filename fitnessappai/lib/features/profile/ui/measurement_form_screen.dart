@@ -6,6 +6,7 @@ import 'package:fitnessappai/core/domain/models/body_measurement.dart';
 import 'package:fitnessappai/features/profile/data/body_measurement_repository.dart';
 import 'package:fitnessappai/features/profile/domain/body_measurement_validator.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
+import 'package:fitnessappai/features/profile/ui/body_metric_label.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -154,11 +155,12 @@ class _MetricField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppTextFormField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
-        labelText: metric.labelRu,
+        labelText: bodyMetricLabel(l10n, metric),
         suffixText: suffix,
         border: const OutlineInputBorder(),
       ),

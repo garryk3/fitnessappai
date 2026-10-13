@@ -218,6 +218,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseListEmpty => 'Список упражнений пуст';
 
   @override
+  String get exerciseListEmptyHint => 'Потяните вниз, чтобы обновить список.';
+
+  @override
+  String get exercisePickerEmptyHint =>
+      'Снимите фильтр или выберите другой тип упражнения.';
+
+  @override
   String get exerciseFilterAll => 'Все';
 
   @override
@@ -730,6 +737,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderEmptyDay => 'В этом дне пока нет упражнений';
 
   @override
+  String get programBuilderEmptyDayHint =>
+      'Нажмите «+», чтобы добавить упражнение в этот день.';
+
+  @override
   String programBuilderDayProgress(int filled, int total) {
     return 'Заполнено $filled из $total дней';
   }
@@ -927,7 +938,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRunExitTitle => 'Выйти из тренировки?';
 
   @override
-  String get workoutRunExitBody => 'Тренировка не будет сохранена. Выйти?';
+  String get workoutRunExitBody =>
+      'Сохранится только по кнопке «Завершить и сохранить». Если выйти, прогресс этой тренировки потеряется.';
 
   @override
   String get workoutRunExit => 'Выйти';
@@ -968,6 +980,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRunEmpty => 'В этом дне нет упражнений';
 
   @override
+  String get workoutRunEmptyHint =>
+      'Добавьте упражнения в этот день в конструкторе дня.';
+
+  @override
+  String get workoutDayNotFoundHint =>
+      'Вернитесь назад и откройте день заново.';
+
+  @override
   String get progressPeriodWeek => 'Неделя';
 
   @override
@@ -998,6 +1018,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get progressEmpty => 'Нет тренировок за период';
 
   @override
+  String get progressEmptyHint =>
+      'Измените период — за него тренировок не было.';
+
+  @override
   String get progressProgression => 'Динамика упражнения';
 
   @override
@@ -1008,6 +1032,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ещё нет тренировок с этим упражнением';
 
   @override
+  String get progressProgressionEmptyHint =>
+      'Выполните тренировку с этим упражнением — график появится здесь.';
+
+  @override
   String get progressProgressionMax => 'Максимум';
 
   @override
@@ -1015,6 +1043,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get progressDayEmpty => 'Нет тренировок за этот день';
+
+  @override
+  String get progressDayEmptyHint =>
+      'Вернитесь к календарю и выберите день с тренировкой.';
 
   @override
   String get monthShortJan => 'Янв';
@@ -1060,6 +1092,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get historyEmpty => 'Пока нет тренировок';
+
+  @override
+  String get historyEmptyHint => 'Завершённые тренировки появятся здесь.';
 
   @override
   String get historySessionNotFound => 'Тренировка не найдена';
@@ -1165,6 +1200,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncImportConfirm => 'Согласен';
 
   @override
+  String get syncErrorNotDatabase =>
+      'Файл не является базой данных FitnessAppAI';
+
+  @override
+  String get syncErrorCorrupted =>
+      'Файл повреждён и не может быть импортирован';
+
+  @override
+  String syncErrorSchemaNewer(Object installedVersion, Object schemaVersion) {
+    return 'Версия схемы $schemaVersion новее установленной $installedVersion. Обновите приложение.';
+  }
+
+  @override
   String get contraindications => 'Противопоказания';
 
   @override
@@ -1228,6 +1276,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileCurrentValues => 'Текущие значения';
 
   @override
+  String get profileMetricHeight => 'Рост';
+
+  @override
+  String get profileMetricWeight => 'Вес';
+
+  @override
+  String get profileMetricNeck => 'Шея';
+
+  @override
+  String get profileMetricChest => 'Грудь';
+
+  @override
+  String get profileMetricWaist => 'Талия';
+
+  @override
+  String get profileMetricHips => 'Бёдра';
+
+  @override
+  String get profileMetricBiceps => 'Бицепс';
+
+  @override
+  String get profileMetricForearm => 'Предплечье';
+
+  @override
+  String get profileMetricThigh => 'Бедро';
+
+  @override
+  String get profileMetricCalf => 'Икра';
+
+  @override
   String get profileMetricChart => 'Динамика';
 
   @override
@@ -1238,6 +1316,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileEmpty => 'Пока нет замеров тела';
+
+  @override
+  String get profileEmptyHint => 'Здесь появятся записи замеров тела.';
 
   @override
   String get profileChartEmpty => 'Добавьте замеры, чтобы увидеть динамику';

@@ -19,6 +19,7 @@ class AppTextButton extends StatelessWidget {
     this.busy = false,
     this.autofocus = false,
     this.tooltip,
+    this.destructive = false,
   });
 
   /// Подпись кнопки; при [busy] заменяется спиннером.
@@ -39,6 +40,10 @@ class AppTextButton extends StatelessWidget {
   final bool autofocus;
   final String? tooltip;
 
+  /// `true` — деструктивное действие: подпись в `error`-роли темы
+  /// (вариант «уйти/удалить безвозвратно», визуально подчинён главному).
+  final bool destructive;
+
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !busy;
@@ -55,11 +60,21 @@ class AppTextButton extends StatelessWidget {
         ? TextButton(
             onPressed: effective,
             autofocus: autofocus,
+            style: destructive
+                ? TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  )
+                : null,
             child: labelWidget,
           )
         : TextButton.icon(
             onPressed: effective,
             autofocus: autofocus,
+            style: destructive
+                ? TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  )
+                : null,
             icon: AppIcon(icon!, size: iconSize),
             label: labelWidget,
           );

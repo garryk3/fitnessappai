@@ -82,9 +82,7 @@ class LocalFileSyncService implements SyncService {
           String.fromCharCodes(header, 0, _sqliteMagic.length) !=
               _sqliteMagic ||
           header[_sqliteMagic.length] != 0) {
-        throw const SyncValidationException(
-          'Файл не является базой данных FitnessAppAI',
-        );
+        throw const SyncValidationException(SyncValidationError.notADatabase);
       }
     } finally {
       file.closeSync();
@@ -101,22 +99,19 @@ class LocalFileSyncService implements SyncService {
           .map((row) => row['integrity_check'].toString())
           .toList();
       if (integrity.isEmpty || integrity.first != 'ok') {
-        throw const SyncValidationException(
-          'Файл повреждён и не может быть импортирован',
-        );
+        throw const SyncValidationException(SyncValidationError.corrupted);
       }
       final version =
           probe.select('PRAGMA user_version').single['user_version'] as int;
       if (version > appDatabaseSchemaVersion) {
         throw SyncValidationException(
-          'Версия схемы $version новее установленной '
-          '$appDatabaseSchemaVersion. Обновите приложение.',
+          SyncValidationError.schemaNewer,
+          schemaVersion: version,
+          installedVersion: appDatabaseSchemaVersion,
         );
       }
     } on sqlite.SqliteException {
-      throw const SyncValidationException(
-        'Файл не является базой данных FitnessAppAI',
-      );
+      throw const SyncValidationException(SyncValidationError.notADatabase);
     } finally {
       probe.close();
     }

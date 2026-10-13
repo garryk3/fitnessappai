@@ -529,7 +529,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Выйти из тренировки?'), findsOneWidget);
-    expect(find.text('Тренировка не будет сохранена. Выйти?'), findsOneWidget);
+    expect(
+      find.text(
+        'Сохранится только по кнопке «Завершить и сохранить». '
+        'Если выйти, прогресс этой тренировки потеряется.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Выйти'));
     await tester.pumpAndSettle();

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:fitnessappai/app/theme/status_colors.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/progress/ui/progress_screen.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -75,11 +76,10 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
               ),
             )
           : _points.isEmpty
-          ? Center(
-              child: AppText(
-                l10n.progressProgressionEmpty,
-                style: theme.textTheme.titleMedium,
-              ),
+          ? AppEmptyState(
+              icon: Icons.show_chart_outlined,
+              title: l10n.progressProgressionEmpty,
+              hint: l10n.progressProgressionEmptyHint,
             )
           : _buildBody(context, _exercise!),
     );
@@ -244,7 +244,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
             color: ChartSeriesColors.of(
               theme.brightness,
               0,
-            ).withValues(alpha: 0.15),
+            ).withValues(alpha: AppTints.faint),
           ),
         ),
       ],
