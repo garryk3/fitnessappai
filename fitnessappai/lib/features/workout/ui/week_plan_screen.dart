@@ -533,7 +533,7 @@ class _DayColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     // Заголовок дня тапается в обоих случаях: у занятого дня он открывает
     // лист действий, у пустого — планирование (47.16).
-    final header = GestureDetector(
+    final header = AppGestureDetector(
       onTap: onDayTap == null ? null : () => onDayTap!(date),
       behavior: HitTestBehavior.opaque,
       child: _DayHeader(
@@ -607,7 +607,7 @@ class _DayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: EdgeInsets.zero,
-      child: InkWell(
+      child: AppInkWell(
         onTap: onDayTap == null ? null : () => onDayTap!(date),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -811,7 +811,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
             ),
             if (item.hasTime) ...[
               const SizedBox(height: 4),
-              InkWell(
+              AppInkWell(
                 onTap: () => onEditTime(item),
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
@@ -973,7 +973,7 @@ class _WeekEmpty extends StatelessWidget {
       return Center(child: content);
     }
     return Center(
-      child: InkWell(
+      child: AppInkWell(
         onTap: onSchedule,
         borderRadius: BorderRadius.circular(12),
         child: content,

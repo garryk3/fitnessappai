@@ -161,7 +161,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
       // направлений, поэтому профиль выровнен с остальными пунктами.
       return SizedBox(
         height: 48,
-        child: InkWell(
+        child: AppInkWell(
           onTap: _goToProfile,
           child: Row(
             children: [
@@ -344,7 +344,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
           children: [
             // Шапка меню: профиль как пункт меню (аватар слева + подпись),
             // тап открывает Профиль.
-            InkWell(
+            AppInkWell(
               onTap: () {
                 Navigator.of(context).pop();
                 _goToBranch(_profileBranchIndex);

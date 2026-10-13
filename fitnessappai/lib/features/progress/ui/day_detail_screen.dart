@@ -138,7 +138,7 @@ class _SessionCard extends StatelessWidget {
     final minutes = item.duration.inMinutes;
     return AppCard(
       padding: EdgeInsets.zero,
-      child: InkWell(
+      child: AppInkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => context.push('/history/${session.id}'),
         child: Padding(

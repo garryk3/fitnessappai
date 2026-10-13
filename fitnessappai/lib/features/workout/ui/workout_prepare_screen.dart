@@ -230,7 +230,7 @@ class _ExerciseCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: AppInkWell(
         onTap: exerciseId == null
             ? null
             : () => context.push('/exercises/$exerciseId'),
