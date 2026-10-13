@@ -2248,6 +2248,54 @@ abstract class AppLocalizations {
   /// **'Версия схемы {schemaVersion} новее установленной {installedVersion}. Обновите приложение.'**
   String syncErrorSchemaNewer(Object installedVersion, Object schemaVersion);
 
+  /// No description provided for @syncStatusExportShared.
+  ///
+  /// In ru, this message translates to:
+  /// **'Резервная копия создана и отправлена'**
+  String get syncStatusExportShared;
+
+  /// No description provided for @syncStatusExportSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Резервная копия сохранена'**
+  String get syncStatusExportSaved;
+
+  /// No description provided for @syncStatusSaveCancelled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранение отменено'**
+  String get syncStatusSaveCancelled;
+
+  /// No description provided for @syncErrorExport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка экспорта'**
+  String get syncErrorExport;
+
+  /// No description provided for @syncErrorImport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка импорта'**
+  String get syncErrorImport;
+
+  /// No description provided for @syncErrorUnavailableOnPlatform.
+  ///
+  /// In ru, this message translates to:
+  /// **'операция недоступна на этой платформе'**
+  String get syncErrorUnavailableOnPlatform;
+
+  /// No description provided for @syncErrorFilePickerUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'не удалось открыть выбор файла'**
+  String get syncErrorFilePickerUnavailable;
+
+  /// No description provided for @syncSaveDialogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранение резервной копии'**
+  String get syncSaveDialogTitle;
+
   /// No description provided for @contraindications.
   ///
   /// In ru, this message translates to:

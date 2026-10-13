@@ -151,7 +151,7 @@ void main() {
     SyncService? syncService,
     Future<String?> Function()? pickFile,
     Future<void> Function(String path)? shareFile,
-    Future<bool> Function(String path)? saveFile,
+    Future<bool> Function(String path, {String? dialogTitle})? saveFile,
     SoundSettingsController? soundController,
     SoundSettingsController? reminderSoundController,
     UpdateCheckController? updateController,
@@ -169,7 +169,7 @@ void main() {
           (path) async {
             sharedPath = path;
           },
-      saveFile: saveFile ?? (_) async => true,
+      saveFile: saveFile ?? (_, {dialogTitle}) async => true,
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -400,7 +400,7 @@ void main() {
     String? savedTo;
     await pumpScreen(
       tester,
-      saveFile: (path) async {
+      saveFile: (path, {dialogTitle}) async {
         savedTo = path;
         return true;
       },
@@ -417,7 +417,7 @@ void main() {
   testWidgets('отмена сохранения файла показывает статус без ошибки', (
     tester,
   ) async {
-    await pumpScreen(tester, saveFile: (_) async => false);
+    await pumpScreen(tester, saveFile: (_, {dialogTitle}) async => false);
 
     await tester.tap(find.text('Сохранить в файлы'));
     await tester.pumpAndSettle();
@@ -596,7 +596,7 @@ void main() {
   testWidgets('экспорт в файл перехватывает PlatformException', (tester) async {
     await pumpScreen(
       tester,
-      saveFile: (_) async =>
+      saveFile: (_, {dialogTitle}) async =>
           throw PlatformException(code: 'save_failed', message: 'no save'),
     );
 

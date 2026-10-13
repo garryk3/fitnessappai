@@ -39,8 +39,8 @@ void main() {
 
     expect(result, isFalse);
     expect(controller.hasError.value, isTrue);
-    // Текст локализуется на стороне экрана — контроллер несёт только причину.
-    expect(controller.statusText.value, isNull);
+    // Статус локализуется на стороне экрана — контроллер несёт только вид.
+    expect(controller.status.value, isNull);
     expect(
       controller.importValidationError.value?.reason,
       SyncValidationError.notADatabase,
@@ -64,7 +64,7 @@ void main() {
 
     expect(result, isFalse);
     expect(controller.hasError.value, isTrue);
-    expect(controller.statusText.value, isNull);
+    expect(controller.status.value, isNull);
     final error = controller.importValidationError.value;
     expect(error?.reason, SyncValidationError.schemaNewer);
     expect(error?.schemaVersion, 99);
@@ -81,7 +81,7 @@ void main() {
 
     expect(result, isTrue);
     expect(controller.hasError.value, isFalse);
-    expect(controller.statusText.value, 'База данных импортирована');
+    expect(controller.status.value?.kind, SyncStatusKind.importDone);
     expect(controller.importValidationError.value, isNull);
   });
 
@@ -95,14 +95,14 @@ void main() {
 
     expect(result, isFalse);
     expect(controller.hasError.value, isFalse);
-    expect(controller.statusText.value, isNull);
+    expect(controller.status.value, isNull);
   });
 
   test('экспорт сохраняет файл в файловую систему', () async {
     String? savedTo;
     controller = SyncController(
       syncServiceFactory: () => _FakeSyncService(),
-      saveFile: (path) async {
+      saveFile: (path, {dialogTitle}) async {
         savedTo = path;
         return true;
       },
@@ -113,35 +113,46 @@ void main() {
     expect(result, isTrue);
     expect(savedTo, 'backup.sqlite');
     expect(controller.hasError.value, isFalse);
-    expect(controller.statusText.value, 'Резервная копия сохранена');
+    expect(controller.status.value?.kind, SyncStatusKind.exportSaved);
   });
 
   test('отмена сохранения файла не считается ошибкой', () async {
     controller = SyncController(
       syncServiceFactory: () => _FakeSyncService(),
-      saveFile: (_) async => false,
+      saveFile: (_, {dialogTitle}) async => false,
     );
 
     final result = await controller.exportDatabaseToFile();
 
     expect(result, isFalse);
     expect(controller.hasError.value, isFalse);
-    expect(controller.statusText.value, 'Сохранение отменено');
+    expect(controller.status.value?.kind, SyncStatusKind.saveCancelled);
   });
 
   test('экспорт в файлы перехватывает ошибку сохранения', () async {
     controller = SyncController(
       syncServiceFactory: () => _FakeSyncService(),
-      saveFile: (_) async => throw UnimplementedError('saving'),
+      saveFile: (_, {dialogTitle}) async => throw UnimplementedError('saving'),
     );
 
     final result = await controller.exportDatabaseToFile();
 
     expect(result, isFalse);
     expect(controller.hasError.value, isTrue);
-    expect(
-      controller.statusText.value,
-      contains('операция недоступна на этой платформе'),
+    expect(controller.status.value?.kind, SyncStatusKind.exportFailed);
+    expect(controller.status.value?.error, isA<UnimplementedError>());
+  });
+
+  test('успешный экспорт фиксирует статус отправки', () async {
+    controller = SyncController(
+      syncServiceFactory: () => _FakeSyncService(),
+      shareFile: (_) async {},
     );
+
+    final result = await controller.exportDatabase();
+
+    expect(result, isTrue);
+    expect(controller.status.value?.kind, SyncStatusKind.exportShared);
+    expect(controller.hasError.value, isFalse);
   });
 }
