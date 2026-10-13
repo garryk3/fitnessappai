@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
@@ -136,6 +137,7 @@ void main() {
     WidgetTester tester, {
     ThemeData? theme,
     DateTime? now,
+    ProgramRepository? programRepository,
   }) async {
     router = GoRouter(
       initialLocation: '/plan',
@@ -143,7 +145,7 @@ void main() {
         GoRoute(
           path: '/plan',
           builder: (context, state) => WeekPlanScreen(
-            programRepository: programRepo,
+            programRepository: programRepository ?? programRepo,
             workoutRepository: workoutRepo,
             planScheduleRepository: planScheduleRepo,
             clock: () => now ?? fixedNow,
@@ -196,6 +198,19 @@ void main() {
       ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: null),
     ]);
     return (await programRepo.getDays(created.id!)).first;
+  }
+
+  Future<int> insertExercise(String name) {
+    return db
+        .into(db.exercises)
+        .insert(
+          ExercisesCompanion.insert(
+            name: name,
+            type: ExerciseType.strength,
+            createdAt: DateTime(2024, 1, 1),
+            updatedAt: DateTime(2024, 1, 1),
+          ),
+        );
   }
 
   DateTime mondayOf(DateTime d) {
@@ -920,7 +935,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(BottomSheet), findsOneWidget);
-      expect(find.text('Запланировать тренировку'), findsOneWidget);
+      // Текст «Запланировать тренировку» есть и на CTA-кнопке пустого экрана
+      // (53.3), поэтому ищем заголовок внутри листа.
+      expect(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Запланировать тренировку'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 
@@ -1527,6 +1550,176 @@ void main() {
     final item = await planScheduleRepo.getFor(day.id!, fixedNow);
     expect(item!.timeLabel, '09:00', reason: 'время не изменилось');
   });
+
+  testWidgets(
+    'пустая неделя: кнопка «Запланировать тренировку» открывает лист (53.3)',
+    (tester) async {
+      await pumpPlan(tester);
+
+      expect(find.text('Запланировать тренировку'), findsOneWidget);
+      await tester.tap(find.text('Запланировать тренировку'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Запланировать тренировку'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('строка времени: тап-таргет не меньше 48dp (53.3)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    await planScheduleRepo.schedule(day.id!, fixedNow, hour: 9, minute: 0);
+    await pumpPlan(tester);
+
+    final timeRow = find
+        .ancestor(
+          of: find.descendant(
+            of: dayColumn(tester, '10'),
+            matching: find.byIcon(Icons.access_time),
+          ),
+          matching: find.byType(AppInkWell),
+        )
+        .first;
+    expect(timeRow, findsOneWidget);
+    expect(
+      tester.getSize(timeRow).height,
+      greaterThanOrEqualTo(48),
+      reason:
+          'единственный вход в «Время и напоминание» должен быть тапабельным',
+    );
+    expect(
+      find.descendant(
+        of: timeRow,
+        matching: find.byWidgetPredicate(
+          (w) => w is ConstrainedBox && w.constraints.minHeight == 48,
+        ),
+      ),
+      findsOneWidget,
+      reason: 'минимальная высота задаётся явным ConstrainedBox',
+    );
+  });
+
+  testWidgets(
+    'лист планирования: склонение «1 упражнение» вместо «1 упражнений» (53.3)',
+    (tester) async {
+      final day = await createDay(fixedNow.weekday, name: 'Сплит');
+      final exId = await insertExercise('Жим лёжа');
+      await programRepo.addExerciseToDay(day.id!, exId);
+      // Вторая программа отключает auto-select (лист остаётся на списке).
+      await createDay(_weekdayAfter(fixedNow.weekday), name: 'Гибкость');
+      await pumpPlan(tester);
+
+      // Среда 12.08 пуста — открываем лист (вт занят «Гибкостью», пн — «Сплит»).
+      await tester.tap(find.text('12').last);
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      expect(
+        find.descendant(of: sheet, matching: find.text('Сплит')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('1 упражнение')),
+        findsOneWidget,
+        reason: 'plural-ключ l10n, а не голая склейка',
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('1 упражнений')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'лист планирования: непривязанный день — «Без привязки» из l10n (53.3)',
+    (tester) async {
+      await createManualDay(name: 'Сплит');
+      await pumpPlan(tester);
+
+      // Вторник 11.08 пуст — открываем лист и выбираем программу.
+      await tester.tap(find.text('11').last);
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('Сплит')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: sheet, matching: find.text('Без привязки')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'ошибка загрузки плана: явное состояние с повтором вместо пустой недели (53.3)',
+    (tester) async {
+      final flaky = _FlakyProgramRepository(programRepo)..failActive = true;
+      await pumpPlan(tester, programRepository: flaky);
+
+      expect(find.text('Не удалось загрузить план недели'), findsOneWidget);
+      expect(find.text('Нет запланированных тренировок'), findsNothing);
+
+      // «БД починилась» — повтор восстанавливает план.
+      flaky.failActive = false;
+      await tester.tap(find.text('Повторить'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Не удалось загрузить план недели'), findsNothing);
+      expect(find.text('Нет запланированных тренировок'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'лист планирования: ошибка загрузки программ — текст и повтор (53.3)',
+    (tester) async {
+      final flaky = _FlakyProgramRepository(programRepo)..failList = true;
+      await pumpPlan(tester, programRepository: flaky);
+
+      await tester.tap(find.text('Запланировать тренировку'));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Не удалось загрузить список программ'),
+        ),
+        findsOneWidget,
+      );
+
+      flaky.failList = false;
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('Повторить')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Не удалось загрузить список программ'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: sheet,
+          matching: find.text('Нет программ для назначения'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }
 
 IconButton weekSwitcherArrow(WidgetTester tester, String tooltip) =>
@@ -1556,3 +1749,33 @@ Future<void> saveSession(
 }
 
 int _weekdayAfter(int weekday) => weekday >= 7 ? 1 : weekday + 1;
+
+/// Репозиторий программ с переключаемыми сбоями (53.3): имитирует сбой чтения
+/// БД для контроллера (`failActive`) и списка программ листа (`failList`).
+class _FlakyProgramRepository implements ProgramRepository {
+  _FlakyProgramRepository(this.inner);
+
+  final ProgramRepository inner;
+
+  /// Сбой загрузки плана: `getActivePrograms` бросает.
+  bool failActive = false;
+
+  /// Сбой загрузки списка программ листа: `getPrograms` бросает.
+  bool failList = false;
+
+  @override
+  Future<List<Program>> getActivePrograms() {
+    if (failActive) throw Exception('db down');
+    return inner.getActivePrograms();
+  }
+
+  @override
+  Future<List<ProgramSummary>> getPrograms() {
+    if (failList) throw Exception('db down');
+    return inner.getPrograms();
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}

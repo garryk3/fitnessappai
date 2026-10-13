@@ -718,6 +718,24 @@ abstract class AppLocalizations {
   /// **'Убрать время'**
   String get weekPlanClearTime;
 
+  /// No description provided for @weekPlanLoadError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить план недели'**
+  String get weekPlanLoadError;
+
+  /// No description provided for @weekPlanScheduleLoadError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить список программ'**
+  String get weekPlanScheduleLoadError;
+
+  /// No description provided for @weekPlanRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get weekPlanRetry;
+
   /// No description provided for @programBuilderDayOfWeek.
   ///
   /// In ru, this message translates to:

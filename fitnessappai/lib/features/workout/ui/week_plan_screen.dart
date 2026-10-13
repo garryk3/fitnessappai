@@ -197,9 +197,36 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     AppLocalizations l10n,
     DateTime today,
   ) {
+    final theme = Theme.of(context);
     final items = controller.items.value;
     if (controller.isLoading.value && items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if (controller.hasError.value && items.isEmpty) {
+      // 53.3: сбой чтения БД показываем явно, а не маскируем пустой неделей.
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppIcon(
+              Icons.error_outline,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 12),
+            AppText(
+              l10n.weekPlanLoadError,
+              style: theme.textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            AppTextButton(
+              label: l10n.weekPlanRetry,
+              onPressed: controller.refresh,
+            ),
+          ],
+        ),
+      );
     }
     if (items.isEmpty) {
       return _WeekEmpty(
@@ -814,31 +841,37 @@ class _PlannedWorkoutCard extends StatelessWidget {
               AppInkWell(
                 onTap: () => onEditTime(item),
                 borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const AppIcon(Icons.access_time, size: 14),
-                      const SizedBox(width: 4),
-                      AppText(
-                        item.timeLabel!,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      if (item.reminderEnabled) ...[
+                // 53.3: единственный вход в «Время и напоминание» — тап-таргет
+                // поднят до минимума Material (48dp), контент центрируется.
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const AppIcon(Icons.access_time, size: 14),
                         const SizedBox(width: 4),
-                        AppIcon(
-                          Icons.notifications_active,
-                          size: 14,
-                          color: theme.colorScheme.primary,
+                        AppText(
+                          item.timeLabel!,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
+                        if (item.reminderEnabled) ...[
+                          const SizedBox(width: 4),
+                          AppIcon(
+                            Icons.notifications_active,
+                            size: 14,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -966,6 +999,15 @@ class _WeekEmpty extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
+          // 53.3: подсказка вела в конструктор, а тап по экрану открывал лист
+          // планирования — affordance теперь явный, а не «угадай по тапу».
+          if (onSchedule != null) ...[
+            const SizedBox(height: 20),
+            AppGradientButton(
+              label: l10n.weekPlanScheduleTitle,
+              onPressed: onSchedule,
+            ),
+          ],
         ],
       ),
     );
@@ -1151,6 +1193,14 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   ProgramDetail? _programDetail;
   bool _loading = true;
 
+  /// Программы листа (53.3): раньше подтягивались немемоизированным
+  /// `FutureBuilder` в `build()` — двойной запрос к БД и мелькающий спиннер
+  /// при любом rebuild листа. Теперь грузятся один раз в `_loadPrograms`.
+  List<ProgramSummary>? _programs;
+
+  /// Ошибка загрузки программ листа (53.3).
+  bool _loadError = false;
+
   /// Шаг «время» (48.10): день выбран, осталось время и подтверждение.
   ProgramDay? _selectedDay;
 
@@ -1167,15 +1217,34 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   }
 
   Future<void> _loadPrograms() async {
-    final programs = await widget.controller.programRepository.getPrograms();
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-    });
-    // Auto-select if only one program.
-    if (programs.length == 1) {
-      await _selectProgram(programs.first);
+    try {
+      final programs = await widget.controller.programRepository.getPrograms();
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = false;
+        _programs = programs;
+      });
+      // Auto-select if only one program.
+      if (programs.length == 1) {
+        await _selectProgram(programs.first);
+      }
+    } on Exception {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = true;
+      });
     }
+  }
+
+  /// Повтор загрузки программ после ошибки (53.3).
+  void _retryPrograms() {
+    setState(() {
+      _loading = true;
+      _loadError = false;
+    });
+    _loadPrograms();
   }
 
   Future<void> _selectProgram(ProgramSummary summary) async {
@@ -1276,38 +1345,57 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   }
 
   Widget _buildProgramList(AppLocalizations l10n) {
-    return FutureBuilder<List<ProgramSummary>>(
-      future: widget.controller.programRepository.getPrograms(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final programs = snapshot.data!;
-        if (programs.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: AppText(l10n.weekPlanScheduleNoPrograms)),
-          );
-        }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppText(
-              l10n.weekPlanScheduleSelectProgram,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            const SizedBox(height: 8),
-            for (final summary in programs)
-              ListTile(
-                title: AppText(summary.program.name),
-                subtitle: AppText('${summary.exercisesCount} упражнений'),
-                trailing: const AppIcon(Icons.chevron_right),
-                onTap: () => _selectProgram(summary),
+    final theme = Theme.of(context);
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_loadError) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppText(
+                l10n.weekPlanScheduleLoadError,
+                textAlign: TextAlign.center,
               ),
-          ],
-        );
-      },
+              const SizedBox(height: 8),
+              AppTextButton(
+                label: l10n.weekPlanRetry,
+                onPressed: _retryPrograms,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    final programs = _programs ?? const <ProgramSummary>[];
+    if (programs.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: AppText(l10n.weekPlanScheduleNoPrograms)),
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(
+          l10n.weekPlanScheduleSelectProgram,
+          style: theme.textTheme.labelLarge,
+        ),
+        const SizedBox(height: 8),
+        for (final summary in programs)
+          ListTile(
+            title: AppText(summary.program.name),
+            subtitle: AppText(
+              l10n.programExercisesCount(summary.exercisesCount),
+            ),
+            trailing: const AppIcon(Icons.chevron_right),
+            onTap: () => _selectProgram(summary),
+          ),
+      ],
     );
   }
 
@@ -1348,7 +1436,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
             subtitle: AppText(
               day.day.dayOfWeek != null
                   ? _weekdayLabel(l10n, day.day.dayOfWeek!)
-                  : 'Без привязки',
+                  : l10n.programBuilderDayNoWeekday,
             ),
             trailing: const AppIcon(Icons.add_circle_outline),
             onTap: () => _selectDay(day.day),
