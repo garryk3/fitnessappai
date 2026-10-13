@@ -291,7 +291,7 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
     final date = DateFormat('d MMMM yyyy', 'ru').format(session.performedDate);
     final minutes = session.endedAt.difference(session.startedAt).inMinutes;
     final groups = _groupByExercise(detail.results);
-    return ListView(
+    return AppListView(
       padding: const EdgeInsets.all(16),
       children: [
         Row(

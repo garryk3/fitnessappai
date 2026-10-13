@@ -263,7 +263,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     if (items.isEmpty) {
       return RefreshIndicator(
         onRefresh: _controller.refresh,
-        child: ListView(
+        child: AppListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 160),
@@ -274,7 +274,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     }
     return RefreshIndicator(
       onRefresh: _controller.refresh,
-      child: ListView.builder(
+      child: AppListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         itemCount: items.length,
@@ -481,7 +481,7 @@ class _Thumbnail extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image(
+      child: AppImage(
         image: provider,
         width: size,
         height: size,

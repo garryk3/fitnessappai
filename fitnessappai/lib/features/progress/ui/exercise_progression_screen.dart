@@ -89,7 +89,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final maxPoint = _points.reduce((a, b) => b.metric > a.metric ? b : a);
-    return ListView(
+    return AppListView(
       padding: const EdgeInsets.all(16),
       children: [
         AppCard(

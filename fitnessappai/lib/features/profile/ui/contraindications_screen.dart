@@ -48,7 +48,7 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
     final tags = _controller.tags.value;
     final selectedKeys = _controller.selectedKeys.value;
     final isSaving = _controller.isSaving.value;
-    return ListView(
+    return AppListView(
       padding: const EdgeInsets.all(16),
       children: [
         AppText(

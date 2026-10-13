@@ -219,7 +219,7 @@ class _ProgramDayExerciseParamsScreenState
     }
     return Form(
       key: _formKey,
-      child: ListView(
+      child: AppListView(
         padding: const EdgeInsets.all(16),
         children: [
           AppText(

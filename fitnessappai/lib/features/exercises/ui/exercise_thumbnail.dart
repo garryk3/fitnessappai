@@ -34,7 +34,7 @@ class ExerciseThumbnail extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: Image(
+      child: AppImage(
         image: provider,
         width: size,
         height: size,

@@ -263,7 +263,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
-        child: ListView(
+        child: AppListView(
           shrinkWrap: true,
           children: [
             Padding(
@@ -473,7 +473,7 @@ class _WeekList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return AppListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       itemCount: days.length,
       itemBuilder: (context, index) {
@@ -548,7 +548,7 @@ class _DayColumn extends StatelessWidget {
         if (items.isNotEmpty) ...[
           header,
           const SizedBox(height: 8),
-          ListView.builder(
+          AppListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: items.length,

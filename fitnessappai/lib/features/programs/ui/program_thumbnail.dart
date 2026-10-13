@@ -23,7 +23,7 @@ class ProgramThumbnail extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image(
+      child: AppImage(
         image: provider,
         width: size,
         height: size,

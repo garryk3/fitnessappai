@@ -191,7 +191,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
                     ),
                   ),
                 )
-              : ListView.builder(
+              : AppListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: controller.visibleItems.length,
                   itemBuilder: (context, index) => Padding(

@@ -192,7 +192,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   Widget _buildContent(BuildContext context, ExerciseDetailData data) {
     final l10n = AppLocalizations.of(context);
     final exercise = data.exercise;
-    return ListView(
+    return AppListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         Center(
@@ -386,7 +386,7 @@ class _ExercisePreview extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: Image(
+      child: AppImage(
         image: provider,
         width: double.infinity,
         height: height,

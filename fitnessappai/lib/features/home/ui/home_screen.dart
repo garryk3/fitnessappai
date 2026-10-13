@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (controller.isLoading.value) {
             return const Center(child: CircularProgressIndicator());
           }
-          return ListView(
+          return AppListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             children: [
               _buildProgramSection(context),

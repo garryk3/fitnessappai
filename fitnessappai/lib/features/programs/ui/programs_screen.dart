@@ -70,7 +70,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
       return RefreshIndicator(
         onRefresh: _controller.refresh,
         child: LayoutBuilder(
-          builder: (context, constraints) => ListView(
+          builder: (context, constraints) => AppListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               SizedBox(
@@ -86,7 +86,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     }
     return RefreshIndicator(
       onRefresh: _controller.refresh,
-      child: ListView.builder(
+      child: AppListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         itemCount: items.length,

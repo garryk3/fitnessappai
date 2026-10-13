@@ -56,7 +56,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
       appBar: AppTopBar(title: l10n.measurementFormTitle),
       body: Form(
         key: _formKey,
-        child: ListView(
+        child: AppListView(
           padding: const EdgeInsets.all(16),
           children: [
             AppCard(
