@@ -368,7 +368,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
             ),
             const Divider(height: 1),
             Expanded(
-              child: ListView(
+              child: AppListView(
                 padding: EdgeInsets.zero,
                 children: [
                   for (final item in items)

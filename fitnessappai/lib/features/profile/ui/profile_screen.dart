@@ -73,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     final measurements = _controller.measurements.value;
-    return ListView(
+    return AppListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         _GenderCard(controller: _controller),

@@ -1012,7 +1012,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         if (provider != null) ...[
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image(
+            child: AppImage(
               image: provider,
               width: double.infinity,
               height: 120,

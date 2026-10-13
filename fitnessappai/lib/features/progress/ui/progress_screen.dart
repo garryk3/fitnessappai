@@ -111,7 +111,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ),
       );
     }
-    return ListView(
+    return AppListView(
       padding: const EdgeInsets.all(16),
       children: [
         period,

@@ -113,7 +113,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 style: theme.textTheme.titleMedium,
               ),
             )
-          : ListView.separated(
+          : AppListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _items.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),

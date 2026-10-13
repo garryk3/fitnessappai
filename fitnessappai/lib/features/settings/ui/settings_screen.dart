@@ -129,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
       appBar: AppTopBar(leading: const AppMenuButton(), title: l10n.settings),
-      body: ListView(
+      body: AppListView(
         padding: const EdgeInsets.all(16),
         children: [
           AppSectionHeader(title: l10n.settingsSyncSection),

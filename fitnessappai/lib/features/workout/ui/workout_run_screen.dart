@@ -614,7 +614,7 @@ class _ExerciseMedia extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: Image(
+      child: AppImage(
         image: provider,
         height: 180,
         width: double.infinity,

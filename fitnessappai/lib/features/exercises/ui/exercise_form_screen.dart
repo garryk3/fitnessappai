@@ -312,7 +312,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
-              child: ListView(
+              child: AppListView(
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
@@ -639,7 +639,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           if (provider != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image(
+              child: AppImage(
                 image: provider,
                 width: double.infinity,
                 height: 120,
@@ -700,7 +700,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           if (provider != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image(
+              child: AppImage(
                 image: provider,
                 width: double.infinity,
                 height: 160,

@@ -47,5 +47,29 @@ void main() {
       expect(find.text('Пункт 0'), findsOneWidget);
       expect(find.byType(Divider), findsNWidgets(2));
     });
+
+    testWidgets('separated пробрасывает add* в SliverChildBuilderDelegate', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        AppListView.separated(
+          addAutomaticKeepAlives: false,
+          addRepaintBoundaries: false,
+          addSemanticIndexes: false,
+          itemCount: 2,
+          itemBuilder: (context, index) => Text('Пункт $index'),
+          separatorBuilder: (context, index) => const Divider(),
+        ),
+      );
+
+      // Регресс (52.8, баг из 52.1): эти параметры конструктор `.separated`
+      // принимал, но в `ListView.separated` не пробрасывал — молча игнорировались.
+      final list = tester.widget<ListView>(find.byType(ListView));
+      final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
+      expect(delegate.addAutomaticKeepAlives, isFalse);
+      expect(delegate.addRepaintBoundaries, isFalse);
+      expect(delegate.addSemanticIndexes, isFalse);
+    });
   });
 }

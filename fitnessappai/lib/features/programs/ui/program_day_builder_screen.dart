@@ -720,7 +720,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
             Expanded(
               child: _filtered.isEmpty
                   ? Center(child: AppText(l10n.exerciseListEmpty))
-                  : ListView.separated(
+                  : AppListView.separated(
                       itemCount: _filtered.length,
                       separatorBuilder: (context, index) =>
                           const Divider(height: 1),

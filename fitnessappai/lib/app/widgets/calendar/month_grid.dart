@@ -259,7 +259,7 @@ class _MonthGridViewState extends State<MonthGridView> {
     final grid = wrapDrag(
       widget.fillHeight
           ? Column(children: [for (final row in weekRows) Expanded(child: row)])
-          : ListView(
+          : AppListView(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
               children: [
                 headerRow,
