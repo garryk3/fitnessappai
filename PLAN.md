@@ -14,7 +14,7 @@
 
 ## Индекс этапов
 
-Все этапы **0–51** заархивированы в `PLAN_ARCHIVE.md` (там же полные рабочие планы и результаты). Активных этапов нет: новые этапы добавляются сюда по мере поступления из `TASKS.md` (см. `AGENTS.md`), с продолжением нумерации.
+Все этапы **0–51** заархивированы в `PLAN_ARCHIVE.md` (там же полные рабочие планы и результаты). Этап **52** завершён (2026-10-13) — будет заархивирован при следующем релизе (сжатие `PLAN.md`, см. `AGENTS.md`). Активный этап — **53**; новые этапы добавляются сюда по мере поступления из `TASKS.md` (см. `AGENTS.md`), с продолжением нумерации.
 
 | Этап | Название | Задачи | Статус | Завершён (≈) |
 |---|---|---|---|---|
@@ -65,6 +65,7 @@
 | 50 | Оптимизация PLAN.md (индекс + архив + `docs/PROJECT.md`) и правило актуализации ветки; фикс date-зависимых e2e переноса дня | 50.1–50.3 | ✅ | 2026-10-11 |
 | 51 | Задачи из `TASKS.md` (2026-10-11): версия в настройках, запрет прошлых недель, планирование на занятый день и время, размер ячеек календаря истории, баннер блокировки сна | 51.1–51.6 | ✅ | 2026-10-11 |
 | 52 | UI-кит 2.0 — полный запрет сырых Material-виджетов в UI (`restrict_raw_flutter`), весь UI через `lib/uikit/` | 52.1–52.10 | ✅ | 2026-10-13 |
+| 53 | Редизайн — подготовка: инфраструктура дизайн-ревью (скилы + агент `design-reviewer`) | 53.1–53.2 | в работе | — |
 
 ## Незавершённые задачи
 
@@ -104,3 +105,33 @@
 - [x] **52.8 — Списки и изображения (`ListView` → `AppListView`, `GridView` → `AppGridView`, `Image` → `AppImage`), 32 шт.** (2026-10-13). Включены `ban_listview_widget`, `ban_gridview_widget`, `ban_image_widget` (итого 14 из 18; `ban_gridview_widget` — «впрок», сайтов 0). **24 `ListView` → `AppListView`** — механика (17 конструкторов + 5 `.builder` + 2 `.separated`; у обёртки все три конструктора с теми же именами, байт-эквивалентность доказана обратной заменой токена в ревью). **8 `Image` → `AppImage`** — механика (все сайты используют именованный `image: provider`; `ImageProvider`/`AssetImage` целы — граница слова). Каскада в тестах отсутствует и подтверждена прогоном: обёртки рендерят голые `ListView`/`GridView`/`Image` внутри → 22 finder'а (`byType(Image)` c `tester.widget<Image>`, `byType(ListView)`) матчат нижележащий виджет. **Попутно починен предсуществующий WILL ROT из 52.1** (нашёл ревьюер): `AppListView.separated` принимал `addAutomaticKeepAlives`/`addRepaintBoundaries`/`addSemanticIndexes`, но в `ListView.separated` их не пробрасывал — молча игнорировал; фикс — 3 строки + регрессионный тест через публичный `childrenDelegate` (поля делегата в SDK публичные). Гейты: `dart analyze --fatal-infos` = 0 при 14 включённых правилах, guard чисто, `flutter test` = 1142/1142 (+1 регрессионный). Ревью `task-reviewer` → **SHIP** (байт-эквивалентный аудит 24+8 замен, счётчики правил дословно). E2E прогнаны по решению владельца (2026-10-13): **19/19 PASS** (7м32с).
 - [x] **52.9 — Поля ввода (`TextFormField`/`TextField` → `AppTextFormField`/`AppTextField`), 25 шт.** (2026-10-13). Включены `ban_textfield_widget`, `ban_textformfield_widget` (итого 16 из 18). **23 `TextFormField` + 2 `TextField` — чистая механика:** точный парс всех 25 вызовов дал 0 непокрытых аргументов (обёртки пасстхру: 32/37 параметров); байт-эквивалентность 25 замен доказана ревью обратной заменой токена (все пары сходятся, 0 нечётных строк — потеряно/склеено ничего). Дефолты обёрток сверены с SDK (переданные сайтом значения побеждают, конфликтов нет), `decoration` пробрасывается как есть. Каскад в тестах отсутствует: обёртки рендерят голые `TextField`/`TextFormField` внутри → 29 finder'ов (`widgetWithText(TextFormField, 'Вес')`, `enterText(byType(TextFormField))`) матчат нижележащий виджет — подтверждено прогоном, тесты не менялись. Гейты: `dart analyze --fatal-infos` = 0 при 16 включённых правилах, guard чисто, `flutter test` = 1142/1142. Ревью `task-reviewer` → **SHIP** (WILL BREAK / COST / ROT — нет). E2E прогнаны по решению владельца (2026-10-13): **19/19 PASS** (7м30с).
 - [x] **52.10 — Нажатия (`InkWell` → `AppInkWell`, `GestureDetector` → `AppGestureDetector`), 14 шт.** (2026-10-13). **Этап 52 закрыт: все 18 правил `restrict_raw_flutter` включены**, `dart analyze --fatal-infos` = 0 по всему пакету без пути. **12 `InkWell` + 2 `GestureDetector` — механика** (обёртки пасстхру 22/31 параметр, 0 непокрытых аргументов: `onTap` 12/1, `child` 12/2, `borderRadius` 5, `customBorder` 1, `onLongPress` 1, `behavior` 1 + 3 drag-колбэка): байт-эквивалентность 14 замен доказана ревью обратной заменой токена (0 расхождений), границы слова целы (даже упоминаний `InkWell`/`GestureDetector` вне uikit нет). Механизм 52.5-фикса условного `InkWell` в `AppCard` не задет (мигрированные карточки `onTap` не получают — вложенных дублей нет), хрупкий e2e- finder `byType(InkWell)` внутри `_StatCard` подтверждён по коду. Каскад в тестах отсутствует (обёртки рендерят голые виджеты; 5 finder'ов матчатся — прогоном). **Финальный контроль этапа:** grep-скан всего `lib/` — сырых 18 виджетов и `Colors.*`/`Color(0x` вне `lib/uikit/**` и `lib/app/theme/**` — **0** (baseline 52.1 = 703 нарушения: 647 lib/features + 56 lib/app → теперь 0); guard чисто. Гейты: `flutter analyze` = 0, `dart format` = 0, `flutter test` = 1142/1142. Ревью `task-reviewer` → **SHIP** (WILL BREAK / COST / ROT — нет). E2E прогнаны по решению владельца (2026-10-13): **19/19 PASS** (8м08с).
+
+### Этап 53 — Редизайн: инфраструктура дизайн-ревью (подготовка)
+
+**Инициатива владельца (чат, 2026-10-13):** «в этом релизе будет полный редизайн проекта; для начала нужно найти в интернете навыки или готовых агентов, которые могут проводить дизайн-ревью». Этап — подготовка редизайна: инструменты ревью. Сами задачи редизайна будут добавлены отдельным этапом после определения объёма.
+
+**Результаты исследования (2026-10-13):**
+
+- Зрелая экосистема дизайн-ревью живёт в **скиллах** (skills.sh, `npx skills`), а не в готовых агентах: в крупнейших коллекциях сабагентов (`VoltAgent/awesome-claude-code-subagents` 25.7K⭐, `contains-studio/agents` 12.4K⭐) dedicated-роли «design-reviewer» нет — есть только designer-роли (`ui-designer`, `design-bridge`, `ux-researcher`), ревью-роли — code/arch/security. Мелкие репозитории с «агентами-ревьюерами» (5–7⭐) непроверенного качества — отклонены.
+- OpenCode официально поддержан skills CLI (`skills.sh/agent/opencode`); `npx skills add` кладёт скиллы в `.agents/skills/` (отслеживается в git наравне с dart-/flutter-скиллами) и дописывает `skills-lock.json` (тоже в git).
+
+**Порядок задач:**
+
+- [x] **53.1 — Установка скилов дизайн-ревью** (2026-10-13). Установлено 4 скилла в `.agents/skills/` (+ `skills-lock.json`):
+  - **`impeccable`** (pbakaus/impeccable v4.5.2; 329K installs, репо 80K⭐; Paul Bakaus) — ядро дизайн-ревью. Команды: `critique` (две изолированные суб-оценки: design review + detector/browser evidence → синтез; отчёт с severity и конкретными фиксами), `audit.native`/`audit` для native-платформ + `reference/android.md`, `polish`/`bolder`/`quieter`/`distill`/`harden`/`animate`. Загружает `PRODUCT.md`/`DESIGN.md` — в репо `DESIGN.md` есть. Нюансы: (1) лаунчер `scripts/impeccable` исполняет self-contained бинарник (скачивается один раз, версия пинится в `scripts/VERSION`; pre-commit audit skills.sh: Socket «1 alert», Snyk Low Risk — ожидаемо для такого лаунчера); (2) заточен под web (браузерные доказательства), для Flutter путь — native/android-режимы.
+  - **`web-design-guidelines`** (vercel-labs/agent-skills; 730K installs, репо 32K⭐; офиц. Vercel) — аудит UI-**кода** против Vercel Web Interface Guidelines: вывод `file:line`, правила подтягиваются с remote перед каждым ревью.
+  - **`sleek-design-mobile-apps`** (sleekdotdesign/agent-skills) — мобильный дизайн iOS/Android (жесты, safe areas, native feel). Оговорка: SKILL.md частично привязан к инструменту Sleek (реализация дизайнов Sleek в React Native/HTML) — использовать как источник мобильных паттернов.
+  - **`extract-design-system`** (arvindrk/extract-design-system; 130K installs) — генерирует стартовые дизайн-токены из публичного **веб-сайта** (по URL). Полезно для референсов редизайна; Flutter-код не разбирает.
+- [ ] **53.2 — Агент `design-reviewer`** (по образцу `task-reviewer`; готовых качественных дизайн-ревью-агентов в открытых коллекциях нет — см. исследование выше, поэтому собираем своего под наши конвенции).
+
+  **Рабочий план:**
+  1. Составить `.agents/agents/design-reviewer.md`:
+     - **роль:** ревью UI и редизайна против `DESIGN.md` + критериев `.agents/skills/impeccable` (critique: visual hierarchy, information architecture, composition, typography, color strategy, state handling, microcopy, affordance; audit.native: a11y, перформанс, theming/токены, touch targets, text scaling) + конвенций репо (`lib/uikit/`, запрет сырых Material-виджетов, токены темы, Material 3, Android 12+, offline-first);
+     - **вход:** diff ветки или перечень экранов; для визуальной оценки — скриншоты (эмулятор `Pixel_10_Pro` или linux desktop — по протоколу `android-tester`);
+     - **метод:** две независимые оценки (протокол impeccable critique: оценка дизайнера + детектор/скриншоты; вердикт только после обеих; degraded-прогон помечается banner'ом в первой строке отчёта);
+     - **выпуск:** отчёт severity (Critical/High/Medium/Low) с file:line и конкретными фиксами + вердикт `APPROVE` / `APPROVE WITH FIXES` / `REDESIGN REQUIRED`;
+     - **границы:** код не чинит (как `task-reviewer`); на этапе редизайна вердикт `DO NOT SHIP`-класса блокирует PR с UI-изменениями.
+  2. Симлинк `.opencode/agents/design-reviewer.md` → `../../.agents/agents/design-reviewer.md`, проверить `opencode debug agents`.
+  3. Smoke test: прогнать агента на одном экране (напр. `week_plan_screen`) и сверить отчёт с известными находками этапа 52 (мёртвый InkWell в `AppCard`, `scaffoldKey`, `AppListView.separated`).
+  4. Обновить `AGENTS.md`: агент в разделе `.agents/` + раздел «Как запустить дизайн-ревью».
+  5. Ветка `task/53.2-design-reviewer-agent` → PR (изменений в `lib/`/`test/` нет — e2e и `task-reviewer` не требуются).
