@@ -331,7 +331,11 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       return;
     }
     if (action == 'save') {
-      _controller.workout.finishEarly();
+      // finishEarly бросает исключение, если тренировка уже завершена
+      // (Back во время автосохранения с экрана итогов — задача 53.5).
+      if (_controller.workout.phase.value != WorkoutPhase.finished) {
+        _controller.workout.finishEarly();
+      }
       await _controller.completeAndSave();
       await _clearCheckpoint();
       _foregroundService.stop();

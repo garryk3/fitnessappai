@@ -45,6 +45,25 @@ class _FakeWakelock implements WakelockService {
   }
 }
 
+/// Репозиторий с «вратами»: `saveSession` не завершается, пока тест не
+/// откроет [gate] — держит сохранение в полёте для проверки гонок (53.5).
+class _GatedWorkoutRepository extends WorkoutRepository {
+  _GatedWorkoutRepository(super.db);
+
+  final Completer<void> gate = Completer<void>();
+  int saveCalls = 0;
+
+  @override
+  Future<WorkoutSessionDetail> saveSession(
+    WorkoutSession session,
+    List<WorkoutSetResult> results,
+  ) async {
+    saveCalls++;
+    await gate.future;
+    return super.saveSession(session, results);
+  }
+}
+
 class _ControllableSoundService implements SoundService {
   final _isPlayingController = StreamController<bool>.broadcast();
   int stopCalls = 0;
@@ -602,6 +621,95 @@ void main() {
       final detail = await workoutRepo.getSession(sessions.first.id!);
       expect(detail!.results, hasLength(1));
       expect(detail.results.first.reps, 10);
+    },
+  );
+
+  testWidgets(
+    'диалог «Завершить и сохранить» при медленном сохранении пишет сессию один раз',
+    (tester) async {
+      // Регрессия задачи 53.5: после finishEarly() экран итогов сам дёргает
+      // completeAndSave() в initState — до фикса параллельный вызов проходил
+      // проверку `saved.value` и сессия писалась дважды.
+      final repo = _GatedWorkoutRepository(db);
+      workoutRepo = repo;
+      final dayId = await createDay(sets: 3, restSeconds: 60);
+      await pumpRun(tester, dayId, initialLocation: '/');
+
+      final router = GoRouter.of(tester.element(find.text('home')));
+      router.push('/workout/run?programDayId=$dayId&variant=main');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).first, '10');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pump();
+      expect(find.text('Отдых'), findsOneWidget);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Завершить и сохранить'));
+      // Сохранение в полёте: спиннер saving анимируется, pumpAndSettle
+      // здесь недоступен — кадры вручную.
+      await tester.pump();
+      await tester.pump();
+
+      // Гонка: _FinishedView.initState успел запросить сохранение повторно.
+      expect(repo.saveCalls, 1);
+
+      repo.gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('home'), findsOneWidget);
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      expect(sessions, hasLength(1));
+    },
+  );
+
+  testWidgets(
+    'Back во время автосохранения итогов не крашится и не дублирует сессию',
+    (tester) async {
+      // Регрессия задачи 53.5: finishEarly() на уже завершённой фазе бросал
+      // WorkoutStateException; повторный вызов не должен писать вторую сессию.
+      final repo = _GatedWorkoutRepository(db);
+      workoutRepo = repo;
+      final dayId = await createDay(sets: 1, restSeconds: null);
+      await pumpRun(tester, dayId, initialLocation: '/');
+
+      final router = GoRouter.of(tester.element(find.text('home')));
+      router.push('/workout/run?programDayId=$dayId&variant=main');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).first, '8');
+      await tester.tap(find.text('Подход выполнен'));
+      // Автосохранение с экрана итогов в полёте (врата не открыты) —
+      // спиннер saving анимируется, кадры вручную.
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+      expect(repo.saveCalls, 1);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('Выйти из тренировки?'), findsOneWidget);
+
+      await tester.tap(find.text('Завершить и сохранить'));
+      await tester.pump();
+      await tester.pump();
+      expect(repo.saveCalls, 1);
+
+      repo.gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('home'), findsOneWidget);
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      expect(sessions, hasLength(1));
     },
   );
 

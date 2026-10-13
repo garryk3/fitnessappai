@@ -72,6 +72,15 @@ class WorkoutRunController {
   WorkoutSessionDetail? _savedDetail;
   WorkoutSessionDetail? get savedDetail => _savedDetail;
 
+  /// Незавершённое сохранение сессии (см. [completeAndSave]).
+  ///
+  /// Гонка до фикса (задача 53.5): тап «Завершить и сохранить» в диалоге
+  /// выводил фазу в `finished`, после чего `_FinishedView.initState` дёргал
+  /// `completeAndSave()` повторно, пока первое сохранение ещё летело в БД
+  /// (`saved.value` выставляется только после `await`) — сессия писалась
+  /// дважды. Теперь параллельные вызовы разделяют один и тот же future.
+  Future<void>? _saveInFlight;
+
   /// Суммарное число подходов для отображения прогресса.
   int get totalSets => workout.exercises.fold(0, (sum, e) => sum + e.sets);
 
@@ -200,16 +209,27 @@ class WorkoutRunController {
   }
 
   /// Завершает тренировку и сохраняет сессию с результатами.
-  Future<void> completeAndSave() async {
+  ///
+  /// Идемпотентно относительно повторных/параллельных вызовов (см.
+  /// [_saveInFlight]): повторный вызов возвращает тот же future.
+  Future<void> completeAndSave() {
     if (workout.phase.value != WorkoutPhase.finished) {
-      return;
+      return Future.value();
     }
     if (saved.value) {
-      return;
+      return Future.value();
     }
-    final result = workout.completeWorkout();
+    // Сброс мемоизации через whenComplete: callback отложится в микротаск уже
+    // после присваивания `_saveInFlight`, поэтому даже синхронный провал
+    // `_save()` не оставит залипший stale-future — после неудачи повторный
+    // вызов начнёт новую попытку.
+    return _saveInFlight ??= _save().whenComplete(() => _saveInFlight = null);
+  }
+
+  Future<void> _save() async {
     saving.value = true;
     try {
+      final result = workout.completeWorkout();
       _savedDetail = await workoutRepository.saveSession(
         result.session,
         result.results,
