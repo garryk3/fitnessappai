@@ -215,9 +215,12 @@ class _SyncSectionState extends State<_SyncSection> {
     return SignalBuilder(
       builder: (_) {
         final validationError = widget.controller.importValidationError.value;
+        final syncStatus = widget.controller.status.value;
         final status = validationError != null
             ? syncValidationMessage(l10n, validationError)
-            : widget.controller.statusText.value;
+            : syncStatus == null
+            ? null
+            : syncStatusMessage(l10n, syncStatus);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -292,7 +295,10 @@ class _SyncSectionState extends State<_SyncSection> {
   }
 
   Future<void> _exportToFile() async {
-    await widget.controller.exportDatabaseToFile();
+    final l10n = AppLocalizations.of(context);
+    await widget.controller.exportDatabaseToFile(
+      dialogTitle: l10n.syncSaveDialogTitle,
+    );
   }
 
   Future<void> _import() async {

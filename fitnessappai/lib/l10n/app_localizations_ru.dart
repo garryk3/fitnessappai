@@ -1213,6 +1213,31 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get syncStatusExportShared => 'Резервная копия создана и отправлена';
+
+  @override
+  String get syncStatusExportSaved => 'Резервная копия сохранена';
+
+  @override
+  String get syncStatusSaveCancelled => 'Сохранение отменено';
+
+  @override
+  String get syncErrorExport => 'Ошибка экспорта';
+
+  @override
+  String get syncErrorImport => 'Ошибка импорта';
+
+  @override
+  String get syncErrorUnavailableOnPlatform =>
+      'операция недоступна на этой платформе';
+
+  @override
+  String get syncErrorFilePickerUnavailable => 'не удалось открыть выбор файла';
+
+  @override
+  String get syncSaveDialogTitle => 'Сохранение резервной копии';
+
+  @override
   String get contraindications => 'Противопоказания';
 
   @override

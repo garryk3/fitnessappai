@@ -15,7 +15,47 @@ typedef SyncFilePicker = Future<String?> Function();
 typedef SyncFileShare = Future<void> Function(String filePath);
 
 /// Возвращает `true`, если файл сохранён пользователем, `false` — при отмене.
-typedef SyncFileSave = Future<bool> Function(String filePath);
+///
+/// [dialogTitle] — локализованный заголовок системного диалога сохранения.
+typedef SyncFileSave =
+    Future<bool> Function(String filePath, {String? dialogTitle});
+
+/// Вид статуса операции синхронизации (без текста).
+///
+/// Текст локализуется на стороне экрана (`syncStatusMessage`), контроллер
+/// не хранит русские строки мимо `app_ru.arb`.
+enum SyncStatusKind {
+  /// Экспорт: копия создана и передана в шаринг.
+  exportShared,
+
+  /// Экспорт в файл: пользователь сохранил файл.
+  exportSaved,
+
+  /// Экспорт в файл: пользователь отменил сохранение.
+  saveCancelled,
+
+  /// Импорт завершён успешно.
+  importDone,
+
+  /// Ошибка экспорта (детали — в [SyncStatus.error]).
+  exportFailed,
+
+  /// Ошибка импорта (детали — в [SyncStatus.error]).
+  importFailed,
+}
+
+/// Структурированный статус операции синхронизации.
+///
+/// Для ошибок несёт исходный объект ошибки — человекочитаемая деталь
+/// составляется при локализации (`syncStatusMessage`).
+class SyncStatus {
+  const SyncStatus(this.kind, {this.error});
+
+  final SyncStatusKind kind;
+
+  /// Исходная ошибка (только для `*Failed`, иначе `null`).
+  final Object? error;
+}
 
 /// Управляет экраном «Синхронизация»: экспорт, импорт и статус операции.
 class SyncController {
@@ -39,7 +79,10 @@ class SyncController {
   SyncService get _syncService => _service();
 
   final Signal<bool> isBusy = Signal(false);
-  final Signal<String?> statusText = Signal(null);
+
+  /// Последняя операция (структурированный статус): текст локализуется на
+  /// стороне экрана (`syncStatusMessage`), контроллер хранит только вид.
+  final Signal<SyncStatus?> status = Signal(null);
   final Signal<bool> hasError = Signal(false);
 
   /// Последняя ошибка валидации импорта (причина без текста): сообщение
@@ -47,14 +90,14 @@ class SyncController {
   /// не хранит русские строки мимо `app_ru.arb`.
   final Signal<SyncValidationException?> importValidationError = Signal(null);
 
-  /// Единая точка обновления статуса: текст — для невалидационных операций,
-  /// [validationError] — для ошибок импорта (тогда текст не показывается).
+  /// Единая точка обновления статуса: [next] — для невалидационных операций,
+  /// [validationError] — для ошибок импорта (тогда статус не показывается).
   void _setStatus(
-    String? text, {
+    SyncStatus? next, {
     required bool error,
     SyncValidationException? validationError,
   }) {
-    statusText.value = text;
+    status.value = next;
     hasError.value = error;
     importValidationError.value = validationError;
   }
@@ -68,10 +111,13 @@ class SyncController {
     try {
       final path = await _syncService.export();
       await _shareFile(path);
-      _setStatus('Резервная копия создана и отправлена', error: false);
+      _setStatus(const SyncStatus(SyncStatusKind.exportShared), error: false);
       return true;
     } catch (error) {
-      _setStatus(_operationError('Ошибка экспорта', error), error: true);
+      _setStatus(
+        SyncStatus(SyncStatusKind.exportFailed, error: error),
+        error: true,
+      );
       return false;
     } finally {
       isBusy.value = false;
@@ -79,21 +125,29 @@ class SyncController {
   }
 
   /// Экспортирует копию БД и сохраняет её в файловую систему.
-  Future<bool> exportDatabaseToFile() async {
+  ///
+  /// [dialogTitle] — заголовок системного диалога сохранения (локализуется
+  /// на стороне экрана).
+  Future<bool> exportDatabaseToFile({String? dialogTitle}) async {
     if (isBusy.value) {
       return false;
     }
     isBusy.value = true;
     try {
       final path = await _syncService.export();
-      final saved = await _saveFile(path);
+      final saved = await _saveFile(path, dialogTitle: dialogTitle);
       _setStatus(
-        saved ? 'Резервная копия сохранена' : 'Сохранение отменено',
+        SyncStatus(
+          saved ? SyncStatusKind.exportSaved : SyncStatusKind.saveCancelled,
+        ),
         error: false,
       );
       return saved;
     } catch (error) {
-      _setStatus(_operationError('Ошибка экспорта', error), error: true);
+      _setStatus(
+        SyncStatus(SyncStatusKind.exportFailed, error: error),
+        error: true,
+      );
       return false;
     } finally {
       isBusy.value = false;
@@ -109,7 +163,10 @@ class SyncController {
     try {
       source = await _pickFile();
     } catch (error) {
-      _setStatus(_operationError('Ошибка импорта', error), error: true);
+      _setStatus(
+        SyncStatus(SyncStatusKind.importFailed, error: error),
+        error: true,
+      );
       return false;
     }
     if (source == null) {
@@ -118,29 +175,20 @@ class SyncController {
     isBusy.value = true;
     try {
       await _syncService.import(source);
-      _setStatus('База данных импортирована', error: false);
+      _setStatus(const SyncStatus(SyncStatusKind.importDone), error: false);
       return true;
     } on SyncValidationException catch (error) {
       _setStatus(null, error: true, validationError: error);
       return false;
     } catch (error) {
-      _setStatus(_operationError('Ошибка импорта', error), error: true);
+      _setStatus(
+        SyncStatus(SyncStatusKind.importFailed, error: error),
+        error: true,
+      );
       return false;
     } finally {
       isBusy.value = false;
     }
-  }
-
-  /// Текст ошибки операции: для платформенных «нет поддержки» — человекочитаемое
-  /// сообщение, иначе — исходная ошибка.
-  static String _operationError(String action, Object error) {
-    if (error is UnimplementedError || error is MissingPluginException) {
-      return '$action: операция недоступна на этой платформе';
-    }
-    if (error is PlatformException) {
-      return '$action: не удалось открыть выбор файла';
-    }
-    return '$action: $error';
   }
 
   static SyncService _defaultService() => locator.get<SyncService>();
@@ -170,11 +218,14 @@ class SyncController {
 
   static const _channel = MethodChannel('com.example.fitnessappai/file_saver');
 
-  static Future<bool> _defaultSave(String filePath) async {
+  static Future<bool> _defaultSave(
+    String filePath, {
+    String? dialogTitle,
+  }) async {
     if (!Platform.isAndroid) {
       // На desktop — обычный saveFile через file_picker.
       final destination = await FilePicker.platform.saveFile(
-        dialogTitle: 'Сохранение резервной копии',
+        dialogTitle: dialogTitle,
         fileName: 'fitnessappai_backup.sqlite',
       );
       if (destination == null) {
@@ -201,6 +252,34 @@ class SyncController {
       return true;
     }
   }
+}
+
+/// Локализованное сообщение статуса операции синхронизации.
+///
+/// Тексты — в `app_ru.arb` (`syncStatus*`, `syncError*`); контроллер хранит
+/// только вид статуса и исходный объект ошибки.
+String syncStatusMessage(AppLocalizations l10n, SyncStatus status) =>
+    switch (status.kind) {
+      SyncStatusKind.exportShared => l10n.syncStatusExportShared,
+      SyncStatusKind.exportSaved => l10n.syncStatusExportSaved,
+      SyncStatusKind.saveCancelled => l10n.syncStatusSaveCancelled,
+      SyncStatusKind.importDone => l10n.syncImportSuccess,
+      SyncStatusKind.exportFailed =>
+        '${l10n.syncErrorExport}: ${_syncErrorDetail(l10n, status.error)}',
+      SyncStatusKind.importFailed =>
+        '${l10n.syncErrorImport}: ${_syncErrorDetail(l10n, status.error)}',
+    };
+
+/// Деталь ошибки операции: для платформенных «нет поддержки» — человекочитаемое
+/// сообщение, иначе — исходная ошибка.
+String _syncErrorDetail(AppLocalizations l10n, Object? error) {
+  if (error is UnimplementedError || error is MissingPluginException) {
+    return l10n.syncErrorUnavailableOnPlatform;
+  }
+  if (error is PlatformException) {
+    return l10n.syncErrorFilePickerUnavailable;
+  }
+  return '$error';
 }
 
 /// Локализованное сообщение об ошибке валидации импорта.
