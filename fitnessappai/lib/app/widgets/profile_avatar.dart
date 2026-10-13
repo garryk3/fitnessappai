@@ -18,7 +18,7 @@ class ProfileAvatar extends StatelessWidget {
     if (onTap == null) {
       return avatar;
     }
-    return InkWell(
+    return AppInkWell(
       customBorder: const CircleBorder(),
       onTap: onTap,
       child: avatar,

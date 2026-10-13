@@ -187,7 +187,7 @@ class _ProgramCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: AppInkWell(
         onTap: onEdit,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),

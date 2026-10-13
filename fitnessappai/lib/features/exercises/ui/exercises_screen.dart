@@ -342,7 +342,7 @@ class _ExerciseCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
-      child: InkWell(
+      child: AppInkWell(
         onTap: onTap,
         onLongPress: onLongPress,
         child: Padding(

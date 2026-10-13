@@ -93,7 +93,7 @@ class MonthDayCell extends StatelessWidget {
     final theme = Theme.of(context);
     final cell = Material(
       color: AppColors.transparent,
-      child: InkWell(
+      child: AppInkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: AppContainer(
@@ -249,7 +249,7 @@ class _MonthGridViewState extends State<MonthGridView> {
         ),
     ];
 
-    Widget wrapDrag(Widget child) => GestureDetector(
+    Widget wrapDrag(Widget child) => AppGestureDetector(
       onHorizontalDragStart: _onDragStart,
       onHorizontalDragUpdate: _onDragUpdate,
       onHorizontalDragEnd: _onDragEnd,

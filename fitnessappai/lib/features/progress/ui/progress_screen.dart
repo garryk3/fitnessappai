@@ -194,7 +194,7 @@ class _StatCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: AppInkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
