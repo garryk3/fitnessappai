@@ -59,6 +59,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       appBar: AppTopBar(
         leading: const AppMenuButton(),
         title: AppLocalizations.of(context).navProgress,
+        large: true,
       ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );

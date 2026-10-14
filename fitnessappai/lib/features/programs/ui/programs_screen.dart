@@ -51,6 +51,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
       appBar: AppTopBar(
         leading: const AppMenuButton(),
         title: l10n.navPrograms,
+        large: true,
       ),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
       floatingActionButton: FloatingActionButton(

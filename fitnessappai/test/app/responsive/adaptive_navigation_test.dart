@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/main.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/app/widgets/profile_avatar.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -27,6 +28,47 @@ void main() {
     for (final label in ['Главная', 'Упражнения', 'Программы', 'План']) {
       expect(find.text(label), findsWidgets);
     }
+  });
+
+  testWidgets('54.2: активная вкладка бара — pill-индикатор, primary-иконка', (
+    tester,
+  ) async {
+    await pumpAtSize(tester, const Size(480, 800));
+    final Theme theme = tester.widget<Theme>(
+      find.ancestor(
+        of: find.byType(NavigationBar),
+        matching: find.byType(Theme),
+      ),
+    );
+    final barTheme = theme.data.navigationBarTheme;
+    final shape = barTheme.indicatorShape! as RoundedRectangleBorder;
+    expect((shape.borderRadius as BorderRadius).topLeft.x, AppRadii.pill);
+    expect(
+      barTheme.indicatorColor,
+      theme.data.colorScheme.surfaceContainerHighest,
+    );
+    final selectedIcon = barTheme.iconTheme!.resolve(const {
+      WidgetState.selected,
+    });
+    expect(selectedIcon!.color, theme.data.colorScheme.primary);
+  });
+
+  testWidgets('54.2: активный пункт rail — primary-иконка', (tester) async {
+    await pumpAtSize(tester, const Size(1200, 800));
+    final Theme theme = tester.widget<Theme>(
+      find
+          .ancestor(
+            of: find.byType(NavigationRail),
+            matching: find.byType(Theme),
+          )
+          .first,
+    );
+    final railTheme = theme.data.navigationRailTheme;
+    expect(railTheme.selectedIconTheme!.color, theme.data.colorScheme.primary);
+    expect(
+      railTheme.indicatorColor,
+      theme.data.colorScheme.surfaceContainerHighest,
+    );
   });
 
   testWidgets('на широком экране (900dp) — свернутый NavigationRail', (

@@ -128,7 +128,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
-      appBar: AppTopBar(leading: const AppMenuButton(), title: l10n.settings),
+      appBar: AppTopBar(
+        leading: const AppMenuButton(),
+        title: l10n.settings,
+        large: true,
+      ),
       body: AppListView(
         padding: const EdgeInsets.all(16),
         children: [

@@ -89,6 +89,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       appBar: AppTopBar(
         leading: const AppMenuButton(),
         title: l10n.history,
+        large: true,
         actions: [
           IconButton(
             tooltip: l10n.historyCopyJsonTooltip,
