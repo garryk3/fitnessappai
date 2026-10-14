@@ -490,6 +490,24 @@ abstract class AppLocalizations {
   /// **'Нужно не всем: на Xiaomi, Huawei и Samsung система откладывает фоновые напоминания, пока оптимизация батареи включена, и напоминание приходит только вместе с открытием приложения. Без исключения приложение покажет пропущенное при возврате.'**
   String get settingsNotificationsBatteryHint;
 
+  /// No description provided for @settingsNotificationsErrorCheck.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось проверить разрешения'**
+  String get settingsNotificationsErrorCheck;
+
+  /// No description provided for @settingsNotificationsErrorRequest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось запросить разрешение'**
+  String get settingsNotificationsErrorRequest;
+
+  /// No description provided for @settingsNotificationsErrorBatteryRequest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось запросить исключение из оптимизации батареи'**
+  String get settingsNotificationsErrorBatteryRequest;
+
   /// No description provided for @commonClose.
   ///
   /// In ru, this message translates to:
