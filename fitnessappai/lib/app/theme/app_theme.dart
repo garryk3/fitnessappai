@@ -46,26 +46,52 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
-        centerTitle: false,
-        elevation: 0,
-        titleTextStyle: TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-        ),
+        // Редизайн 54 (§11): шапка «сливается» со scaffold — без тинта и
+        // скролл-поднятия. Крупные заголовки задаёт AppTopBar из контекстной
+        // темы (displaySmall/headlineMedium) — appBarTheme.titleTextStyle
+        // здесь не заполняется (standalone textTheme ненадёжен без
+        // локализации MaterialApp).
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
       ),
+      // Редизайн 54 (§11): активная вкладка/rail — pill-индикатор на
+      // приподнятой поверхности + неон-акцент (primary) на иконке.
+      // Плоский бар без теней (тональная элевация).
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.surfaceContainer,
-        indicatorColor: colorScheme.primaryContainer,
-        elevation: 3,
-        shadowColor: Colors.black.withValues(alpha: 0.3),
+        indicatorColor: colorScheme.surfaceContainerHighest,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+        ),
+        elevation: 0,
+        shadowColor: Colors.transparent,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final bool selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          );
+        }),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: colorScheme.surfaceContainer,
-        indicatorColor: colorScheme.primaryContainer,
-        selectedIconTheme: IconThemeData(color: colorScheme.onPrimaryContainer),
+        indicatorColor: colorScheme.surfaceContainerHighest,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+        ),
+        selectedIconTheme: IconThemeData(color: colorScheme.primary),
         unselectedIconTheme: IconThemeData(color: colorScheme.onSurfaceVariant),
+      ),
+      // Редизайн 54: выбранный пункт списка (drawer-меню и т.п.) — та же
+      // приподнятая поверхность, что у индикатора бара/rail-а, и тот же
+      // pill-язык формы (stadium — как у индикатора активной вкладки).
+      listTileTheme: ListTileThemeData(
+        selectedTileColor: colorScheme.surfaceContainerHighest,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+        ),
       ),
       cardTheme: CardThemeData(
         color: colorScheme.surfaceContainerLow,

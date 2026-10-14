@@ -173,6 +173,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
       appBar: AppTopBar(
+        // Крупный заголовок только вне режима выделения (там — счётчик).
+        large: !_selectionMode,
         title: _selectionMode ? '${_selectedIds.length}' : l10n.navExercises,
         leading: _selectionMode
             ? IconButton(

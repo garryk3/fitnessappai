@@ -53,7 +53,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
-      appBar: AppTopBar(leading: const AppMenuButton(), title: l10n.navProfile),
+      appBar: AppTopBar(
+        leading: const AppMenuButton(),
+        title: l10n.navProfile,
+        large: true,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'profile-fab',
         onPressed: () async {

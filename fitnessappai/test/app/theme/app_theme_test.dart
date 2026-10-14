@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -156,6 +157,68 @@ void main() {
       expect(theme.segmentedButtonTheme, isNotNull);
       expect(theme.searchBarTheme, isNotNull);
       expect(theme.dialogTheme, isNotNull);
+    });
+
+    test('54.2: бар/rail — pill-индикатор на приподнятой поверхности', () {
+      for (final ThemeData theme in [AppTheme.light(), AppTheme.dark()]) {
+        final ColorScheme scheme = theme.colorScheme;
+
+        final bar = theme.navigationBarTheme;
+        expect(bar.indicatorColor, scheme.surfaceContainerHighest);
+        final barShape = bar.indicatorShape! as RoundedRectangleBorder;
+        expect(
+          (barShape.borderRadius as BorderRadius).topLeft.x,
+          AppRadii.pill,
+        );
+        // Плоский бар без тени (тональная элевация).
+        expect(bar.elevation, 0);
+        // Неон-акцент: иконка выбранной вкладки — primary.
+        final selectedIcon = bar.iconTheme!.resolve(const {
+          WidgetState.selected,
+        });
+        expect(selectedIcon!.color, scheme.primary);
+        final idleIcon = bar.iconTheme!.resolve(const {});
+        expect(idleIcon!.color, scheme.onSurfaceVariant);
+
+        final rail = theme.navigationRailTheme;
+        expect(rail.indicatorColor, scheme.surfaceContainerHighest);
+        final railShape = rail.indicatorShape! as RoundedRectangleBorder;
+        expect(
+          (railShape.borderRadius as BorderRadius).topLeft.x,
+          AppRadii.pill,
+        );
+        expect(rail.selectedIconTheme!.color, scheme.primary);
+        expect(rail.unselectedIconTheme!.color, scheme.onSurfaceVariant);
+      }
+    });
+
+    test('54.2: шапка — крупные заголовки, без тинта', () {
+      for (final ThemeData theme in [AppTheme.light(), AppTheme.dark()]) {
+        final appBar = theme.appBarTheme;
+        // Заголовки (headlineMedium/displaySmall) задаёт AppTopBar из
+        // контекстной темы — appBarTheme.titleTextStyle остаётся пустым
+        // (standalone textTheme ненадёжен без локализации MaterialApp).
+        expect(appBar.titleTextStyle, isNull);
+        expect(appBar.backgroundColor, theme.colorScheme.surface);
+        expect(appBar.surfaceTintColor, Colors.transparent);
+        expect(appBar.scrolledUnderElevation, 0);
+      }
+    });
+
+    test('54.2: выбранный пункт списка — приподнятая поверхность и pill', () {
+      for (final ThemeData theme in [AppTheme.light(), AppTheme.dark()]) {
+        expect(
+          theme.listTileTheme.selectedTileColor,
+          theme.colorScheme.surfaceContainerHighest,
+        );
+        // Та же pill-форма, что у индикатора активной вкладки бара/rail-а.
+        final shape = theme.listTileTheme.shape;
+        expect(shape, isA<RoundedRectangleBorder>());
+        expect(
+          (shape! as RoundedRectangleBorder).borderRadius,
+          BorderRadius.circular(AppRadii.pill),
+        );
+      }
     });
   });
 

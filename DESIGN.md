@@ -409,9 +409,27 @@ abstract final class ChartSeriesColors {
 - `AppGradientButton`: дефолтный градиент — `AppGradients.primaryCta`; параметры `pill` (stadium вместо `AppRadii.lg`) и `intensity`; glow — только dark; текст всегда белый.
 - `AppSegmentedButton<T>` (`lib/uikit/app_segmented_button.dart`) — pill-обёртка над `SegmentedButton` для переключателей (Неделя/Месяц/Год, пол и т.п.): пилюля, текст labelLarge через `AppText`; цвета ролей не переопределяются — M3-дефолт темы (индикатор `secondaryContainer`, текст `onSecondaryContainer`). Сырой `SegmentedButton` вне `lib/uikit/` для новых экранов не использовать; миграция существующих мест — в задачах экранов (54.5–54.9).
 
+### Навигационная оболочка и шапки (54.2)
+
+Нижний `NavigationBar` и `NavigationRail` темизированы в `app_theme.dart` (без правок структуры — IA и состав вкладок не меняются):
+
+- **Pill-индикатор активной вкладки:** `indicatorShape` = `RoundedRectangleBorder(radius: AppRadii.pill)`, `indicatorColor` = `surfaceContainerHighest` (приподнятая поверхность вместо `primaryContainer`).
+- **Неон-актив:** иконка выбранного пункта — `primary` (акцент темы), невыбранная — `onSurfaceVariant`; то же для `NavigationRail` (`selectedIconTheme`). Подписи и композиция — M3-дефолт.
+- **Плоский бар:** `elevation: 0`, `shadowColor: transparent` — тональная элевация вместо теней.
+- **Выбранный пункт списка** (drawer-меню, trailing rail): `listTileTheme.selectedTileColor` = `surfaceContainerHighest` — та же палитра, что у индикатора; `listTileTheme.shape` = stadium (`AppRadii.pill`) — тот же pill-язык формы.
+
+Шапки (`AppTopBar`):
+
+- Обычный заголовок — `headlineMedium` (28/36, по образцам push-экранов); **корневые экраны** передают `large: true` → `displaySmall` (36/44, крупный левый заголовок). Вес обоих — **w600** (semibold — по образцам `templates/`; M3-дефолт w400 визуально легче). Стиль берётся из контекстной темы (локализованной MaterialApp).
+- **Двухстрочная обрезка:** строковый заголовок переносится максимум на 2 строки, далее — ellipsis; кегль не уменьшается (единый стиль для заголовков любой длины). Высота шапки динамическая: тулбар подгоняется под замеренный `TextPainter`-текст **по фактическим констрейнтам слота (`LayoutBuilder`), а не по `MediaQuery`** — в wide-раскладке с rail тулбар уже на ширину rail (81–257dp), и по полной ширине окна замер решился бы «1 строка» с обрезкой второй; кламп масштаба 1.34 зеркалит `AppBar`, короткий заголовок — дефолтные `kToolbarHeight`. Механика: `Scaffold` читает `preferredSize` в своём `build` (до `build` дочерней шапки), поэтому `AppTopBar` хранит измерение в холдере и при смене высоты пост-фреймом перестраивает ancestor-`Scaffold` — слот конвергируется на следующем кадре (иначе `Align` внутри `AppBar` растягивает панель ровно до устаревшего `preferredSize` и вторая строка обрезается).
+- Шапка «сливается» со scaffold: `surfaceTintColor: transparent`, `scrolledUnderElevation: 0`, фон = `surface`; отступы — дефолтные M3 (единые).
+- `large` ставится только на корневых экранах вкладок/меню (home, exercises — вне режима выделения, programs, plan, progress, history, profile, settings); push-экраны — без флага.
+
 ---
 
 ## 12. Чейнджлог
+
+- 2026-10-14 — редизайн 54, навигация и шапки (задача 54.2, §11): pill-индикатор активной вкладки `NavigationBar`/`NavigationRail` (`AppRadii.pill`, фон `surfaceContainerHighest`), неон-актив (иконка выбранного пункта — `primary`), плоский бар без теней, `listTileTheme.selectedTileColor` = `surfaceContainerHighest` + pill-shape (`AppRadii.pill`); шапки — `AppTopBar.large` (`displaySmall` для корневых экранов, `headlineMedium` для push, вес w600 по образцам), двухстрочная обрезка длинных заголовков (maxLines 2 + ellipsis, динамическая высота шапки: `TextPainter`-замер по фактическим констрейнтам слота через `LayoutBuilder` + пост-фрейм-синхронизация `preferredSize` со Scaffold), без surface-tint и скролл-поднятия. Тесты: `app_theme_test.dart`, `adaptive_navigation_test.dart`, `app_top_bar_test.dart`.
 
 - 2026-10-14 — редизайн 54, фундамент (задача 54.1, §11): near-black поверхности тёмной темы (`copyWith` поверх `fromSeed`, акценты seed-фиксированы), токены `AppGradients` (primaryCta, highlight), `AppGlow` + компонент `AppGlowContainer` (glow только dark, статично, max 1), `AppRadii.pill`, `AppGradientButton` (дефолтный градиент из токенов, pill, intensity), `AppSegmentedButton` (pill-обёртка). WCAG-пары обеих тем автотестятся (`app_theme_test.dart`), стопы градиентов — по всей длине (`app_tokens_test.dart`).
 

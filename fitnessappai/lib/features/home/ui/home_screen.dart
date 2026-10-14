@@ -69,7 +69,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
-      appBar: AppTopBar(leading: const AppMenuButton(), title: l10n.navHome),
+      appBar: AppTopBar(
+        leading: const AppMenuButton(),
+        title: l10n.navHome,
+        large: true,
+      ),
       body: SignalBuilder(
         builder: (context) {
           final controller = _controller;

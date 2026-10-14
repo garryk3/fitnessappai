@@ -174,7 +174,9 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                     alignment: Alignment.center,
                     decoration: selected
                         ? BoxDecoration(
-                            color: scheme.secondaryContainer,
+                            // Редизайн 54: активный пункт — pill-фон на приподнятой
+                            // поверхности (как индикатор rail-а).
+                            color: scheme.surfaceContainerHighest,
                             shape: BoxShape.circle,
                           )
                         : null,
@@ -202,7 +204,9 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
           alignment: Alignment.center,
           decoration: selected
               ? BoxDecoration(
-                  color: scheme.secondaryContainer,
+                  // Редизайн 54: активный пункт — pill-фон на приподнятой
+                  // поверхности (как индикатор rail-а).
+                  color: scheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 )
               : null,
@@ -273,7 +277,8 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
       footer = ListTile(
         dense: true,
         selected: selected,
-        selectedTileColor: scheme.secondaryContainer,
+        // Редизайн 54: активный пункт — pill-фон на приподнятой поверхности.
+        selectedTileColor: scheme.surfaceContainerHighest,
         leading: AppIcon(selected ? Icons.settings : Icons.settings_outlined),
         title: AppText(l10n.settings),
         onTap: _goToSettings,
