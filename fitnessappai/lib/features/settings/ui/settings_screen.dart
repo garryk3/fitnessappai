@@ -369,7 +369,10 @@ class _NotificationsSectionState extends State<_NotificationsSection> {
           return const SizedBox.shrink();
         }
         final permissions = controller.status.value;
-        final error = controller.error.value;
+        final errorKind = controller.error.value;
+        final error = errorKind == null
+            ? null
+            : notificationErrorMessage(l10n, errorKind);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

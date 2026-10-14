@@ -4,6 +4,22 @@ import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/notifications/battery_optimization.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/l10n/app_localizations.dart';
+
+/// Вид ошибки секции «Уведомления» (без текста).
+///
+/// Текст локализуется на стороне экрана (`notificationErrorMessage`),
+/// контроллер не хранит русские строки мимо `app_ru.arb`.
+enum NotificationErrorKind {
+  /// Не удалось проверить текущий статус разрешений.
+  checkFailed,
+
+  /// Не удалось запросить разрешение (уведомления / точные будильники).
+  requestFailed,
+
+  /// Не удалось запросить исключение из оптимизации батареи.
+  batteryRequestFailed,
+}
 
 /// Контроллер секции «Уведомления» в настройках.
 ///
@@ -26,7 +42,10 @@ class NotificationSettingsController extends ChangeNotifier {
   final Signal<bool> isLoading = Signal(false);
   final Signal<NotificationPermissionStatus?> status =
       Signal<NotificationPermissionStatus?>(null);
-  final Signal<String?> error = Signal<String?>(null);
+
+  /// Последняя ошибка (структурированный вид): текст локализуется на стороне
+  /// экрана (`notificationErrorMessage`), контроллер хранит только вид.
+  final Signal<NotificationErrorKind?> error = Signal(null);
 
   /// Исключено ли приложение из оптимизации батареи: `null` — статус
   /// недоступен (не Android, канал не отвечает) и плитка не показывается.
@@ -39,7 +58,7 @@ class NotificationSettingsController extends ChangeNotifier {
     try {
       status.value = await _reminderService.checkPermissions();
     } catch (e) {
-      error.value = 'Не удалось проверить разрешения';
+      error.value = NotificationErrorKind.checkFailed;
     }
     try {
       batteryOptimizationExempt.value = await _batteryOptimization.isIgnoring();
@@ -63,7 +82,7 @@ class NotificationSettingsController extends ChangeNotifier {
     try {
       batteryOptimizationExempt.value = await _batteryOptimization.request();
     } catch (e) {
-      error.value = 'Не удалось запросить исключение из оптимизации батареи';
+      error.value = NotificationErrorKind.batteryRequestFailed;
     } finally {
       isLoading.value = false;
     }
@@ -87,9 +106,23 @@ class NotificationSettingsController extends ChangeNotifier {
     try {
       status.value = await action();
     } catch (e) {
-      error.value = 'Не удалось запросить разрешение';
+      error.value = NotificationErrorKind.requestFailed;
     } finally {
       isLoading.value = false;
     }
   }
 }
+
+/// Локализованное сообщение об ошибке секции «Уведомления».
+///
+/// Тексты — в `app_ru.arb` (`settingsNotificationsError*`); контроллер хранит
+/// только вид ошибки.
+String notificationErrorMessage(
+  AppLocalizations l10n,
+  NotificationErrorKind kind,
+) => switch (kind) {
+  NotificationErrorKind.checkFailed => l10n.settingsNotificationsErrorCheck,
+  NotificationErrorKind.requestFailed => l10n.settingsNotificationsErrorRequest,
+  NotificationErrorKind.batteryRequestFailed =>
+    l10n.settingsNotificationsErrorBatteryRequest,
+};

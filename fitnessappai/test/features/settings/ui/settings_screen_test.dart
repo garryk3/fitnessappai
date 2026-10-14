@@ -56,18 +56,33 @@ class _FakeSyncService implements SyncService {
 }
 
 class _FakeReminderService extends ReminderService {
-  _FakeReminderService({required super.repository, required this._status});
+  _FakeReminderService({
+    required super.repository,
+    required this._status,
+    this.failOnCheck = false,
+    this.failOnRequestNotifications = false,
+  });
 
   NotificationPermissionStatus _status;
   int notificationsCalls = 0;
   int exactAlarmsCalls = 0;
+  bool failOnCheck;
+  bool failOnRequestNotifications;
 
   @override
-  Future<NotificationPermissionStatus> checkPermissions() async => _status;
+  Future<NotificationPermissionStatus> checkPermissions() async {
+    if (failOnCheck) {
+      throw Exception('диалог недоступен');
+    }
+    return _status;
+  }
 
   @override
   Future<NotificationPermissionStatus> requestNotificationsPermission() async {
     notificationsCalls++;
+    if (failOnRequestNotifications) {
+      throw Exception('диалог недоступен');
+    }
     _status = const NotificationPermissionStatus(
       notificationsEnabled: true,
       exactAlarmsEnabled: false,
@@ -915,4 +930,52 @@ void main() {
       expect(find.text('Оптимизация батареи включена'), findsOneWidget);
     },
   );
+
+  testWidgets('сбой проверки разрешений показывает ошибку, а не глотается', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      notificationController: NotificationSettingsController(
+        reminderService: _FakeReminderService(
+          repository: WorkoutReminderRepository(db),
+          status: const NotificationPermissionStatus(
+            notificationsEnabled: true,
+            exactAlarmsEnabled: true,
+          ),
+          failOnCheck: true,
+        ),
+        batteryOptimization: _FakeBatteryOptimization(ignoring: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Не удалось проверить разрешения'), findsOneWidget);
+  });
+
+  testWidgets('сбой запроса разрешения показывает ошибку, а не глотается', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      notificationController: NotificationSettingsController(
+        reminderService: _FakeReminderService(
+          repository: WorkoutReminderRepository(db),
+          status: const NotificationPermissionStatus(
+            notificationsEnabled: false,
+            exactAlarmsEnabled: false,
+          ),
+          failOnRequestNotifications: true,
+        ),
+        batteryOptimization: _FakeBatteryOptimization(ignoring: false),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Разрешить уведомления'));
+    await tester.tap(find.text('Разрешить уведомления'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Не удалось запросить разрешение'), findsOneWidget);
+  });
 }
