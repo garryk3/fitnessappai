@@ -1,4 +1,7 @@
-/// Дизайн-токены геометрии и прозрачности (DESIGN.md, §6).
+// ignore_for_file: type=lint
+import 'package:flutter/material.dart';
+
+/// Дизайн-токены геометрии и прозрачности (DESIGN.md, §6, §11).
 ///
 /// Единая шкала скруглений и альфа-тинтов: экраны не задают
 /// `BorderRadius.circular`/`withValues(alpha:)` произвольными числами —
@@ -21,6 +24,10 @@ abstract final class AppRadii {
 
   /// Формы M3 (FAB, крупные контейнеры темы).
   static const double xxl = 24;
+
+  /// Пилюля (stadium): значение заведомо больше любой высоты элемента,
+  /// радиус фактически ограничен половиной высоты. Pill-кнопки и сегменты.
+  static const double pill = 999;
 }
 
 /// Альфа-градации тинтов поверх container/series-цветов (DESIGN.md, §6).
@@ -32,10 +39,51 @@ abstract final class AppTints {
   /// фон бейджей.
   static const double faint = 0.15;
 
-  /// Средний тинт: подсветка/глоу, масштабируется интенсивностью
-  /// (`AppTints.medium * intensity`).
+  /// Средний тинт: тонированные подсветки на container/series-цветах,
+  /// масштабируется интенсивностью (`AppTints.medium * intensity`).
+  /// Для неон-glow активных элементов использовать отдельную шкалу
+  /// [AppGlow] (не этот токен).
   static const double medium = 0.35;
 
   /// Сильный тинт: акцентные плашки под иконками и чипы на container-цвете.
   static const double strong = 0.4;
+}
+
+/// Токены неонового свечения (glow) — редизайн 54 (DESIGN.md, §11).
+///
+/// Статичные свечения: без анимаций и пульсаций, не более одного glow
+/// на виджет. Значения закрытой шкалы — новые свечения не задаются «на глаз».
+abstract final class AppGlow {
+  /// Радиус размытия свечения (blurRadius тени).
+  static const double radius = 16;
+
+  /// Расширение свечения за краем элемента (spreadRadius тени).
+  static const double spread = 2;
+
+  /// Базовая альфа свечения; интенсивность масштабируется
+  /// (`AppGlow.alpha * intensity`).
+  static const double alpha = 0.45;
+
+  /// Альфа неоновой обводки (border) активного элемента.
+  static const double borderAlpha = 0.8;
+}
+
+/// Токены градиентов — единая точка градиентов (DESIGN.md, §11).
+///
+/// Стопы подобраны так, чтобы белый текст держал AA (≥4.5:1) на всём
+/// протяжении градиента (проверяется тестом `test/app/theme/app_tokens_test.dart`).
+abstract final class AppGradients {
+  /// Основной CTA-градиент: фиолет → синий (кнопки «Старт», «Сохранить»).
+  static const LinearGradient primaryCta = LinearGradient(
+    colors: [Color(0xFF6D46C4), Color(0xFF3F5FD9)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  /// Highlight-вариант: фиолет → розовый (статистика, акцентные числа).
+  static const LinearGradient highlight = LinearGradient(
+    colors: [Color(0xFF6D46C4), Color(0xFFC93B8A)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }
