@@ -24,6 +24,8 @@
   "commonToday": "Сегодня",
   "commonOk": "ОК",
   "commonDelete": "Удалить",
+  "commonIncrease": "Увеличить",
+  "commonDecrease": "Уменьшить",
   "commonAll": "Все",
   "commonEdit": "Редактировать",
   "commonAdd": "Добавить",
@@ -236,6 +238,14 @@
   "programActivatePrompt": "Сделать программу активной?",
   "programActive": "Активная",
   "programDeactivate": "Деактивировать",
+  "programListWeekFraction": "{performed}/{assigned} дн",
+  "@programListWeekFraction": {
+    "description": "Дробь недельного прогресса на карточке программы: выполненные за неделю дни из общего числа",
+    "placeholders": {
+      "performed": {"type": "int", "example": "1"},
+      "assigned": {"type": "int", "example": "3"}
+    }
+  },
   "programCopyJson": "Скопировать JSON",
   "copyJsonCopied": "JSON скопирован в буфер обмена",
   "copyJsonNotFound": "Не удалось скопировать JSON",
@@ -365,6 +375,14 @@
   "exerciseParamsPositive": "Значение должно быть больше нуля",
   "exerciseParamsNotNegative": "Значение не может быть отрицательным",
   "exerciseParamsHoldHint": "Пусто — время удержания со счётчика",
+  "exerciseParamsPlanProgress": "Прогресс плана: День {day} / {total}",
+  "@exerciseParamsPlanProgress": {
+    "description": "Позиция текущего дня в плане программы (по образцу «Параметры упражнения»)",
+    "placeholders": {
+      "day": {"type": "int", "example": "3"},
+      "total": {"type": "int", "example": "7"}
+    }
+  },
   "workoutPrepare": "Подготовка к тренировке",
   "workoutRun": "Тренировка",
   "workoutPrepareStart": "Начать тренировку",

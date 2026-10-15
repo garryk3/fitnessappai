@@ -4,8 +4,11 @@ import 'package:signals/signals.dart';
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/weekly_progress.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Элемент карточки программы: модель, дни и количество упражнений.
 class ProgramListItem {
@@ -13,6 +16,7 @@ class ProgramListItem {
     required this.program,
     required this.days,
     required this.exercisesCount,
+    this.weekProgress,
   });
 
   final Program program;
@@ -20,6 +24,18 @@ class ProgramListItem {
   /// Дни программы в порядке индексов.
   final List<ProgramDay> days;
   final int exercisesCount;
+
+  /// Недельный прогресс (выполненные дни / всего) по правилам 48.2 —
+  /// считается только при наличии репозитория сессий; `null` — данных нет.
+  final ({int performed, int assigned})? weekProgress;
+
+  /// Процент недельного выполнения; `null` — нет данных.
+  int? get weekPercent => weekProgress == null
+      ? null
+      : weeklyProgressPercent(
+          performedDays: weekProgress!.performed,
+          assignedDays: weekProgress!.assigned,
+        );
 }
 
 /// Управляет списком программ: загрузка, обновление, удаление.
@@ -28,7 +44,11 @@ class ProgramListController {
     this._repository, {
     DataChangeNotifier? changes,
     ReminderService? reminderService,
-  }) : _reminderService = reminderService {
+    WorkoutRepository? workoutRepository,
+    DateTime Function()? clock,
+  }) : _reminderService = reminderService,
+       _workoutRepository = workoutRepository,
+       _clock = clock ?? DateTime.now {
     _reloadSubscription = ChangeReloadSubscription(
       changes: changes ?? appDataChanges,
       reload: _load,
@@ -38,6 +58,8 @@ class ProgramListController {
 
   final ProgramRepository _repository;
   final ReminderService? _reminderService;
+  final WorkoutRepository? _workoutRepository;
+  final DateTime Function() _clock;
   late final ChangeReloadSubscription _reloadSubscription;
 
   final Signal<List<ProgramListItem>> items = Signal(<ProgramListItem>[]);
@@ -91,13 +113,22 @@ class ProgramListController {
     isLoading.value = true;
     try {
       final summaries = await _repository.getPrograms();
+      final sessions = await _loadWeekSessions();
       final list = <ProgramListItem>[];
       for (final summary in summaries) {
+        final days = await _repository.getDays(summary.program.id!);
         list.add(
           ProgramListItem(
             program: summary.program,
-            days: await _repository.getDays(summary.program.id!),
+            days: days,
             exercisesCount: summary.exercisesCount,
+            weekProgress: sessions == null
+                ? null
+                : weeklyProgramProgress(
+                    days: days,
+                    sessions: sessions,
+                    programId: summary.program.id!,
+                  ),
           ),
         );
       }
@@ -105,6 +136,25 @@ class ProgramListController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Сессии текущей недели `[пн, пн+7)`; `null` — репозитория нет, тогда
+  /// недельный прогресс карточек не считается (без данных — без кольца).
+  Future<List<WorkoutSession>?> _loadWeekSessions() async {
+    final repository = _workoutRepository;
+    if (repository == null) {
+      return null;
+    }
+    final today = _clock();
+    final weekStart = DateTime(
+      today.year,
+      today.month,
+      today.day - (today.weekday - 1),
+    );
+    return repository.getSessionsBetween(
+      weekStart,
+      weekStart.add(const Duration(days: 7)),
+    );
   }
 
   void dispose() {

@@ -11,6 +11,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
@@ -22,6 +23,7 @@ import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/app_progress_ring.dart';
 
 void main() {
   late AppDatabase db;
@@ -38,6 +40,7 @@ void main() {
   Future<void> pumpPrograms(
     WidgetTester tester, {
     ReminderService? reminderService,
+    WorkoutRepository? workoutRepository,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -48,6 +51,7 @@ void main() {
         home: ProgramsScreen(
           repository: repository,
           reminderService: reminderService,
+          workoutRepository: workoutRepository,
         ),
       ),
     );
@@ -140,6 +144,66 @@ void main() {
       expect(find.text(''), findsNothing);
     },
   );
+
+  testWidgets('недельное кольцо: 1 из 3 привязанных дней → 33% и «1/3 дн»', (
+    tester,
+  ) async {
+    final created = await repository.create(program('Сплит', daysCount: 3), [
+      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 1),
+      ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: 4),
+      ProgramDay(programId: 0, dayIndex: 2, dayOfWeek: 6),
+    ]);
+    final days = await repository.getDays(created.id!);
+    final workoutRepository = WorkoutRepository(db);
+    final now = DateTime.now();
+    await workoutRepository.saveSession(
+      WorkoutSession(
+        programId: created.id!,
+        programName: 'Сплит',
+        programDayId: days.first.id!,
+        dayIndex: 0,
+        performedDate: now,
+        startedAt: now,
+        endedAt: now.add(const Duration(hours: 1)),
+      ),
+      const [],
+    );
+
+    await pumpPrograms(tester, workoutRepository: workoutRepository);
+
+    expect(find.byType(AppProgressRing), findsOneWidget);
+    expect(find.text('33%'), findsOneWidget);
+    expect(find.text('1/3 дн'), findsOneWidget);
+  });
+
+  testWidgets('без репозитория сессий кольцо и дробь не показываются', (
+    tester,
+  ) async {
+    await repository.create(program('Сплит', daysCount: 2), [
+      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 1),
+      ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: 3),
+    ]);
+
+    await pumpPrograms(tester);
+
+    expect(find.byType(AppProgressRing), findsNothing);
+    expect(find.textContaining(RegExp(r'\d/\d дн')), findsNothing);
+  });
+
+  testWidgets('показывает ближайший день недели отдельной compound-строкой', (
+    tester,
+  ) async {
+    await repository.create(program('Сплит', daysCount: 1), [
+      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 1),
+    ]);
+
+    await pumpPrograms(tester);
+
+    // Единственный привязанный день — Пн: ближайший всегда Пн, при этом
+    // бейдж дня недели остаётся отдельным текстом и не задваивается.
+    expect(find.text('Ближайший день: Пн'), findsOneWidget);
+    expect(find.text('Пн'), findsOneWidget);
+  });
 
   testWidgets('кнопка «Начать» ведёт к подготовке тренировки', (tester) async {
     Uri opened = Uri();

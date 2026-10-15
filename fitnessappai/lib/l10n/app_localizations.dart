@@ -190,6 +190,18 @@ abstract class AppLocalizations {
   /// **'Удалить'**
   String get commonDelete;
 
+  /// No description provided for @commonIncrease.
+  ///
+  /// In ru, this message translates to:
+  /// **'Увеличить'**
+  String get commonIncrease;
+
+  /// No description provided for @commonDecrease.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уменьшить'**
+  String get commonDecrease;
+
   /// No description provided for @commonAll.
   ///
   /// In ru, this message translates to:
@@ -1210,6 +1222,12 @@ abstract class AppLocalizations {
   /// **'Деактивировать'**
   String get programDeactivate;
 
+  /// Дробь недельного прогресса на карточке программы: выполненные за неделю дни из общего числа
+  ///
+  /// In ru, this message translates to:
+  /// **'{performed}/{assigned} дн'**
+  String programListWeekFraction(int performed, int assigned);
+
   /// No description provided for @programCopyJson.
   ///
   /// In ru, this message translates to:
@@ -1611,6 +1629,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пусто — время удержания со счётчика'**
   String get exerciseParamsHoldHint;
+
+  /// Позиция текущего дня в плане программы (по образцу «Параметры упражнения»)
+  ///
+  /// In ru, this message translates to:
+  /// **'Прогресс плана: День {day} / {total}'**
+  String exerciseParamsPlanProgress(int day, int total);
 
   /// No description provided for @workoutPrepare.
   ///
