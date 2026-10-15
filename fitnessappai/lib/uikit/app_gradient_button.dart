@@ -7,7 +7,10 @@ import 'package:fitnessappai/app/theme/app_tokens.dart';
 ///
 /// Дефолтный градиент — токен [AppGradients.primaryCta] (фиолет → синий,
 /// белый текст ≥4.5:1 на всём протяжении). Свечение — токены [AppGlow],
-/// рисуется только в тёмной теме (светлая — без glow, §11).
+/// рисуется только в тёмной теме (светлая — без glow, §11). Неактивная
+/// кнопка (`onPressed == null`) отличима: нейтральная подложка
+/// `surfaceContainerHigh` вместо градиента, текст `onSurfaceVariant`,
+/// без свечения; `busy` — отдельное состояние на градиенте (54.3).
 class AppGradientButton extends StatelessWidget {
   const AppGradientButton({
     super.key,
@@ -47,32 +50,43 @@ class AppGradientButton extends StatelessWidget {
     final BorderRadius borderRadius = BorderRadius.circular(
       pill ? AppRadii.pill : AppRadii.lg,
     );
-    final bool glow = theme.brightness == Brightness.dark;
-    final bool enabled = onPressed != null && !busy;
+    // Disabled (54.3): `onPressed == null` — нейтральная подложка вместо
+    // градиента и приглушённый текст — неактивная кнопка отличима от
+    // активной. `busy` — отдельное состояние: кнопка на градиенте
+    // со спиннером, свечение сохраняется.
+    final bool disabled = onPressed == null && !busy;
+    final bool glow = theme.brightness == Brightness.dark && !disabled;
+
+    final BoxDecoration decoration = disabled
+        ? BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHigh,
+            borderRadius: borderRadius,
+          )
+        : BoxDecoration(
+            gradient: effectiveGradient,
+            borderRadius: borderRadius,
+            boxShadow: glow
+                ? [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(
+                        alpha: AppGlow.alpha * intensity,
+                      ),
+                      blurRadius: AppGlow.radius,
+                      spreadRadius: AppGlow.spread,
+                    ),
+                  ]
+                : const [],
+          );
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: effectiveGradient,
-        borderRadius: borderRadius,
-        boxShadow: glow
-            ? [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withValues(
-                    alpha: AppGlow.alpha * intensity,
-                  ),
-                  blurRadius: AppGlow.radius,
-                  spreadRadius: AppGlow.spread,
-                ),
-              ]
-            : const [],
-      ),
+      decoration: decoration,
       child: ElevatedButton.icon(
-        onPressed: enabled ? onPressed : null,
+        onPressed: (onPressed != null && !busy) ? onPressed : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
           disabledBackgroundColor: Colors.transparent,
-          disabledForegroundColor: Colors.white,
+          disabledForegroundColor: theme.colorScheme.onSurfaceVariant,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: borderRadius),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -82,7 +96,13 @@ class AppGradientButton extends StatelessWidget {
             ? const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                // Белый: дефолтный `primary` на светлом градиенте
+                // (контраст ~1.02:1) не виден — спиннер «висит» (54.3,
+                // design-review); текст на кнопке всегда белый (§11).
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                ),
               )
             : icon != null
             ? Icon(icon)

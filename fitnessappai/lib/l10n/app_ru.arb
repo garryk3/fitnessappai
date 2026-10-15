@@ -537,6 +537,15 @@
   "homeNoWorkoutsHint": "Выполните первую тренировку — она появится здесь.",
   "homeViewAll": "Вся история",
   "homeGoToHistory": "К истории",
+  "homeStreakDays": "Серия: {count, plural, one{{count} день} few{{count} дня} other{{count} дней}}",
+  "@homeStreakDays": {
+    "description": "Бейдж серии подряд идущих тренировок на главной (54.3)",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "homeWeekProgressLabel": "Выполнение программы за неделю: {percent}%",
   "@homeWeekProgressLabel": {
     "description": "A11y-подпись кольца прогресса программы на главной",

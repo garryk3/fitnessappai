@@ -369,6 +369,86 @@ void main() {
     expect(find.text('history-route'), findsOneWidget);
   });
 
+  testWidgets('streak-бейдж показывается при живой серии (54.3)', (
+    WidgetTester tester,
+  ) async {
+    // Сессия вчера (9 августа) при «сегодня» 10 августа — серия жива.
+    await saveSession('База');
+
+    await pumpHome(tester);
+
+    expect(find.text('Серия: 1 день'), findsOneWidget);
+    expect(find.byIcon(Icons.local_fire_department), findsOneWidget);
+  });
+
+  testWidgets('streak-бейджа нет без истории (54.3)', (
+    WidgetTester tester,
+  ) async {
+    await pumpHome(tester);
+
+    expect(find.textContaining('Серия:'), findsNothing);
+    expect(find.byIcon(Icons.local_fire_department), findsNothing);
+  });
+
+  testWidgets('streak-бейджа нет при прерванной серии (54.3)', (
+    WidgetTester tester,
+  ) async {
+    final program = await createProgram(name: 'База', dayOfWeek: 1);
+    final day = (await programRepo.getDays(program.id!)).single;
+    // Тренировка позавчера (8 августа) — серия прервана.
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        programName: 'База',
+        programDayId: day.id!,
+        dayIndex: 0,
+        performedDate: DateTime(2026, 8, 8),
+        startedAt: DateTime(2026, 8, 8, 18, 0),
+        endedAt: DateTime(2026, 8, 8, 18, 35),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseName: 'Жим',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 10,
+          completedAt: DateTime(2026, 8, 8, 18, 5),
+        ),
+      ],
+    );
+
+    await pumpHome(tester);
+
+    expect(find.textContaining('Серия:'), findsNothing);
+  });
+
+  testWidgets('CTA «Начать» — pill AppGradientButton на hero-карточке', (
+    WidgetTester tester,
+  ) async {
+    final program = await createProgram(name: 'Силовая', dayOfWeek: 1);
+    await programRepo.setActive(program.id!);
+
+    await pumpHome(tester);
+
+    final cta = find.descendant(
+      of: find.byType(AppCard),
+      matching: find.byType(AppGradientButton),
+    );
+    expect(cta, findsOneWidget);
+    expect(
+      find.descendant(of: cta, matching: find.byIcon(Icons.play_arrow)),
+      findsOneWidget,
+    );
+    // Ровно один play_arrow на экране — контракт e2e.
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+
+    await tester.tap(cta);
+    await tester.pumpAndSettle();
+
+    final day = (await programRepo.getDays(program.id!)).single;
+    expect(find.text('prepare-${day.id}'), findsOneWidget);
+  });
+
   testWidgets('иконка play на карточке открывает подготовку тренировки', (
     WidgetTester tester,
   ) async {

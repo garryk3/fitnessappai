@@ -2206,6 +2206,12 @@ abstract class AppLocalizations {
   /// **'К истории'**
   String get homeGoToHistory;
 
+  /// Бейдж серии подряд идущих тренировок на главной (54.3)
+  ///
+  /// In ru, this message translates to:
+  /// **'Серия: {count, plural, one{{count} день} few{{count} дня} other{{count} дней}}'**
+  String homeStreakDays(int count);
+
   /// A11y-подпись кольца прогресса программы на главной
   ///
   /// In ru, this message translates to:

@@ -70,6 +70,52 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
+    testWidgets('disabled отличим: нейтральная подложка вместо градиента', (
+      tester,
+    ) async {
+      await _pump(tester, AppGradientButton(label: 'Старт', onPressed: null));
+
+      final DecoratedBox box = tester.widget<DecoratedBox>(
+        find.descendant(
+          of: find.byType(AppGradientButton),
+          matching: find.byType(DecoratedBox),
+        ),
+      );
+      final decoration = box.decoration as BoxDecoration;
+      expect(decoration.gradient, isNull);
+      expect(decoration.color, isNotNull);
+      expect(decoration.boxShadow, isNull);
+    });
+
+    testWidgets('disabled и активная кнопка различаются декором', (
+      tester,
+    ) async {
+      BoxDecoration decorationOf(WidgetTester t, String label) {
+        final DecoratedBox box = t.widget<DecoratedBox>(
+          find.descendant(
+            of: find.widgetWithText(AppGradientButton, label),
+            matching: find.byType(DecoratedBox),
+          ),
+        );
+        return box.decoration as BoxDecoration;
+      }
+
+      await _pump(
+        tester,
+        Column(
+          children: [
+            AppGradientButton(label: 'Активная', onPressed: () {}),
+            AppGradientButton(label: 'Неактивная', onPressed: null),
+          ],
+        ),
+      );
+      final active = decorationOf(tester, 'Активная');
+      final disabled = decorationOf(tester, 'Неактивная');
+
+      expect(active.gradient, isNotNull);
+      expect(disabled.gradient, isNull);
+    });
+
     testWidgets('busy=true — спиннер вместо текста и disabled', (tester) async {
       await _pump(
         tester,
@@ -84,6 +130,11 @@ void main() {
       expect(find.text('Старт'), findsNothing);
       final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
       expect(button.onPressed, isNull);
+      // Спиннер белый — на светлом градиенте `primary` не виден (54.3).
+      final spinner = tester.widget<CircularProgressIndicator>(
+        find.byType(CircularProgressIndicator),
+      );
+      expect(spinner.valueColor?.value, Colors.white);
     });
 
     testWidgets('дефолтный градиент — токен AppGradients.primaryCta', (

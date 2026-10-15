@@ -1180,6 +1180,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeGoToHistory => 'К истории';
 
   @override
+  String homeStreakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    return 'Серия: $_temp0';
+  }
+
+  @override
   String homeWeekProgressLabel(int percent) {
     return 'Выполнение программы за неделю: $percent%';
   }

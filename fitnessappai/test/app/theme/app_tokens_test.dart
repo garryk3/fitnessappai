@@ -88,10 +88,39 @@ void main() {
       }
     });
 
+    test('heroCard: светлый текст держит AA на всей длине градиента', () {
+      for (double t = 0; t <= 1.0; t += 0.1) {
+        expect(
+          _contrast(const Color(0xFFFFFFFF), _sample(AppGradients.heroCard, t)),
+          greaterThanOrEqualTo(4.5),
+          reason: 't=$t',
+        );
+      }
+    });
+
+    test(
+      'heroCard — единственный тёмный градиент (стопы темнее остальных)',
+      () {
+        expect(
+          _luminance(AppGradients.heroCard.colors.last),
+          lessThan(
+            math.min(
+              _luminance(AppGradients.primaryCta.colors.last),
+              _luminance(AppGradients.highlight.colors.last),
+            ),
+          ),
+        );
+      },
+    );
+
     test('градиенты отличимы друг от друга (разные конечные стопы)', () {
       expect(
         AppGradients.primaryCta.colors.last,
         isNot(AppGradients.highlight.colors.last),
+      );
+      expect(
+        AppGradients.heroCard.colors.last,
+        isNot(AppGradients.primaryCta.colors.last),
       );
     });
   });

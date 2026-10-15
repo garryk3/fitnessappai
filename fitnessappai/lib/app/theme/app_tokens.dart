@@ -86,4 +86,14 @@ abstract final class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  /// Hero-карточка главной (54.3): тёмно-синий → фиолет (стопы сэмплированы
+  /// из образца `templates/IMG_20260920_204544.jpg`). Единственный
+  /// «тёмный» градиент: им покрывается только роль «текущая/ближайшая
+  /// тренировка», на нём — светлый текст (≥4.5:1, проверяется тестом).
+  static const LinearGradient heroCard = LinearGradient(
+    colors: [Color(0xFF14243D), Color(0xFF3A3468)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }

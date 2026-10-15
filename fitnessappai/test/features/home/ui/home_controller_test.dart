@@ -126,6 +126,7 @@ void main() {
     expect(controller.hasPrograms.value, isFalse);
     expect(controller.activePrograms.value, isEmpty);
     expect(controller.recentWorkouts.value, isEmpty);
+    expect(controller.streakDays.value, 0);
   });
 
   test('активная программа определяет ближайший день и упражнения', () async {
@@ -222,6 +223,70 @@ void main() {
     expect(workouts.first.exercisesCount, 1);
     expect(workouts[1].exercisesCount, 2);
     expect(workouts.last.exercisesCount, 1);
+  });
+
+  test('streakDays: подряд идущие дни считаются как серия', () async {
+    programDayId = await createProgramDay();
+    await saveSession(session(performedDate: DateTime(2026, 8, 10)), ['Жим']);
+    await saveSession(
+      session(
+        dayIndex: 1,
+        performedDate: DateTime(2026, 8, 9),
+        startedAt: DateTime(2026, 8, 9, 18),
+        endedAt: DateTime(2026, 8, 9, 18, 30),
+      ),
+      ['Жим'],
+    );
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.streakDays.value, 2);
+  });
+
+  test(
+    'streakDays: вчерашняя тренировка без сегодняшней держит серию',
+    () async {
+      programDayId = await createProgramDay();
+      await saveSession(session(performedDate: DateTime(2026, 8, 9)), ['Жим']);
+
+      final controller = HomeController(
+        programRepository: programRepository,
+        exerciseRepository: exerciseRepository,
+        workoutRepository: workoutRepository,
+        clock: () => DateTime(2026, 8, 10),
+      );
+      addTearDown(controller.dispose);
+
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.streakDays.value, 1);
+    },
+  );
+
+  test('streakDays: прерванная серия (тренировка позавчера) → 0', () async {
+    programDayId = await createProgramDay();
+    // Тренировка позавчера — серия прервана.
+    await saveSession(session(performedDate: DateTime(2026, 8, 8)), ['Жим']);
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      clock: () => DateTime(2026, 8, 10),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.streakDays.value, 0);
   });
 
   test('не активна ни одна программа — подсказка через hasPrograms', () async {
