@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -271,7 +269,7 @@ class _ActiveProgramCard extends StatelessWidget {
                   ),
                 ),
                 if (weeklyProgressPercent != null) ...[
-                  _ProgressRing(
+                  AppProgressRing(
                     percent: weeklyProgressPercent!,
                     label: l10n.homeWeekProgressLabel(weeklyProgressPercent!),
                   ),
@@ -386,104 +384,6 @@ class _RecentWorkoutCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Кольцевой индикатор процента выполнения программы за неделю.
-class _ProgressRing extends StatelessWidget {
-  const _ProgressRing({required this.percent, required this.label});
-
-  /// Процент выполнения: для полностью привязанной программы 0..100, для
-  /// программы с непривязанными днями — больше 100 (48.2). Дуга ниже
-  /// клампится в полный оборот, подпись показывает реальное значение.
-  final int percent;
-
-  /// А11y-подпись кольца.
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      label: label,
-      child: SizedBox(
-        width: 52,
-        height: 52,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            CustomPaint(
-              painter: _RingPainter(
-                // Процент может превышать 100 (программа с непривязанными
-                // днями, 48.2): дуга кольца ограничена полным оборотом, а
-                // подпись и aria-label показывают реальное значение.
-                progress: (percent / 100).clamp(0.0, 1.0),
-                trackColor: theme.colorScheme.surfaceContainerHighest,
-                progressColor: theme.colorScheme.primary,
-                strokeWidth: 5,
-              ),
-            ),
-            Center(
-              child: AppText(
-                '$percent%',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Рисует кольцо прогресса: трек + дуга вплоть до [progress] (0..1).
-class _RingPainter extends CustomPainter {
-  _RingPainter({
-    required this.progress,
-    required this.trackColor,
-    required this.progressColor,
-    required this.strokeWidth,
-  });
-
-  final double progress;
-  final Color trackColor;
-  final Color progressColor;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = (size.shortestSide - strokeWidth) / 2;
-    final track = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..color = trackColor;
-    canvas.drawCircle(center, radius, track);
-    if (progress <= 0) {
-      return;
-    }
-    final arc = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..color = progressColor;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      2 * math.pi * progress,
-      false,
-      arc,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter oldDelegate) =>
-      oldDelegate.progress != progress ||
-      oldDelegate.trackColor != trackColor ||
-      oldDelegate.progressColor != progressColor ||
-      oldDelegate.strokeWidth != strokeWidth;
 }
 
 String _weekdayLabel(AppLocalizations l10n, int? dayOfWeek) =>

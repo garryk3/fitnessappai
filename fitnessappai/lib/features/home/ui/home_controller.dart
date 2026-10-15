@@ -5,10 +5,16 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/workout_streak.dart' as streak;
+import 'package:fitnessappai/core/domain/weekly_progress.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
+
+/// Чистая функция недельного процента перенесена в домен (54.4) — re-export
+/// для существующих потребителей `home_controller.dart`.
+export 'package:fitnessappai/core/domain/weekly_progress.dart'
+    show weeklyProgressPercent;
 
 /// Последняя тренировка на домашнем экране.
 class HomeWorkoutItem {
@@ -278,22 +284,3 @@ DateTime _dateOnly(DateTime value) =>
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
-
-/// Процент выполнения программы за неделю: [performedDays] выполненных из
-/// [assignedDays].
-///
-/// `assignedDays` — знаменатель правила из [_weeklyProgress]: число дней
-/// программы для программы с непривязанными днями, число закреплённых дней
-/// для полностью привязанной. `null` — знаменатель пуст.
-///
-/// Значение **не ограничено сверху**: для программы с непривязанными днями
-/// выполнить можно больше, чем дней в программе (48.2).
-int? weeklyProgressPercent({
-  required int performedDays,
-  required int assignedDays,
-}) {
-  if (assignedDays <= 0) {
-    return null;
-  }
-  return (performedDays / assignedDays * 100).round();
-}
