@@ -4,6 +4,7 @@ import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/workout_streak.dart' as streak;
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -81,6 +82,10 @@ class HomeController {
   /// Последние тренировки, свежие сверху.
   final Signal<List<HomeWorkoutItem>> recentWorkouts = Signal(const []);
 
+  /// Длина серии подряд идущих дней с тренировками (54.3); 0 — пустая
+  /// история или прерванная серия (бейдж в UI не показывается).
+  final Signal<int> streakDays = Signal(0);
+
   Future<void> refresh() => _load();
 
   Future<void> _load() async {
@@ -142,6 +147,10 @@ class HomeController {
       activePrograms.value = infos;
 
       final sessions = await workoutRepository.getAllSessions();
+      streakDays.value = streak.streakDays(
+        dates: sessions.map((s) => s.performedDate),
+        today: today,
+      );
       final workouts = <HomeWorkoutItem>[];
       for (final session in sessions.take(3)) {
         final detail = await workoutRepository.getSession(session.id!);

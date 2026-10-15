@@ -150,12 +150,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWorkoutsSection(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final controller = _controller;
     final workouts = controller.recentWorkouts.value;
+    final int streak = controller.streakDays.value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Стрик (54.3): только при живой серии — «Серия: 0 дней» не показываем
+        // (правило «без данных — без элементов»).
+        if (streak >= 1) ...[
+          AppBadge(
+            label: l10n.homeStreakDays(streak),
+            icon: Icons.local_fire_department,
+            background: theme.colorScheme.primaryContainer.withValues(
+              alpha: AppTints.faint,
+            ),
+            foreground: theme.colorScheme.primary,
+            borderRadius: const BorderRadius.all(
+              Radius.circular(AppRadii.pill),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          ),
+          const SizedBox(height: 12),
+        ],
         AppSectionHeader(
           title: l10n.homeRecentWorkouts,
           actionLabel: workouts.isNotEmpty ? l10n.homeGoToHistory : null,
@@ -208,79 +227,101 @@ class _ActiveProgramCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return AppCard(
-      gradient: LinearGradient(
-        colors: [
-          theme.colorScheme.surfaceContainerLow,
-          theme.colorScheme.primaryContainer.withValues(alpha: AppTints.faint),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ProgramThumbnail(imagePath: imagePath),
-              const SizedBox(width: 14),
-              Expanded(
-                child: AppText(
-                  programName,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+    // Hero-фон (54.3): в тёмной теме — тёмный градиент-токен по образцу
+    // (белый текст ≥4.5:1, проверяется `app_tokens_test`); светлая тема
+    // остаётся без near-black поверхностей (DESIGN.md §11) — прежний
+    // лёгкий градиент ролей.
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Gradient heroGradient = isDark
+        ? AppGradients.heroCard
+        : LinearGradient(
+            colors: [
+              theme.colorScheme.surfaceContainerLow,
+              theme.colorScheme.primaryContainer.withValues(
+                alpha: AppTints.faint,
               ),
-              if (weeklyProgressPercent != null) ...[
-                _ProgressRing(
-                  percent: weeklyProgressPercent!,
-                  label: l10n.homeWeekProgressLabel(weeklyProgressPercent!),
-                ),
-                const SizedBox(width: 10),
-              ],
-              if (onStart != null)
-                IconButton.filledTonal(
-                  icon: const AppIcon(Icons.play_arrow),
-                  tooltip: l10n.weekPlanStart,
-                  onPressed: onStart,
-                ),
             ],
-          ),
-          if (day != null) ...[
-            const SizedBox(height: 12),
-            if (todayStatus != null)
-              StatusBadge(status: todayStatus!)
-            else
-              AppText(
-                '${l10n.homeUpcomingDay}: '
-                '${_weekdayLabel(l10n, day!.dayOfWeek)}',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          ],
-          if (exerciseNames.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          );
+
+    return AppGlowContainer(
+      radius: AppRadii.xl,
+      child: AppCard(
+        gradient: heroGradient,
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                for (final name in exerciseNames)
-                  Chip(
-                    avatar: const AppIcon(Icons.fitness_center, size: 14),
-                    label: AppText(name, style: theme.textTheme.bodySmall),
-                    visualDensity: VisualDensity.compact,
-                    backgroundColor: theme.colorScheme.surfaceContainerHigh,
+                ProgramThumbnail(imagePath: imagePath),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: AppText(
+                    programName,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    // Две строки: строка делит ширину с миниатюрой и
+                    // кольцом — на обычном масштабе имя программы не
+                    // должно обрезаться (54.3, design-review).
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                ),
+                if (weeklyProgressPercent != null) ...[
+                  _ProgressRing(
+                    percent: weeklyProgressPercent!,
+                    label: l10n.homeWeekProgressLabel(weeklyProgressPercent!),
+                  ),
+                ],
               ],
             ),
+            if (day != null) ...[
+              const SizedBox(height: 12),
+              if (todayStatus != null)
+                StatusBadge(status: todayStatus!)
+              else
+                AppText(
+                  '${l10n.homeUpcomingDay}: '
+                  '${_weekdayLabel(l10n, day!.dayOfWeek)}',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
+            if (exerciseNames.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final name in exerciseNames)
+                    Chip(
+                      avatar: const AppIcon(Icons.fitness_center, size: 14),
+                      label: AppText(name, style: theme.textTheme.bodySmall),
+                      visualDensity: VisualDensity.compact,
+                      backgroundColor: theme.colorScheme.surfaceContainerHigh,
+                    ),
+                ],
+              ),
+            ],
+            if (onStart != null) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: AppGradientButton(
+                  label: l10n.weekPlanStart,
+                  icon: Icons.play_arrow,
+                  pill: true,
+                  onPressed: onStart,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -298,25 +339,12 @@ class _RecentWorkoutCard extends StatelessWidget {
     final session = item.session;
     final date = DateFormat('d MMMM yyyy', 'ru').format(session.performedDate);
     final minutes = item.duration.inMinutes;
+    // Рестайл 54.3 по образцу: программа/дата/упражнения слева, крупная
+    // длительность titleLarge справа.
     return AppCard(
       onTap: () => context.push('/history/${session.id}'),
       child: Row(
         children: [
-          AppContainer(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(
-                alpha: AppTints.strong,
-              ),
-              borderRadius: BorderRadius.circular(AppRadii.md),
-            ),
-            child: AppIcon(
-              Icons.check_circle_outline,
-              color: theme.colorScheme.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,8 +366,7 @@ class _RecentWorkoutCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 AppText(
-                  '${l10n.historyExercisesCount(item.exercisesCount)}'
-                  ' · ${l10n.historyDuration(minutes)}',
+                  l10n.historyExercisesCount(item.exercisesCount),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w500,
@@ -348,9 +375,12 @@ class _RecentWorkoutCard extends StatelessWidget {
               ],
             ),
           ),
-          AppIcon(
-            Icons.chevron_right,
-            color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(width: 12),
+          AppText(
+            l10n.historyDuration(minutes),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

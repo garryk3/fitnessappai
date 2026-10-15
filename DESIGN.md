@@ -390,6 +390,7 @@ abstract final class ChartSeriesColors {
 |---|---|---|---|
 | `AppGradients.primaryCta` | `#6D46C4` → `#3F5FD9` (фиолет → синий) | primary-CTA («Старт», «Сохранить») | ≥5.4:1 на всей длине (AA) |
 | `AppGradients.highlight` | `#6D46C4` → `#C93B8A` (фиолет → розовый) | highlight-вариант (акцентные числа/статистика) | ≥4.6:1 на всей длине (AA) |
+| `AppGradients.heroCard` | `#14243D` → `#3A3468` (тёмно-синий → фиолет) | hero-карточка главной (тёмная тема; единственный тёмный градиент, 54.3) | ≥4.5:1 на всей длине (AA, светлый текст) |
 
 Стопы проверяются тестом `app_tokens_test.dart` по всей длине градиента (сэмплы каждые 10%). Белый текст на градиенте — обязательное условие; тёмный текст на градиенте не использовать.
 
@@ -425,9 +426,23 @@ abstract final class ChartSeriesColors {
 - Шапка «сливается» со scaffold: `surfaceTintColor: transparent`, `scrolledUnderElevation: 0`, фон = `surface`; отступы — дефолтные M3 (единые).
 - `large` ставится только на корневых экранах вкладок/меню (home, exercises — вне режима выделения, programs, plan, progress, history, profile, settings); push-экраны — без флага.
 
+### Главная (54.3)
+
+Hero-карточка «активная программа» (`home_screen.dart`, `_ActiveProgramCard`):
+
+- **Тема-сплит градиента:** тёмная тема — токен `AppGradients.heroCard` (тёмно-синий `#14243D` → фиолет `#3A3468`, стопы сэмплированы из образца `templates/IMG_20260920_204544.jpg`), светлые текстовые роли по умолчанию (`onSurface` ≥8.8:1 на светлом стопе); светлая тема — прежний лёгкий градиент ролей (`surfaceContainerLow` → `primaryContainer` ×`AppTints.faint`), тёмные роли по умолчанию. Единственный «тёмный» градиент в `AppGradients` — им покрывается только роль «текущая/ближайшая тренировка».
+- **Неон-обводка** — `AppGlowContainer(radius: AppRadii.xl)` вокруг `AppCard` (роль «текущая тренировка»; glow только dark, в light — только обводка, §11).
+- **CTA:** полноширинная pill-кнопка `AppGradientButton(pill, icon: play_arrow, label «Начать»)` вместо `IconButton.filledTonal`; рендерится только при наличии ближайшего дня (`onStart != null` — поведение прежнее). Ровно один `Icons.play_arrow` на экране — контракт e2e.
+- **Streak-бейдж:** `AppBadge` (pill, `local_fire_department`, фон `primaryContainer` ×`AppTints.faint`, текст `primary`) отдельной строкой над секцией «Последние тренировки»; показывается только при `streakDays >= 1` (правило «без данных — без элементов»). Расчёт — чистая функция `streakDays` (`lib/core/domain/workout_streak.dart`): серия активна, если последняя тренировка сегодня или вчера; прерванная/пустая → 0.
+- **Карточка недавней тренировки:** программа/дата/число упражнений слева, крупная длительность `titleLarge` справа (без иконочного бокса и шеврона — тап по всей карточке).
+
+Low из 54.1 закрыты: disabled `AppGradientButton` отличим (подложка `surfaceContainerHigh` вместо градиента, текст `onSurfaceVariant`, без glow; `busy` — отдельное состояние на градиенте со спиннером); `AppGlowContainer` рендерит `AppContainer` вместо сырого `Container`.
+
 ---
 
 ## 12. Чейнджлог
+
+- 2026-10-15 — редизайн 54, главная (задача 54.3, §11): hero-карточка активной программы — токен `AppGradients.heroCard` (тёмно-синий → фиолет, стопы из образца) в тёмной теме / прежний лёгкий градиент в светлой, неон-обводка `AppGlowContainer`, полноширинная pill-CTA `AppGradientButton` «Начать» вместо `IconButton.filledTonal`; streak-бейдж (`local_fire_department`, только при серии ≥1) над «Последние тренировки», расчёт — чистая функция `streakDays` (домен, unit-тесты) + l10n plural `homeStreakDays`; карточка недавней тренировки — крупная длительность `titleLarge` справа. Low 54.1 закрыты: disabled `AppGradientButton` отличим (нейтральная подложка, `onSurfaceVariant`, без glow), `AppGlowContainer` рендерит `AppContainer`. Тесты: `workout_streak_test.dart`, `home_controller_test.dart` (streakDays), `home_screen_test.dart` (бейдж/CTA), `app_tokens_test.dart` (стопы/контраст heroCard), `app_gradient_button_test.dart` (disabled).
 
 - 2026-10-14 — редизайн 54, навигация и шапки (задача 54.2, §11): pill-индикатор активной вкладки `NavigationBar`/`NavigationRail` (`AppRadii.pill`, фон `surfaceContainerHighest`), неон-актив (иконка выбранного пункта — `primary`), плоский бар без теней, `listTileTheme.selectedTileColor` = `surfaceContainerHighest` + pill-shape (`AppRadii.pill`); шапки — `AppTopBar.large` (`displaySmall` для корневых экранов, `headlineMedium` для push, вес w600 по образцам), двухстрочная обрезка длинных заголовков (maxLines 2 + ellipsis, динамическая высота шапки: `TextPainter`-замер по фактическим констрейнтам слота через `LayoutBuilder` + пост-фрейм-синхронизация `preferredSize` со Scaffold), без surface-tint и скролл-поднятия. Тесты: `app_theme_test.dart`, `adaptive_navigation_test.dart`, `app_top_bar_test.dart`.
 

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:fitnessappai/app/theme/app_tokens.dart';
+import 'package:fitnessappai/uikit/app_container.dart';
 
 /// Контейнер с неоновой обводкой и свечением (редизайн 54, DESIGN.md §11).
 ///
@@ -52,7 +53,7 @@ class AppGlowContainer extends StatelessWidget {
     final bool glow = Theme.of(context).brightness == Brightness.dark;
     final BorderRadius borderRadius = BorderRadius.circular(radius);
 
-    return Container(
+    return AppContainer(
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
