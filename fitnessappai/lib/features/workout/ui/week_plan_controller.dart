@@ -211,8 +211,8 @@ class WeekPlanController {
 
   /// Дата, выбранная в календаре месяца: всегда внутри отображаемого месяца.
   ///
-  /// По умолчанию — «сегодня» (если оно в этом месяце), иначе — выбора нет,
-  /// пока пользователь не тапнет ячейку.
+  /// По умолчанию — «сегодня», когда оно в этом месяце; иначе — 1-е число
+  /// месяца (карточка дня показывается всегда, 54.5).
   DateTime? get effectiveMonthDate {
     final stored = monthSelectedDate.value;
     final month = monthStart.value;
@@ -224,7 +224,7 @@ class WeekPlanController {
     final today = _dateOnly(_now());
     return today.year == month.year && today.month == month.month
         ? today
-        : null;
+        : DateTime(month.year, month.month, 1);
   }
 
   /// Выбирает день месяца в календаре (тап по ячейке).

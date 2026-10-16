@@ -269,6 +269,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final selected = controller.effectiveMonthDate;
     return Column(
       children: [
+        // Календарь доминирует: сетка забирает высоту после карточки дня
+        // (карточка — non-flex со своим интринсиком, максимум 240 со
+        // скроллом — иначе два flex:1 делили высоту строго 50/50).
         Expanded(
           child: MonthGridView(
             monthStart: month,
@@ -285,15 +288,14 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           ),
         ),
         if (selected != null)
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: _MonthDayCard(
-                date: selected,
-                items: _itemsForDay(items, selected),
-                today: today,
-                onOpen: _openFromMonth,
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: _MonthDayCard(
+              date: selected,
+              items: _itemsForDay(items, selected),
+              today: today,
+              actionable: _monthWorkoutActionable,
+              onOpen: _start,
             ),
           ),
       ],
@@ -359,10 +361,16 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     ];
   }
 
-  /// Переход на день из карточки месяца: открыть подготовку к тренировке без
-  /// автостарта и без переноса — в месяце нет контекста «сегодня» (54.5).
-  Future<void> _openFromMonth(WeekPlanItem item) =>
-      startPlannedWorkout(context, _controller, item);
+  /// Тап по строке тренировки карточки месяца (54.5) — тот же гейтинг, что
+  /// в недельном виде (47.1): запуск/перенос разрешает только
+  /// `dayActionsFor` (сам [`_start`] вычисляет `rescheduleWeekStart`).
+  /// Выполненные/пропущенные/ручные и прочие строки без действий —
+  /// информационные, обработчика тапа не имеют.
+  bool _monthWorkoutActionable(WeekPlanItem item) {
+    final actions = dayActionsFor(item, _controller.selectedDate.value);
+    return actions.contains(DayAction.start) ||
+        actions.contains(DayAction.reschedule);
+  }
 
   Widget _buildWeekSwitcher(
     BuildContext context,
@@ -1701,12 +1709,14 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
 }
 
 /// Карточка выбранного дня под календарем месяца (54.5, образец 204446):
-/// дата и тренировки дня со статусами; тап по тренировке открывает подготовку.
+/// дата и тренировки дня со статусами; тап по разрешённой тренировке
+/// ([actionable]) открывает подготовку через `_start` с гейтингом 47.1.
 class _MonthDayCard extends StatelessWidget {
   const _MonthDayCard({
     required this.date,
     required this.items,
     required this.today,
+    required this.actionable,
     required this.onOpen,
   });
 
@@ -1716,7 +1726,10 @@ class _MonthDayCard extends StatelessWidget {
   /// Сегодняшняя дата — бейдж «Сегодня» в шапке карточки.
   final DateTime today;
 
-  /// Тап по тренировке — переход на день (подготовка без автостарта).
+  /// Разрешает ли строка тренировки тап (`dayActionsFor`: start/reschedule).
+  final bool Function(WeekPlanItem item) actionable;
+
+  /// Тап по разрешённой тренировке — переход на день (подготовка).
   final _WorkoutAction onOpen;
 
   @override
@@ -1777,7 +1790,11 @@ class _MonthDayCard extends StatelessWidget {
             for (final item in items)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: _MonthWorkoutRow(item: item, onOpen: onOpen),
+                child: _MonthWorkoutRow(
+                  item: item,
+                  actionable: actionable(item),
+                  onOpen: onOpen,
+                ),
               ),
           ],
         ),
@@ -1787,11 +1804,17 @@ class _MonthDayCard extends StatelessWidget {
 }
 
 /// Строка тренировки в карточке дня месяца: превью, «Программа → День N»,
-/// время, статус; тап — подготовка к тренировке.
+/// время, статус; тап разрешён только для строк с действиями (47.1) —
+/// иначе строка информационная (`onTap: null`).
 class _MonthWorkoutRow extends StatelessWidget {
-  const _MonthWorkoutRow({required this.item, required this.onOpen});
+  const _MonthWorkoutRow({
+    required this.item,
+    required this.actionable,
+    required this.onOpen,
+  });
 
   final WeekPlanItem item;
+  final bool actionable;
   final _WorkoutAction onOpen;
 
   @override
@@ -1800,7 +1823,7 @@ class _MonthWorkoutRow extends StatelessWidget {
     final theme = Theme.of(context);
     return AppInkWell(
       borderRadius: BorderRadius.circular(AppRadii.md),
-      onTap: () => onOpen(item),
+      onTap: actionable ? () => onOpen(item) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(

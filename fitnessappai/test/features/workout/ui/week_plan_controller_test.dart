@@ -656,11 +656,12 @@ void main() {
       controller.selectMonthDate(DateTime(2026, 8, 17, 15));
       expect(controller.effectiveMonthDate, DateTime(2026, 8, 17));
 
-      // В другом месяце выбора нет, пока пользователь не тапнет ячейку.
+      // В другом месяце «сегодня» (10.08) вне его — fallback на 1-е число,
+      // карточка дня остаётся видимой (54.5).
       controller.shiftMonth(1);
       await pumpEventQueue();
       expect(controller.monthSelectedDate.value, isNull);
-      expect(controller.effectiveMonthDate, isNull);
+      expect(controller.effectiveMonthDate, DateTime(2026, 9, 1));
 
       controller.shiftMonth(-1);
       await pumpEventQueue();

@@ -159,7 +159,18 @@ void main() {
         GoRoute(
           path: '/workout/prepare/:programDayId',
           builder: (context, state) => Scaffold(
-            body: Text('prepare-${state.pathParameters['programDayId']}'),
+            body: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('prepare-${state.pathParameters['programDayId']}'),
+                // Отдельным текстом, чтобы не менять контракт `prepare-N`:
+                // маркер проброса недели-источника (47.1/48.4).
+                if (state.uri.queryParameters.containsKey(
+                  'rescheduleWeekStart',
+                ))
+                  const Text('reschedule-mark'),
+              ],
+            ),
           ),
         ),
       ],
@@ -1810,10 +1821,12 @@ void main() {
     expect(find.text('Сплит → День 1'), findsOneWidget);
     expect(find.text('Сегодня'), findsWidgets);
 
-    // Тап по тренировке открывает подготовку — без автостарта и переноса.
+    // Тап по сегодняшней тренировке открывает подготовку — это старт, без
+    // проброса недели-источника.
     await tester.tap(find.text('Сплит → День 1'));
     await tester.pumpAndSettle();
     expect(find.text('prepare-${day.id}'), findsOneWidget);
+    expect(find.text('reschedule-mark'), findsNothing);
   });
 
   testWidgets('месяц: пустой день месяца — карточка без тренировок (54.5)', (
@@ -1891,6 +1904,47 @@ void main() {
 
     expect(find.text('Август 2026'), findsOneWidget);
     expect(weekSwitcherArrow(tester, 'Предыдущий месяц').onPressed, isNull);
+  });
+
+  testWidgets('месяц: выполненная строка карточки — без действия (47.1)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    final scheduledDate = mondayOf(
+      fixedNow,
+    ).add(Duration(days: fixedNow.weekday - 1));
+    await saveSession(workoutRepo, day, scheduledDate);
+    await pumpPlan(tester);
+    await tester.tap(find.text('Месяц'));
+    await tester.pumpAndSettle();
+
+    // Строка информационная: статус на месте, тап не открывает подготовку —
+    // дубль-сессии из месяца не создать (гейтинг dayActionsFor, 47.1).
+    expect(find.text('Выполнено'), findsOneWidget);
+    await tester.tap(find.text('Сплит → День 1'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('prepare-'), findsNothing);
+  });
+
+  testWidgets('месяц: будущая строка — перенос с пробросом недели (47.1)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+    await tester.tap(find.text('Месяц'));
+    await tester.pumpAndSettle();
+
+    // Следующий понедельник 17.08: будущая строка — только перенос, карточка
+    // месяца пробрасывает rescheduleWeekStart, как «Перенести на сегодня».
+    await tester.tap(find.text('17'));
+    await tester.pumpAndSettle();
+    expect(find.text('17 августа 2026'), findsOneWidget);
+
+    await tester.tap(find.text('Сплит → День 1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('prepare-${day.id}'), findsOneWidget);
+    expect(find.text('reschedule-mark'), findsOneWidget);
   });
 }
 
