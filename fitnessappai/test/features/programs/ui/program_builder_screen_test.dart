@@ -1228,7 +1228,16 @@ void main() {
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
 
-    // Появляются чекбоксы вместо drag-индикаторов.
+    // Появляются чекбоксы вместо drag-индикаторов. Шапка (54.4: карточки
+    // со степперами) выше — третий день может не попасть в первую постройку
+    // списка: прокручиваем к его заголовку (`.at(2)` здесь нельзя — finder
+    // кидает IndexError при уже менее чем 3 построенных чекбоксах).
+    await tester.scrollUntilVisible(
+      find.text('День 3'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.byType(Checkbox), findsNWidgets(3));
 
     // Кнопка «Удалить выбранное» внизу заблокирована (ничего не выбрано).
@@ -1289,6 +1298,14 @@ void main() {
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
 
+    // Шапка (54.4) выше — прокручиваем к заголовку последнего дня
+    // (`.at(2)` нельзя: IndexError при <3 построенных чекбоксах).
+    await tester.scrollUntilVisible(
+      find.text('День 3'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.byType(Checkbox), findsNWidgets(3));
 
     // Нажимаем крестик (отмена).

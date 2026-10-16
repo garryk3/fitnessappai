@@ -875,25 +875,38 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                       _imageEditor(l10n),
                       const SizedBox(height: 16),
                       // Разминка/отдых — степперы (54.4, образец 204637):
-                      // поля-строки ±, вместо outlined-полей с клавиатурой.
+                      // поля-строки ±, вместо outlined-полей с клавиатурой —
+                      // в карточке, как на params-экране (единый вид степпера).
                       // Валидации не было и нет: пусто → null, digitsOnly
                       // исключает нечисловые/отрицательные значения.
-                      AppNumberStepper(
-                        controller: _warmupController,
-                        label: l10n.programBuilderWarmupMinutes,
-                        validator: (_) => null,
-                        increaseTooltip: l10n.commonIncrease,
-                        decreaseTooltip: l10n.commonDecrease,
-                        onChanged: (_) => setState(() {}),
+                      AppCard(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        child: AppNumberStepper(
+                          controller: _warmupController,
+                          label: l10n.programBuilderWarmupMinutes,
+                          validator: (_) => null,
+                          increaseTooltip: l10n.commonIncrease,
+                          decreaseTooltip: l10n.commonDecrease,
+                          onChanged: (_) => setState(() {}),
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      AppNumberStepper(
-                        controller: _exerciseRestController,
-                        label: l10n.programBuilderExerciseRestSeconds,
-                        validator: (_) => null,
-                        increaseTooltip: l10n.commonIncrease,
-                        decreaseTooltip: l10n.commonDecrease,
-                        onChanged: (_) => setState(() {}),
+                      const SizedBox(height: 12),
+                      AppCard(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        child: AppNumberStepper(
+                          controller: _exerciseRestController,
+                          label: l10n.programBuilderExerciseRestSeconds,
+                          validator: (_) => null,
+                          increaseTooltip: l10n.commonIncrease,
+                          decreaseTooltip: l10n.commonDecrease,
+                          onChanged: (_) => setState(() {}),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       _daysCountField(l10n),

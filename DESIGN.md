@@ -452,7 +452,7 @@ Low из 54.1 закрыты: disabled `AppGradientButton` отличим (по�
 
 - Контракт `TextFormField` сохранён: лейбл через `labelText` (`find.widgetWithText(TextFormField, label)`), ввод через контроллер (`enterText`), валидация `Form`/`validator`. Валидное значение — без рамки (`enabledBorder: none`), ошибка — красная рамка + текст валидатора; фокус — `outline`.
 - Кнопки ± столбиком справа, шаг `step`, кламп по `min` (0 — «−» до нуля, валидатор решает допустимость), `decimals` (вес/дистанция), иконочный бейдж-плашка слева (`icon`), тултипы `commonIncrease`/`commonDecrease`. Живая валидация: `controller.text` → `didChange` → `autovalidateMode.onUserInteraction`.
-- Применение: конструктор программы — разминка/отдых (без иконок, валидации не было — `validator: null` сохранён); params — подходы/повторы/вес/время/дистанция/отдых с иконками `format_list_numbered`/`repeat`/`fitness_center`/`timer`/`directions_run`/`hourglass_bottom`.
+- Применение: каждая строка-степпер — в `AppCard` (горизонтальный паддинг 12, вертикальный 4), как в образце «Параметры упражнения». Конструктор программы — разминка/отдых (без иконок, валидации не было — `validator: null` сохранён); params — подходы/повторы/вес/время/дистанция/отдых с иконками `format_list_numbered`/`repeat`/`fitness_center`/`timer`/`directions_run`/`hourglass_bottom` и крупным значением titleLarge w600.
 
 Экраны 54.4:
 
