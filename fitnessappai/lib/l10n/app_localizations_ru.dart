@@ -59,6 +59,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonDelete => 'Удалить';
 
   @override
+  String get commonIncrease => 'Увеличить';
+
+  @override
+  String get commonDecrease => 'Уменьшить';
+
+  @override
   String get commonAll => 'Все';
 
   @override
@@ -616,6 +622,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programDeactivate => 'Деактивировать';
 
   @override
+  String programListWeekFraction(int performed, int assigned) {
+    return '$performed/$assigned дн';
+  }
+
+  @override
   String get programCopyJson => 'Скопировать JSON';
 
   @override
@@ -847,6 +858,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exerciseParamsHoldHint => 'Пусто — время удержания со счётчика';
+
+  @override
+  String exerciseParamsPlanProgress(int day, int total) {
+    return 'Прогресс плана: День $day / $total';
+  }
 
   @override
   String get workoutPrepare => 'Подготовка к тренировке';

@@ -438,9 +438,33 @@ Hero-карточка «активная программа» (`home_screen.dart
 
 Low из 54.1 закрыты: disabled `AppGradientButton` отличим (подложка `surfaceContainerHigh` вместо градиента, текст `onSurfaceVariant`, без glow; `busy` — отдельное состояние на градиенте со спиннером); `AppGlowContainer` рендерит `AppContainer` вместо сырого `Container`.
 
+### Программы (54.4)
+
+Список программ (`programs_screen.dart`, `_ProgramCard`, образец `templates/IMG_20260920_204537.jpg`):
+
+- **Две колонки через вертикальный разделитель** (`outlineVariant`, `IntrinsicHeight`): слева — `ProgramThumbnail` 56, название `titleLarge` w600 (maxLines 2), дневные бейджи; справа — ближайший день, кольцо прогресса, pill-CTA. Строка метаданных сверху слева: «N дня | M упражнений» — labelSmall `onSurfaceVariant`, letter-spacing 0.4, тонкий разделитель-чертка.
+- **Кольцо `AppProgressRing`** (перенесено из home; подпись `%` в `FittedBox(scaleDown)`, `excludeSemantics: true` — иначе label мержится с детским текстом) — недельный прогресс сессий `[пн, пн+7)`; справа дробь `programListWeekFraction` («1/3 дн»). Данных нет (нет `WorkoutRepository`/дней у программы) — кольцо и дробь скрыты («без данных — без элементов»). Расчёт — домен `weeklyProgramProgress` (`lib/core/domain/weekly_progress.dart`), `ProgramListController` получает необязательные `WorkoutRepository` и `clock`.
+- **Ближайший день** — compound-строка «Ближайший день: Пн» через `homeUpcomingDay` (без привязок — скрывается; отдельный `find.text('Пн')` не задваивается — бейджи остаются отдельными); расчет — домен `nearestWeekday`.
+- **Бейдж «Активная»** — outline-pill: обводка `primary`, текст `primary` labelSmall w600 (вместо залитого).
+- **CTA «Начать»** — `AppGradientButton(pill, icon: play_arrow)` в правой колонке, рендерится при наличии дней (поведение прежнее).
+
+**`AppNumberStepper`** (`lib/uikit/app_number_stepper.dart`, новый) — поле-строка ± вместо outlined-поля с цифровой клавиатурой (образец «Параметры упражнения»):
+
+- Контракт `TextFormField` сохранён: лейбл через `labelText` (`find.widgetWithText(TextFormField, label)`), ввод через контроллер (`enterText`), валидация `Form`/`validator`. Валидное значение — без рамки (`enabledBorder: none`), ошибка — красная рамка + текст валидатора; фокус — `outline`.
+- Кнопки ± столбиком справа, шаг `step`, кламп по `min` (0 — «−» до нуля, валидатор решает допустимость), `decimals` (вес/дистанция), иконочный бейдж-плашка слева (`icon`), тултипы `commonIncrease`/`commonDecrease`. Живая валидация: `controller.text` → `didChange` → `autovalidateMode.onUserInteraction`.
+- Применение: каждая строка-степпер — в `AppCard` (горизонтальный паддинг 12, вертикальный 4), как в образце «Параметры упражнения». Конструктор программы — разминка/отдых (без иконок, валидации не было — `validator: null` сохранён); params — подходы/повторы/вес/время/дистанция/отдых с иконками `format_list_numbered`/`repeat`/`fitness_center`/`timer`/`directions_run`/`hourglass_bottom` и крупным значением titleLarge w600.
+
+Экраны 54.4:
+
+- **Конструктор программы:** «Количество дней» — `AppSegmentedButton<int>` (1–7) вместо сырого `SegmentedButton`; степперы разминка/отдых — в `AppCard` (тот же вид, что на params); новая программа стартует с префиллом дефолтов по образцу — разминка 10, отдых 60 (запись до подписки на контроллеры, форма не «изменённая»); нижний CTA — `AppGradientButton(pill, busy)` («Сохранить» / «Заполнить день N»). Режим удаления дней остаётся `FilledButton` — осознанное delete-исключение; диалоги не тронуты.
+- **Наполнение дня:** сегмент основной/альтернативный набор — `AppSegmentedButton<bool>` (expanded), CTA — `AppGradientButton(pill)`.
+- **Параметры упражнения (образец 204634):** шапка — `AppCard` с `ExerciseThumbnail(size: 64)` и названием `titleLarge` w600; каждое поле — `AppCard` со степпером (иконочный бейдж типа слева, крупное значение titleLarge w600, ± справа); футер-карточка `AppCard` «Прогресс плана: День N / M» (`exerciseParamsPlanProgress`) + `LinearProgressIndicator` — позиция дня в программе (`getDay` + `getById`), без данных — скрыт; CTA — `AppGradientButton(pill, icon: save)`.
+
 ---
 
 ## 12. Чейнджлог
+
+- 2026-10-16 — редизайн 54, программы (задача 54.4, §11): карточка списка по образцу 204537 — две колонки через вертикальный разделитель, ближайший день compound-строкой (`homeUpcomingDay`), кольцо недельного прогресса `AppProgressRing` + дробь «N/M дн» (домен `weeklyProgramProgress`/`nearestWeekday`; `ProgramListController` — необязательные `WorkoutRepository`/`clock`), outline-бейдж «Активная», pill-CTA «Начать»; новый uikit `AppNumberStepper` (поле-строка ±, живая валидация, иконочный бейдж, тултипы `commonIncrease`/`commonDecrease`) в `AppCard`-строках — разминка/отдых в билдере (префилл дефолтов 10/60 по образцу 204637) и все поля params с иконками типов; `AppSegmentedButton<int>` (количество дней) и `<bool>` (основной/альтернативный набор, expanded); pill-CTA `AppGradientButton` билдера/дня/params (режим удаления — осознанное `FilledButton`-исключение); params — шапка `AppCard` с `ExerciseThumbnail(size: 64)` и футер «Прогресс плана: День N / M» (`exerciseParamsPlanProgress`) с `LinearProgressIndicator`. Тесты: `weekly_progress_test`, `nearest_weekday_test`, `app_progress_ring_test` (5), `app_number_stepper_test` (9); finder'ы `FilledButton`→`ElevatedButton` (params/билдер/day/e2e), `ensureVisible`/`scrollUntilVisible` под более высокой шапкой; 1253/1253.
 
 - 2026-10-15 — редизайн 54, главная (задача 54.3, §11): hero-карточка активной программы — токен `AppGradients.heroCard` (тёмно-синий → фиолет, стопы из образца) в тёмной теме / прежний лёгкий градиент в светлой, неон-обводка `AppGlowContainer`, полноширинная pill-CTA `AppGradientButton` «Начать» вместо `IconButton.filledTonal`; streak-бейдж (`local_fire_department`, только при серии ≥1) над «Последние тренировки», расчёт — чистая функция `streakDays` (домен, unit-тесты) + l10n plural `homeStreakDays`; карточка недавней тренировки — крупная длительность `titleLarge` справа. Low 54.1 закрыты: disabled `AppGradientButton` отличим (нейтральная подложка, `onSurfaceVariant`, без glow), `AppGlowContainer` рендерит `AppContainer`. Тесты: `workout_streak_test.dart`, `home_controller_test.dart` (streakDays), `home_screen_test.dart` (бейдж/CTA), `app_tokens_test.dart` (стопы/контраст heroCard), `app_gradient_button_test.dart` (disabled).
 

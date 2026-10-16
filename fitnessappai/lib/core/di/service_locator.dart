@@ -31,6 +31,9 @@ class ServiceLocator {
     return registration.resolve(this) as T;
   }
 
+  /// true, если сервис [T] зарегистрирован (для необязательных DI-зависимостей).
+  bool isRegistered<T>() => _registrations.containsKey(T);
+
   void reset() {
     _registrations.clear();
     _singletons.clear();

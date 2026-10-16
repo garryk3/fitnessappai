@@ -211,7 +211,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
       await tester.pumpAndSettle();
 
       final scheduled = await reminderRepository.allScheduled();
@@ -251,7 +251,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(await reminderRepository.allScheduled(), isEmpty);
@@ -286,7 +286,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(await reminderRepository.allScheduled(), isEmpty);

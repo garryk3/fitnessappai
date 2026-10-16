@@ -4,12 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
+import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
+import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Сервис напоминаний, который только записывает вызовы (плагин не нужен).
 class _RecordingReminderService extends ReminderService {
@@ -69,12 +73,17 @@ void main() {
   /// Контроллер с собственным `DataChangeNotifier`: мутации программы шлют
   /// глобальный нотификатор, и его фоновая перезагрузка не должна бить по
   /// закрытой БД в tearDown. Начальная загрузка дожидается явно.
-  Future<ProgramListController> createController() async {
+  Future<ProgramListController> createController({
+    WorkoutRepository? workoutRepository,
+    DateTime Function()? clock,
+  }) async {
     final changes = DataChangeNotifier();
     final controller = ProgramListController(
       programRepository,
       changes: changes,
       reminderService: reminders,
+      workoutRepository: workoutRepository,
+      clock: clock,
     );
     await controller.refresh();
     addTearDown(() {
@@ -171,4 +180,105 @@ void main() {
       });
     },
   );
+
+  group('ProgramListController: недельный прогресс карточек (54.4)', () {
+    // «Сегодня» — среда 2026-10-14: текущая неделя [12.10, 19.10).
+    final today = DateTime(2026, 10, 14);
+
+    Future<WorkoutRepository> saveSession({
+      required int programId,
+      required int? programDayId,
+      required DateTime performedDate,
+    }) async {
+      final repository = WorkoutRepository(db);
+      await repository.saveSession(
+        WorkoutSession(
+          programId: programId,
+          programName: 'Сплит',
+          programDayId: programDayId,
+          dayIndex: 0,
+          performedDate: performedDate,
+          startedAt: performedDate.add(const Duration(hours: 18)),
+          endedAt: performedDate.add(const Duration(hours: 18, minutes: 40)),
+        ),
+        [
+          WorkoutSetResult(
+            sessionId: 0,
+            exerciseName: 'Жим',
+            exerciseType: ExerciseType.strength,
+            setIndex: 1,
+            reps: 10,
+            completedAt: performedDate.add(const Duration(minutes: 5)),
+          ),
+        ],
+      );
+      return repository;
+    }
+
+    test('привязанный день со сессией этой недели → 1/1, 100%', () async {
+      final day = await createDay(dayOfWeek: 2);
+      final repository = await saveSession(
+        programId: day.programId,
+        programDayId: day.id,
+        performedDate: DateTime(2026, 10, 13),
+      );
+      final controller = await createController(
+        workoutRepository: repository,
+        clock: () => today,
+      );
+
+      final item = controller.items.value.single;
+      expect(item.weekProgress, (performed: 1, assigned: 1));
+      expect(item.weekPercent, 100);
+    });
+
+    test('сессия прошлой недели не засчитывается', () async {
+      final day = await createDay(dayOfWeek: 2);
+      final repository = await saveSession(
+        programId: day.programId,
+        programDayId: day.id,
+        performedDate: DateTime(2026, 10, 5),
+      );
+      final controller = await createController(
+        workoutRepository: repository,
+        clock: () => today,
+      );
+
+      final item = controller.items.value.single;
+      expect(item.weekProgress, (performed: 0, assigned: 1));
+    });
+
+    test('непривязанные дни: сессии по programId, дни — знаменатель', () async {
+      final first = await createDay(dayOfWeek: null);
+      final second = await createDay(dayOfWeek: null);
+      final repository = await saveSession(
+        programId: first.programId,
+        programDayId: first.id,
+        performedDate: DateTime(2026, 10, 13),
+      );
+      final controller = await createController(
+        workoutRepository: repository,
+        clock: () => today,
+      );
+
+      final firstItem = controller.items.value.firstWhere(
+        (item) => item.program.id == first.programId,
+      );
+      expect(firstItem.weekProgress, (performed: 1, assigned: 1));
+
+      final secondItem = controller.items.value.firstWhere(
+        (item) => item.program.id == second.programId,
+      );
+      expect(secondItem.weekProgress, (performed: 0, assigned: 1));
+    });
+
+    test('без WorkoutRepository прогресс не считается', () async {
+      await createDay(dayOfWeek: 2);
+      final controller = await createController(clock: () => today);
+
+      final item = controller.items.value.single;
+      expect(item.weekProgress, isNull);
+      expect(item.weekPercent, isNull);
+    });
+  });
 }

@@ -94,6 +94,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   final _descriptionController = TextEditingController();
   final _warmupController = TextEditingController();
   final _exerciseRestController = TextEditingController();
+
+  /// Дефолты новой программы по образцу «Новая программа» (204637):
+  /// разминка 10 мин, отдых между упражнениями 60 сек.
+  static const _defaultWarmupMinutes = 10;
+  static const _defaultRestSeconds = 60;
   final List<_DayDraft> _days = [];
   int _nextDayKey = -1;
   bool _loading = true;
@@ -186,6 +191,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           _addDay();
         }
       }
+    }
+    if (programId == null) {
+      // Префилл дефолтов новой программы (образец 204637) — до подписки на
+      // контроллеры, чтобы форма не стартовала бы «изменённой» (_dirty = false
+      // выставляется ниже, после addListener).
+      _warmupController.text = '$_defaultWarmupMinutes';
+      _exerciseRestController.text = '$_defaultRestSeconds';
     }
     if (_days.isEmpty) {
       _addDay();
@@ -874,30 +886,37 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                       const SizedBox(height: 16),
                       _imageEditor(l10n),
                       const SizedBox(height: 16),
-                      AppTextFormField(
-                        controller: _warmupController,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: l10n.programBuilderWarmupMinutes,
-                          border: const OutlineInputBorder(),
+                      // Разминка/отдых — степперы (54.4, образец 204637):
+                      // поля-строки ±, вместо outlined-полей с клавиатурой —
+                      // в карточке, как на params-экране (единый вид степпера).
+                      // Валидации не было и нет: пусто → null, digitsOnly
+                      // исключает нечисловые/отрицательные значения.
+                      AppCard(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
+                        child: AppNumberStepper(
+                          controller: _warmupController,
+                          label: l10n.programBuilderWarmupMinutes,
+                          validator: (_) => null,
+                          increaseTooltip: l10n.commonIncrease,
+                          decreaseTooltip: l10n.commonDecrease,
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      AppTextFormField(
-                        controller: _exerciseRestController,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: l10n.programBuilderExerciseRestSeconds,
-                          border: const OutlineInputBorder(),
+                      const SizedBox(height: 12),
+                      AppCard(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
+                        child: AppNumberStepper(
+                          controller: _exerciseRestController,
+                          label: l10n.programBuilderExerciseRestSeconds,
+                          validator: (_) => null,
+                          increaseTooltip: l10n.commonIncrease,
+                          decreaseTooltip: l10n.commonDecrease,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       _daysCountField(l10n),
@@ -921,27 +940,21 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: _deleteMode
+                // Режим удаления — delete-действие: осознанное исключение
+                // остаётся FilledButton (как в 54.x, см. PLAN.md 54.4).
                 ? FilledButton(
                     onPressed: _canDeleteSelected ? _deleteSelectedDays : null,
                     child: AppText(l10n.programBuilderDeleteSelected),
                   )
-                : FilledButton(
-                    onPressed: _saving
-                        ? null
-                        : nextDay == null
+                : AppGradientButton(
+                    pill: true,
+                    busy: _saving,
+                    onPressed: nextDay == null
                         ? _save
                         : () => _openDayFill(nextDay),
-                    child: _saving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : AppText(
-                            nextDay == null
-                                ? l10n.programBuilderSave
-                                : l10n.programBuilderFillNextDay(nextDay + 1),
-                          ),
+                    label: nextDay == null
+                        ? l10n.programBuilderSave
+                        : l10n.programBuilderFillNextDay(nextDay + 1),
                   ),
           ),
         ),
@@ -1066,13 +1079,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       children: [
         AppSectionHeader(title: l10n.programBuilderDaysCount),
         const SizedBox(height: 8),
-        SegmentedButton<int>(
+        AppSegmentedButton<int>(
           segments: [
             for (var count = 1; count <= 7; count++)
-              ButtonSegment(value: count, label: AppText('$count')),
+              AppSegment(value: count, label: '$count'),
           ],
           selected: {_days.length},
-          showSelectedIcon: false,
           onSelectionChanged: (selection) => _setDaysCount(selection.first),
         ),
       ],

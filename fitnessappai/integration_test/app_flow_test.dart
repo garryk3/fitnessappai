@@ -494,7 +494,7 @@ Future<void> addDayExercise(
 
   final save = find.descendant(
     of: find.byType(ProgramDayExerciseParamsScreen),
-    matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
   );
   await ensureFieldVisible(tester, save);
   await tester.tap(save);
@@ -592,7 +592,7 @@ Future<void> dismissActivatePopupIfShown(WidgetTester tester) async {
 Future<void> saveProgramBuilder(WidgetTester tester) async {
   final programSave = find.descendant(
     of: find.byType(ProgramBuilderScreen),
-    matching: find.widgetWithText(FilledButton, 'Сохранить'),
+    matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
   );
   await tester.tap(programSave);
   // Ждём появления попапа (асинхронный сохранение в БД).

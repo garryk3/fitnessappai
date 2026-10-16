@@ -227,7 +227,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('День 1'), findsOneWidget);
-    expect(find.text('Без привязки'), findsOneWidget);
+    // Сабтайтл дня: «Без привязки» + префилл разминки 10 мин (54.4).
+    expect(find.textContaining('Без привязки'), findsOneWidget);
 
     await tester.ensureVisible(find.text('3'));
     await tester.tap(find.text('3').last);
@@ -276,7 +277,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pump(const Duration(milliseconds: 500));
     // Новая программа — попап «Сделать активной?».
     await tester.tap(find.text('Отмена'));
@@ -382,7 +383,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await enterName(tester, 'Сплит 2');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final updated = await repository.getById(created.id!);
@@ -404,7 +405,7 @@ void main() {
     expect((await repository.getActiveProgram())!.id, created.id);
 
     await pumpBuilder(tester, programId: created.id);
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect((await repository.getActiveProgram())!.id, created.id);
@@ -440,7 +441,7 @@ void main() {
     }
     expect(warmupText, findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final savedDay = (await repository.getDays(created.id!)).single;
@@ -465,7 +466,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить').first);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final saved = (await repository.getById(created.id!))!;
@@ -621,7 +622,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Заполнить день 2'), findsNothing);
-      expect(find.widgetWithText(FilledButton, 'Сохранить'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, 'Сохранить'), findsOneWidget);
     },
   );
 
@@ -752,7 +753,7 @@ void main() {
 
     // Невалидное сохранение: ошибка названия видна.
     await enterName(tester, '');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
     expect(find.text('Введите название'), findsOneWidget);
 
@@ -840,7 +841,7 @@ void main() {
         find.widgetWithText(TextFormField, 'Вес (кг)'),
         '20',
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
@@ -881,7 +882,7 @@ void main() {
     await tester.pumpAndSettle();
     await enterName(tester, 'Новая');
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -917,7 +918,7 @@ void main() {
     await tester.pumpAndSettle();
     await enterName(tester, 'Новая');
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -1228,14 +1229,29 @@ void main() {
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
 
-    // Появляются чекбоксы вместо drag-индикаторов.
+    // Появляются чекбоксы вместо drag-индикаторов. Шапка (54.4: карточки
+    // со степперами) выше — третий день может не попасть в первую постройку
+    // списка: прокручиваем к его заголовку (`.at(2)` здесь нельзя — finder
+    // кидает IndexError при уже менее чем 3 построенных чекбоксах).
+    await tester.scrollUntilVisible(
+      find.text('День 3'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.byType(Checkbox), findsNWidgets(3));
 
     // Кнопка «Удалить выбранное» внизу заблокирована (ничего не выбрано).
     expect(find.text('Удалить выбранное'), findsOneWidget);
 
-    // Выбираем два дня.
+    // Выбираем два дня. Шапка со степперами (54.4) выше старых полей —
+    // прокручиваем каждый чекбокс в зону видимости, иначе он уходит под
+    // нижнюю панель и тап срабатывает по ней.
+    await tester.ensureVisible(find.byType(Checkbox).at(0));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(Checkbox).at(0));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(Checkbox).at(2));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(Checkbox).at(2));
     await tester.pumpAndSettle();
@@ -1283,6 +1299,14 @@ void main() {
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
 
+    // Шапка (54.4) выше — прокручиваем к заголовку последнего дня
+    // (`.at(2)` нельзя: IndexError при <3 построенных чекбоксах).
+    await tester.scrollUntilVisible(
+      find.text('День 3'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.byType(Checkbox), findsNWidgets(3));
 
     // Нажимаем крестик (отмена).
@@ -1336,8 +1360,10 @@ void main() {
     expect(find.byTooltip('Удалить изображение'), findsOneWidget);
 
     // Сохраняем.
-    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Сохранить'));
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.ensureVisible(
+      find.widgetWithText(ElevatedButton, 'Сохранить'),
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
@@ -1371,8 +1397,10 @@ void main() {
     await tester.pump();
     expect(find.byTooltip('Удалить изображение'), findsNothing);
 
-    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Сохранить'));
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.ensureVisible(
+      find.widgetWithText(ElevatedButton, 'Сохранить'),
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
