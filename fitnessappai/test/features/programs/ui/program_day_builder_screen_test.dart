@@ -510,10 +510,23 @@ void main() {
       find.widgetWithText(TextFormField, 'Вес (кг)'),
       '20',
     );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Отдых (сек)'),
-      '60',
+    // Четвёртое поле (отдых) после рестайла 54.4 выходит за первую постройку
+    // списка params — скроллим экран параметров, а не день под ним.
+    final restField = find.widgetWithText(TextFormField, 'Отдых (сек)');
+    await tester.scrollUntilVisible(
+      restField,
+      200,
+      // У каждого TextField свой внутренний Scrollable — берём первый под
+      // экраном (список формы), а не горизонтальную прокрутку поля.
+      scrollable: find
+          .descendant(
+            of: find.byType(ProgramDayExerciseParamsScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
+    await tester.pumpAndSettle();
+    await tester.enterText(restField, '60');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 

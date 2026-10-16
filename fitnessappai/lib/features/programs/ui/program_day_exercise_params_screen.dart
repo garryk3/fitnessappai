@@ -240,29 +240,31 @@ class _ProgramDayExerciseParamsScreenState
         padding: const EdgeInsets.all(16),
         children: [
           // Шапка: миниатюра + название (образец «Параметры упражнения»).
-          Row(
-            children: [
-              ExerciseThumbnail(
-                exercise: _exercise,
-                mediaCache: locator.isRegistered<MediaCache>()
-                    ? locator.get<MediaCache>()
-                    : null,
-                size: 64,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: AppText(
-                  _exercise?.name ?? '',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+          AppCard(
+            child: Row(
+              children: [
+                ExerciseThumbnail(
+                  exercise: _exercise,
+                  mediaCache: locator.isRegistered<MediaCache>()
+                      ? locator.get<MediaCache>()
+                      : null,
+                  size: 64,
                 ),
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: AppText(
+                    _exercise?.name ?? '',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           if (type != ExerciseType.distance)
             _buildStepperField(
               controller: _setsController,
@@ -358,16 +360,23 @@ class _ProgramDayExerciseParamsScreenState
     bool decimals = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AppNumberStepper(
-        controller: controller,
-        label: label,
-        validator: validator,
-        icon: icon,
-        step: step,
-        decimals: decimals,
-        increaseTooltip: l10n.commonIncrease,
-        decreaseTooltip: l10n.commonDecrease,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: AppNumberStepper(
+          controller: controller,
+          label: label,
+          validator: validator,
+          icon: icon,
+          step: step,
+          decimals: decimals,
+          // Крупное полужирное значение — как в образце «Параметры упражнения».
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          increaseTooltip: l10n.commonIncrease,
+          decreaseTooltip: l10n.commonDecrease,
+        ),
       ),
     );
   }
