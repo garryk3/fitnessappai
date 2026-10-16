@@ -94,6 +94,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   final _descriptionController = TextEditingController();
   final _warmupController = TextEditingController();
   final _exerciseRestController = TextEditingController();
+
+  /// Дефолты новой программы по образцу «Новая программа» (204637):
+  /// разминка 10 мин, отдых между упражнениями 60 сек.
+  static const _defaultWarmupMinutes = 10;
+  static const _defaultRestSeconds = 60;
   final List<_DayDraft> _days = [];
   int _nextDayKey = -1;
   bool _loading = true;
@@ -186,6 +191,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           _addDay();
         }
       }
+    }
+    if (programId == null) {
+      // Префилл дефолтов новой программы (образец 204637) — до подписки на
+      // контроллеры, чтобы форма не стартовала бы «изменённой» (_dirty = false
+      // выставляется ниже, после addListener).
+      _warmupController.text = '$_defaultWarmupMinutes';
+      _exerciseRestController.text = '$_defaultRestSeconds';
     }
     if (_days.isEmpty) {
       _addDay();
@@ -890,7 +902,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                           validator: (_) => null,
                           increaseTooltip: l10n.commonIncrease,
                           decreaseTooltip: l10n.commonDecrease,
-                          onChanged: (_) => setState(() {}),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -905,7 +916,6 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                           validator: (_) => null,
                           increaseTooltip: l10n.commonIncrease,
                           decreaseTooltip: l10n.commonDecrease,
-                          onChanged: (_) => setState(() {}),
                         ),
                       ),
                       const SizedBox(height: 16),

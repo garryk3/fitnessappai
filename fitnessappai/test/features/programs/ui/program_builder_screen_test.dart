@@ -227,7 +227,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('День 1'), findsOneWidget);
-    expect(find.text('Без привязки'), findsOneWidget);
+    // Сабтайтл дня: «Без привязки» + префилл разминки 10 мин (54.4).
+    expect(find.textContaining('Без привязки'), findsOneWidget);
 
     await tester.ensureVisible(find.text('3'));
     await tester.tap(find.text('3').last);
