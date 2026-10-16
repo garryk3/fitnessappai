@@ -70,6 +70,7 @@ class MonthDayCell extends StatelessWidget {
     this.border,
     this.tooltip,
     this.showWorkoutIcon = false,
+    this.icons,
     this.isToday = false,
     this.fillHeight = false,
   });
@@ -81,6 +82,10 @@ class MonthDayCell extends StatelessWidget {
   final BoxBorder? border;
   final String? tooltip;
   final bool showWorkoutIcon;
+
+  /// Иконки групп мышц дня (54.5, «План»): рисуются вместо гантели внизу
+  /// справа, когда переданы и не пусты. Порядок — порядок списка.
+  final List<Widget>? icons;
 
   /// Сегодня: номер дня подсвечивается primary (рамка — через [border]).
   final bool isToday;
@@ -127,7 +132,21 @@ class MonthDayCell extends StatelessWidget {
                   ),
                 ),
               ),
-              if (showWorkoutIcon)
+              if (icons != null && icons!.isNotEmpty)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var i = 0; i < icons!.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 2),
+                        icons![i],
+                      ],
+                    ],
+                  ),
+                )
+              else if (showWorkoutIcon)
                 Positioned(
                   bottom: 0,
                   right: 0,

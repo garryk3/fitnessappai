@@ -53,6 +53,19 @@ class MuscleGroupIcon extends StatelessWidget {
     return 'assets/images/groups/rest.jpg';
   }
 
+  /// Дедупликация ключей групп по ассету (54.5): «грудь» и «пресс» — один
+  /// ассет, в календаре не должны рисоваться дважды. Порядок сохраняется.
+  static List<String> dedupeByAsset(Iterable<String> keys) {
+    final result = <String>[];
+    final seen = <String>{};
+    for (final key in keys) {
+      if (seen.add(assetPathFor(key))) {
+        result.add(key);
+      }
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final path = assetPathFor(muscleKey);

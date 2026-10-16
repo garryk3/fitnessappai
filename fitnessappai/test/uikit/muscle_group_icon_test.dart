@@ -28,6 +28,19 @@ void main() {
     });
   });
 
+  group('MuscleGroupIcon.dedupeByAsset', () {
+    test('грудь и пресс — один ассет, порядок сохраняется (54.5)', () {
+      expect(MuscleGroupIcon.dedupeByAsset(['chest', 'abs', 'arms', 'chest']), [
+        'chest',
+        'arms',
+      ]);
+    });
+
+    test('пустой список — пустой результат', () {
+      expect(MuscleGroupIcon.dedupeByAsset(const []), isEmpty);
+    });
+  });
+
   group('MuscleGroupIcon', () {
     testWidgets('рендерит Image с ассетом группы', (tester) async {
       await _pump(tester, const MuscleGroupIcon(muscleKey: 'arms', size: 24));

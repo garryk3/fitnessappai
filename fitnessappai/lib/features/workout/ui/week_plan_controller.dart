@@ -3,17 +3,21 @@ import 'dart:developer';
 import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
+import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 
-/// Режим отображения плана тренировок: сетка недели или календарь месяца.
+/// Режим отображения плана тренировок: сетка недели или календарь месяца (54.5).
+enum WeekPlanView { week, month }
+
 /// Статус запланированного тренировочного дня на неделе.
 ///
 /// [pastSkipped] — невыполненная тренировка из истёкшей тренировочной недели:
@@ -37,6 +41,7 @@ class WeekPlanItem {
     this.imagePath,
     this.dayTitle,
     this.isManual = false,
+    this.muscleKeys = const [],
     this.reminderHour,
     this.reminderMinute,
     this.reminderEnabled = false,
@@ -63,6 +68,10 @@ class WeekPlanItem {
   /// тренировка. Дни программы (в т.ч. непривязанные, показываемые на
   /// «сегодня» автоматически) удалить из плана нельзя.
   final bool isManual;
+
+  /// Ключи групп мышц дня (54.5): для календаря месяца. Уникальны в рамках
+  /// списка; пусто — данных нет (repos не передан или у дня нет упражнений).
+  final List<String> muscleKeys;
 
   /// Время тренировки (48.10); `null` — время не задано.
   ///
@@ -120,15 +129,18 @@ Set<DayAction> dayActionsFor(WeekPlanItem item, DateTime today) {
   return {DayAction.reschedule};
 }
 
-/// Управляет планом тренировок: сетка недели, статусы, пропуски.
+/// Управляет планом тренировок: сетка недели, календарь месяца (54.5),
+/// статусы, пропуски.
 ///
-/// Вид «Месяц» убран в 47.10: доступны только текущая и следующая недели.
-/// Назад можно вернуться лишь из следующей недели на текущую — прошлые
-/// недели в плане недоступны (51.2).
+/// Вид «Месяц» вернулся в 54.5 как визуальный слой над теми же данными
+/// планирования: навигация ограничена текущим и следующим периодом, назад —
+/// только из следующего на текущий. Прошлое в плане не просматривается
+/// (51.2): выполненные тренировки доступны на экране «История».
 class WeekPlanController {
   WeekPlanController({
     required this.programRepository,
     required this.workoutRepository,
+    this.exerciseRepository,
     this.planScheduleRepository,
     this.reminders,
     DateTime Function()? clock,
@@ -136,6 +148,7 @@ class WeekPlanController {
   }) : _now = clock ?? DateTime.now {
     final today = _dateOnly(_now());
     weekStart.value = mondayOf(today);
+    monthStart.value = DateTime(today.year, today.month, 1);
     selectedDate.value = today;
     _reloadSubscription = ChangeReloadSubscription(
       changes: changes ?? appDataChanges,
@@ -146,6 +159,12 @@ class WeekPlanController {
 
   final ProgramRepository programRepository;
   final WorkoutRepository workoutRepository;
+
+  /// Каталог упражнений для иконок групп мышц в календаре месяца (54.5);
+  /// `null` — без иконок (виджет-тесты, окружения без зарегистрированного
+  /// сервиса).
+  final ExerciseRepository? exerciseRepository;
+
   final PlanScheduleRepository? planScheduleRepository;
 
   /// Одноразовые напоминания ручных назначений (48.10); `null` — без
@@ -169,6 +188,72 @@ class WeekPlanController {
 
   /// Сегодняшняя дата.
   final Signal<DateTime> selectedDate = Signal(DateTime.now());
+
+  /// Отображаемый вид плана (54.5): сетка недели или календарь месяца.
+  final Signal<WeekPlanView> view = Signal(WeekPlanView.week);
+
+  /// Первое число отображаемого месяца.
+  final Signal<DateTime> monthStart = Signal(DateTime.now());
+
+  /// Выбранный в календаре день месяца для карточки под сеткой (54.5).
+  ///
+  /// `null` — выбора не было; отображаемую дату считает [effectiveMonthDate].
+  final Signal<DateTime?> monthSelectedDate = Signal(null);
+
+  /// Переключает вид плана, загружая данные соответствующего периода.
+  void setView(WeekPlanView next) {
+    if (view.value == next) {
+      return;
+    }
+    view.value = next;
+    _load();
+  }
+
+  /// Дата, выбранная в календаре месяца: всегда внутри отображаемого месяца.
+  ///
+  /// По умолчанию — «сегодня» (если оно в этом месяце), иначе — выбора нет,
+  /// пока пользователь не тапнет ячейку.
+  DateTime? get effectiveMonthDate {
+    final stored = monthSelectedDate.value;
+    final month = monthStart.value;
+    if (stored != null &&
+        stored.year == month.year &&
+        stored.month == month.month) {
+      return stored;
+    }
+    final today = _dateOnly(_now());
+    return today.year == month.year && today.month == month.month
+        ? today
+        : null;
+  }
+
+  /// Выбирает день месяца в календаре (тап по ячейке).
+  void selectMonthDate(DateTime date) =>
+      monthSelectedDate.value = _dateOnly(date);
+
+  /// Смещает отображаемый месяц на [delta] месяцев.
+  void shiftMonth(int delta) {
+    final current = monthStart.value;
+    monthStart.value = DateTime(current.year, current.month + delta, 1);
+    monthSelectedDate.value = null;
+    _load();
+  }
+
+  /// Можно ли перейти на следующий месяц: граница данных — текущая и следующая
+  /// недели (47.10/51.2), поэтому дальше конца следующей недели не открываем.
+  bool get canGoNextMonth {
+    final maxDate = mondayOf(_dateOnly(_now())).add(const Duration(days: 13));
+    final next = DateTime(monthStart.value.year, monthStart.value.month + 1, 1);
+    return !next.isAfter(maxDate);
+  }
+
+  /// Можно ли перейти на предыдущий месяц: назад — только из следующего
+  /// месяца на текущий (51.2), прошлое не просматривается.
+  bool get canGoPrevMonth {
+    final today = _dateOnly(_now());
+    final currentMonth = DateTime(today.year, today.month, 1);
+    return monthStart.value.isAfter(currentMonth);
+  }
 
   Future<void> refresh() => _load();
 
@@ -342,9 +427,16 @@ class WeekPlanController {
     );
   }
 
-  Future<void> _load() async {
+  Future<void> _load() {
+    if (view.value == WeekPlanView.month) {
+      final month = monthStart.value;
+      return _loadRange(
+        DateTime(month.year, month.month, 1),
+        DateTime(month.year, month.month + 1, 0),
+      );
+    }
     final week = weekStart.value;
-    await _loadRange(week, week.add(const Duration(days: 6)));
+    return _loadRange(week, week.add(const Duration(days: 6)));
   }
 
   Future<void> _loadRange(DateTime rangeStart, DateTime rangeEnd) async {
@@ -353,6 +445,12 @@ class WeekPlanController {
     try {
       final now = _dateOnly(_now());
       final activePrograms = await programRepository.getActivePrograms();
+      // Иконки групп мышц для календаря месяца (54.5): резолвим один раз
+      // на загрузку, ключ — programDayId. Без репозитория — пусто.
+      final groupsByExercise = exerciseRepository == null
+          ? const <int, List<MuscleGroup>>{}
+          : await exerciseRepository!.muscleGroupsByExercise();
+      final muscleKeysByDayId = <int, List<String>>{};
       final plannedItems = <WeekPlanItem>[];
       for (final program in activePrograms) {
         final detail = await programRepository.getProgram(program.id!);
@@ -364,6 +462,10 @@ class WeekPlanController {
           if (day.day.id == null) {
             continue;
           }
+          muscleKeysByDayId[day.day.id!] = _muscleKeysFor(
+            day,
+            groupsByExercise,
+          );
           if (dayOfWeek == null) {
             // Непривязанные дни показываем на «сегодня», если оно в диапазоне.
             if (_inRange(now, rangeStart, rangeEnd) &&
@@ -501,6 +603,7 @@ class WeekPlanController {
             dayOfWeek: item.dayOfWeek,
             scheduledDate: item.scheduledDate,
             isManual: item.isManual,
+            muscleKeys: muscleKeysByDayId[item.programDayId] ?? const [],
             reminderHour: time?.reminderHour,
             reminderMinute: time?.reminderMinute,
             reminderEnabled: time?.reminderEnabled ?? false,
@@ -644,8 +747,29 @@ class _PlanMarks {
   final Set<String> rescheduled;
 }
 
-bool _inRange(DateTime date, DateTime rangeStart, DateTime rangeEnd) =>
-    !date.isBefore(rangeStart) && !date.isAfter(rangeEnd);
+bool _inRange(DateTime date, DateTime start, DateTime end) =>
+    !date.isBefore(start) && !date.isAfter(end);
+
+/// Ключи групп мышц тренировочного дня (54.5): по основным упражнениям дня,
+/// без дублей. Пусто — если у дня нет упражнений или каталог не передан.
+List<String> _muscleKeysFor(
+  ProgramDayDetail day,
+  Map<int, List<MuscleGroup>> groupsByExercise,
+) {
+  final keys = <String>[];
+  for (final exercise in day.mainExercises) {
+    final id = exercise.exerciseId;
+    if (id == null) {
+      continue;
+    }
+    for (final muscle in groupsByExercise[id] ?? const <MuscleGroup>[]) {
+      if (!keys.contains(muscle.key)) {
+        keys.add(muscle.key);
+      }
+    }
+  }
+  return keys;
+}
 
 DateTime _dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
