@@ -364,6 +364,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: AppGradientButton(
+                  pill: true,
                   busy: _saving,
                   onPressed:
                       _saving || (_mainItems.isEmpty && _altItems.isEmpty)
@@ -395,19 +396,13 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
         _buildDayOfWeekSelector(currentDay.day),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-          child: SegmentedButton<bool>(
+          child: AppSegmentedButton<bool>(
             segments: [
-              ButtonSegment(
-                value: false,
-                label: AppText(l10n.programBuilderMainSet),
-              ),
-              ButtonSegment(
-                value: true,
-                label: AppText(l10n.programBuilderAlternativeSet),
-              ),
+              AppSegment(value: false, label: l10n.programBuilderMainSet),
+              AppSegment(value: true, label: l10n.programBuilderAlternativeSet),
             ],
             selected: {_isAlternative},
-            showSelectedIcon: false,
+            expanded: true,
             onSelectionChanged: (selection) =>
                 setState(() => _isAlternative = selection.first),
           ),

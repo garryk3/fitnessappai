@@ -87,11 +87,7 @@ void main() {
     });
 
     test('непривязанные дни: числитель — сессии по programId', () {
-      final days = [
-        day(1),
-        day(2),
-        day(3),
-      ];
+      final days = [day(1), day(2), day(3)];
       final result = weeklyProgramProgress(
         days: days,
         sessions: [

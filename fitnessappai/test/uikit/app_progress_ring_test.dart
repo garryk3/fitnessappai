@@ -14,9 +14,9 @@ Future<void> _pump(
     MaterialApp(
       theme: AppTheme.dark(),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: TextScaler.linear(textScale),
-        ),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: Scaffold(body: Center(child: child)),
@@ -35,7 +35,9 @@ void main() {
       expect(find.text('33%'), findsOneWidget);
     });
 
-    testWidgets('процент выше 100 показывает реальное значение', (tester) async {
+    testWidgets('процент выше 100 показывает реальное значение', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AppProgressRing(percent: 133, label: 'Прогресс 133%'),

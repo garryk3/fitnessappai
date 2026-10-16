@@ -244,9 +244,7 @@ class _ProgramCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             Flexible(
                               child: AppText(
-                                l10n.programExercisesCount(
-                                  item.exercisesCount,
-                                ),
+                                l10n.programExercisesCount(item.exercisesCount),
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                   letterSpacing: 0.4,

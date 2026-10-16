@@ -153,7 +153,7 @@ void main() {
     await enterField(tester, 'Время (мин)', '40');
     await enterField(tester, 'Дистанция (км)', '15');
     await enterField(tester, 'Отдых (сек)', '60');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -174,7 +174,7 @@ void main() {
     await enterField(tester, 'Подходы', '3');
     await enterField(tester, 'Повторения', '15');
     await enterField(tester, 'Отдых (сек)', '45');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final items = await _dayItems(programRepository, positionId);
@@ -191,7 +191,7 @@ void main() {
 
     await pumpParams(tester, positionId);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Заполните поле'), findsNWidgets(2));
@@ -207,7 +207,7 @@ void main() {
 
     await pumpParams(tester, positionId);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
     expect(find.text('Заполните поле'), findsNWidgets(2));
 
@@ -230,7 +230,7 @@ void main() {
     expect(find.text('Заполните поле'), findsNothing);
 
     // Ошибки появляются только после сабмита.
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
     expect(find.text('Заполните поле'), findsOneWidget);
   });
@@ -243,7 +243,7 @@ void main() {
     await enterField(tester, 'Повторения', '10');
     await enterField(tester, 'Вес (кг)', '20.5');
     await enterField(tester, 'Отдых (сек)', '60');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final items = await _dayItems(programRepository, positionId);
@@ -259,7 +259,7 @@ void main() {
     await pumpParams(tester, positionId);
     await enterField(tester, 'Время (мин)', '30');
     await enterField(tester, 'Дистанция (км)', '5');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     final items = await _dayItems(programRepository, positionId);
@@ -345,7 +345,7 @@ void main() {
     await enterField(tester, 'Подходы', '3');
     await enterField(tester, 'Повторения', '10');
     await enterField(tester, 'Отдых (сек)', '60');
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Жим штанги'), findsOneWidget);

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
@@ -51,6 +52,10 @@ class _ProgramDayExerciseParamsScreenState
   bool _loading = true;
   bool _saving = false;
 
+  /// Позиция дня в плане программы для футера (1-based); null — данных нет.
+  int? _planDayNumber;
+  int? _planTotalDays;
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +82,19 @@ class _ProgramDayExerciseParamsScreenState
     if (item?.exerciseId != null) {
       exercise = await _exerciseRepository.getById(item!.exerciseId!);
     }
+    // Позиция дня в плане программы — для футера «Прогресс плана».
+    int? planDayNumber;
+    int? planTotalDays;
+    if (item != null) {
+      final day = await _repository.getDay(item.dayId);
+      if (day != null) {
+        final program = await _repository.getById(day.programId);
+        if (program != null) {
+          planDayNumber = day.dayIndex + 1;
+          planTotalDays = program.daysCount;
+        }
+      }
+    }
     if (!mounted) {
       return;
     }
@@ -85,6 +103,8 @@ class _ProgramDayExerciseParamsScreenState
       _item = item;
       _exercise = exercise;
       _type = type;
+      _planDayNumber = planDayNumber;
+      _planTotalDays = planTotalDays;
       _loading = false;
       _setsController.text = _formatInt(item?.sets);
       _repsController.text = _formatInt(item?.reps);
@@ -193,15 +213,12 @@ class _ProgramDayExerciseParamsScreenState
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: FilledButton(
-                  onPressed: _saving ? null : _save,
-                  child: _saving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : AppText(l10n.commonSave),
+                child: AppGradientButton(
+                  pill: true,
+                  icon: Icons.save,
+                  busy: _saving,
+                  onPressed: _save,
+                  label: l10n.commonSave,
                 ),
               ),
             ),
@@ -222,84 +239,135 @@ class _ProgramDayExerciseParamsScreenState
       child: AppListView(
         padding: const EdgeInsets.all(16),
         children: [
-          AppText(
-            _exercise?.name ?? '',
-            style: Theme.of(context).textTheme.titleMedium,
+          // Шапка: миниатюра + название (образец «Параметры упражнения»).
+          Row(
+            children: [
+              ExerciseThumbnail(
+                exercise: _exercise,
+                mediaCache: locator.isRegistered<MediaCache>()
+                    ? locator.get<MediaCache>()
+                    : null,
+                size: 64,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: AppText(
+                  _exercise?.name ?? '',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           if (type != ExerciseType.distance)
-            _buildNumberField(
+            _buildStepperField(
               controller: _setsController,
               label: l10n.exerciseParamsSets,
               validator: _validateRequiredPositive,
+              icon: Icons.format_list_numbered,
             ),
           if (type == ExerciseType.strength ||
               type == ExerciseType.bodyweight) ...[
-            _buildNumberField(
+            _buildStepperField(
               controller: _repsController,
               label: l10n.exerciseParamsReps,
               validator: _validateRequiredPositive,
+              icon: Icons.repeat,
             ),
             if (type == ExerciseType.strength)
-              _buildNumberField(
+              _buildStepperField(
                 controller: _weightController,
                 label: l10n.exerciseParamsWeightKg,
                 validator: _validateOptionalNotNegative,
+                icon: Icons.fitness_center,
+                step: 0.5,
                 decimals: true,
               ),
           ],
           if (type == ExerciseType.plank)
-            _buildNumberField(
+            _buildStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationSeconds,
               validator: _validateRequiredPositive,
+              icon: Icons.timer,
             ),
           if (type == ExerciseType.distance) ...[
-            _buildNumberField(
+            _buildStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,
               validator: _validateRequiredPositive,
+              icon: Icons.timer,
             ),
-            _buildNumberField(
+            _buildStepperField(
               controller: _distanceController,
               label: l10n.exerciseParamsDistanceKm,
               validator: _validateOptionalNotNegative,
+              icon: Icons.directions_run,
+              step: 0.5,
               decimals: true,
             ),
           ],
-          _buildNumberField(
+          _buildStepperField(
             controller: _restController,
             label: l10n.exerciseParamsRestSeconds,
             validator: _validateOptionalNotNegative,
+            icon: Icons.hourglass_bottom,
           ),
+          if (_planDayNumber != null && _planTotalDays != null) ...[
+            const SizedBox(height: 8),
+            _buildPlanProgressCard(l10n),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildNumberField({
+  /// Футер-карточка: позиция дня в плане программы + шкала (54.4).
+  Widget _buildPlanProgressCard(AppLocalizations l10n) {
+    final day = _planDayNumber!;
+    final total = _planTotalDays!;
+    if (total <= 0) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppText(
+            l10n.exerciseParamsPlanProgress(day, total),
+            style: theme.textTheme.labelMedium,
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(value: day / total),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepperField({
     required TextEditingController controller,
     required String label,
     required String? Function(String?) validator,
+    required IconData icon,
+    double step = 1,
     bool decimals = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: AppTextFormField(
+      child: AppNumberStepper(
         controller: controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: decimals),
-        inputFormatters: [
-          if (decimals)
-            FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
-          else
-            FilteringTextInputFormatter.digitsOnly,
-        ],
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        autovalidateMode: AutovalidateMode.onUserInteraction,
+        label: label,
         validator: validator,
+        icon: icon,
+        step: step,
+        decimals: decimals,
+        increaseTooltip: l10n.commonIncrease,
+        decreaseTooltip: l10n.commonDecrease,
       ),
     );
   }

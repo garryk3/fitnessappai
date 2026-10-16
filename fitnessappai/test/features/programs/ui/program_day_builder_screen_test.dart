@@ -168,7 +168,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Повторения'),
       '$reps',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
   }
 
@@ -358,7 +358,7 @@ void main() {
         find.widgetWithText(TextFormField, 'Повторения'),
         '10',
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
       await tester.pumpAndSettle();
 
       expect(find.text('Приседания'), findsOneWidget);
@@ -514,7 +514,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Отдых (сек)'),
       '60',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Параметры упражнения'), findsNothing);
@@ -672,7 +672,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Повторения'),
       '10',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(saveButton().onPressed, isNotNull);

@@ -101,7 +101,12 @@ void main() {
     testWidgets('дробный шаг 0.5 без хвостовых нулей', (tester) async {
       final controller = TextEditingController(text: '5');
       addTearDown(controller.dispose);
-      await _pumpStepper(tester, controller: controller, decimals: true, step: 0.5);
+      await _pumpStepper(
+        tester,
+        controller: controller,
+        decimals: true,
+        step: 0.5,
+      );
 
       await tester.tap(_plus());
       expect(controller.text, '5.5');
@@ -116,7 +121,12 @@ void main() {
     ) async {
       final controller = TextEditingController();
       addTearDown(controller.dispose);
-      await _pumpStepper(tester, controller: controller, decimals: true, step: 0.5);
+      await _pumpStepper(
+        tester,
+        controller: controller,
+        decimals: true,
+        step: 0.5,
+      );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Подходы'),
         '5,5',
@@ -173,7 +183,11 @@ void main() {
       final controller = TextEditingController();
       addTearDown(controller.dispose);
       final received = <String>[];
-      await _pumpStepper(tester, controller: controller, onChanged: received.add);
+      await _pumpStepper(
+        tester,
+        controller: controller,
+        onChanged: received.add,
+      );
 
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Подходы'),

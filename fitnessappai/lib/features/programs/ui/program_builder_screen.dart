@@ -874,30 +874,26 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                       const SizedBox(height: 16),
                       _imageEditor(l10n),
                       const SizedBox(height: 16),
-                      AppTextFormField(
+                      // Разминка/отдых — степперы (54.4, образец 204637):
+                      // поля-строки ±, вместо outlined-полей с клавиатурой.
+                      // Валидации не было и нет: пусто → null, digitsOnly
+                      // исключает нечисловые/отрицательные значения.
+                      AppNumberStepper(
                         controller: _warmupController,
+                        label: l10n.programBuilderWarmupMinutes,
+                        validator: (_) => null,
+                        increaseTooltip: l10n.commonIncrease,
+                        decreaseTooltip: l10n.commonDecrease,
                         onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: l10n.programBuilderWarmupMinutes,
-                          border: const OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
                       ),
                       const SizedBox(height: 16),
-                      AppTextFormField(
+                      AppNumberStepper(
                         controller: _exerciseRestController,
+                        label: l10n.programBuilderExerciseRestSeconds,
+                        validator: (_) => null,
+                        increaseTooltip: l10n.commonIncrease,
+                        decreaseTooltip: l10n.commonDecrease,
                         onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: l10n.programBuilderExerciseRestSeconds,
-                          border: const OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
                       ),
                       const SizedBox(height: 16),
                       _daysCountField(l10n),
@@ -921,27 +917,21 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: _deleteMode
+                // Режим удаления — delete-действие: осознанное исключение
+                // остаётся FilledButton (как в 54.x, см. PLAN.md 54.4).
                 ? FilledButton(
                     onPressed: _canDeleteSelected ? _deleteSelectedDays : null,
                     child: AppText(l10n.programBuilderDeleteSelected),
                   )
-                : FilledButton(
-                    onPressed: _saving
-                        ? null
-                        : nextDay == null
+                : AppGradientButton(
+                    pill: true,
+                    busy: _saving,
+                    onPressed: nextDay == null
                         ? _save
                         : () => _openDayFill(nextDay),
-                    child: _saving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : AppText(
-                            nextDay == null
-                                ? l10n.programBuilderSave
-                                : l10n.programBuilderFillNextDay(nextDay + 1),
-                          ),
+                    label: nextDay == null
+                        ? l10n.programBuilderSave
+                        : l10n.programBuilderFillNextDay(nextDay + 1),
                   ),
           ),
         ),
@@ -1066,13 +1056,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       children: [
         AppSectionHeader(title: l10n.programBuilderDaysCount),
         const SizedBox(height: 8),
-        SegmentedButton<int>(
+        AppSegmentedButton<int>(
           segments: [
             for (var count = 1; count <= 7; count++)
-              ButtonSegment(value: count, label: AppText('$count')),
+              AppSegment(value: count, label: '$count'),
           ],
           selected: {_days.length},
-          showSelectedIcon: false,
           onSelectionChanged: (selection) => _setDaysCount(selection.first),
         ),
       ],
