@@ -4,9 +4,11 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
+import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
@@ -20,22 +22,27 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/app/theme/app_tokens.dart';
 
-/// Экран «План»: сетка недели с тренировочными днями.
+/// Экран «План»: сетка недели и календарь месяца с тренировочными днями.
 ///
-/// Вид «Месяц» и переход на прошлые недели убраны в 47.10: доступны
-/// текущая и следующая недели.
+/// Переключатель Неделя/Месяц (54.5, образец `templates/IMG_20260920_204446`):
+/// месяц — визуальный слой над теми же данными планирования, навигация
+/// ограничена текущим и следующим периодом (прошлое закрыто, 51.2).
 class WeekPlanScreen extends StatefulWidget {
   const WeekPlanScreen({
     super.key,
     this.programRepository,
     this.workoutRepository,
     this.planScheduleRepository,
+    this.exerciseRepository,
     this.clock,
   });
 
   final ProgramRepository? programRepository;
   final WorkoutRepository? workoutRepository;
   final PlanScheduleRepository? planScheduleRepository;
+
+  /// Каталог упражнений для иконок групп мышц в календаре месяца (54.5).
+  final ExerciseRepository? exerciseRepository;
 
   /// Часы для детерминированных тестов: «сегодня» внутри экрана.
   final DateTime Function()? clock;
@@ -58,9 +65,22 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       planScheduleRepository:
           widget.planScheduleRepository ??
           locator.get<PlanScheduleRepository>(),
+      exerciseRepository:
+          widget.exerciseRepository ?? _resolveExerciseRepository(),
       reminders: _resolveReminders(),
       clock: widget.clock,
     );
+  }
+
+  /// Каталог упражнений (54.5) регистрируется не во всех окружениях: в
+  /// виджет-тестах контейнер может быть пустым — иконки групп мышц просто
+  /// не показываются («без данных — без элементов»).
+  ExerciseRepository? _resolveExerciseRepository() {
+    try {
+      return locator.get<ExerciseRepository>();
+    } on StateError {
+      return null;
+    }
   }
 
   /// Одноразовые напоминания (48.10) регистрируются не во всех окружениях:
@@ -173,13 +193,185 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final controller = _controller;
     final l10n = AppLocalizations.of(context);
     final today = controller.selectedDate.value;
+    final view = controller.view.value;
 
     return Column(
       children: [
-        _buildWeekSwitcher(context, controller, l10n),
-        Expanded(child: _buildWeekContent(context, controller, l10n, today)),
+        _buildViewSegment(context, controller, l10n),
+        if (view == WeekPlanView.week) ...[
+          _buildWeekSwitcher(context, controller, l10n),
+          Expanded(child: _buildWeekContent(context, controller, l10n, today)),
+        ] else ...[
+          _buildMonthSwitcher(controller),
+          Expanded(child: _buildMonthContent(controller, l10n, today)),
+        ],
       ],
     );
+  }
+
+  /// Переключатель вида Неделя/Месяц (54.5, сегмент 54.1, образец 204446).
+  Widget _buildViewSegment(
+    BuildContext context,
+    WeekPlanController controller,
+    AppLocalizations l10n,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Center(
+        child: AppSegmentedButton<WeekPlanView>(
+          segments: [
+            AppSegment(
+              value: WeekPlanView.week,
+              label: l10n.progressPeriodWeek,
+            ),
+            AppSegment(
+              value: WeekPlanView.month,
+              label: l10n.progressPeriodMonth,
+            ),
+          ],
+          selected: {controller.view.value},
+          onSelectionChanged: (selection) =>
+              controller.setView(selection.first),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthSwitcher(WeekPlanController controller) {
+    final month = controller.monthStart.value;
+    return MonthSwitcher(
+      label: monthTitle(month),
+      onPrevious: controller.canGoPrevMonth
+          ? () => controller.shiftMonth(-1)
+          : null,
+      onNext: controller.canGoNextMonth ? () => controller.shiftMonth(1) : null,
+    );
+  }
+
+  /// Месяц: календарь с индикацией тренировочных дней и карточка дня (54.5).
+  ///
+  /// Действий (начать/перенести/пропустить) в месяце нет — это визуальный
+  /// слой над данными планирования; тап по тренировке в карточке открывает
+  /// подготовку к ней.
+  Widget _buildMonthContent(
+    WeekPlanController controller,
+    AppLocalizations l10n,
+    DateTime today,
+  ) {
+    final month = controller.monthStart.value;
+    final items = controller.items.value;
+    if (controller.isLoading.value && items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (controller.hasError.value && items.isEmpty) {
+      return _buildLoadError(context, controller, l10n);
+    }
+    final selected = controller.effectiveMonthDate;
+    return Column(
+      children: [
+        // Календарь доминирует: сетка забирает высоту после карточки дня
+        // (карточка — non-flex со своим интринсиком, максимум 240 со
+        // скроллом — иначе два flex:1 делили высоту строго 50/50).
+        Expanded(
+          child: MonthGridView(
+            monthStart: month,
+            today: today,
+            fillHeight: true,
+            onPrevious: controller.canGoPrevMonth
+                ? () => controller.shiftMonth(-1)
+                : null,
+            onNext: controller.canGoNextMonth
+                ? () => controller.shiftMonth(1)
+                : null,
+            cellBuilder: (context, date) =>
+                _buildMonthCell(context, controller, date, month, today),
+          ),
+        ),
+        if (selected != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: _MonthDayCard(
+              date: selected,
+              items: _itemsForDay(items, selected),
+              today: today,
+              actionable: _monthWorkoutActionable,
+              onOpen: _start,
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Ячейка календаря месяца: тренировочный день — `primaryContainer` плюс
+  /// иконки групп мышц; «сегодня» — glow (тёмная тема) и рамка; выбранный
+  /// день — акцентная рамка.
+  Widget _buildMonthCell(
+    BuildContext context,
+    WeekPlanController controller,
+    DateTime date,
+    DateTime month,
+    DateTime today,
+  ) {
+    if (date.month != month.month || date.year != month.year) {
+      return const SizedBox.shrink();
+    }
+    final colorScheme = Theme.of(context).colorScheme;
+    final dayItems = _itemsForDay(controller.items.value, date);
+    final isTraining = dayItems.isNotEmpty;
+    final isToday = _sameDay(date, today);
+    final selected = controller.effectiveMonthDate;
+    final isSelected = selected != null && _sameDay(date, selected);
+    final cell = MonthDayCell(
+      day: date.day,
+      fillHeight: true,
+      background: isTraining
+          ? colorScheme.primaryContainer
+          : colorScheme.surfaceContainerLow,
+      foreground: isTraining
+          ? colorScheme.onPrimaryContainer
+          : colorScheme.onSurfaceVariant,
+      isToday: isToday,
+      icons: _cellMuscleIcons(dayItems),
+      border: isSelected || isToday
+          ? Border.all(color: colorScheme.primary, width: isSelected ? 1.5 : 1)
+          : null,
+      onTap: () => controller.selectMonthDate(date),
+    );
+    if (!isToday) {
+      return cell;
+    }
+    // «Сегодня»: неон-обводка и свечение по токенам `AppGlow` (в светлой
+    // теме остаётся только рамка — как у всего glow в редизайне 54).
+    return AppGlowContainer(
+      radius: AppRadii.md,
+      intensity: 0.8,
+      showBorder: false,
+      child: cell,
+    );
+  }
+
+  /// До двух иконок групп мышц дня: дедупликация по ассету (грудь и пресс —
+  /// один ассет «press»), порядок — порядок загрузки.
+  List<Widget> _cellMuscleIcons(List<WeekPlanItem> dayItems) {
+    final keys = MuscleGroupIcon.dedupeByAsset([
+      for (final item in dayItems) ...item.muscleKeys,
+    ]);
+    return [
+      // 16dp — минимум читаемости иконок-ассетов по базе (16–18dp в
+      // «Упражнениях»/детали); две по 16 + зазор 2 влезают в контент ячейки.
+      for (final key in keys.take(2)) MuscleGroupIcon(muscleKey: key, size: 16),
+    ];
+  }
+
+  /// Тап по строке тренировки карточки месяца (54.5) — тот же гейтинг, что
+  /// в недельном виде (47.1): запуск/перенос разрешает только
+  /// `dayActionsFor` (сам [`_start`] вычисляет `rescheduleWeekStart`).
+  /// Выполненные/пропущенные/ручные и прочие строки без действий —
+  /// информационные, обработчика тапа не имеют.
+  bool _monthWorkoutActionable(WeekPlanItem item) {
+    final actions = dayActionsFor(item, _controller.selectedDate.value);
+    return actions.contains(DayAction.start) ||
+        actions.contains(DayAction.reschedule);
   }
 
   Widget _buildWeekSwitcher(
@@ -202,36 +394,13 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     AppLocalizations l10n,
     DateTime today,
   ) {
-    final theme = Theme.of(context);
     final items = controller.items.value;
     if (controller.isLoading.value && items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (controller.hasError.value && items.isEmpty) {
       // 53.3: сбой чтения БД показываем явно, а не маскируем пустой неделей.
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppIcon(
-              Icons.error_outline,
-              size: 48,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 12),
-            AppText(
-              l10n.weekPlanLoadError,
-              style: theme.textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            AppTextButton(
-              label: l10n.weekPlanRetry,
-              onPressed: controller.refresh,
-            ),
-          ],
-        ),
-      );
+      return _buildLoadError(context, controller, l10n);
     }
     if (items.isEmpty) {
       return _WeekEmpty(
@@ -269,6 +438,38 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           onDayTap: (date) => _onDayTap(context, controller, date, l10n),
         );
       },
+    );
+  }
+
+  /// Явное состояние ошибки загрузки плана (53.3): сообщение и повтор.
+  Widget _buildLoadError(
+    BuildContext context,
+    WeekPlanController controller,
+    AppLocalizations l10n,
+  ) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIcon(
+            Icons.error_outline,
+            size: 48,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 12),
+          AppText(
+            l10n.weekPlanLoadError,
+            style: theme.textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          AppTextButton(
+            label: l10n.weekPlanRetry,
+            onPressed: controller.refresh,
+          ),
+        ],
+      ),
     );
   }
 
@@ -1505,6 +1706,162 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Карточка выбранного дня под календарем месяца (54.5, образец 204446):
+/// дата и тренировки дня со статусами; тап по разрешённой тренировке
+/// ([actionable]) открывает подготовку через `_start` с гейтингом 47.1.
+class _MonthDayCard extends StatelessWidget {
+  const _MonthDayCard({
+    required this.date,
+    required this.items,
+    required this.today,
+    required this.actionable,
+    required this.onOpen,
+  });
+
+  final DateTime date;
+  final List<WeekPlanItem> items;
+
+  /// Сегодняшняя дата — бейдж «Сегодня» в шапке карточки.
+  final DateTime today;
+
+  /// Разрешает ли строка тренировки тап (`dayActionsFor`: start/reschedule).
+  final bool Function(WeekPlanItem item) actionable;
+
+  /// Тап по разрешённой тренировке — переход на день (подготовка).
+  final _WorkoutAction onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isToday = _sameDay(date, today);
+    // Карточка ограничена по высоте: при многих тренировках дня она
+    // прокручивается внутри, не сжимая календарь.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 240),
+      child: AppCard(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        child: AppListView(
+          shrinkWrap: true,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: AppText(
+                    DateFormat('d MMMM yyyy', 'ru').format(date),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (isToday)
+                  AppContainer(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                    ),
+                    child: AppText(
+                      l10n.weekPlanToday,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (items.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: AppText(
+                  l10n.weekPlanEmpty,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            for (final item in items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _MonthWorkoutRow(
+                  item: item,
+                  actionable: actionable(item),
+                  onOpen: onOpen,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Строка тренировки в карточке дня месяца: превью, «Программа → День N»,
+/// время, статус; тап разрешён только для строк с действиями (47.1) —
+/// иначе строка информационная (`onTap: null`).
+class _MonthWorkoutRow extends StatelessWidget {
+  const _MonthWorkoutRow({
+    required this.item,
+    required this.actionable,
+    required this.onOpen,
+  });
+
+  final WeekPlanItem item;
+  final bool actionable;
+  final _WorkoutAction onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return AppInkWell(
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      onTap: actionable ? () => onOpen(item) : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            ProgramThumbnail(imagePath: item.imagePath, size: 40),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    '${item.programName} → '
+                    '${item.dayTitle ?? l10n.programBuilderDay(item.dayIndex + 1)}',
+                    style: theme.textTheme.titleSmall,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (item.hasTime)
+                    AppText(
+                      item.timeLabel!,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: StatusBadge(status: item.status),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

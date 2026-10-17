@@ -3,9 +3,13 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/core/database/app_database.dart';
+import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
+import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/media/media_store.dart';
+import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
@@ -576,6 +580,179 @@ void main() {
         await WorkoutRepository(db).getMarks(DateTime(2026, 8, 10)),
         isEmpty,
       );
+    },
+  );
+
+  test('вид «Месяц»: месяц целиком, возврат к неделе (54.5)', () async {
+    await createLinkedDay(DateTime.monday);
+    await controller.refresh();
+
+    expect(controller.view.value, WeekPlanView.week);
+    expect(controller.items.value.map((i) => i.scheduledDate.day), [10]);
+
+    controller.setView(WeekPlanView.month);
+    await pumpEventQueue();
+
+    expect(controller.view.value, WeekPlanView.month);
+    // Август целиком: понедельники 3, 10, 17, 24 и 31.
+    expect(controller.items.value.map((i) => i.scheduledDate.day).toList(), [
+      3,
+      10,
+      17,
+      24,
+      31,
+    ]);
+    // Текущий месяц — нижняя граница: назад некуда, вперёд тоже — конец
+    // следующей недели (23.08) раньше 01.09.
+    expect(controller.canGoPrevMonth, isFalse);
+    expect(controller.canGoNextMonth, isFalse);
+
+    controller.setView(WeekPlanView.week);
+    await pumpEventQueue();
+    expect(controller.items.value.map((i) => i.scheduledDate.day), [10]);
+  });
+
+  test(
+    'смена вида/месяца синхронно сбрасывает items (без pop-in, design-review)',
+    () async {
+      await createLinkedDay(DateTime.monday);
+      await controller.refresh();
+      expect(controller.items.value, isNotEmpty);
+
+      // setView: старые item'ы очищаются синхронно до завершения загрузки —
+      // спиннер включается сразу, сетка не рисуется по данным чужого периода.
+      controller.setView(WeekPlanView.month);
+      expect(controller.items.value, isEmpty);
+      expect(controller.view.value, WeekPlanView.month);
+      await pumpEventQueue();
+      expect(controller.items.value, isNotEmpty);
+
+      // shiftMonth: то же при переходе на соседний месяц.
+      controller.shiftMonth(1);
+      expect(controller.items.value, isEmpty);
+      await pumpEventQueue();
+
+      // refresh() item'ы не трогает — без мигания на авто-перезагрузках.
+      final before = controller.items.value;
+      await controller.refresh();
+      expect(controller.items.value, isNotEmpty);
+      expect(identical(controller.items.value, before), isFalse);
+      expect(
+        controller.items.value.map((i) => i.scheduledDate.day),
+        before.map((i) => i.scheduledDate.day),
+      );
+    },
+  );
+
+  test('навигация месяцами в границах данных (54.5)', () async {
+    await createLinkedDay(DateTime.monday);
+    final late = WeekPlanController(
+      programRepository: programRepo,
+      workoutRepository: WorkoutRepository(db),
+      planScheduleRepository: scheduleRepo,
+      clock: () => DateTime(2026, 8, 25),
+    );
+    addTearDown(() async {
+      await pumpEventQueue();
+      late.dispose();
+    });
+    late.setView(WeekPlanView.month);
+    await pumpEventQueue();
+
+    expect(late.monthStart.value, DateTime(2026, 8, 1));
+    expect(late.canGoPrevMonth, isFalse);
+    // Конец следующей недели — 06.09: сентябрь в границах, октябрь нет.
+    expect(late.canGoNextMonth, isTrue);
+
+    late.shiftMonth(1);
+    await pumpEventQueue();
+    expect(late.monthStart.value, DateTime(2026, 9, 1));
+    expect(late.canGoPrevMonth, isTrue);
+    expect(late.canGoNextMonth, isFalse);
+
+    late.shiftMonth(-1);
+    await pumpEventQueue();
+    expect(late.monthStart.value, DateTime(2026, 8, 1));
+    expect(late.canGoPrevMonth, isFalse);
+  });
+
+  test(
+    'выбор дня месяца: по умолчанию «сегодня», смена месяца сбрасывает',
+    () async {
+      controller.setView(WeekPlanView.month);
+      await pumpEventQueue();
+
+      expect(controller.effectiveMonthDate, DateTime(2026, 8, 10));
+
+      // Тап по ячейке выбирает день (время суток отбрасывается).
+      controller.selectMonthDate(DateTime(2026, 8, 17, 15));
+      expect(controller.effectiveMonthDate, DateTime(2026, 8, 17));
+
+      // В другом месяце «сегодня» (10.08) вне его — fallback на 1-е число,
+      // карточка дня остаётся видимой (54.5).
+      controller.shiftMonth(1);
+      await pumpEventQueue();
+      expect(controller.monthSelectedDate.value, isNull);
+      expect(controller.effectiveMonthDate, DateTime(2026, 9, 1));
+
+      controller.shiftMonth(-1);
+      await pumpEventQueue();
+      expect(controller.effectiveMonthDate, DateTime(2026, 8, 10));
+    },
+  );
+
+  test(
+    'muscleKeys дня — группы основных упражнений без дублей (54.5)',
+    () async {
+      final dayId = await createLinkedDay(DateTime.monday);
+      final chest = await (db.select(
+        db.muscleGroups,
+      )..where((t) => t.key.equals('chest'))).getSingle();
+      final exerciseId = await db
+          .into(db.exercises)
+          .insert(
+            ExercisesCompanion.insert(
+              name: 'Жим лёжа',
+              type: ExerciseType.strength,
+              createdAt: DateTime(2024, 1, 1),
+              updatedAt: DateTime(2024, 1, 1),
+            ),
+          );
+      await db
+          .into(db.exerciseMuscles)
+          .insert(
+            ExerciseMusclesCompanion.insert(
+              exerciseId: exerciseId,
+              muscleGroupId: chest.id,
+              intensity: MuscleIntensity.primary,
+            ),
+          );
+      await programRepo.addExerciseToDay(dayId, exerciseId);
+
+      final withMuscles = WeekPlanController(
+        programRepository: programRepo,
+        workoutRepository: WorkoutRepository(db),
+        planScheduleRepository: scheduleRepo,
+        exerciseRepository: ExerciseRepository(db, MediaStore()),
+        clock: fixedNow,
+      );
+      addTearDown(() async {
+        await pumpEventQueue();
+        withMuscles.dispose();
+      });
+      await pumpEventQueue();
+
+      final item = withMuscles.items.value.firstWhere(
+        (i) => i.programDayId == dayId,
+      );
+      expect(item.muscleKeys, ['chest']);
+
+      // Без репозитория ключей нет — иконки скрываются («без данных — без
+      // элементов»), сам item при этом остаётся.
+      final bare = controller.items.value.firstWhere(
+        (i) => i.programDayId == dayId,
+      );
+      expect(bare.muscleKeys, isEmpty);
     },
   );
 }
