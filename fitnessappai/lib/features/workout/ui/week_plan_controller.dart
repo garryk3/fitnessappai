@@ -206,6 +206,10 @@ class WeekPlanController {
       return;
     }
     view.value = next;
+    // Сброс старого периода: сетка нового рисуется сразу по новым данным,
+    // без «pop-in» устаревших тренировок (design-review 54.5, находка 1).
+    // `refresh()` item'ы не трогает — авто-перезагрузки без мигания.
+    items.value = const [];
     _load();
   }
 
@@ -236,6 +240,8 @@ class WeekPlanController {
     final current = monthStart.value;
     monthStart.value = DateTime(current.year, current.month + delta, 1);
     monthSelectedDate.value = null;
+    // Сброс данных старого месяца — см. [setView] (design-review 54.5).
+    items.value = const [];
     _load();
   }
 

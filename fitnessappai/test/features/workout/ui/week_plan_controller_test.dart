@@ -612,6 +612,38 @@ void main() {
     expect(controller.items.value.map((i) => i.scheduledDate.day), [10]);
   });
 
+  test(
+    'смена вида/месяца синхронно сбрасывает items (без pop-in, design-review)',
+    () async {
+      await createLinkedDay(DateTime.monday);
+      await controller.refresh();
+      expect(controller.items.value, isNotEmpty);
+
+      // setView: старые item'ы очищаются синхронно до завершения загрузки —
+      // спиннер включается сразу, сетка не рисуется по данным чужого периода.
+      controller.setView(WeekPlanView.month);
+      expect(controller.items.value, isEmpty);
+      expect(controller.view.value, WeekPlanView.month);
+      await pumpEventQueue();
+      expect(controller.items.value, isNotEmpty);
+
+      // shiftMonth: то же при переходе на соседний месяц.
+      controller.shiftMonth(1);
+      expect(controller.items.value, isEmpty);
+      await pumpEventQueue();
+
+      // refresh() item'ы не трогает — без мигания на авто-перезагрузках.
+      final before = controller.items.value;
+      await controller.refresh();
+      expect(controller.items.value, isNotEmpty);
+      expect(identical(controller.items.value, before), isFalse);
+      expect(
+        controller.items.value.map((i) => i.scheduledDate.day),
+        before.map((i) => i.scheduledDate.day),
+      );
+    },
+  );
+
   test('навигация месяцами в границах данных (54.5)', () async {
     await createLinkedDay(DateTime.monday);
     final late = WeekPlanController(

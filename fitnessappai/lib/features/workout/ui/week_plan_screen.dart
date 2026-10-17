@@ -357,7 +357,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       for (final item in dayItems) ...item.muscleKeys,
     ]);
     return [
-      for (final key in keys.take(2)) MuscleGroupIcon(muscleKey: key, size: 12),
+      // 16dp — минимум читаемости иконок-ассетов по базе (16–18dp в
+      // «Упражнениях»/детали); две по 16 + зазор 2 влезают в контент ячейки.
+      for (final key in keys.take(2)) MuscleGroupIcon(muscleKey: key, size: 16),
     ];
   }
 
