@@ -136,14 +136,21 @@ class MonthDayCell extends StatelessWidget {
                 Positioned(
                   bottom: 0,
                   right: 0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (var i = 0; i < icons!.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 2),
-                        icons![i],
+                  // scaleDown: на узких ячейках (≤~380dp, 7 колонок) ряд из
+                  // двух иконок шире контента и левая клипается Stack-ом —
+                  // масштабируется вместо обрезки (design-review 54.5).
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.bottomRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (var i = 0; i < icons!.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 2),
+                          icons![i],
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 )
               else if (showWorkoutIcon)
