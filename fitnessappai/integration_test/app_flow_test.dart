@@ -19,6 +19,7 @@ import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
+import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/main.dart' hide main;
@@ -619,10 +620,27 @@ Future<void> saveProgramBuilder(WidgetTester tester) async {
 /// «Начать тренировку» → (диалог противопоказаний) → (разминка).
 ///
 /// После завершения тест остаётся на экране выполнения первого упражнения.
-Future<void> startWorkout(
+/// Пропускает экран разминки, если он показан (после 54.4 разминка
+/// префиллится 10 мин — старт почти всегда идёт через неё).
+///
+/// Возвращает `true`, если экран разминки был показан и пропущен.
+Future<bool> skipWarmupIfShown(WidgetTester tester) async {
+  final warmup = find.byType(WorkoutWarmupScreen);
+  if (warmup.evaluate().isEmpty) {
+    return false;
+  }
+  final skip = find.descendant(
+    of: warmup,
+    matching: find.widgetWithText(OutlinedButton, 'Пропустить'),
+  );
+  await tester.tap(skip);
+  await tester.pumpAndSettle();
+  return true;
+}
+
+Future<bool> startWorkout(
   WidgetTester tester, {
   bool expectContraindications = false,
-  int? warmupMinutes,
 }) async {
   await tester.tap(find.text('Начать'));
   await tester.pumpAndSettle();
@@ -642,14 +660,8 @@ Future<void> startWorkout(
     await tester.pumpAndSettle();
   }
 
-  if (warmupMinutes != null) {
-    await pumpUntilFound(
-      tester,
-      find.widgetWithText(OutlinedButton, 'Пропустить'),
-    );
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Пропустить'));
-    await tester.pumpAndSettle();
-  }
+  // Разминка (префилл 10 мин из 54.4): почти любой старт проходит через неё.
+  return skipWarmupIfShown(tester);
 }
 
 Future<void> completeStrengthSet(
@@ -1040,6 +1052,7 @@ void main() {
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
+    await skipWarmupIfShown(tester);
 
     await completeStrengthSet(tester, repeats: '12', weight: '50');
     await skipRestIfShown(tester);
@@ -1133,6 +1146,7 @@ void main() {
 
     await tester.tap(find.widgetWithText(FilledButton, 'Продолжить'));
     await tester.pumpAndSettle();
+    await skipWarmupIfShown(tester);
 
     await completeStrengthSet(tester, repeats: '10', weight: '40');
     await skipRestIfShown(tester);
@@ -1227,6 +1241,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
+    await skipWarmupIfShown(tester);
 
     await completeRunningSet(tester, minutes: '15', distance: '3');
     await skipRestIfShown(tester);
@@ -1576,7 +1591,7 @@ void main() {
     await goToTab(tester, Icons.event_note_outlined);
     expect(find.text(_programName), findsWidgets);
 
-    await startWorkout(tester, warmupMinutes: 1);
+    expect(await startWorkout(tester), isTrue, reason: 'разминка показана');
 
     expect(find.widgetWithText(TextFormField, 'Повторения'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Вес (кг)'), findsNothing);
@@ -1841,6 +1856,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Продолжить'));
     await tester.pumpAndSettle();
+    await skipWarmupIfShown(tester);
 
     await completeStrengthSet(tester, repeats: '10', weight: '40');
     await skipRestIfShown(tester);
@@ -1862,6 +1878,7 @@ void main() {
     await pumpUntilFound(tester, startWorkoutBtn2);
     await tester.tap(startWorkoutBtn2);
     await tester.pumpAndSettle();
+    await skipWarmupIfShown(tester);
     expect(find.text('Противопоказания'), findsNothing);
     expect(find.widgetWithText(TextFormField, 'Повторения'), findsOneWidget);
   });
