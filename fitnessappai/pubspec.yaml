@@ -97,6 +97,9 @@ flutter:
     - assets/data/
     - assets/exercises/
     - assets/images/
+    # Подпапки не включаются рекурсивно — группы мышц объявляем отдельно
+    # (54.6: без строки ниже итоги тренировки показывают fallback-гантель).
+    - assets/images/groups/
     - assets/sounds/
     - assets/videos/
 

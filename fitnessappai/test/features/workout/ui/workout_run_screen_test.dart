@@ -14,6 +14,7 @@ import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
@@ -29,6 +30,7 @@ import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 class _FakeWakelock implements WakelockService {
   int enableCalls = 0;
@@ -445,6 +447,103 @@ void main() {
     expect(find.text('progress'), findsOneWidget);
   });
 
+  testWidgets(
+    'итоги: эмблема-галочка, streak-бейдж и кнопки прогресса/повтора (54.6)',
+    (tester) async {
+      final dayId = await createDay(sets: 1, restSeconds: null);
+      final fg = StubWorkoutForegroundService();
+      await pumpRun(tester, dayId, foregroundService: fg);
+
+      await tester.enterText(find.byType(TextFormField).first, '8');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+
+      // Эмблема-галочка: градиентный бейдж с неон-обводкой (54.6).
+      final emblem = find.byType(AppGlowContainer);
+      expect(emblem, findsOneWidget);
+      expect(
+        find.descendant(of: emblem, matching: find.byIcon(Icons.check)),
+        findsOneWidget,
+      );
+
+      // Сохранение и streak: сессия сегодня → серия 1 (54.6).
+      await tester.pumpAndSettle();
+      expect(find.text('Тренировка сохранена'), findsOneWidget);
+      expect(find.text('Серия: 1 день'), findsOneWidget);
+
+      final progress = find.widgetWithText(AppGradientButton, 'К прогрессу');
+      expect(progress, findsOneWidget);
+      expect(tester.widget<AppGradientButton>(progress).pill, isTrue);
+      expect(
+        find.widgetWithText(AppOutlinedButton, 'Повторить тренировку'),
+        findsOneWidget,
+      );
+
+      // «Повторить» перезапускает тот же день на месте: свежая тренировка
+      // (без навигации — go_router переиспользует Element маршрута).
+      await tester.ensureVisible(find.text('Повторить тренировку'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Повторить тренировку'));
+      await tester.pumpAndSettle();
+      expect(find.text('Тренировка завершена'), findsNothing);
+      expect(find.text('Упражнение 1 из 1 · Подход 1 из 1'), findsOneWidget);
+      expect(find.text('Приседания'), findsOneWidget);
+      expect(find.text('Подход выполнен'), findsOneWidget);
+      // Повтор перезапускает foreground service после stop() на finished.
+      expect(fg.stopCalls, 1);
+      expect(fg.startCalls, 2);
+    },
+  );
+
+  testWidgets('итоги без привязанных групп мышц не показывают секцию (54.6)', (
+    tester,
+  ) async {
+    final dayId = await createDay(sets: 1, restSeconds: null);
+    await pumpRun(tester, dayId);
+
+    await tester.enterText(find.byType(TextFormField).first, '8');
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Тренировка завершена'), findsOneWidget);
+    expect(find.text('Задействованные мышцы'), findsNothing);
+    expect(find.byType(MuscleGroupIcon), findsNothing);
+  });
+
+  testWidgets(
+    'итоги: задействованные мышцы — крупные ассеты групп без дублей (54.6)',
+    (tester) async {
+      final dayId = await createDay(sets: 1, restSeconds: null);
+      // Привязываем упражнение к «груди» и «прессу» — обе на одном ассете
+      // (press.jpg), после дедупа должна остаться одна иконка (54.5/54.6).
+      final exId = (await programRepo.getExercises(dayId)).first.exerciseId!;
+      final groups = await (db.select(
+        db.muscleGroups,
+      )..where((t) => t.key.isIn(['chest', 'abs']))).get();
+      for (final group in groups) {
+        await db
+            .into(db.exerciseMuscles)
+            .insert(
+              ExerciseMusclesCompanion.insert(
+                exerciseId: exId,
+                muscleGroupId: group.id,
+                intensity: MuscleIntensity.primary,
+              ),
+            );
+      }
+
+      await pumpRun(tester, dayId);
+      await tester.enterText(find.byType(TextFormField).first, '8');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Задействованные мышцы'), findsOneWidget);
+      expect(find.byType(MuscleGroupIcon), findsOneWidget);
+      expect(find.text('Грудь'), findsOneWidget);
+    },
+  );
+
   testWidgets('альтернативный вариант показывает свои упражнения', (
     tester,
   ) async {
@@ -781,6 +880,55 @@ void main() {
 
     expect(find.text('Последняя тренировка'), findsOneWidget);
     expect(find.textContaining('20'), findsWidgets);
+    // Бейдж цели сета по параметрам позиции (54.6): reps=8.
+    expect(find.text('Цель: 8 повт'), findsOneWidget);
+  });
+
+  testWidgets('бейдж цели показывает длительность для планки (54.6)', (
+    tester,
+  ) async {
+    final dayId = await createDay(
+      type: ExerciseType.plank,
+      durationSeconds: 30,
+      sets: 1,
+    );
+    final exerciseId = (await programRepo.getExercises(dayId)).first.id!;
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        id: null,
+        programId: null,
+        programName: 'База',
+        programDayId: null,
+        dayIndex: 0,
+        variant: WorkoutVariant.main,
+        performedDate: DateTime(2026, 8, 14),
+        startedAt: DateTime(2026, 8, 14, 18, 0),
+        endedAt: DateTime(2026, 8, 14, 18, 30),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: exerciseId,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.plank,
+          setIndex: 1,
+          reps: null,
+          weightKg: null,
+          durationSeconds: 30,
+          distanceMeters: null,
+          completedAt: DateTime(2026, 8, 14, 18, 5),
+        ),
+      ],
+    );
+
+    await pumpRun(tester, dayId);
+
+    // Два «Цель: 30 с» — бейдж карточки и цель plank-панели; проверяем бейдж.
+    final badge = find.byType(AppBadge);
+    expect(
+      find.descendant(of: badge, matching: find.text('Цель: 30 с')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('карточка последней тренировки скрыта без истории', (

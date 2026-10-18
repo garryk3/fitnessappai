@@ -77,10 +77,16 @@ class MuscleGroupIcon extends StatelessWidget {
         child: Image.asset(
           path,
           fit: BoxFit.cover,
+          // Отказ ассета — «картинки нет», а не силовая группа: неотличимая
+          // fallback-гантель читалась бы как реальный индикатор (54.6).
           errorBuilder: (context, error, stackTrace) => Icon(
-            Icons.fitness_center,
-            size: size * 0.8,
-            color: color ?? Theme.of(context).colorScheme.primary,
+            Icons.image_not_supported_outlined,
+            size: size * 0.7,
+            color:
+                color ??
+                Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
           ),
         ),
       ),

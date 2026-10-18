@@ -15,6 +15,7 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
+import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_controller.dart';
 
 /// Регрессия задачи 53.5 (двойное сохранение тренировки).
@@ -142,6 +143,33 @@ void main() {
     await controller.completeAndSave();
     expect(await allSessions(), hasLength(1));
   });
+
+  test(
+    'restart сбрасывает сохранение и запускает свежую сессию (54.6)',
+    () async {
+      final controller = makeController();
+      await controller.load();
+      controller.workout.finishEarly();
+      await controller.completeAndSave();
+      expect(controller.saved.value, isTrue);
+      expect(controller.savedDetail, isNotNull);
+
+      await controller.restart();
+
+      // Флаги сброшены: guard'ы 53.5 не считают новую сессию сохранённой,
+      // а durationMinutes не берёт длительность первой сессии из savedDetail.
+      expect(controller.saved.value, isFalse);
+      expect(controller.savedDetail, isNull);
+      expect(controller.workout.phase.value, WorkoutPhase.exercise);
+      expect(controller.workout.completedSets.value, 0);
+      expect(controller.workout.results.value, isEmpty);
+
+      // Повторное завершение пишет вторую сессию (не no-op по stale saved).
+      controller.workout.finishEarly();
+      await controller.completeAndSave();
+      expect(await allSessions(), hasLength(2));
+    },
+  );
 }
 
 /// Репозиторий, чей `saveSession` падает первые [failTimes] вызовов.

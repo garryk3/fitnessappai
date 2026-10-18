@@ -992,6 +992,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String workoutRunTargetReps(int reps) {
+    return 'Цель: $reps повт';
+  }
+
+  @override
+  String workoutPrepareProgramLabel(String name) {
+    return 'Программа: $name';
+  }
+
+  @override
   String get workoutRunHoldStart => 'Начать';
 
   @override
@@ -1029,6 +1039,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workoutRunGoProgress => 'К прогрессу';
+
+  @override
+  String get workoutRunRepeat => 'Повторить тренировку';
 
   @override
   String get workoutRunExercises => 'Упражнения';

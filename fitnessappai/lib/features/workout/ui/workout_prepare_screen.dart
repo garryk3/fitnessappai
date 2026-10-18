@@ -6,7 +6,9 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/ui/workout_prepare_controller.dart';
@@ -23,6 +25,7 @@ class WorkoutPrepareScreen extends StatefulWidget {
     this.programRepository,
     this.exerciseRepository,
     this.profileRepository,
+    this.mediaCache,
   });
 
   final int programDayId;
@@ -34,12 +37,17 @@ class WorkoutPrepareScreen extends StatefulWidget {
   final ExerciseRepository? exerciseRepository;
   final UserProfileRepository? profileRepository;
 
+  /// Необязательный кэш медиа для превью упражнений (54.6);
+  /// если не передан и не зарегистрирован в DI — превью рисует заглушку.
+  final MediaCache? mediaCache;
+
   @override
   State<WorkoutPrepareScreen> createState() => _WorkoutPrepareScreenState();
 }
 
 class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
   late final WorkoutPrepareController _controller;
+  late final MediaCache? _mediaCache;
 
   @override
   void initState() {
@@ -53,6 +61,10 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
       profileRepository:
           widget.profileRepository ?? locator.get<UserProfileRepository>(),
     );
+    final cache = widget.mediaCache;
+    _mediaCache =
+        cache ??
+        (locator.isRegistered<MediaCache>() ? locator.get<MediaCache>() : null);
   }
 
   /// Query-параметр переноса для следующих экранов (задача 48.4).
@@ -124,44 +136,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText(
-                controller.programName.value,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 4),
-              AppText(
-                controller.dayTitle.value ??
-                    l10n.programBuilderDay(controller.dayIndex.value + 1),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              if (controller.warmupMinutes.value case final minutes?
-                  when minutes > 0) ...[
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AppIcon(
-                      Icons.timer,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    AppText(
-                      l10n.programBuilderWarmupShort(minutes),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
+          child: _ProgramHeader(controller: controller),
         ),
         if (controller.hasAlternative)
           Padding(
@@ -197,7 +172,11 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
                   itemCount: controller.visibleItems.length,
                   itemBuilder: (context, index) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: _ExerciseCard(item: controller.visibleItems[index]),
+                    child: _ExerciseCard(
+                      item: controller.visibleItems[index],
+                      current: index == 0,
+                      mediaCache: _mediaCache,
+                    ),
                   ),
                 ),
         ),
@@ -208,6 +187,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
             child: AppGradientButton(
               onPressed: _start,
               icon: Icons.play_arrow,
+              pill: true,
               label: l10n.workoutPrepareStart,
             ),
           ),
@@ -217,10 +197,113 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
   }
 }
 
+/// Шапка подготовки (54.6): программа, день и прогресс-бар по дням программы
+/// (образец «Подготовка к тренировке»: «Программа: Тест · 1/14», «День 1»).
+class _ProgramHeader extends StatelessWidget {
+  const _ProgramHeader({required this.controller});
+
+  final WorkoutPrepareController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final total = controller.totalDays.value;
+    final dayNumber = controller.dayIndex.value + 1;
+    final warmup = controller.warmupMinutes.value;
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      l10n.workoutPrepareProgramLabel(
+                        controller.programName.value,
+                      ),
+                      style: theme.textTheme.titleLarge,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    AppText(
+                      controller.dayTitle.value ??
+                          l10n.programBuilderDay(controller.dayIndex.value + 1),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (total > 0) ...[
+                const SizedBox(width: 12),
+                AppText(
+                  '$dayNumber/$total',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (total > 0) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              child: LinearProgressIndicator(
+                // Доля пройденного пути: текущий день считается в прогресс
+                // (в образце «1/14» бар слегка заполнен).
+                value: dayNumber / total,
+                minHeight: 6,
+              ),
+            ),
+          ],
+          if (warmup != null && warmup > 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppIcon(
+                  Icons.timer,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                AppText(
+                  l10n.programBuilderWarmupShort(warmup),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _ExerciseCard extends StatelessWidget {
-  const _ExerciseCard({required this.item});
+  const _ExerciseCard({
+    required this.item,
+    this.current = false,
+    this.mediaCache,
+  });
 
   final WorkoutPrepareItem item;
+
+  /// Текущее (первое) упражнение дня — подсвечивается по образцу (54.6).
+  final bool current;
+
+  final MediaCache? mediaCache;
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +311,7 @@ class _ExerciseCard extends StatelessWidget {
     final theme = Theme.of(context);
     final exercise = item.exercise;
     final exerciseId = exercise.id;
-    return AppCard(
+    final card = AppCard(
       padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: AppInkWell(
@@ -239,7 +322,11 @@ class _ExerciseCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _TypeIcon(type: exercise.type),
+              ExerciseThumbnail(
+                exercise: exercise,
+                mediaCache: mediaCache,
+                size: 48,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -247,7 +334,11 @@ class _ExerciseCard extends StatelessWidget {
                   children: [
                     AppText(
                       exercise.name,
-                      style: theme.textTheme.titleSmall,
+                      style: current
+                          ? theme.textTheme.titleMedium
+                          : theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -286,6 +377,10 @@ class _ExerciseCard extends StatelessWidget {
         ),
       ),
     );
+    if (!current) {
+      return card;
+    }
+    return AppGlowContainer(child: card);
   }
 
   String _paramsSummary(
@@ -321,31 +416,6 @@ class _ExerciseCard extends StatelessWidget {
                   '${_fmt(duration / 60)} ${l10n.workoutUnitMinutes}'
             : l10n.programBuilderNoMetrics;
     }
-  }
-}
-
-class _TypeIcon extends StatelessWidget {
-  const _TypeIcon({required this.type});
-
-  final ExerciseType type;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final icon = switch (type) {
-      ExerciseType.strength => Icons.fitness_center,
-      ExerciseType.bodyweight => Icons.accessibility_new,
-      ExerciseType.plank => Icons.self_improvement,
-      ExerciseType.distance => Icons.directions_run,
-    };
-    return AppContainer(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(AppRadii.md),
-      ),
-      child: AppIcon(icon, size: 20, color: colorScheme.onSecondaryContainer),
-    );
   }
 }
 

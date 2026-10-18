@@ -8,6 +8,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 
 /// Экран разминки перед тренировкой: обратный отсчёт и «Пропустить».
@@ -95,6 +96,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return AppScaffold(
       appBar: AppTopBar(title: l10n.workoutWarmup),
       body: Center(
@@ -103,30 +105,47 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AppIcon(
-                _done ? Icons.check_circle : Icons.timer,
-                size: 64,
-                color: _done
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.secondary,
-              ),
-              const SizedBox(height: 24),
-              AppText(
-                _done ? l10n.workoutWarmupDone : _format(_remaining),
-                style: theme.textTheme.displayMedium?.copyWith(
-                  color: theme.colorScheme.onSurface,
+              // Таймер-карточка в стиле таймера планки run-экрана (54.6).
+              AppContainer(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: 12,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              if (!_done)
-                AppText(
-                  l10n.workoutWarmupSecondsLeft(_remaining),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppRadii.lg),
                 ),
+                child: Column(
+                  children: [
+                    AppIcon(
+                      _done ? Icons.check_circle : Icons.timer,
+                      size: 48,
+                      color: _done
+                          ? colorScheme.primary
+                          : colorScheme.secondary,
+                    ),
+                    const SizedBox(height: 16),
+                    AppText(
+                      _done ? l10n.workoutWarmupDone : _format(_remaining),
+                      style: theme.textTheme.displayMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (!_done) ...[
+                      const SizedBox(height: 8),
+                      AppText(
+                        l10n.workoutWarmupSecondsLeft(_remaining),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
               const SizedBox(height: 32),
               if (!_done)
                 AppOutlinedButton(
@@ -137,6 +156,7 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
                 AppGradientButton(
                   onPressed: _goToRun,
                   icon: Icons.play_arrow,
+                  pill: true,
                   label: l10n.workoutWarmupStartWorkout,
                 ),
             ],
