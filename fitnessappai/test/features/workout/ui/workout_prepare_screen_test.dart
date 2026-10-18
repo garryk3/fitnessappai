@@ -24,6 +24,7 @@ import 'package:fitnessappai/features/workout/ui/workout_prepare_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 class _FakeWakelock implements WakelockService {
   @override
@@ -163,7 +164,7 @@ void main() {
     final dayId = await createDay();
     await pumpPrepare(tester, dayId);
 
-    expect(find.text('База'), findsOneWidget);
+    expect(find.text('Программа: База'), findsOneWidget);
     expect(find.text('Приседания'), findsOneWidget);
     expect(find.text('3 × 8 повт × 20 кг'), findsOneWidget);
     expect(find.text('Отдых 60 с'), findsOneWidget);
@@ -418,5 +419,82 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('detail $exerciseId'), findsOneWidget);
+  });
+
+  testWidgets('прогресс-бар дня программы: день из всех дней (54.6)', (
+    tester,
+  ) async {
+    final created = await programRepo.create(
+      Program(
+        name: 'База',
+        daysCount: 2,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      [
+        ProgramDay(programId: 0, dayIndex: 0),
+        ProgramDay(programId: 0, dayIndex: 1),
+      ],
+    );
+    final firstDay = (await programRepo.getDays(created.id!)).first;
+    final exId = await insertExercise('Приседания');
+    await programRepo.addExerciseToDay(firstDay.id!, exId);
+
+    await pumpPrepare(tester, firstDay.id!);
+
+    expect(find.text('1/2'), findsOneWidget);
+    final bar = tester.widget<LinearProgressIndicator>(
+      find.byType(LinearProgressIndicator),
+    );
+    expect(bar.value, 0.5);
+  });
+
+  testWidgets('прогресс-бар одно-дневной программы: 1/1 (54.6)', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    // Программа из одного дня: бар показывает 1/1 и не падает на граничных
+    // данных (totalDays = 1, dayIndex = 0).
+    await pumpPrepare(tester, dayId);
+
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.text('1/1'), findsOneWidget);
+  });
+
+  testWidgets('текущее упражнение подсвечено glow-карточкой, остальные — нет ('
+      '54.6)', (tester) async {
+    final dayId = await createDay();
+    final secondId = await insertExercise('Жим');
+    await programRepo.addExerciseToDay(dayId, secondId);
+
+    await pumpPrepare(tester, dayId);
+
+    expect(find.text('Приседания'), findsOneWidget);
+    expect(find.text('Жим'), findsOneWidget);
+    // Glow только у текущего (первого) упражнения дня.
+    expect(find.byType(AppGlowContainer), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.text('Приседания'),
+        matching: find.byType(AppGlowContainer),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.text('Жим'),
+        matching: find.byType(AppGlowContainer),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('старт — pill-кнопка AppGradientButton (54.6)', (tester) async {
+    final dayId = await createDay();
+    await pumpPrepare(tester, dayId);
+
+    final start = find.widgetWithText(AppGradientButton, 'Начать тренировку');
+    expect(start, findsOneWidget);
+    expect(tester.widget<AppGradientButton>(start).pill, isTrue);
   });
 }

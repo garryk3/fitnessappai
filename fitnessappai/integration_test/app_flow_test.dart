@@ -792,7 +792,8 @@ Future<void> completeBodyweightSet(
 /// Планка по таймеру удержания: запуск кнопкой «Начать», без ручного ввода
 /// времени — фактическое значение счётчика переносится в результат (13.5).
 Future<void> completePlankHoldSet(WidgetTester tester) async {
-  final start = find.widgetWithText(FilledButton, 'Начать');
+  // 54.6: кнопка «Начать» удержания — AppGradientButton (ElevatedButton).
+  final start = find.widgetWithText(ElevatedButton, 'Начать');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, start);
   await tester.tap(start);
@@ -1981,7 +1982,7 @@ void main() {
     await startWorkout(tester);
 
     expect(find.text('Цель: 30 с'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Начать'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, 'Начать'), findsOneWidget);
 
     await completePlankHoldSet(tester);
     await skipRestIfShown(tester);

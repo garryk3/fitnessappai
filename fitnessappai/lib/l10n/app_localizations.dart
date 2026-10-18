@@ -1864,6 +1864,18 @@ abstract class AppLocalizations {
   /// **'Цель: {seconds} с'**
   String workoutRunHoldTarget(int seconds);
 
+  /// Целевое число повторений в бейдже «Последний результат»
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель: {reps} повт'**
+  String workoutRunTargetReps(int reps);
+
+  /// Название программы в шапке подготовки к тренировке
+  ///
+  /// In ru, this message translates to:
+  /// **'Программа: {name}'**
+  String workoutPrepareProgramLabel(String name);
+
   /// Кнопка запуска отсчёта удержания планки
   ///
   /// In ru, this message translates to:
@@ -1917,6 +1929,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'К прогрессу'**
   String get workoutRunGoProgress;
+
+  /// No description provided for @workoutRunRepeat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить тренировку'**
+  String get workoutRunRepeat;
 
   /// No description provided for @workoutRunExercises.
   ///

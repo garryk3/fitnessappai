@@ -48,6 +48,10 @@ class WorkoutPrepareController {
   final Signal<String> programName = Signal('');
   final Signal<int?> programId = Signal(null);
   final Signal<int> dayIndex = Signal(0);
+
+  /// Всего дней в программе — для прогресс-бара подготовки (54.6).
+  /// 0 — программа не найдена/данных нет, прогресс-бар не показывается.
+  final Signal<int> totalDays = Signal(0);
   final Signal<String?> dayTitle = Signal(null);
   final Signal<int?> warmupMinutes = Signal(null);
   final Signal<WorkoutVariant> variant = Signal(WorkoutVariant.main);
@@ -87,6 +91,7 @@ class WorkoutPrepareController {
       final program = await programRepository.getById(day.programId);
       programName.value = program?.name ?? '';
       dayIndex.value = day.dayIndex;
+      totalDays.value = (await programRepository.getDays(day.programId)).length;
       dayTitle.value = day.title;
       warmupMinutes.value = day.warmupMinutes;
       _tagsByExercise = await exerciseRepository.contraindicationsByExercise();

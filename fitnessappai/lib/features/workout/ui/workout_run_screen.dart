@@ -15,6 +15,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/single_exercise_params.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
+import 'package:fitnessappai/core/domain/workout_streak.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
@@ -116,6 +117,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   Timer? _checkpointTimer;
   void Function()? _disposeForegroundEffect;
 
+  /// Жив ли foreground service: после `stop()` на `finished` эффект фазы
+  /// должен снова `start`, а не no-op `update` (54.6, «Повторить»).
+  bool _foregroundRunning = false;
+
   @override
   void initState() {
     super.initState();
@@ -143,10 +148,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     _foregroundService =
         widget.foregroundService ?? locator.get<WorkoutForegroundService>();
     _wakelock.enable();
-    _foregroundService.start(
-      title: 'Личный тренер',
-      text: 'Тренировка выполняется',
-    );
+    _startForeground('Тренировка выполняется');
     _disposeForegroundEffect = effect(_updateForeground);
     _initLoad();
     _checkpointTimer = Timer.periodic(
@@ -203,21 +205,38 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
 
   /// Обновляет уведомление foreground service под текущую фазу тренировки;
   /// при завершении останавливает сервис.
+  ///
+  /// После остановки (`finished`, затем «Повторить тренировку», 54.6) `update`
+  /// на живом сервисе — no-op, поэтому третья фаза снова `start` сервиса.
   void _updateForeground() {
     final workout = _controller.workout;
     switch (workout.phase.value) {
       case WorkoutPhase.rest:
-        _foregroundService.update(title: 'Личный тренер', text: 'Отдых');
+        if (_foregroundRunning) {
+          _foregroundService.update(title: 'Личный тренер', text: 'Отдых');
+        } else {
+          _startForeground(workout.currentExercise?.name ?? 'Тренировка');
+        }
       case WorkoutPhase.exercise:
-        _foregroundService.update(
-          title: 'Личный тренер',
-          text: workout.currentExercise?.name ?? 'Тренировка',
-        );
+        if (_foregroundRunning) {
+          _foregroundService.update(
+            title: 'Личный тренер',
+            text: workout.currentExercise?.name ?? 'Тренировка',
+          );
+        } else {
+          _startForeground(workout.currentExercise?.name ?? 'Тренировка');
+        }
       case WorkoutPhase.finished:
+        _foregroundRunning = false;
         _foregroundService.stop();
       case WorkoutPhase.idle:
         break;
     }
+  }
+
+  void _startForeground(String text) {
+    _foregroundRunning = true;
+    _foregroundService.start(title: 'Личный тренер', text: text);
   }
 
   Future<void> _saveCheckpointIfNeeded() async {
@@ -706,9 +725,29 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppText(
-                  l10n.workoutRunLastWorkout,
-                  style: theme.textTheme.titleSmall,
+                Row(
+                  children: [
+                    AppText(
+                      l10n.workoutRunLastWorkout,
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const Spacer(),
+                    // Бейдж цели сета (54.6, образец): с/повт по параметрам
+                    // позиции; данных нет — бейджа нет.
+                    if (_goalLabel(l10n) case final label?)
+                      AppBadge(
+                        label: label,
+                        background: theme.colorScheme.surfaceContainerHighest,
+                        foreground: theme.colorScheme.onSurfaceVariant,
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(AppRadii.pill),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 for (final result in results)
@@ -728,6 +767,21 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
         );
       },
     );
+  }
+
+  /// Цель сета для бейджа (54.6): длительность (с) либо повторения (повт);
+  /// оба параметра не заданы — бейдж не показывается.
+  String? _goalLabel(AppLocalizations l10n) {
+    final position = widget.exercise.position;
+    final seconds = position.durationSeconds;
+    if (seconds != null && seconds > 0) {
+      return l10n.workoutRunHoldTarget(seconds);
+    }
+    final reps = position.reps;
+    if (reps != null && reps > 0) {
+      return l10n.workoutRunTargetReps(reps);
+    }
+    return null;
   }
 
   String _sideLabel(int setIndex, String? side) {
@@ -810,10 +864,11 @@ class _PlankHoldPanel extends StatelessWidget {
           ),
           if (!running) ...[
             const SizedBox(height: 16),
-            FilledButton.icon(
+            AppGradientButton(
               onPressed: onStart,
-              icon: const AppIcon(Icons.play_arrow),
-              label: AppText(l10n.workoutRunHoldStart),
+              icon: Icons.play_arrow,
+              pill: true,
+              label: l10n.workoutRunHoldStart,
             ),
           ],
         ],
@@ -1234,11 +1289,16 @@ class _FinishedView extends StatefulWidget {
 
 class _FinishedViewState extends State<_FinishedView> {
   List<String> _muscleNames = [];
+  List<String> _muscleKeys = [];
+  int _streak = 0;
 
   @override
   void initState() {
     super.initState();
     _loadMuscles();
+    if (widget.saved) {
+      _loadStreak();
+    }
     if (!widget.saved) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -1248,23 +1308,51 @@ class _FinishedViewState extends State<_FinishedView> {
     }
   }
 
+  @override
+  void didUpdateWidget(covariant _FinishedView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Стрик считаем по факту сохранённой сессии: 54.6.
+    if (widget.saved && !oldWidget.saved) {
+      _loadStreak();
+    }
+  }
+
+  Future<void> _loadStreak() async {
+    final sessions = await widget.controller.workoutRepository.getAllSessions();
+    if (!mounted) {
+      return;
+    }
+    final streak = streakDays(
+      dates: sessions.map((s) => s.performedDate),
+      today: DateTime.now(),
+    );
+    setState(() => _streak = streak);
+  }
+
   Future<void> _loadMuscles() async {
     final exercises = widget.controller.workout.exercises;
     final repo = widget.controller.exerciseRepository;
     final allGroups = await repo.getAllMuscleGroups();
     final groupById = {for (final g in allGroups) g.id!: g};
     final names = <String>{};
+    final keys = <String>[];
     for (final we in exercises) {
       final muscles = await repo.getMuscles(we.exercise.id!);
       for (final m in muscles) {
         final group = groupById[m.muscleGroupId];
         if (group != null) {
           names.add(group.labelRu);
+          if (!keys.contains(group.key)) {
+            keys.add(group.key);
+          }
         }
       }
     }
     if (mounted) {
-      setState(() => _muscleNames = names.toList()..sort());
+      setState(() {
+        _muscleNames = names.toList()..sort();
+        _muscleKeys = MuscleGroupIcon.dedupeByAsset(keys);
+      });
     }
   }
 
@@ -1272,11 +1360,13 @@ class _FinishedViewState extends State<_FinishedView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final workout = widget.controller.workout;
     final programName = workout.context?.programName ?? '';
     final setsCount = workout.results.value.length;
     final minutes = widget.controller.durationMinutes;
     final exercises = workout.exercises;
+    final canRepeat = widget.controller.programDayId != null;
 
     return Center(
       child: SingleChildScrollView(
@@ -1284,10 +1374,23 @@ class _FinishedViewState extends State<_FinishedView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppIcon(
-              Icons.check_circle,
-              size: 64,
-              color: theme.colorScheme.primary,
+            // Эмблема-галочка (54.6, образец «Тренировка Завершена»):
+            // градиентный бейдж с неон-обводкой, как у streak-бейджа главной.
+            AppGlowContainer(
+              radius: AppRadii.pill,
+              child: AppContainer(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  gradient: AppGradients.primaryCta,
+                  shape: BoxShape.circle,
+                ),
+                child: AppIcon(
+                  Icons.check,
+                  size: 40,
+                  color: colorScheme.onPrimary,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             AppText(
@@ -1299,8 +1402,15 @@ class _FinishedViewState extends State<_FinishedView> {
               AppText(programName, style: theme.textTheme.titleMedium),
             ],
             const SizedBox(height: 16),
-            AppText(l10n.workoutRunSetsCount(setsCount)),
-            AppText(l10n.workoutRunTime(minutes)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppText(l10n.workoutRunSetsCount(setsCount)),
+                AppText(' • ', style: theme.textTheme.bodyMedium),
+                AppText(l10n.workoutRunTime(minutes)),
+              ],
+            ),
             if (exercises.isNotEmpty) ...[
               const SizedBox(height: 16),
               Align(
@@ -1332,7 +1442,7 @@ class _FinishedViewState extends State<_FinishedView> {
                   ),
                 ),
             ],
-            if (_muscleNames.isNotEmpty) ...[
+            if (_muscleKeys.isNotEmpty) ...[
               const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerLeft,
@@ -1341,7 +1451,18 @@ class _FinishedViewState extends State<_FinishedView> {
                   style: theme.textTheme.titleSmall,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
+              // Крупные ассеты групп мышц по данным сессии (54.6, образец).
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final key in _muscleKeys)
+                    MuscleGroupIcon(muscleKey: key, size: 56),
+                ],
+              ),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
@@ -1349,8 +1470,9 @@ class _FinishedViewState extends State<_FinishedView> {
                   for (final name in _muscleNames)
                     Chip(
                       label: AppText(name, style: theme.textTheme.labelSmall),
-                      backgroundColor: theme.colorScheme.primaryContainer
-                          .withValues(alpha: AppTints.strong),
+                      backgroundColor: colorScheme.primaryContainer.withValues(
+                        alpha: AppTints.strong,
+                      ),
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -1369,14 +1491,42 @@ class _FinishedViewState extends State<_FinishedView> {
                 AppText(
                   l10n.workoutRunSaved,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.primary,
+                    color: colorScheme.primary,
                   ),
                 ),
-              const SizedBox(height: 12),
-              FilledButton(
+              // Стрик (54.6, образец): только при живой серии — «Серия: 0»
+              // не показываем (правило «без данных — без элементов»).
+              if (_streak >= 1) ...[
+                const SizedBox(height: 8),
+                AppBadge(
+                  label: l10n.homeStreakDays(_streak),
+                  icon: Icons.local_fire_department,
+                  background: colorScheme.primaryContainer.withValues(
+                    alpha: AppTints.faint,
+                  ),
+                  foreground: colorScheme.primary,
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppRadii.pill),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              AppGradientButton(
                 onPressed: () => context.go('/progress'),
-                child: AppText(l10n.workoutRunGoProgress),
+                pill: true,
+                label: l10n.workoutRunGoProgress,
               ),
+              if (canRepeat) ...[
+                const SizedBox(height: 8),
+                AppOutlinedButton(
+                  label: l10n.workoutRunRepeat,
+                  onPressed: () => widget.controller.restart(),
+                ),
+              ],
             ],
           ],
         ),

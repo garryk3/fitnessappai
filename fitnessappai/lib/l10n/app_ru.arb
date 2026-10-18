@@ -475,6 +475,24 @@
       }
     }
   },
+  "workoutRunTargetReps": "Цель: {reps} повт",
+  "@workoutRunTargetReps": {
+    "description": "Целевое число повторений в бейдже «Последний результат»",
+    "placeholders": {
+      "reps": {
+        "type": "int"
+      }
+    }
+  },
+  "workoutPrepareProgramLabel": "Программа: {name}",
+  "@workoutPrepareProgramLabel": {
+    "description": "Название программы в шапке подготовки к тренировке",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "workoutRunHoldStart": "Начать",
   "@workoutRunHoldStart": {
     "description": "Кнопка запуска отсчёта удержания планки"
@@ -503,6 +521,7 @@
   },
   "workoutRunSaved": "Тренировка сохранена",
   "workoutRunGoProgress": "К прогрессу",
+  "workoutRunRepeat": "Повторить тренировку",
   "workoutRunExercises": "Упражнения",
   "workoutRunMuscles": "Задействованные мышцы",
   "workoutRunEmpty": "В этом дне нет упражнений",
