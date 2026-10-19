@@ -541,6 +541,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseFormContraindications => 'Противопоказания';
 
   @override
+  String get exerciseFormMediaSection => 'Медиаматериалы';
+
+  @override
+  String get exerciseFormBasicInfo => 'Основная информация';
+
+  @override
+  String get exerciseFormInstructionsSection => 'Инструкции';
+
+  @override
+  String get exerciseFormMode => 'Режим выполнения';
+
+  @override
   String get exerciseFormAnimation => 'Изображение';
 
   @override

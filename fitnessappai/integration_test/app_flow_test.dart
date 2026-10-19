@@ -449,22 +449,24 @@ Future<void> createExercise(
   await tester.pumpAndSettle();
 
   if (fixedWeight) {
-    await _toggleFormCheckbox(tester, 'Фиксированный вес');
+    await _toggleFormSwitch(tester, 'Фиксированный вес');
   }
   if (perSide) {
-    await _toggleFormCheckbox(tester, 'Выполнение по сторонам (левая/правая)');
+    await _toggleFormSwitch(tester, 'Выполнение по сторонам (левая/правая)');
   }
 
   await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
   await tester.pumpAndSettle();
 }
 
-Future<void> _toggleFormCheckbox(WidgetTester tester, String label) async {
-  final checkbox = find.widgetWithText(CheckboxListTile, label);
-  await scrollUntilVisibleIn(tester, checkbox);
-  await tester.ensureVisible(checkbox.first);
+/// Переключает тумблер на форме упражнения (54.7: SwitchListTile вместо
+/// CheckboxListTile — по образцу «Режим выполнения»).
+Future<void> _toggleFormSwitch(WidgetTester tester, String label) async {
+  final toggle = find.widgetWithText(SwitchListTile, label);
+  await scrollUntilVisibleIn(tester, toggle);
+  await tester.ensureVisible(toggle.first);
   await tester.pumpAndSettle();
-  await tester.tap(checkbox.first);
+  await tester.tap(toggle.first);
   await tester.pumpAndSettle();
 }
 

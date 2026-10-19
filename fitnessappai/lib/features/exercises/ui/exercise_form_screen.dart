@@ -317,13 +317,33 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
-                  _nameField(l10n),
+                  // Порядок секций по образцу «Новое упражнение» (54.7):
+                  // медиа сверху, дальше основная информация и инструкции.
+                  _mediaSection(l10n),
                   const SizedBox(height: 16),
-                  _typeField(l10n),
+                  _Section(
+                    title: l10n.exerciseFormBasicInfo,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _nameField(l10n),
+                        const SizedBox(height: 16),
+                        _typeField(l10n),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 16),
-                  _descriptionField(l10n),
-                  const SizedBox(height: 16),
-                  _instructionsField(l10n),
+                  _Section(
+                    title: l10n.exerciseFormInstructionsSection,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _descriptionField(l10n),
+                        const SizedBox(height: 16),
+                        _instructionsField(l10n),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   _mistakesEditor(l10n),
                   const SizedBox(height: 16),
@@ -331,19 +351,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                   const SizedBox(height: 16),
                   _contraindicationsEditor(l10n),
                   const SizedBox(height: 16),
-                  _thumbnailEditor(l10n),
-                  const SizedBox(height: 16),
-                  _animationEditor(l10n),
-                  const SizedBox(height: 16),
-                  _hideOptionalField(l10n),
-                  const SizedBox(height: 8),
-                  if (_type != ExerciseType.bodyweight) ...[
-                    _fixedWeightField(l10n),
-                    const SizedBox(height: 8),
-                  ],
-                  // У дистанции стороны нет (бег не делится на левую и
-                  // правую), поэтому чекбокс скрыт — задача 48.5.
-                  if (_type != ExerciseType.distance) ...[_perSideField(l10n)],
+                  _modeSection(l10n),
                 ],
               ),
             ),
@@ -351,11 +359,68 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: AppGradientButton(
+            pill: true,
             busy: _saving,
             onPressed: _saving ? null : _save,
             label: l10n.exerciseFormSave,
           ),
         ),
+      ),
+    );
+  }
+
+  /// Медиа-карточка (54.7, образец «Медиаматериалы»): миниатюра и
+  /// изображение в одной секции; тексты-контракты выбора/удаления сохранены.
+  Widget _mediaSection(AppLocalizations l10n) {
+    return _Section(
+      title: l10n.exerciseFormMediaSection,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _thumbnailEditor(l10n),
+          const SizedBox(height: 16),
+          _animationEditor(l10n),
+        ],
+      ),
+    );
+  }
+
+  /// Секция «Режим выполнения» (54.7, образец): тумблеры с иконками и
+  /// описаниями вместо чекбоксов.
+  Widget _modeSection(AppLocalizations l10n) {
+    return _Section(
+      title: l10n.exerciseFormMode,
+      child: Column(
+        children: [
+          SwitchListTile(
+            value: _hideOptional,
+            onChanged: (value) => setState(() => _hideOptional = value),
+            contentPadding: EdgeInsets.zero,
+            secondary: const AppIcon(Icons.visibility_outlined),
+            title: AppText(l10n.exerciseFormHideOptional),
+            subtitle: AppText(l10n.exerciseFormHideOptionalHelp),
+          ),
+          if (_type != ExerciseType.bodyweight)
+            SwitchListTile(
+              value: _fixedWeight,
+              onChanged: (value) => setState(() => _fixedWeight = value),
+              contentPadding: EdgeInsets.zero,
+              secondary: const AppIcon(Icons.lock_outline),
+              title: AppText(l10n.exerciseFormFixedWeight),
+              subtitle: AppText(l10n.exerciseFormFixedWeightHelp),
+            ),
+          // У дистанции стороны нет (бег не делится на левую и правую),
+          // поэтому тумблер скрыт — задача 48.5.
+          if (_type != ExerciseType.distance)
+            SwitchListTile(
+              value: _perSide,
+              onChanged: (value) => setState(() => _perSide = value),
+              contentPadding: EdgeInsets.zero,
+              secondary: const AppIcon(Icons.swap_horiz),
+              title: AppText(l10n.exerciseFormPerSide),
+              subtitle: AppText(l10n.exerciseFormPerSideHelp),
+            ),
+        ],
       ),
     );
   }
@@ -472,7 +537,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             ),
           Align(
             alignment: Alignment.centerLeft,
-            child: AppTextButton(
+            child: AppGradientButton(
+              // Градиентная пилюля CTA (54.7, образец «Частые ошибки»).
+              pill: true,
               label: l10n.exerciseFormMistakeAdd,
               onPressed: () => setState(
                 () => _mistakeControllers.add(TextEditingController()),
@@ -595,6 +662,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     return FilterChip(
       label: AppText(label),
       selected: selected,
+      // Пилюля (54.7): как чипы мышц/противопоказаний в детали.
+      shape: const StadiumBorder(),
       onSelected: (_) => setState(() {
         if (selected) {
           _muscleSelections.remove(muscleId);
@@ -616,6 +685,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           for (final tag in _allTags)
             FilterChip(
               label: AppText(tag.labelRu),
+              // Пилюля (54.7): как чипы в детали упражнения.
+              shape: const StadiumBorder(),
               selected: _selectedContraindicationIds.contains(tag.id),
               onSelected: (selected) => setState(() {
                 if (selected) {
@@ -632,156 +703,137 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
   Widget _thumbnailEditor(AppLocalizations l10n) {
     final provider = _mediaCache.imageFor(_thumbnailPath, blob: _thumbnailBlob);
-    return _Section(
-      title: l10n.exerciseFormThumbnail,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (provider != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.md),
-              child: AppImage(
-                image: provider,
-                width: double.infinity,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _MediaSubHeader(l10n.exerciseFormThumbnail),
+        _thumbnailEditorBody(l10n, provider),
+      ],
+    );
+  }
+
+  Widget _thumbnailEditorBody(AppLocalizations l10n, ImageProvider? provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (provider != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            child: AppImage(
+              image: provider,
+              width: double.infinity,
+              height: 120,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => AppContainer(
                 height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => AppContainer(
-                  height: 120,
-                  width: double.infinity,
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: const Center(
-                    child: AppIcon(Icons.broken_image_outlined),
-                  ),
+                width: double.infinity,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                child: const Center(
+                  child: AppIcon(Icons.broken_image_outlined),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: AppOutlinedButton(
-                  label: l10n.exerciseFormThumbnailPick,
-                  onPressed: _pickThumbnail,
-                  icon: Icons.image_outlined,
-                ),
-              ),
-              if (_thumbnailPath != null || _thumbnailBlob != null) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: l10n.exerciseFormThumbnailRemove,
-                  icon: const AppIcon(Icons.delete_outline),
-                  onPressed: () => setState(() {
-                    _thumbnailPath = null;
-                    _thumbnailBlob = null;
-                  }),
-                ),
-              ],
-            ],
           ),
-          const SizedBox(height: 4),
-          AppText(
-            l10n.exerciseFormMediaInfo,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
+          const SizedBox(height: 8),
         ],
-      ),
+        Row(
+          children: [
+            Expanded(
+              child: AppOutlinedButton(
+                label: l10n.exerciseFormThumbnailPick,
+                onPressed: _pickThumbnail,
+                icon: Icons.image_outlined,
+              ),
+            ),
+            if (_thumbnailPath != null || _thumbnailBlob != null) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: l10n.exerciseFormThumbnailRemove,
+                icon: const AppIcon(Icons.delete_outline),
+                onPressed: () => setState(() {
+                  _thumbnailPath = null;
+                  _thumbnailBlob = null;
+                }),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        AppText(
+          l10n.exerciseFormMediaInfo,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _animationEditor(AppLocalizations l10n) {
     final provider = _mediaCache.imageFor(_animationPath, blob: _animationBlob);
-    return _Section(
-      title: l10n.exerciseFormAnimation,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (provider != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.md),
-              child: AppImage(
-                image: provider,
-                width: double.infinity,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _MediaSubHeader(l10n.exerciseFormAnimation),
+        _animationEditorBody(l10n, provider),
+      ],
+    );
+  }
+
+  Widget _animationEditorBody(AppLocalizations l10n, ImageProvider? provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (provider != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            child: AppImage(
+              image: provider,
+              width: double.infinity,
+              height: 160,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => AppContainer(
                 height: 160,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => AppContainer(
-                  height: 160,
-                  width: double.infinity,
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: const Center(
-                    child: AppIcon(Icons.broken_image_outlined),
-                  ),
+                width: double.infinity,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                child: const Center(
+                  child: AppIcon(Icons.broken_image_outlined),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: AppOutlinedButton(
-                  label: l10n.exerciseFormAnimationPick,
-                  onPressed: _pickAnimation,
-                  icon: Icons.image_outlined,
-                ),
-              ),
-              if (_animationPath != null || _animationBlob != null) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: l10n.exerciseFormAnimationRemove,
-                  icon: const AppIcon(Icons.delete_outline),
-                  onPressed: () => setState(() {
-                    _animationPath = null;
-                    _animationBlob = null;
-                  }),
-                ),
-              ],
-            ],
           ),
-          const SizedBox(height: 4),
-          AppText(
-            l10n.exerciseFormMediaInfo,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
+          const SizedBox(height: 8),
         ],
-      ),
-    );
-  }
-
-  Widget _hideOptionalField(AppLocalizations l10n) {
-    return CheckboxListTile(
-      value: _hideOptional,
-      onChanged: (value) => setState(() => _hideOptional = value ?? false),
-      title: AppText(l10n.exerciseFormHideOptional),
-      subtitle: AppText(l10n.exerciseFormHideOptionalHelp),
-      contentPadding: EdgeInsets.zero,
-      controlAffinity: ListTileControlAffinity.leading,
-    );
-  }
-
-  Widget _fixedWeightField(AppLocalizations l10n) {
-    return CheckboxListTile(
-      value: _fixedWeight,
-      onChanged: (value) => setState(() => _fixedWeight = value ?? false),
-      title: AppText(l10n.exerciseFormFixedWeight),
-      subtitle: AppText(l10n.exerciseFormFixedWeightHelp),
-      contentPadding: EdgeInsets.zero,
-      controlAffinity: ListTileControlAffinity.leading,
-    );
-  }
-
-  Widget _perSideField(AppLocalizations l10n) {
-    return CheckboxListTile(
-      value: _perSide,
-      onChanged: (value) => setState(() => _perSide = value ?? false),
-      title: AppText(l10n.exerciseFormPerSide),
-      subtitle: AppText(l10n.exerciseFormPerSideHelp),
-      contentPadding: EdgeInsets.zero,
-      controlAffinity: ListTileControlAffinity.leading,
+        Row(
+          children: [
+            Expanded(
+              child: AppOutlinedButton(
+                label: l10n.exerciseFormAnimationPick,
+                onPressed: _pickAnimation,
+                icon: Icons.image_outlined,
+              ),
+            ),
+            if (_animationPath != null || _animationBlob != null) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: l10n.exerciseFormAnimationRemove,
+                icon: const AppIcon(Icons.delete_outline),
+                onPressed: () => setState(() {
+                  _animationPath = null;
+                  _animationBlob = null;
+                }),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        AppText(
+          l10n.exerciseFormMediaInfo,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -801,13 +853,30 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppText(title, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        child,
-      ],
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppText(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Подзаголовок внутри карточки-секции (медиаматериалы 54.7).
+class _MediaSubHeader extends StatelessWidget {
+  const _MediaSubHeader(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: AppText(title, style: Theme.of(context).textTheme.titleSmall),
     );
   }
 }

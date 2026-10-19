@@ -10,6 +10,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_list_controller.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_list_item.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
@@ -170,6 +171,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
       appBar: AppTopBar(
@@ -202,16 +204,75 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             ),
           ),
           _buildTypeFilters(context),
+          // Отдельная строка с тумблером (54.7, образец «Упражнения»):
+          // «только свои» — не фильтр-чип, а режим списка на всю ширину.
+          // Тап по всей строке + семантика toggled (design-review 54.7).
+          SignalBuilder(
+            builder: (context) {
+              final onlyCustom = _controller.onlyCustom.value;
+              void toggle() => _controller.setOnlyCustom(!onlyCustom);
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+                child: AppInkWell(
+                  borderRadius: BorderRadius.circular(AppRadii.md),
+                  onTap: toggle,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AppText(
+                            l10n.exerciseListOnlyCustom,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                        Semantics(
+                          container: true,
+                          excludeSemantics: true,
+                          label: l10n.exerciseListOnlyCustom,
+                          toggled: onlyCustom,
+                          child: Switch(
+                            value: onlyCustom,
+                            onChanged: _controller.setOnlyCustom,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
           Expanded(
             child: SignalBuilder(builder: (context) => _buildBody(context)),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'exercises-fab',
-        onPressed: () => context.push('/exercises/new'),
-        tooltip: l10n.exerciseListCreate,
-        child: const AppIcon(Icons.add),
+      floatingActionButton: Tooltip(
+        message: l10n.exerciseListCreate,
+        child: AppGlowContainer(
+          radius: AppRadii.lg,
+          child: AppContainer(
+            width: 56,
+            height: 56,
+            padding: EdgeInsets.zero,
+            decoration: BoxDecoration(
+              gradient: AppGradients.primaryCta,
+              borderRadius: BorderRadius.circular(AppRadii.lg),
+            ),
+            child: AppInkWell(
+              borderRadius: BorderRadius.circular(AppRadii.lg),
+              onTap: () => context.push('/exercises/new'),
+              child: Center(
+                child: AppIcon(
+                  Icons.add,
+                  size: 28,
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -232,24 +293,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               ])
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: AppText(
-                      option == null
-                          ? l10n.exerciseFilterAll
-                          : _typeLabel(l10n, option),
-                    ),
+                  child: _FilterPill(
+                    label: option == null
+                        ? l10n.exerciseFilterAll
+                        : _typeLabel(l10n, option),
                     selected: current == option,
-                    onSelected: (_) => _controller.setTypeFilter(option),
+                    onTap: () => _controller.setTypeFilter(option),
                   ),
                 ),
-              const SizedBox(width: 4),
-              SignalBuilder(
-                builder: (context) => FilterChip(
-                  label: AppText(l10n.exerciseListOnlyCustom),
-                  selected: _controller.onlyCustom.value,
-                  onSelected: _controller.setOnlyCustom,
-                ),
-              ),
             ],
           ),
         );
@@ -361,7 +412,11 @@ class _ExerciseCard extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 12),
                   child: Checkbox(value: selected, onChanged: (_) => onTap()),
                 ),
-              _Thumbnail(exercise: exercise, mediaCache: mediaCache),
+              ExerciseThumbnail(
+                exercise: exercise,
+                mediaCache: mediaCache,
+                size: 56,
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -370,41 +425,39 @@ class _ExerciseCard extends StatelessWidget {
                     AppText(
                       exercise.name,
                       style: Theme.of(context).textTheme.titleMedium,
-                      maxLines: 1,
+                      // Две строки (design-review 54.7): длинные названия
+                      // не обрываются на fontScale 1.0–1.3.
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         _Badge(label: _typeLabel(l10n, exercise.type)),
-                        if (item.hasContraindications) ...[
-                          const SizedBox(width: 6),
+                        // Иконки групп (54.7, образец): до трёх пиктограмм
+                        // с дедупом по ассету — дубли «грудь/пресс» не рисуем.
+                        for (final key in MuscleGroupIcon.dedupeByAsset(
+                          item.muscles.map((m) => m.key),
+                        ).take(3))
+                          MuscleGroupIcon(muscleKey: key, size: 18),
+                        if (item.hasContraindications)
                           _Badge(
                             label: l10n.contraindications,
                             icon: Icons.warning_amber_rounded,
                             highlight: true,
                           ),
-                        ],
                       ],
                     ),
                     if (item.muscles.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          MuscleGroupIcon(
-                            muscleKey: item.muscles.first.key,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: AppText(
-                              item.muscles.map((m) => m.labelRu).join(', '),
-                              style: Theme.of(context).textTheme.bodySmall,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      AppText(
+                        item.muscles.map((m) => m.labelRu).join(', '),
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],
@@ -412,12 +465,36 @@ class _ExerciseCard extends StatelessWidget {
               ),
               if (onStart != null) ...[
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const AppIcon(Icons.play_circle_outline),
-                  tooltip: AppLocalizations.of(
-                    context,
-                  ).exerciseListStartWorkout,
-                  onPressed: onStart,
+                // Градиентная play-кнопка (54.7, образец): круг на
+                // primaryCta. Glow не рисуем — на каждой карточке он
+                // конкурирует с primary-FAB (design-review 54.7); тап-таргет
+                // 48dp и роль button — через Tooltip+Semantics.
+                Tooltip(
+                  message: l10n.exerciseListStartWorkout,
+                  child: Semantics(
+                    button: true,
+                    label: l10n.exerciseListStartWorkout,
+                    child: AppContainer(
+                      width: 48,
+                      height: 48,
+                      padding: EdgeInsets.zero,
+                      decoration: const BoxDecoration(
+                        gradient: AppGradients.primaryCta,
+                        shape: BoxShape.circle,
+                      ),
+                      child: AppInkWell(
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
+                        onTap: onStart,
+                        child: Center(
+                          child: AppIcon(
+                            Icons.play_arrow,
+                            size: 26,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -448,7 +525,8 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
+        // Пилюля (54.7): бейджи списка — как статус-чипи 54.4–54.6.
+        borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -469,45 +547,34 @@ class _Badge extends StatelessWidget {
   }
 }
 
-class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.exercise, required this.mediaCache});
+/// Пилюля-фильтр по типу (54.7, образец «Упражнения»): выбранная —
+/// неон-обводка и свечение [AppGlowContainer], невыбранная — plain-чип.
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
-  final Exercise exercise;
-  final MediaCache mediaCache;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    const size = 56.0;
-    final provider = mediaCache.imageFor(
-      exercise.thumbnailPath ?? exercise.animationPath,
-      blob: exercise.thumbnailBlob ?? exercise.animationBlob,
-      cacheWidth: 112,
+    final chip = FilterChip(
+      label: AppText(label),
+      selected: selected,
+      showCheckmark: selected,
+      onSelected: (_) => onTap(),
     );
-    if (provider == null) {
-      return _placeholder(context, size);
+    if (!selected) {
+      return chip;
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadii.md),
-      child: AppImage(
-        image: provider,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _placeholder(context, size),
-      ),
-    );
-  }
-
-  Widget _placeholder(BuildContext context, double size) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return AppContainer(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(AppRadii.md),
-      ),
-      child: AppIcon(Icons.fitness_center, color: colorScheme.onSurfaceVariant),
+    return AppGlowContainer(
+      radius: AppRadii.pill,
+      padding: EdgeInsets.zero,
+      child: chip,
     );
   }
 }

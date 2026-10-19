@@ -197,13 +197,24 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         Center(
-          child: _ExercisePreview(exercise: exercise, mediaCache: _mediaCache),
+          child: AppCard(
+            padding: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: _ExercisePreview(
+              exercise: exercise,
+              mediaCache: _mediaCache,
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         Center(
           child: AppText(
             exercise.name,
-            style: Theme.of(context).textTheme.headlineMedium,
+            // Доминанта экрана (design-review 54.7): имя крупнее служебного
+            // заголовка тулбара и набрано жирным.
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ),
@@ -386,7 +397,8 @@ class _ExercisePreview extends StatelessWidget {
       return _placeholder(context, height);
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadii.lg),
+      // Радиус AppCard (xl), а не lg — без «ступеньки» по углам (54.7).
+      borderRadius: BorderRadius.circular(AppRadii.xl),
       child: AppImage(
         image: provider,
         width: double.infinity,
@@ -404,10 +416,16 @@ class _ExercisePreview extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+        borderRadius: BorderRadius.circular(AppRadii.xl),
       ),
       child: AppIcon(
-        Icons.fitness_center,
+        // Иконка по типу (54.7): та же логика, что в `ExerciseThumbnail`.
+        switch (exercise.type) {
+          ExerciseType.bodyweight => Icons.accessibility_new,
+          ExerciseType.plank => Icons.self_improvement,
+          ExerciseType.distance => Icons.directions_run,
+          ExerciseType.strength => Icons.fitness_center,
+        },
         size: 56,
         color: colorScheme.onSurfaceVariant,
       ),
@@ -431,10 +449,11 @@ class _TypeBadge extends StatelessWidget {
     };
     final colorScheme = Theme.of(context).colorScheme;
     return AppContainer(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(AppRadii.md),
+        // Пилюля (54.7): бейдж типа — как в списке и статус-чипи 54.4–54.6.
+        borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
       child: AppText(
         label,
@@ -459,20 +478,23 @@ class _MusclesSection extends StatelessWidget {
       title: l10n.exerciseDetailMuscles,
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              MuscleDiagram(
-                view: MuscleView.front,
-                highlights: highlights,
-                size: const Size(130, 260),
-              ),
-              MuscleDiagram(
-                view: MuscleView.back,
-                highlights: highlights,
-                size: const Size(130, 260),
-              ),
-            ],
+          AppCard(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                MuscleDiagram(
+                  view: MuscleView.front,
+                  highlights: highlights,
+                  size: const Size(130, 260),
+                ),
+                MuscleDiagram(
+                  view: MuscleView.back,
+                  highlights: highlights,
+                  size: const Size(130, 260),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -483,6 +505,8 @@ class _MusclesSection extends StatelessWidget {
                 Chip(
                   avatar: MuscleGroupIcon(muscleKey: muscle.key, size: 18),
                   label: AppText(muscle.labelRu),
+                  // Пилюля (54.7): чипы мышц — в стиле карточек редизайна.
+                  shape: const StadiumBorder(),
                 ),
             ],
           ),
@@ -552,6 +576,8 @@ class _ContraindicationsSection extends StatelessWidget {
                         : colorScheme.onSurfaceVariant,
                   ),
                   side: BorderSide.none,
+                  // Пилюля (54.7): как чипы мышц выше.
+                  shape: const StadiumBorder(),
                 ),
             ],
           ),

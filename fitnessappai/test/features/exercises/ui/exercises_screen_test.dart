@@ -18,6 +18,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/features/exercises/ui/single_exercise_params_screen.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -382,7 +383,7 @@ void main() {
     await repository.create(exercise('Жим штанги'), const []);
     await pumpExercises(tester);
 
-    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
   });
 
   testWidgets('нажатие play открывает экран параметров упражнения', (
@@ -391,7 +392,7 @@ void main() {
     await repository.create(exercise('Жим штанги'), const []);
     await pumpExercises(tester);
 
-    await tester.tap(find.byIcon(Icons.play_circle_outline));
+    await tester.tap(find.byIcon(Icons.play_arrow));
     await tester.pumpAndSettle();
 
     expect(find.byType(SingleExerciseParamsScreen), findsOneWidget);
@@ -407,6 +408,93 @@ void main() {
     await tester.longPress(find.text('Жим штанги'));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.play_circle_outline), findsNothing);
+    expect(find.byIcon(Icons.play_arrow), findsNothing);
+  });
+
+  testWidgets('тумблер «Только свои упражнения» фильтрует встроенные', (
+    tester,
+  ) async {
+    await repository.create(
+      Exercise(
+        name: 'Мой жим',
+        type: ExerciseType.strength,
+        isCustom: true,
+        createdAt: DateTime(2024, 1, 1),
+        updatedAt: DateTime(2024, 1, 1),
+      ),
+      const [],
+    );
+    await repository.create(exercise('Встроенный присед'), const []);
+    await pumpExercises(tester);
+
+    expect(find.text('Встроенный присед'), findsOneWidget);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Мой жим'), findsOneWidget);
+    expect(find.text('Встроенный присед'), findsNothing);
+  });
+
+  testWidgets('выбранный фильтр типа подсвечен AppGlowContainer', (
+    tester,
+  ) async {
+    await repository.create(exercise('Жим штанги'), const []);
+    await pumpExercises(tester);
+
+    final glowFinder = find.ancestor(
+      of: find.text('Все'),
+      matching: find.byType(AppGlowContainer),
+    );
+    expect(glowFinder, findsOneWidget);
+
+    await tester.tap(
+      find.ancestor(of: find.text('Время'), matching: find.byType(FilterChip)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find
+          .ancestor(
+            of: find.text('Все'),
+            matching: find.byType(AppGlowContainer),
+          )
+          .evaluate()
+          .isEmpty,
+      isTrue,
+    );
+    expect(
+      find
+          .ancestor(
+            of: find.text('Время'),
+            matching: find.byType(AppGlowContainer),
+          )
+          .evaluate()
+          .isNotEmpty,
+      isTrue,
+    );
+  });
+
+  testWidgets('в карточке не больше трёх иконок мышц с дедупом по ассету', (
+    tester,
+  ) async {
+    final chestId = await muscleId('chest');
+    final absId = await muscleId('abs');
+    final armsId = await muscleId('arms');
+    final backId = await muscleId('back');
+    final legsId = await muscleId('legs');
+    final created = await repository.create(exercise('Сила всего тела'), [
+      for (final id in [chestId, absId, armsId, backId, legsId])
+        ExerciseMuscle(
+          exerciseId: 0,
+          muscleGroupId: id,
+          intensity: MuscleIntensity.primary,
+        ),
+    ]);
+    expect(created.id, isNotNull);
+    await pumpExercises(tester);
+
+    // Пять групп, но «грудь» и «пресс» — один ассет: итог 4 → лимит 3.
+    expect(find.byType(MuscleGroupIcon), findsNWidgets(3));
   });
 }
