@@ -17,6 +17,7 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 void main() {
   late AppDatabase db;
@@ -120,11 +121,11 @@ void main() {
     matching: find.widgetWithText(FilterChip, chipLabel),
   );
 
-  /// Находит [CheckboxListTile] по подстроке в его заголовке.
-  Finder checkboxInRow(String label) => find
+  /// Находит [SwitchListTile] по подстроке в его заголовке.
+  Finder switchInRow(String label) => find
       .ancestor(
         of: find.textContaining(label),
-        matching: find.byType(CheckboxListTile),
+        matching: find.byType(SwitchListTile),
       )
       .first;
 
@@ -260,6 +261,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Название *'),
       'Жим штанги',
     );
+    await scrollFormTo(tester, find.widgetWithText(TextFormField, 'Описание'));
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Описание'),
       'Классический жим',
@@ -312,7 +314,8 @@ void main() {
 
     final secondaryChip = tester.getRect(chipInRow('Грудь', 'Вспомогательная'));
     final screenWidth = tester.getSize(find.byType(ExerciseFormScreen)).width;
-    expect(secondaryChip.right, closeTo(screenWidth - 16, 2.0));
+    // Отступ карточки-секции (AppCard, 16) внутри паддинга списка (16).
+    expect(secondaryChip.right, closeTo(screenWidth - 32, 2.0));
   });
 
   testWidgets('сохранение без мышц блокируется и показывает ошибку', (
@@ -377,7 +380,7 @@ void main() {
       tester,
       find.textContaining('Скрывать необязательные поля'),
     );
-    await tester.tap(checkboxInRow('Скрывать необязательные поля'));
+    await tester.tap(switchInRow('Скрывать необязательные поля'));
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
@@ -400,8 +403,8 @@ void main() {
       find.textContaining('Скрывать необязательные поля'),
     );
 
-    final checkbox = tester.widget<CheckboxListTile>(
-      checkboxInRow('Скрывать необязательные поля'),
+    final checkbox = tester.widget<SwitchListTile>(
+      switchInRow('Скрывать необязательные поля'),
     );
     expect(checkbox.value, isTrue);
   });
@@ -416,10 +419,10 @@ void main() {
       'С гантелями',
     );
     await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
-    await tester.tap(checkboxInRow('Фиксированный вес'));
+    await tester.tap(switchInRow('Фиксированный вес'));
     await tester.pumpAndSettle();
     await scrollFormTo(tester, find.textContaining('Выполнение по сторонам'));
-    await tester.tap(checkboxInRow('Выполнение по сторонам'));
+    await tester.tap(switchInRow('Выполнение по сторонам'));
     await tester.pumpAndSettle();
 
     await selectChestMuscle(tester);
@@ -442,11 +445,11 @@ void main() {
     await pumpForm(tester, exerciseId: saved.id);
     await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
 
-    final fixedWeight = tester.widget<CheckboxListTile>(
-      checkboxInRow('Фиксированный вес'),
+    final fixedWeight = tester.widget<SwitchListTile>(
+      switchInRow('Фиксированный вес'),
     );
-    final perSide = tester.widget<CheckboxListTile>(
-      checkboxInRow('Выполнение по сторонам'),
+    final perSide = tester.widget<SwitchListTile>(
+      switchInRow('Выполнение по сторонам'),
     );
     expect(fixedWeight.value, isTrue);
     expect(perSide.value, isTrue);
@@ -786,13 +789,11 @@ void main() {
     );
 
     await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
-    await tester.tap(checkboxInRow('Фиксированный вес'));
+    await tester.tap(switchInRow('Фиксированный вес'));
     await tester.pumpAndSettle();
 
     expect(
-      (tester.widget<CheckboxListTile>(
-        checkboxInRow('Фиксированный вес'),
-      )).value,
+      (tester.widget<SwitchListTile>(switchInRow('Фиксированный вес'))).value,
       isTrue,
     );
 
@@ -818,9 +819,7 @@ void main() {
 
     await scrollFormTo(tester, find.textContaining('Фиксированный вес'));
     expect(
-      (tester.widget<CheckboxListTile>(
-        checkboxInRow('Фиксированный вес'),
-      )).value,
+      (tester.widget<SwitchListTile>(switchInRow('Фиксированный вес'))).value,
       isFalse,
     );
   });
@@ -878,11 +877,11 @@ void main() {
         'Жим лёжа',
       );
       await scrollFormTo(tester, find.textContaining('Выполнение по сторонам'));
-      await tester.tap(checkboxInRow('Выполнение по сторонам'));
+      await tester.tap(switchInRow('Выполнение по сторонам'));
       await tester.pumpAndSettle();
       expect(
-        (tester.widget<CheckboxListTile>(
-          checkboxInRow('Выполнение по сторонам'),
+        (tester.widget<SwitchListTile>(
+          switchInRow('Выполнение по сторонам'),
         )).value,
         isTrue,
       );
@@ -897,8 +896,8 @@ void main() {
       await tester.pumpAndSettle();
       await scrollFormTo(tester, find.textContaining('Выполнение по сторонам'));
       expect(
-        (tester.widget<CheckboxListTile>(
-          checkboxInRow('Выполнение по сторонам'),
+        (tester.widget<SwitchListTile>(
+          switchInRow('Выполнение по сторонам'),
         )).value,
         isFalse,
       );
@@ -928,6 +927,67 @@ void main() {
       final saved = (await repository.getAll()).single;
       expect(saved.type, ExerciseType.distance);
       expect(saved.perSide, isFalse);
+    });
+  });
+
+  group('редизайн 54.7', () {
+    testWidgets('секции оформлены карточками с заголовками-контрактами', (
+      tester,
+    ) async {
+      await pumpForm(tester);
+      await tester.pump();
+
+      // Новые заголовки секций из образца «Новое упражнение».
+      expect(find.text('Медиаматериалы'), findsOneWidget);
+      expect(find.text('Основная информация'), findsOneWidget);
+      await scrollFormTo(tester, find.text('Инструкции'));
+      expect(find.text('Инструкции'), findsOneWidget);
+      await scrollFormTo(tester, find.text('Режим выполнения'));
+      expect(find.text('Режим выполнения'), findsOneWidget);
+      // Секции — карточки UI-кита, а не голые колонки.
+      expect(find.byType(AppCard), findsWidgets);
+    });
+
+    testWidgets('медиаматериалы идут первыми, до основной информации', (
+      tester,
+    ) async {
+      await pumpForm(tester);
+      await tester.pump();
+
+      final mediaTop = tester.getRect(find.text('Медиаматериалы')).top;
+      final infoTop = tester.getRect(find.text('Основная информация')).top;
+      expect(mediaTop, lessThan(infoTop));
+
+      // «Инструкции» ниже первого экрана — появляется только после скролла
+      // вниз, т.е. идёт после «Основной информации».
+      expect(find.text('Инструкции'), findsNothing);
+      await scrollFormTo(tester, find.text('Инструкции'));
+      expect(find.text('Инструкции'), findsOneWidget);
+    });
+
+    testWidgets('режим выполнения — тумблеры с иконками и описаниями', (
+      tester,
+    ) async {
+      await pumpForm(tester);
+      await scrollFormTo(tester, find.text('Режим выполнения'));
+
+      final toggles = tester
+          .widgetList<SwitchListTile>(find.byType(SwitchListTile))
+          .toList();
+      expect(toggles, hasLength(3));
+      expect(toggles.every((t) => t.secondary != null), isTrue);
+      expect(toggles.every((t) => t.subtitle != null), isTrue);
+      expect(toggles.first.value, isFalse);
+    });
+
+    testWidgets('CTA «Сохранить» — pill-кнопка AppGradientButton (54.7)', (
+      tester,
+    ) async {
+      await pumpForm(tester);
+
+      final save = find.widgetWithText(AppGradientButton, 'Сохранить');
+      expect(save, findsOneWidget);
+      expect(tester.widget<AppGradientButton>(save).pill, isTrue);
     });
   });
 }

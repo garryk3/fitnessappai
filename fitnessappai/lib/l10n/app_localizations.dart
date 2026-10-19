@@ -1072,6 +1072,30 @@ abstract class AppLocalizations {
   /// **'Противопоказания'**
   String get exerciseFormContraindications;
 
+  /// No description provided for @exerciseFormMediaSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Медиаматериалы'**
+  String get exerciseFormMediaSection;
+
+  /// No description provided for @exerciseFormBasicInfo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Основная информация'**
+  String get exerciseFormBasicInfo;
+
+  /// No description provided for @exerciseFormInstructionsSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Инструкции'**
+  String get exerciseFormInstructionsSection;
+
+  /// No description provided for @exerciseFormMode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Режим выполнения'**
+  String get exerciseFormMode;
+
   /// No description provided for @exerciseFormAnimation.
   ///
   /// In ru, this message translates to:
