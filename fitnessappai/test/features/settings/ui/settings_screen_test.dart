@@ -23,6 +23,7 @@ import 'package:fitnessappai/features/programs/data/workout_reminder_repository.
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 class _FakeUpdateService implements UpdateService {
   _FakeUpdateService({this.release});
@@ -232,6 +233,39 @@ void main() {
     expect(find.byType(SnackBar), findsNothing);
   });
 
+  testWidgets('редизайн 54.9: секции-карточки, плитки и сегмент внутри них', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    // Каждая секция — карточка с заголовком внутри (54.9, образец).
+    for (final title in ['Синхронизация', 'Звук', 'Тема', 'О приложении']) {
+      expect(
+        find.ancestor(of: find.text(title), matching: find.byType(AppCard)),
+        findsOneWidget,
+        reason: 'секция «$title» должна быть карточкой',
+      );
+    }
+    // Плитки действий и сегмент темы — внутри секции-карточки.
+    expect(
+      find.ancestor(
+        of: find.text('Поделиться'),
+        matching: find.byType(AppCard),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.byType(SegmentedButton<ThemeMode>),
+        matching: find.byType(AppCard),
+      ),
+      findsOneWidget,
+    );
+    // Info-баннер синхронизации вместо строки с иконкой облака.
+    expect(find.byIcon(Icons.info_outline), findsOneWidget);
+    expect(find.byIcon(Icons.cloud_outlined), findsNothing);
+  });
+
   group('звук напоминаний (47.5)', () {
     late _FakeSoundStore store;
     late List<SoundSettingsSnapshot> applied;
@@ -293,7 +327,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: reminderSection(),
-          matching: find.widgetWithText(OutlinedButton, 'Выбрать звук'),
+          matching: find.text('Выбрать звук'),
         ),
       );
       await tester.pumpAndSettle();

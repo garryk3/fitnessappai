@@ -1501,6 +1501,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get measurementFormNumberError => 'Введите число';
 
   @override
+  String get measurementFormGirths => 'Обхваты (см)';
+
+  @override
+  String get measurementFormValueHint => '0.0';
+
+  @override
   String get updateCheckErrorNetwork =>
       'Ошибка проверки версии. Проверьте подключение к интернету.';
 

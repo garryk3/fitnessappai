@@ -21,6 +21,7 @@ class AppSegmentedButton<T> extends StatelessWidget {
     this.expanded = false,
     this.multiSelectionEnabled = false,
     this.showSelectedIcon = false,
+    this.emptySelectionAllowed = false,
   });
 
   /// Значения сегментов (порядок = порядок отображения).
@@ -37,6 +38,9 @@ class AppSegmentedButton<T> extends StatelessWidget {
 
   final bool multiSelectionEnabled;
   final bool showSelectedIcon;
+
+  /// Разрешить пустой выбор (сброс, например пол ИМТ — 54.9).
+  final bool emptySelectionAllowed;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +69,7 @@ class AppSegmentedButton<T> extends StatelessWidget {
       onSelectionChanged: onSelectionChanged,
       multiSelectionEnabled: multiSelectionEnabled,
       showSelectedIcon: showSelectedIcon,
+      emptySelectionAllowed: emptySelectionAllowed,
       style: effectiveStyle,
     );
     if (!expanded) {

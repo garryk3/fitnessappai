@@ -12,4 +12,12 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   /// Полностью прозрачный цвет (замена `Colors.transparent`).
   static const Color transparent = Color(0x00000000);
+
+  /// Контент (иконка/текст) поверх градиента `AppGradients.primaryCta`.
+  ///
+  /// Всегда белый: `onPrimary` тёмной темы тёмный и на градиенте даёт
+  /// ~2.2:1 (контрастный дефект дизайн-ревью 54.9), а у светлой темы
+  /// `onPrimary` уже белый — одна константа ведёт себя одинаково в обеих
+  /// темах (так же поступает `AppGradientButton`).
+  static const Color primaryCtaContent = Colors.white;
 }

@@ -2746,6 +2746,18 @@ abstract class AppLocalizations {
   /// **'Введите число'**
   String get measurementFormNumberError;
 
+  /// No description provided for @measurementFormGirths.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обхваты (см)'**
+  String get measurementFormGirths;
+
+  /// No description provided for @measurementFormValueHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'0.0'**
+  String get measurementFormValueHint;
+
   /// No description provided for @updateCheckErrorNetwork.
   ///
   /// In ru, this message translates to:

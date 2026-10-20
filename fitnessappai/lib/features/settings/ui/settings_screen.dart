@@ -3,6 +3,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/app_restart.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/app/sound/reminder_sound_settings_repository.dart';
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/sound/sound_settings_controller.dart';
@@ -136,65 +137,116 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: AppListView(
         padding: const EdgeInsets.all(16),
         children: [
-          AppSectionHeader(title: l10n.settingsSyncSection),
-          const SizedBox(height: 8),
-          _SyncSection(controller: _syncController),
-          const SizedBox(height: 24),
-          AppSectionHeader(title: l10n.settingsSoundSection),
-          const SizedBox(height: 8),
-          SoundSettingsSection(
-            controller: _soundController,
-            title: l10n.soundEnabled,
+          // Секции-карточки (54.9, образец «Настройки»): заголовок
+          // секции внутри AppCard; контракты находок тестов сохраняются
+          // (тексты/типы содержимого не меняются, порядок тот же).
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppSectionHeader(title: l10n.settingsSyncSection),
+                const SizedBox(height: 8),
+                _SyncSection(controller: _syncController),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppSectionHeader(title: l10n.settingsSoundSection),
+                const SizedBox(height: 8),
+                SoundSettingsSection(
+                  controller: _soundController,
+                  title: l10n.soundEnabled,
+                ),
+              ],
+            ),
           ),
           if (_reminderSoundController != null) ...[
-            const SizedBox(height: 24),
-            AppSectionHeader(title: l10n.settingsReminderSoundSection),
-            const SizedBox(height: 8),
-            SoundSettingsSection(
-              controller: _reminderSoundController!,
-              title: l10n.reminderSoundEnabled,
-            ),
-            const SizedBox(height: 8),
-            AppText(
-              l10n.reminderSoundHint,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            const SizedBox(height: 16),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppSectionHeader(title: l10n.settingsReminderSoundSection),
+                  const SizedBox(height: 8),
+                  SoundSettingsSection(
+                    controller: _reminderSoundController!,
+                    title: l10n.reminderSoundEnabled,
+                  ),
+                  const SizedBox(height: 8),
+                  AppText(
+                    l10n.reminderSoundHint,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-          const SizedBox(height: 24),
-          AppSectionHeader(title: l10n.settingsNotificationsSection),
-          const SizedBox(height: 8),
-          if (_notificationController != null)
-            _NotificationsSection(controller: _notificationController!),
-          const SizedBox(height: 24),
-          AppSectionHeader(title: l10n.settingsThemeSection),
-          const SizedBox(height: 8),
-          ValueListenableBuilder<ThemeMode>(
-            valueListenable: _themeController,
-            builder: (context, mode, _) => SegmentedButton<ThemeMode>(
-              segments: [
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: const AppIcon(Icons.dark_mode_outlined),
-                  label: AppText(l10n.settingsThemeDark),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: const AppIcon(Icons.light_mode_outlined),
-                  label: AppText(l10n.settingsThemeLight),
+          if (_notificationController != null) ...[
+            const SizedBox(height: 16),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppSectionHeader(title: l10n.settingsNotificationsSection),
+                  const SizedBox(height: 8),
+                  _NotificationsSection(controller: _notificationController!),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppSectionHeader(title: l10n.settingsThemeSection),
+                const SizedBox(height: 8),
+                // Сегмент темы — pill-обёртка 54.1 на всю ширину
+                // (54.9, образец: активный сегмент-пилюля); нативный
+                // SegmentedButton<ThemeMode> рендерится внутри — контракт
+                // byType теста сохранён.
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: _themeController,
+                  builder: (context, mode, _) => AppSegmentedButton<ThemeMode>(
+                    segments: [
+                      AppSegment(
+                        value: ThemeMode.dark,
+                        label: l10n.settingsThemeDark,
+                        icon: Icons.dark_mode_outlined,
+                      ),
+                      AppSegment(
+                        value: ThemeMode.light,
+                        label: l10n.settingsThemeLight,
+                        icon: Icons.light_mode_outlined,
+                      ),
+                    ],
+                    selected: {mode},
+                    expanded: true,
+                    onSelectionChanged: (selection) {
+                      _themeController.setMode(selection.first);
+                    },
+                  ),
                 ),
               ],
-              selected: {mode},
-              onSelectionChanged: (selection) {
-                _themeController.setMode(selection.first);
-              },
             ),
           ),
-          const SizedBox(height: 24),
-          AppSectionHeader(title: l10n.settingsAboutSection),
-          const SizedBox(height: 8),
-          _AboutSection(controller: _updateController),
+          const SizedBox(height: 16),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppSectionHeader(title: l10n.settingsAboutSection),
+                const SizedBox(height: 8),
+                _AboutSection(controller: _updateController),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -234,59 +286,87 @@ class _SyncSectionState extends State<_SyncSection> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 16),
-            AppOutlinedButton(
-              label: l10n.syncShare,
-              onPressed: busy ? null : _export,
-              icon: Icons.upload_outlined,
-            ),
-            const SizedBox(height: 8),
-            AppOutlinedButton(
-              label: l10n.syncSaveFile,
-              onPressed: busy ? null : _exportToFile,
-              icon: Icons.save_alt_outlined,
-            ),
-            const SizedBox(height: 8),
-            AppOutlinedButton(
-              label: l10n.syncImport,
-              onPressed: busy ? null : _import,
-              icon: Icons.download_outlined,
+            const SizedBox(height: 12),
+            // Три плитки в ряд (54.9, образец): иконка сверху + подпись;
+            // IntrinsicHeight + stretch — равная высота плиток при переносах
+            // подписей на крупном шрифте (дизайн-ревью 54.9; без IntrinsicHeight
+            // Row в Column получает бесконечную высоту). Тексты не менять —
+            // контракт тестов/e2e.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _SyncTile(
+                      icon: Icons.upload_outlined,
+                      label: l10n.syncShare,
+                      onTap: busy ? null : _export,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _SyncTile(
+                      icon: Icons.save_alt_outlined,
+                      label: l10n.syncSaveFile,
+                      onTap: busy ? null : _exportToFile,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _SyncTile(
+                      icon: Icons.download_outlined,
+                      label: l10n.syncImport,
+                      onTap: busy ? null : _import,
+                    ),
+                  ),
+                ],
+              ),
             ),
             if (status case final statusText?) ...[
-              const SizedBox(height: 16),
-              AppCard(
-                padding: EdgeInsets.zero,
-                child: ListTile(
-                  leading: AppIcon(
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  AppIcon(
                     widget.controller.hasError.value
                         ? Icons.error_outline
                         : Icons.check_circle_outline,
+                    size: 20,
                     color: widget.controller.hasError.value
                         ? theme.colorScheme.error
                         : theme.colorScheme.primary,
                   ),
-                  title: AppText(statusText),
-                ),
+                  const SizedBox(width: 8),
+                  Expanded(child: AppText(statusText)),
+                ],
               ),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                AppIcon(
-                  Icons.cloud_outlined,
-                  size: 18,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppText(
-                    l10n.syncCloudComing,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+            const SizedBox(height: 12),
+            // Info-баннер (54.9, образец): роли темы, ≥4.5:1 обеих тем.
+            AppContainer(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(AppRadii.md),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppIcon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppText(
+                      l10n.syncCloudComing,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         );
@@ -348,6 +428,54 @@ class _SyncSectionState extends State<_SyncSection> {
     if (restart == true && mounted) {
       restartApp();
     }
+  }
+}
+
+/// Плитка действия синхронизации (54.9, образец): иконка сверху,
+/// подпись снизу; `onTap == null` — состояние disabled (цвета приглушены).
+class _SyncTile extends StatelessWidget {
+  const _SyncTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = onTap != null;
+    final foreground = enabled
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurfaceVariant;
+    final labelColor = enabled
+        ? theme.colorScheme.onSurface
+        : theme.colorScheme.onSurfaceVariant;
+    return AppContainer(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+      ),
+      child: AppInkWell(
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        onTap: onTap,
+        child: Column(
+          children: [
+            AppIcon(icon, size: 24, color: foreground),
+            const SizedBox(height: 8),
+            AppText(
+              label,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelMedium?.copyWith(color: labelColor),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

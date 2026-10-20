@@ -16,6 +16,7 @@ import 'package:fitnessappai/features/profile/domain/user_profile_repository.dar
 import 'package:fitnessappai/features/profile/ui/measurement_form_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 void main() {
   late AppDatabase db;
@@ -88,9 +89,85 @@ void main() {
 
     expect(find.text('Пока нет замеров тела'), findsOneWidget);
     expect(find.byType(LineChart), findsNothing);
-    expect(find.byType(FloatingActionButton), findsOneWidget);
+    // FAB редизайна 54.9 — градиентная пилюля с Tooltip (byType
+    // FloatingActionButton больше нет — контракт по тексту/тултипу).
+    expect(find.byTooltip('Добавить замер'), findsOneWidget);
     expect(find.text('Противопоказания'), findsOneWidget);
   });
+
+  testWidgets('редизайн 54.9: FAB — градиентная пилюля AppGlowContainer', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+
+    // Контракт «Добавить замер» — тултип (e2e тапает по тексту внутри
+    // AppInkWell — предок текста, hit-test проходит).
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byType(AppGlowContainer), findsOneWidget);
+    expect(find.byTooltip('Добавить замер'), findsOneWidget);
+  });
+
+  testWidgets('редизайн 54.9: чипы значений с иконками-бейджами', (
+    tester,
+  ) async {
+    await repo.add(
+      measurement(
+        date: DateTime(2026, 8, 1),
+        weightKg: 80,
+        heightCm: 178,
+        waistCm: 84,
+      ),
+    );
+    await pumpProfile(tester);
+
+    expect(find.text('Текущие значения'), findsOneWidget);
+    expect(find.byIcon(Icons.height), findsOneWidget);
+    // Чип «Вес» + бейдж строки истории (вес известен).
+    expect(find.byIcon(Icons.monitor_weight_outlined), findsNWidgets(2));
+    // Восемь чипов обхватов — линейка (в истории — весы).
+    expect(find.byIcon(Icons.straighten_outlined), findsNWidgets(8));
+  });
+
+  testWidgets('редизайн 54.9: форма — секция обхватов и градиентные карточки', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+    await tester.tap(find.text('Добавить замер'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Обхваты (см)'), findsOneWidget);
+    // Дата (без градиента) + рост + вес + 8 обхватов = 10 градиентных.
+    final gradientCards = tester
+        .widgetList<AppCard>(find.byType(AppCard))
+        .where((card) => card.gradient != null)
+        .toList();
+    expect(gradientCards, hasLength(10));
+    // Сетка 2 колонки: «Шея» и «Грудь» — один ряд, разные колонки.
+    final neck = tester.getRect(find.widgetWithText(AppCard, 'Шея'));
+    final chest = tester.getRect(find.widgetWithText(AppCard, 'Грудь'));
+    expect(neck.top, closeTo(chest.top, 1));
+    expect(neck.left, lessThan(chest.left));
+    expect(neck.right, lessThanOrEqualTo(chest.left));
+  });
+
+  testWidgets(
+    'редизайн 54.9: форма на самом узком экране (320dp) без overflow',
+    (tester) async {
+      await pumpProfile(tester);
+      // 320dp — минимальная заявленная ширина; вьюпорт высокий, чтобы все
+      // карточки обхватов построились и layout-исключения были видны.
+      tester.view.physicalSize = const Size(320, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Добавить замер'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Обхваты (см)'), findsOneWidget);
+      expect(find.byIcon(Icons.straighten_outlined), findsNWidgets(8));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('форма добавляет замер', (tester) async {
     await pumpProfile(tester);
