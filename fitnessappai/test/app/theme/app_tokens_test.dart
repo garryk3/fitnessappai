@@ -123,5 +123,32 @@ void main() {
         isNot(AppGradients.primaryCta.colors.last),
       );
     });
+
+    test('chartLine: данные графиков держат AA к карточке в обеих темах', () {
+      // Фактические роли карточек (DESIGN.md §5): near-black тёмная
+      // surfaceContainerLow и M3-светлая.
+      const cardByBrightness = <Brightness, Color>{
+        Brightness.dark: Color(0xFF17171F),
+        Brightness.light: Color(0xFFF6EDF7),
+      };
+      for (final entry in cardByBrightness.entries) {
+        final gradient = AppGradients.chartLine(entry.key);
+        for (double t = 0; t <= 1.0; t += 0.1) {
+          expect(
+            _contrast(_sample(gradient, t), entry.value),
+            greaterThanOrEqualTo(4.5),
+            reason: '${entry.key}, t=$t',
+          );
+        }
+      }
+    });
+
+    test('chartLine: стопы различаются в обеих темах', () {
+      final dark = AppGradients.chartLine(Brightness.dark);
+      final light = AppGradients.chartLine(Brightness.light);
+      expect(dark.colors.first, isNot(dark.colors.last));
+      expect(light.colors.first, isNot(light.colors.last));
+      expect(dark.colors.first, isNot(light.colors.first));
+    });
   });
 }

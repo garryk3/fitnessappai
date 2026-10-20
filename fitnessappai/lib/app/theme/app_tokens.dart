@@ -1,6 +1,8 @@
 // ignore_for_file: type=lint
 import 'package:flutter/material.dart';
 
+import 'package:fitnessappai/app/theme/status_colors.dart';
+
 /// Дизайн-токены геометрии и прозрачности (DESIGN.md, §6, §11).
 ///
 /// Единая шкала скруглений и альфа-тинтов: экраны не задают
@@ -93,6 +95,34 @@ abstract final class AppGradients {
   /// тренировка», на нём — светлый текст (≥4.5:1, проверяется тестом).
   static const LinearGradient heroCard = LinearGradient(
     colors: [Color(0xFF14243D), Color(0xFF3A3468)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  /// Градиент данных графиков (54.8): столбики срезов, линия метрики и
+  /// прогрессии. Стопы — из проверенной палитры серий (`ChartSeriesColors`
+  /// 0 и 3), контраст ≥4.5:1 к `surfaceContainerLow` в обеих темах
+  /// проверяется тестом `app_tokens_test`.
+  static LinearGradient chartLine(Brightness brightness) {
+    final colors = brightness == Brightness.dark
+        ? ChartSeriesColors.dark
+        : ChartSeriesColors.light;
+    return LinearGradient(
+      colors: [colors[0], colors[3]],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  /// Лёгкий «ролевой» градиент hero-подобных карточек в СВЕТЛОЙ теме
+  /// (hero главной 54.3, stat-карточка прогресса 54.8): светлая тема без
+  /// near-black поверхностей (DESIGN.md §11), фон — из поверхностных ролей.
+  /// В тёмной теме используйте [heroCard].
+  static LinearGradient roleSurface(ColorScheme scheme) => LinearGradient(
+    colors: [
+      scheme.surfaceContainerLow,
+      scheme.primaryContainer.withValues(alpha: AppTints.faint),
+    ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

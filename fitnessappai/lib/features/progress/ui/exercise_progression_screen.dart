@@ -236,15 +236,14 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
               FlSpot(i.toDouble(), _points[i].metric),
           ],
           isCurved: false,
-          barWidth: 2,
-          color: ChartSeriesColors.of(theme.brightness, 0),
+          barWidth: 3,
+          gradient: AppGradients.chartLine(theme.brightness),
           dotData: FlDotData(show: true),
           belowBarData: BarAreaData(
             show: true,
-            color: ChartSeriesColors.of(
+            gradient: AppGradients.chartLine(
               theme.brightness,
-              0,
-            ).withValues(alpha: AppTints.faint),
+            ).withOpacity(AppTints.faint),
           ),
         ),
       ],

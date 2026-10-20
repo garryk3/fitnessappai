@@ -71,20 +71,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     final l10n = AppLocalizations.of(context);
-    final period = SegmentedButton<StatPeriod>(
+    final period = AppSegmentedButton<StatPeriod>(
+      expanded: true,
       segments: [
-        ButtonSegment(
-          value: StatPeriod.week,
-          label: AppText(l10n.progressPeriodWeek),
-        ),
-        ButtonSegment(
-          value: StatPeriod.month,
-          label: AppText(l10n.progressPeriodMonth),
-        ),
-        ButtonSegment(
-          value: StatPeriod.year,
-          label: AppText(l10n.progressPeriodYear),
-        ),
+        AppSegment(value: StatPeriod.week, label: l10n.progressPeriodWeek),
+        AppSegment(value: StatPeriod.month, label: l10n.progressPeriodMonth),
+        AppSegment(value: StatPeriod.year, label: l10n.progressPeriodYear),
       ],
       selected: {controller.period.value},
       onSelectionChanged: (selection) => _controller.setPeriod(selection.first),
@@ -130,7 +122,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 }
 
-/// Карточки «Тренировок», «Дистанция», «Время».
+/// Единая градиентная карточка статистики (54.8, образец `IMG_..._204452`):
+/// Тренировки / Дистанция / Время планки — три колонки через вертикальный
+/// разделитель. Тап по «Тренировкам» → история (e2e-контракт).
 class _StatCards extends StatelessWidget {
   const _StatCards({required this.controller});
 
@@ -138,91 +132,116 @@ class _StatCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final distanceKm = controller.totalDistanceMeters.value / 1000;
     final exerciseMinutes = _fmt(controller.exerciseTime.value.inSeconds / 60);
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            label: l10n.progressWorkouts,
-            value: '${controller.workoutCount.value}',
-            icon: Icons.fitness_center,
-            onTap: () => context.go('/history'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatCard(
-            label: l10n.progressDistance,
-            value: '${_fmt(distanceKm)} ${l10n.workoutUnitKm}',
-            icon: Icons.directions_run,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatCard(
-            label: l10n.progressTotalTime,
-            value: '$exerciseMinutes ${l10n.workoutUnitMinutes}',
-            icon: Icons.timer_outlined,
-          ),
-        ),
-      ],
+    final column = theme.textTheme.titleLarge?.copyWith(
+      fontWeight: FontWeight.w600,
     );
-  }
-}
+    final caption = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    Widget cell({
+      required IconData icon,
+      required String value,
+      required String label,
+      VoidCallback? onTap,
+    }) {
+      final content = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+        child: Column(
+          children: [
+            AppIcon(
+              icon,
+              size: 20,
+              color: onTap != null
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 6),
+            // FittedBox: значение ужимается, а не обрезается, при
+            // fontScale 1.3–1.5 (design-review 54.8).
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: AppText(value, style: column, maxLines: 1),
+            ),
+            const SizedBox(height: 2),
+            AppText(
+              label,
+              style: caption,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      );
+      final child = onTap == null
+          ? content
+          // Явный affordance и семантика кнопки (design-review 54.8).
+          : Semantics(
+              button: true,
+              label: label,
+              child: AppInkWell(
+                borderRadius: BorderRadius.circular(AppRadii.xl),
+                onTap: onTap,
+                child: content,
+              ),
+            );
+      return Expanded(child: child);
+    }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    this.onTap,
-  });
+    // Разделители колонок: в тёмной теме — приглушённая линия ролей
+    // (outlineVariant светлее роли surface на near-black), в светлой —
+    // канонический outlineVariant (design-review 54.8).
+    final dividerColor = theme.brightness == Brightness.dark
+        ? theme.colorScheme.onSurface.withValues(alpha: AppTints.faint)
+        : theme.colorScheme.outlineVariant;
+    final divider = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: AppContainer(
+        width: 1,
+        height: double.infinity,
+        color: dividerColor,
+      ),
+    );
 
-  final String label;
-  final String value;
-  final IconData icon;
-  final VoidCallback? onTap;
+    // Фон (54.8, fix design-review): в тёмной теме — тёмный градиент-токен
+    // heroCard по образцу (светлые роли ≥4.5:1, проверяется токен-тестом);
+    // светлая тема без near-black поверхностей (DESIGN.md §11) — лёгкий
+    // ролевой градиент (токен, паттерн home-hero 54.3).
+    final cardGradient = theme.brightness == Brightness.dark
+        ? AppGradients.heroCard
+        : AppGradients.roleSurface(theme.colorScheme);
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return AppCard(
+      gradient: cardGradient,
       padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: AppInkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Column(
-            children: [
-              AppIcon(
-                icon,
-                size: 20,
-                color: onTap != null
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: 6),
-              AppText(
-                value,
-                style: theme.textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              AppText(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            cell(
+              icon: Icons.fitness_center,
+              value: '${controller.workoutCount.value}',
+              label: l10n.progressWorkouts,
+              onTap: () => context.go('/history'),
+            ),
+            divider,
+            cell(
+              icon: Icons.directions_run,
+              value: '${_fmt(distanceKm)} ${l10n.workoutUnitKm}',
+              label: l10n.progressDistance,
+            ),
+            divider,
+            cell(
+              icon: Icons.timer_outlined,
+              value: '$exerciseMinutes ${l10n.workoutUnitMinutes}',
+              label: l10n.progressTotalTime,
+            ),
+          ],
         ),
       ),
     );
@@ -244,6 +263,13 @@ class _WorkoutsChart extends StatelessWidget {
     final maxY = counts.isEmpty
         ? 4.0
         : (counts.reduce((a, b) => a > b ? a : b) + 1).toDouble();
+    // Два последних непустых среза (54.8, образец): светлые колонки-акцент.
+    final highlighted = <int>{};
+    for (var i = counts.length - 1; i >= 0 && highlighted.length < 2; i--) {
+      if (counts[i] > 0) {
+        highlighted.add(i);
+      }
+    }
     return AppCard(
       padding: EdgeInsets.zero,
       child: Padding(
@@ -256,10 +282,44 @@ class _WorkoutsChart extends StatelessWidget {
               style: theme.textTheme.titleSmall,
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 160,
-              child: BarChart(
-                BarChartData(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const rodWidth = 16.0;
+                final barGroups = [
+                  for (var i = 0; i < counts.length; i++)
+                    BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: counts[i].toDouble(),
+                          width: rodWidth,
+                          gradient: AppGradients.chartLine(theme.brightness),
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                        ),
+                      ],
+                    ),
+                ];
+                // Центры групп в пикселях — та же формула, что в
+                // BarChartPainter.paint → calculateGroupsX (spaceEvenly;
+                // usableSize = viewSize, т.к. виртуального rect нет).
+                final groupsX = _evenlyGroupCenters(
+                  viewWidth: constraints.maxWidth,
+                  count: barGroups.length,
+                  groupWidth: rodWidth,
+                );
+                // Подложка шире столбика на 4 px с каждой стороны
+                // (24 px вместо 16 px) — читается в обеих темах.
+                const columnHalf = 12.0;
+                final scale = BarChartData().maxX / constraints.maxWidth;
+                final annotations = [
+                  for (final i in highlighted)
+                    VerticalRangeAnnotation(
+                      x1: (groupsX[i] - columnHalf) * scale,
+                      x2: (groupsX[i] + columnHalf) * scale,
+                      color: theme.colorScheme.surfaceContainerHigh,
+                    ),
+                ];
+                final chartData = BarChartData(
                   maxY: maxY,
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
@@ -351,27 +411,52 @@ class _WorkoutsChart extends StatelessWidget {
                       ),
                     ),
                   ),
-                  barGroups: [
-                    for (var i = 0; i < counts.length; i++)
-                      BarChartGroupData(
-                        x: i,
-                        barRods: [
-                          BarChartRodData(
-                            toY: counts[i].toDouble(),
-                            width: 12,
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(AppRadii.xs),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
+                  // Подложка-колонка двух последних непустых срезов
+                  // (54.8, образец «выделенных месяцев»): рисуется
+                  // AxisChartPainter.paint() ДО баров (drawRangeAnnotation),
+                  // поэтому видна за столбиком в обеих темах. `verticalLines`
+                  // в BarChart fl_chart 1.2.0 не рисуются (issue #1149) —
+                  // подложка только через rangeAnnotations.
+                  rangeAnnotations: RangeAnnotations(
+                    verticalRangeAnnotations: annotations,
+                  ),
+                  barGroups: barGroups,
+                );
+                return SizedBox(height: 160, child: BarChart(chartData));
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Центры групп в пикселях при `BarChartAlignment.spaceEvenly` — та же
+  /// формула, что в `BarChartDataExtension.calculateGroupsX` (fl_chart,
+  /// не экспортируется публично; src-импорт запрещён линтом
+  /// `implementation_imports`). Если группы не помещаются — fl_chart
+  /// переключается на равномерное заполнение (пространство межгрупп).
+  List<double> _evenlyGroupCenters({
+    required double viewWidth,
+    required int count,
+    required double groupWidth,
+  }) {
+    if (count == 0) {
+      return const [];
+    }
+    final free = viewWidth - count * groupWidth;
+    if (free < 0) {
+      // Fallback fl_chart: пространство делится между группами.
+      final eachSpace = viewWidth / (count + 1);
+      return [
+        for (var i = 0; i < count; i++) eachSpace * (i + 1) + groupWidth / 2,
+      ];
+    }
+    final eachSpace = free / (count + 1);
+    return [
+      for (var i = 0; i < count; i++)
+        eachSpace * (i + 1) + groupWidth * (i + 0.5),
+    ];
   }
 
   List<String> _sliceLabels(
@@ -545,10 +630,15 @@ class _MetricChart extends StatelessWidget {
                           FlSpot(i.toDouble(), values[i]),
                       ],
                       isCurved: false,
-                      barWidth: 2,
-                      color: ChartSeriesColors.of(theme.brightness, 0),
+                      barWidth: 3,
+                      gradient: AppGradients.chartLine(theme.brightness),
                       dotData: FlDotData(show: true),
-                      belowBarData: BarAreaData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: AppGradients.chartLine(
+                          theme.brightness,
+                        ).withOpacity(AppTints.faint),
+                      ),
                     ),
                   ],
                 ),
