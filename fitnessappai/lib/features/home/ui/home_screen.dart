@@ -227,21 +227,12 @@ class _ActiveProgramCard extends StatelessWidget {
     final theme = Theme.of(context);
     // Hero-фон (54.3): в тёмной теме — тёмный градиент-токен по образцу
     // (белый текст ≥4.5:1, проверяется `app_tokens_test`); светлая тема
-    // остаётся без near-black поверхностей (DESIGN.md §11) — прежний
-    // лёгкий градиент ролей.
+    // остаётся без near-black поверхностей (DESIGN.md §11) — лёгкий
+    // ролевой градиент (токен, переиспользуется stat-карточкой 54.8).
     final bool isDark = theme.brightness == Brightness.dark;
     final Gradient heroGradient = isDark
         ? AppGradients.heroCard
-        : LinearGradient(
-            colors: [
-              theme.colorScheme.surfaceContainerLow,
-              theme.colorScheme.primaryContainer.withValues(
-                alpha: AppTints.faint,
-              ),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          );
+        : AppGradients.roleSurface(theme.colorScheme);
 
     return AppGlowContainer(
       radius: AppRadii.xl,

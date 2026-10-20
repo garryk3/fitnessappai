@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
@@ -199,6 +200,171 @@ void main() {
     expect(find.text(groups.first.labelRu), findsOneWidget);
   });
 
+  testWidgets('редизайн 54.8: единая градиентная stat-карточка (dark)', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Приседания');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+
+    await pumpProgress(tester);
+
+    // Три подписи живут в ОДНОЙ AppCard (слитие 54.8).
+    final card = tester.widget<AppCard>(
+      find.ancestor(
+        of: find.text('Тренировок'),
+        matching: find.byType(AppCard),
+      ),
+    );
+    expect(
+      find.descendant(
+        of: statCard('Дистанция'),
+        matching: find.byType(AppCard),
+      ),
+      findsNothing,
+    );
+    // Тёмная тема — тёмный градиент-токен heroCard (контраст ролей ≥4.5:1).
+    expect(card.gradient, isNotNull);
+    expect(card.gradient!.colors, AppGradients.heroCard.colors);
+
+    // Тапабельная колонка «Тренировок» несёт семантику кнопки.
+    final semantics = tester.getSemantics(find.text('Тренировок'));
+    expect(semantics.flagsCollection.isButton, isTrue);
+  });
+
+  testWidgets('редизайн 54.8: градиенты графиков и подсветка срезов', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Приседания');
+    // 17 августа — тренировка в ТЕКУЩЕЙ неделе (срез clock = 12.08),
+    // 10 августа — прошлая неделя, в недельном срезе не отображается.
+    // Подсветка должна захватить последний непустой срез.
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 17)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+
+    await pumpProgress(tester);
+
+    // Столбики и линия — токен градиента данных (стопы ≥4.5:1 к карточке).
+    final bar = tester.widget<BarChart>(find.byType(BarChart));
+    for (final group in bar.data.barGroups) {
+      for (final rod in group.barRods) {
+        expect(
+          rod.gradient?.colors,
+          AppGradients.chartLine(Brightness.dark).colors,
+        );
+      }
+    }
+    // Подсветка последнего непустого среза — подложка-колонка
+    // (rangeAnnotations: verticalLines в BarChart fl_chart не рисуются).
+    final annotations = bar.data.rangeAnnotations.verticalRangeAnnotations;
+    expect(annotations, hasLength(1));
+    // Колонка невырожденная (x1 < x2) и зафиксированного размера.
+    expect(annotations.single.x1, lessThan(annotations.single.x2));
+
+    final line = tester.widget<LineChart>(find.byType(LineChart));
+    final lineBar = line.data.lineBarsData.single;
+    expect(
+      lineBar.gradient?.colors,
+      AppGradients.chartLine(Brightness.dark).colors,
+    );
+    // Заливка под линией (визуал образца).
+    expect(lineBar.belowBarData.show, isTrue);
+    expect(lineBar.belowBarData.gradient, isNotNull);
+  });
+
+  testWidgets('редизайн 54.8: подсвечиваются последние два непустых среза', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Приседания');
+    // Месячный срез (4 недели): тренировки в 1-ю и 3-ю недели, 2-я и 4-я
+    // пустые — подсветка должна захватить ровно последние два НЕПУСТЫХ
+    // среза, пропуская пустую 4-ю.
+    await workoutRepo.saveSession(session(DateTime(2026, 7, 20)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 3)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+
+    await pumpProgress(tester);
+    await tester.tap(find.text('Месяц'));
+    await tester.pumpAndSettle();
+
+    final bar = tester.widget<BarChart>(find.byType(BarChart));
+    final annotations = bar.data.rangeAnnotations.verticalRangeAnnotations;
+    expect(annotations, hasLength(2));
+    // Колонки невырожденные и одинаковой ширины.
+    final widths = [for (final a in annotations) a.x2 - a.x1];
+    expect(widths.first, greaterThan(0));
+    expect(widths.last, closeTo(widths.first, 0.001));
+  });
+
+  testWidgets('редизайн 54.8: тап «Тренировок» открывает историю', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final exerciseId = await insertExercise('Приседания');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId),
+    ]);
+
+    // Гейтинг «Тренировок → /history» без e2e: инлайн-роутер, путь
+    // проверяем по экземпляру GoRouter (regression: удаление onTap
+    // должно ронять тест, а не уезжать в прод).
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => ProgressScreen(
+            statsAggregator: aggregator,
+            exerciseRepository: exerciseRepo,
+          ),
+        ),
+        GoRoute(
+          path: '/history',
+          builder: (context, state) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Тренировок'));
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, '/history');
+  });
+
   testWidgets('подписи осей графиков используют фиксированный интервал', (
     tester,
   ) async {
@@ -365,6 +531,10 @@ void main() {
           statsAggregator: aggregator,
           exerciseRepository: exerciseRepo,
         ),
+      ),
+      GoRoute(
+        path: '/history',
+        builder: (context, state) => const SizedBox.shrink(),
       ),
       GoRoute(
         path: '/progress/exercise/:id',
