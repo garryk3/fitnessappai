@@ -704,6 +704,8 @@
   "measurementFormTitle": "Новый замер",
   "measurementFormDate": "Дата",
   "measurementFormNumberError": "Введите число",
+  "measurementFormGirths": "Обхваты (см)",
+  "measurementFormValueHint": "0.0",
   "updateCheckErrorNetwork": "Ошибка проверки версии. Проверьте подключение к интернету.",
   "updateCheckError": "Ошибка проверки версии."
 }

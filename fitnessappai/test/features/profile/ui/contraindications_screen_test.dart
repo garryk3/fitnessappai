@@ -77,6 +77,27 @@ void main() {
     expect(find.byType(Switch), findsNWidgets(8));
   });
 
+  testWidgets('редизайн 54.9: info-баннер и отдельная карточка на тумблер', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    expect(find.byIcon(Icons.info_outline), findsOneWidget);
+    expect(
+      find.text(
+        'Отметьте свои противопоказания. Упражнения с ними будут '
+        'отмечены предупреждением.',
+      ),
+      findsOneWidget,
+    );
+    // Отдельная карточка на каждый тумблер (8) — общей с Divider нет.
+    expect(find.byType(AppCard), findsNWidgets(8));
+    expect(find.byType(Divider), findsNothing);
+    // Иконки-бейджи тегов.
+    expect(find.byIcon(Icons.pregnant_woman), findsOneWidget);
+    expect(find.byIcon(Icons.monitor_heart_outlined), findsOneWidget);
+  });
+
   testWidgets('восстанавливает сохранённые теги', (tester) async {
     await repo.setContraindicationTags(['knees', 'back']);
 

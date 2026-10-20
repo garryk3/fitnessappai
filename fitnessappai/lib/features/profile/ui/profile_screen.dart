@@ -52,22 +52,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     return AppScaffold(
       appBar: AppTopBar(
         leading: const AppMenuButton(),
         title: l10n.navProfile,
         large: true,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'profile-fab',
-        onPressed: () async {
-          await context.push('/measurements/new');
-          if (mounted) {
-            await _controller.reload();
-          }
-        },
-        icon: const AppIcon(Icons.add),
-        label: AppText(l10n.profileAddMeasurement),
+      // FAB — градиентная пилюля (54.9, образец) по паттерну 54.7:
+      // glow + primaryCta + текст, e2e-контракт «Добавить замер» сохранён
+      // (AppInkWell — предок текста, тап по нему проходит hit-test).
+      floatingActionButton: Tooltip(
+        message: l10n.profileAddMeasurement,
+        child: AppGlowContainer(
+          radius: AppRadii.pill,
+          child: AppContainer(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              gradient: AppGradients.primaryCta,
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+            ),
+            child: AppInkWell(
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              onTap: () async {
+                await context.push('/measurements/new');
+                if (mounted) {
+                  await _controller.reload();
+                }
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppIcon(
+                    Icons.add,
+                    size: 24,
+                    color: AppColors.primaryCtaContent,
+                  ),
+                  const SizedBox(width: 8),
+                  AppText(
+                    l10n.profileAddMeasurement,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      // onPrimary тёмной темы тёмный — на градиенте 2.2:1
+                      // (дизайн-ревью 54.9); белый виден в обеих темах.
+                      color: AppColors.primaryCtaContent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: SignalBuilder(builder: (_) => _buildBody(context)),
     );
@@ -75,7 +111,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildBody(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     if (_controller.isLoading.value) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -100,10 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _MetricChartCard(controller: _controller),
         ],
         const SizedBox(height: 16),
-        AppText(
-          l10n.profileMeasurementsHistory,
-          style: theme.textTheme.titleMedium,
-        ),
+        AppSectionHeader(title: l10n.profileMeasurementsHistory),
         const SizedBox(height: 8),
         if (measurements.isEmpty)
           AppEmptyState(
@@ -179,16 +211,12 @@ class _GenderCard extends StatelessWidget {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          SegmentedButton<Gender>(
+          // Сегмент пола — pill-обёртка 54.1 (нативный SegmentedButton
+          // рендерится внутри — контракт byType теста сохранён).
+          AppSegmentedButton<Gender>(
             segments: [
-              ButtonSegment(
-                value: Gender.male,
-                label: AppText(l10n.profileGenderMale),
-              ),
-              ButtonSegment(
-                value: Gender.female,
-                label: AppText(l10n.profileGenderFemale),
-              ),
+              AppSegment(value: Gender.male, label: l10n.profileGenderMale),
+              AppSegment(value: Gender.female, label: l10n.profileGenderFemale),
             ],
             selected: {?controller.gender.value},
             emptySelectionAllowed: true,
@@ -445,23 +473,50 @@ class _MetricChip extends StatelessWidget {
     final unit = metric == BodyMetric.weight
         ? l10n.workoutUnitKg
         : l10n.profileUnitCm;
+    // Чип по образцу «Профиль» (54.9): иконка-бейдж слева, подпись
+    // сверху / значение снизу.
     return AppContainer(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          AppText(
-            bodyMetricLabel(l10n, metric),
-            style: theme.textTheme.labelSmall,
+          AppContainer(
+            width: 28,
+            height: 28,
+            padding: EdgeInsets.zero,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+            ),
+            child: Center(
+              child: AppIcon(
+                bodyMetricIcon(metric),
+                size: 16,
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+            ),
           ),
-          const SizedBox(height: 2),
-          AppText(
-            value == null ? '—' : '${_fmt(value!)} $unit',
-            style: theme.textTheme.bodyMedium,
+          const SizedBox(width: 8),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText(
+                bodyMetricLabel(l10n, metric),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              AppText(
+                value == null ? '—' : '${_fmt(value!)} $unit',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
           ),
         ],
       ),
@@ -638,11 +693,18 @@ class _MetricLineChart extends StatelessWidget {
               for (var i = 0; i < points.length; i++)
                 FlSpot(i.toDouble(), points[i].value),
             ],
+            // Градиент линии + заливка (54.9, паттерн 54.8): единый
+            // токен chartLine, isCurved остаётся false — геометрия честная.
             isCurved: false,
-            barWidth: 2,
-            color: theme.colorScheme.primary,
+            barWidth: 3,
+            gradient: AppGradients.chartLine(theme.brightness),
             dotData: FlDotData(show: true),
-            belowBarData: BarAreaData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: AppGradients.chartLine(
+                theme.brightness,
+              ).withOpacity(AppTints.faint),
+            ),
           ),
         ],
       ),
@@ -660,6 +722,7 @@ class _HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final date = DateFormat('d MMMM yyyy', 'ru').format(measurement.date);
     final values = BodyMetric.values
         .map((m) => m.readValue(measurement))
@@ -674,11 +737,36 @@ class _HistoryTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: ListTile(
           contentPadding: EdgeInsets.zero,
-          title: AppText(date, style: Theme.of(context).textTheme.bodyMedium),
+          // Бейдж метрики (54.9, образец): весы при известном весе,
+          // иначе линейка (заполненных обхватов).
+          leading: AppContainer(
+            width: 40,
+            height: 40,
+            padding: EdgeInsets.zero,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+            child: Center(
+              child: AppIcon(
+                measurement.weightKg != null
+                    ? Icons.monitor_weight_outlined
+                    : Icons.straighten_outlined,
+                size: 20,
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+            ),
+          ),
+          title: AppText(
+            date,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           subtitle: AppText(
             summary,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           trailing: IconButton(

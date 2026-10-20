@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
@@ -19,3 +21,19 @@ String bodyMetricLabel(AppLocalizations l10n, BodyMetric metric) =>
       BodyMetric.thigh => l10n.profileMetricThigh,
       BodyMetric.calf => l10n.profileMetricCalf,
     };
+
+/// Иконка метрики для бейджей (54.9, образцы «Профиль»/«Новый замер»):
+/// рост/вес — предметные, обхваты — линейка (иллюстраций образца
+/// в ассетах приложения нет).
+IconData bodyMetricIcon(BodyMetric metric) => switch (metric) {
+  BodyMetric.height => Icons.height,
+  BodyMetric.weight => Icons.monitor_weight_outlined,
+  BodyMetric.neck ||
+  BodyMetric.chest ||
+  BodyMetric.waist ||
+  BodyMetric.hips ||
+  BodyMetric.biceps ||
+  BodyMetric.forearm ||
+  BodyMetric.thigh ||
+  BodyMetric.calf => Icons.straighten_outlined,
+};

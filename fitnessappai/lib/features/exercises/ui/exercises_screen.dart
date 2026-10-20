@@ -267,7 +267,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 child: AppIcon(
                   Icons.add,
                   size: 28,
-                  color: theme.colorScheme.onPrimary,
+                  // На градиенте primaryCta — всегда белый (см. токен:
+                  // onPrimary тёмной темы даёт ~2.2:1, дизайн-ревью 54.9).
+                  color: AppColors.primaryCtaContent,
                 ),
               ),
             ),
@@ -489,7 +491,9 @@ class _ExerciseCard extends StatelessWidget {
                           child: AppIcon(
                             Icons.play_arrow,
                             size: 26,
-                            color: Theme.of(context).colorScheme.onPrimary,
+                            // На градиенте primaryCta — всегда белый (токен,
+                            // design-review 54.9).
+                            color: AppColors.primaryCtaContent,
                           ),
                         ),
                       ),

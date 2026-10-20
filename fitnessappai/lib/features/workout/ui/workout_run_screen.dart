@@ -1388,7 +1388,9 @@ class _FinishedViewState extends State<_FinishedView> {
                 child: AppIcon(
                   Icons.check,
                   size: 40,
-                  color: colorScheme.onPrimary,
+                  // На градиенте primaryCta — всегда белый (токен;
+                  // design-review 54.9).
+                  color: AppColors.primaryCtaContent,
                 ),
               ),
             ),
