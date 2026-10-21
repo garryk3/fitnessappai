@@ -13,8 +13,10 @@ import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/ui/single_exercise_params_screen.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/uikit.dart';
 
 void main() {
   late AppDatabase db;
@@ -98,6 +100,16 @@ void main() {
 
   Finder field(String label) => find.widgetWithText(TextFormField, label);
 
+  /// Карточки-степперы (55.1) укрупнили форму — нижние поля лениво строятся
+  /// только после прокрутки списка.
+  Future<void> scrollFieldIntoView(WidgetTester tester, String label) {
+    return tester.scrollUntilVisible(
+      field(label),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+  }
+
   testWidgets('strength: набор полей по типу', (tester) async {
     final exercise = await createExercise('Жим штанги', ExerciseType.strength);
 
@@ -106,15 +118,17 @@ void main() {
     expect(field('Подходы'), findsOneWidget);
     expect(field('Повторения'), findsOneWidget);
     expect(field('Вес (кг)'), findsOneWidget);
-    expect(field('Отдых (сек)'), findsOneWidget);
-    expect(field('Время (сек)'), findsNothing);
-    expect(field('Время (мин)'), findsNothing);
-    expect(field('Дистанция (км)'), findsNothing);
+    // Заголовок/CTA проверяем до прокрутки — шапка уходит из ленивого списка.
     expect(find.text('Жим штанги'), findsOneWidget);
     expect(
       find.widgetWithText(ElevatedButton, 'Начать тренировку'),
       findsOneWidget,
     );
+    await scrollFieldIntoView(tester, 'Отдых (сек)');
+    expect(field('Отдых (сек)'), findsOneWidget);
+    expect(field('Время (сек)'), findsNothing);
+    expect(field('Время (мин)'), findsNothing);
+    expect(field('Дистанция (км)'), findsNothing);
   });
 
   testWidgets('plank: набор полей по типу', (tester) async {
@@ -241,6 +255,7 @@ void main() {
     await enterField(tester, 'Подходы', '4');
     await enterField(tester, 'Повторения', '8');
     await enterField(tester, 'Вес (кг)', '20.5');
+    await scrollFieldIntoView(tester, 'Отдых (сек)');
     await enterField(tester, 'Отдых (сек)', '90');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
@@ -366,5 +381,56 @@ void main() {
     await pumpParams(tester, 999);
 
     expect(find.text('Упражнение не найдено'), findsOneWidget);
+  });
+
+  testWidgets('редизайн 55.1: шапка-карточка с миниатюрой и степперы ±', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Жим штанги', ExerciseType.strength);
+
+    await pumpParams(tester, exercise.id!);
+
+    // Шапка: AppCard с миниатюрой 64 и названием titleLarge w600.
+    expect(
+      find.ancestor(
+        of: find.text('Жим штанги'),
+        matching: find.byType(AppCard),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(ExerciseThumbnail), findsOneWidget);
+    // Поля — степперы в карточках (по одному на каждое поле strength).
+    await scrollFieldIntoView(tester, 'Отдых (сек)');
+    expect(find.byType(AppNumberStepper), findsNWidgets(4));
+
+    // Кнопки ± работают и пишут в контроллер (контракт «подходы»).
+    final setsCard = find.ancestor(
+      of: field('Подходы'),
+      matching: find.byType(AppCard),
+    );
+    await tester.scrollUntilVisible(
+      setsCard,
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.descendant(of: setsCard, matching: find.byTooltip('Увеличить')),
+    );
+    await tester.pump();
+    expect(
+      tester.widget<TextFormField>(field('Подходы')).controller?.text,
+      '1',
+    );
+  });
+
+  testWidgets('редизайн 55.1: plank helper-текст виден без ввода', (
+    tester,
+  ) async {
+    final exercise = await createExercise('Планка', ExerciseType.plank);
+
+    await pumpParams(tester, exercise.id!);
+
+    expect(find.byType(AppNumberStepper), findsNWidgets(3));
+    expect(find.text('Пусто — время удержания со счётчика'), findsOneWidget);
   });
 }
