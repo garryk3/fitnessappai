@@ -12,15 +12,10 @@ class NotFoundScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const AppIcon(Icons.search_off, size: 64),
-            const SizedBox(height: 16),
-            AppText('404', style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            AppText(l10n.errorNotFound),
-          ],
+        child: AppEmptyState(
+          icon: Icons.search_off,
+          title: '404',
+          hint: l10n.errorNotFound,
         ),
       ),
     );
