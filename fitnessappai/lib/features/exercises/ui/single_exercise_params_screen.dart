@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -154,6 +155,8 @@ class _SingleExerciseParamsScreenState
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: AppGradientButton(
+                  pill: true,
+                  icon: Icons.play_arrow,
                   onPressed: _start,
                   label: l10n.exerciseListStartWorkout,
                 ),
@@ -176,87 +179,120 @@ class _SingleExerciseParamsScreenState
       child: AppListView(
         padding: const EdgeInsets.all(16),
         children: [
-          AppText(
-            exercise.name,
-            style: Theme.of(context).textTheme.titleMedium,
+          // Шапка: миниатюра + название (паттерн «Параметры упражнения», 54.4).
+          AppCard(
+            child: Row(
+              children: [
+                ExerciseThumbnail(
+                  exercise: exercise,
+                  mediaCache: locator.isRegistered<MediaCache>()
+                      ? locator.get<MediaCache>()
+                      : null,
+                  size: 64,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: AppText(
+                    exercise.name,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           if (type != ExerciseType.distance)
-            _buildNumberField(
+            _buildStepperField(
               controller: _setsController,
               label: l10n.exerciseParamsSets,
               validator: _validateRequiredPositive,
+              icon: Icons.format_list_numbered,
             ),
           if (type == ExerciseType.strength ||
               type == ExerciseType.bodyweight) ...[
-            _buildNumberField(
+            _buildStepperField(
               controller: _repsController,
               label: l10n.exerciseParamsReps,
               validator: _validateRequiredPositive,
+              icon: Icons.repeat,
             ),
             if (type == ExerciseType.strength)
-              _buildNumberField(
+              _buildStepperField(
                 controller: _weightController,
                 label: l10n.exerciseParamsWeightKg,
                 validator: _validateOptionalNotNegative,
+                icon: Icons.fitness_center,
+                step: 0.5,
                 decimals: true,
               ),
           ],
           if (type == ExerciseType.plank)
-            _buildNumberField(
+            _buildStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationSeconds,
               validator: _validateOptionalNotNegative,
+              icon: Icons.timer,
               helperText: l10n.exerciseParamsHoldHint,
             ),
           if (type == ExerciseType.distance) ...[
-            _buildNumberField(
+            _buildStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,
               validator: _validateRequiredPositive,
+              icon: Icons.timer,
             ),
-            _buildNumberField(
+            _buildStepperField(
               controller: _distanceController,
               label: l10n.exerciseParamsDistanceKm,
               validator: _validateOptionalNotNegative,
+              icon: Icons.directions_run,
+              step: 0.5,
               decimals: true,
             ),
           ],
-          _buildNumberField(
+          _buildStepperField(
             controller: _restController,
             label: l10n.exerciseParamsRestSeconds,
             validator: _validateOptionalNotNegative,
+            icon: Icons.hourglass_bottom,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNumberField({
+  Widget _buildStepperField({
     required TextEditingController controller,
     required String label,
     required String? Function(String?) validator,
+    required IconData icon,
+    double step = 1,
     bool decimals = false,
     String? helperText,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AppTextFormField(
-        controller: controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: decimals),
-        inputFormatters: [
-          if (decimals)
-            FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
-          else
-            FilteringTextInputFormatter.digitsOnly,
-        ],
-        decoration: InputDecoration(
-          labelText: label,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: AppNumberStepper(
+          controller: controller,
+          label: label,
+          validator: validator,
+          icon: icon,
+          step: step,
+          decimals: decimals,
           helperText: helperText,
-          border: const OutlineInputBorder(),
+          // Крупное полужирное значение — как в образце «Параметры упражнения».
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          increaseTooltip: l10n.commonIncrease,
+          decreaseTooltip: l10n.commonDecrease,
         ),
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        validator: validator,
       ),
     );
   }

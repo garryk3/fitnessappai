@@ -41,6 +41,7 @@ class AppNumberStepper extends StatelessWidget {
     this.onChanged,
     this.increaseTooltip,
     this.decreaseTooltip,
+    this.helperText,
   });
 
   final TextEditingController controller;
@@ -75,6 +76,10 @@ class AppNumberStepper extends StatelessWidget {
   /// Тултипы/а11y-подписи кнопок (l10n) — обязательны для доступности.
   final String? increaseTooltip;
   final String? decreaseTooltip;
+
+  /// Необязательная служебная подпись под полем (`helperText` — например,
+  /// plank-подсказка «Пусто — время удержания со счётчика»).
+  final String? helperText;
 
   double? _parse() {
     final text = controller.text.trim().replaceAll(',', '.');
@@ -148,6 +153,9 @@ class AppNumberStepper extends StatelessWidget {
             ],
             decoration: InputDecoration(
               labelText: label,
+              helperText: helperText,
+              // Не обрывается на крупном шрифте (fontScale ≥1.3 — дизайн-ревью 55.1).
+              helperMaxLines: 2,
               border: const OutlineInputBorder(),
               // Валидное значение — без рамки (по образцу); ошибка — красная
               // рамка поля + служебный текст валидатора.
