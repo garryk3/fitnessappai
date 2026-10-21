@@ -524,9 +524,18 @@ Low из 54.1 закрыты: disabled `AppGradientButton` отличим (по�
 - **Нюанс (ленивый список):** карточки укрупнили форму — нижние поля не строятся до прокрутки; в тестах — `scrollFieldIntoView` (`tester.scrollUntilVisible`), проверки шапки/CTA — до скролла.
 - Принятые отклонения: без футера «Прогресс плана» (там позиция в программе — здесь одиночный запуск, данных нет); порядок дней в `AppNumberStepper`-кнопках «+» сверху/«−» снизу — общий паттерн uikit. Отложено в 55.4 (task-review 55.1): безопасный парсинг `_start` вместо `int.parse` (WILL COST при ленивом списке + fontScale ≳1.3 — закрывает и эталон 54.4) и выноска общей шапки-карточки/`_buildStepperField` двух params-экранов (WILL ROT).
 
+### Системные мелочи (55.2)
+
+- **Снекбар** (`snackBarTheme`, обе темы): фон `surfaceContainerHighest`, текст `onSurface` (в M3 `ColorScheme` нет `onSurfaceContainerHighest`; на highest-слое контраст ≥10:1 по §11), `behavior: floating`, радиус `AppRadii.lg` — младший радиус шкалы (снекбар — временный мелкий элемент; листы/диалоги — уровень `xxl`, см. ниже). Раньше — M3-дефолт `inverseSurface` выбивался из near-black иерархии.
+- **Bottom sheet** (`bottomSheetTheme`, обе темы): фон `surfaceContainerLow`, верхний радиус `AppRadii.xxl` (как у диалогов), `showDragHandle: true` (M3-механика не меняется — листы действий/планирования 54.5 остаются с drag-handle).
+- **404** (`not_found_screen`) → `AppEmptyState` (`Icons.search_off` + заголовок «404» + подсказка `errorNotFound`); контракт-тест `router_test` (`'404'` + `'Страница не найдена'`) сохранён без смены l10n.
+- **`StatusBadge` — принятый статус** (по §4): chip-радиус `AppRadii.sm`, НЕ pill — статусные бейджи осознанно следуют §4 (Filled/Outlined chip), pill-язык редизайна к ним не применяется. Не трогать.
+
 ---
 
 ## 12. Чейнджлог
+
+- 2026-10-21 — завершение перевода (задача 55.2, §11): `snackBarTheme` (`surfaceContainerHighest`/`onSurface`, floating, `AppRadii.lg`) и `bottomSheetTheme` (`surfaceContainerLow`, верхний радиус `AppRadii.xxl`, drag-handle) — токенизированные роли вместо M3-дефолтов, обе темы + тест; 404 → `AppEmptyState` (контракт `router_test` сохранён); `StatusBadge` зафиксирован как принятый chip-статус по §4. Тесты +1; 1299/1299.
 
 - 2026-10-21 — завершение перевода (задача 55.1, §11): экран одиночных параметров `/exercises/:id/params` — единственный пропуск редизайна 54 — приведён к паттерну «Параметры упражнения» 54.4: шапка-карточка `ExerciseThumbnail(64)`+имя `titleLarge` w600, поля — `AppNumberStepper` в `AppCard` с иконочными бейджами, CTA `AppGradientButton(pill)`. `AppNumberStepper` +`helperText` (plank-подсказка, контракт теста). Контракты `TextFormField`/`ElevatedButton 'Начать тренировку'`/валидации не тронуты; тесты +2, ленивый список — `scrollFieldIntoView`. 1298/1298.
 

@@ -159,6 +159,32 @@ void main() {
       expect(theme.dialogTheme, isNotNull);
     });
 
+    test('55.2: снекбар и лист — токенизированные роли и радиусы', () {
+      for (final ThemeData theme in [AppTheme.light(), AppTheme.dark()]) {
+        final ColorScheme scheme = theme.colorScheme;
+        final SnackBarThemeData snack = theme.snackBarTheme;
+        final BottomSheetThemeData sheet = theme.bottomSheetTheme;
+
+        expect(snack.backgroundColor, scheme.surfaceContainerHighest);
+        expect(snack.contentTextStyle?.color, scheme.onSurface);
+        final RoundedRectangleBorder snackShape =
+            snack.shape! as RoundedRectangleBorder;
+        expect(
+          (snackShape.borderRadius as BorderRadius).topLeft.x,
+          AppRadii.lg,
+        );
+
+        expect(sheet.backgroundColor, scheme.surfaceContainerLow);
+        final RoundedRectangleBorder sheetShape =
+            sheet.shape! as RoundedRectangleBorder;
+        expect(
+          (sheetShape.borderRadius as BorderRadius).topLeft.x,
+          AppRadii.xxl,
+        );
+        expect(sheet.showDragHandle, isTrue);
+      }
+    });
+
     test('54.2: бар/rail — pill-индикатор на приподнятой поверхности', () {
       for (final ThemeData theme in [AppTheme.light(), AppTheme.dark()]) {
         final ColorScheme scheme = theme.colorScheme;

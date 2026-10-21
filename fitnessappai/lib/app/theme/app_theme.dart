@@ -134,6 +134,26 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppRadii.xxl),
         ),
       ),
+      // 55.2: снекбар/лист — токенизированные роли, консистентно с
+      // dialogTheme (иначе M3-дефолт inverseSurface выбивается из
+      // near-black иерархии тёмной темы).
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: colorScheme.surfaceContainerHighest,
+        contentTextStyle: TextStyle(color: colorScheme.onSurface),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.lg),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colorScheme.surfaceContainerLow,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadii.xxl),
+          ),
+        ),
+        showDragHandle: true,
+      ),
     );
   }
 }
