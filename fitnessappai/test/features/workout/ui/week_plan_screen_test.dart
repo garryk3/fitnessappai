@@ -344,6 +344,33 @@ void main() {
     expect(find.text('Пропустить'), findsOneWidget);
   });
 
+  testWidgets('редизайн 55.3: «Начать» — pill-CTA AppGradientButton', (
+    tester,
+  ) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+
+    // Недельная карточка: primary-действие дня — градиентная пилюля
+    // (AppGradientButton оборачивает ElevatedButton — контракт finder'ов).
+    expect(find.widgetWithText(ElevatedButton, 'Начать'), findsOneWidget);
+    // Кнопка «Начать» больше не FilledButton.tonalIcon (55.3).
+    expect(find.widgetWithText(FilledButton, 'Начать'), findsNothing);
+
+    // Лист действий дня в месячном виде — тот же pill-контракт.
+    await tester.tap(find.text('10').last);
+    await tester.pumpAndSettle();
+
+    final sheet = find.byType(BottomSheet);
+    expect(sheet, findsOneWidget);
+    expect(
+      find.descendant(
+        of: sheet,
+        matching: find.widgetWithText(ElevatedButton, 'Начать'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'изображение программы показывается на запланированной карточке',
     (tester) async {

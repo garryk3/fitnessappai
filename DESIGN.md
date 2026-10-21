@@ -531,9 +531,20 @@ Low из 54.1 закрыты: disabled `AppGradientButton` отличим (по�
 - **404** (`not_found_screen`) → `AppEmptyState` (`Icons.search_off` + заголовок «404» + подсказка `errorNotFound`); контракт-тест `router_test` (`'404'` + `'Страница не найдена'`) сохранён без смены l10n.
 - **`StatusBadge` — принятый статус** (по §4): chip-радиус `AppRadii.sm`, НЕ pill — статусные бейджи осознанно следуют §4 (Filled/Outlined chip), pill-язык редизайна к ним не применяется. Не трогать.
 
+### Week-plan: pill-CTA «Начать» (55.3)
+
+Primary-действие дня в «Плане» приведено к единому pill-языку редизайна (паттерн 54.4/54.7, токены `AppGradients.primaryCta`/`AppRadii.pill`, §11):
+
+- Обе точки рендера «Начать» — карточка дня (`_WeekList`) и `_DayActionTile` (один и тот же виджет рендерит и bottom-sheet действий дня в месячном виде) — переведены с `FilledButton.tonalIcon` на `AppGradientButton(pill, icon: play_arrow)`; компактный padding стиля убран (пилюля сама задаёт ритм). Иерархия: ровно один primary на блок.
+- Вторичные действия не меняются: «Перенести на сегодня» — `FilledButton.tonalIcon`, «Пропустить» — `AppTextButton` (§11, иерархия primary/вторичных).
+- Контракты сохранены: текст `'Начать'` виден всем finder'ам (и unit, и e2e); `AppGradientButton` оборачивает `ElevatedButton`, поэтому `widgetWithText(ElevatedButton, 'Начать')`-сценарии e2e не тронуты. Лист действий дня (`_showScheduleSheet` для пустого дня) кнопки «Начать» не содержит — точка одна.
+- **Нюанс:** pending-день одиночно не показывает «Перенести» (оно проявляется при втором присвоении того же дня — покрыто тестом 47.3).
+
 ---
 
 ## 12. Чейнджлог
+
+- 2026-10-21 — завершение перевода (задача 55.3, §11): week-plan «Начать» → `AppGradientButton(pill, icon: play_arrow)` в обеих точках (`_WeekList`, `_DayActionTile`+bottom-sheet); «Перенести»/«Пропустить» — вторичные, без изменений; текстовые контракты unit/e2e сохранены, +1 тест pill-CTA. 1300/1300.
 
 - 2026-10-21 — завершение перевода (задача 55.2, §11): `snackBarTheme` (`surfaceContainerHighest`/`onSurface`, floating, `AppRadii.lg`) и `bottomSheetTheme` (`surfaceContainerLow`, верхний радиус `AppRadii.xxl`, drag-handle) — токенизированные роли вместо M3-дефолтов, обе темы + тест; 404 → `AppEmptyState` (контракт `router_test` сохранён); `StatusBadge` зафиксирован как принятый chip-статус по §4. Тесты +1; 1299/1299.
 

@@ -1087,16 +1087,17 @@ class _PlannedWorkoutCard extends StatelessWidget {
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
+                // Выравнивание ряда по центру — пилюля выше text-кнопки
+                // «Пропустить» (дизайн-ревью 55.3 Low).
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   if (actions.contains(DayAction.start))
-                    FilledButton.tonalIcon(
+                    // 55.3: primary-действие дня — pill-CTA (паттерн 54.4/54.7).
+                    AppGradientButton(
+                      pill: true,
                       onPressed: () => onStart(item),
-                      icon: const AppIcon(Icons.play_arrow),
-                      label: AppText(l10n.weekPlanStart),
-                      style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
+                      icon: Icons.play_arrow,
+                      label: l10n.weekPlanStart,
                     ),
                   if (actions.contains(DayAction.reschedule))
                     FilledButton.tonalIcon(
@@ -1285,10 +1286,12 @@ class _DayActionTile extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   if (actions.contains(DayAction.start))
-                    FilledButton.tonalIcon(
+                    // 55.3: primary-действие дня — pill-CTA (паттерн 54.4/54.7).
+                    AppGradientButton(
+                      pill: true,
                       onPressed: onStart,
-                      icon: const AppIcon(Icons.play_arrow),
-                      label: AppText(l10n.weekPlanStart),
+                      icon: Icons.play_arrow,
+                      label: l10n.weekPlanStart,
                     ),
                   if (actions.contains(DayAction.reschedule))
                     FilledButton.tonalIcon(
