@@ -6,7 +6,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
-import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_params_form.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
@@ -122,26 +122,42 @@ class _ProgramDayExerciseParamsScreenState
     });
   }
 
-  ProgramDayExercise _buildUpdated() {
+  /// Обновлённая позиция; null — обязательное поле не распарсилось
+  /// (ленивый список + крупный шрифт: поле могло размонтироваться до
+  /// validate() — 55.4).
+  ProgramDayExercise? _buildUpdated() {
     final item = _item!;
     final type = _type!;
     final rest = _parseInt(_restController.text);
+    // 55.4: tryParse вместо int.parse — размонтированное поле не роняет тап.
+    final sets = type == ExerciseType.distance
+        ? 1
+        : int.tryParse(_setsController.text.trim());
+    final needsReps =
+        type == ExerciseType.strength || type == ExerciseType.bodyweight;
+    final reps = needsReps ? int.tryParse(_repsController.text.trim()) : null;
+    final plankSeconds = type == ExerciseType.plank
+        ? int.tryParse(_durationController.text.trim())
+        : null;
+    if (sets == null ||
+        (needsReps && reps == null) ||
+        (type == ExerciseType.plank && plankSeconds == null)) {
+      return null;
+    }
     return ProgramDayExercise(
       id: item.id,
       dayId: item.dayId,
       exerciseId: item.exerciseId,
       orderIndex: item.orderIndex,
       isAlternative: item.isAlternative,
-      sets: type == ExerciseType.distance ? 1 : int.parse(_setsController.text),
-      reps: type == ExerciseType.strength || type == ExerciseType.bodyweight
-          ? int.parse(_repsController.text)
-          : null,
+      sets: sets,
+      reps: reps,
       weightKg: type == ExerciseType.strength
           ? _parseDouble(_weightController.text)
           : null,
       durationSeconds: switch (type) {
         ExerciseType.strength || ExerciseType.bodyweight => null,
-        ExerciseType.plank => int.parse(_durationController.text),
+        ExerciseType.plank => plankSeconds,
         ExerciseType.distance => _minutesToSeconds(_durationController.text),
       },
       distanceMeters: switch (type) {
@@ -158,9 +174,16 @@ class _ProgramDayExerciseParamsScreenState
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    final updated = _buildUpdated();
+    if (updated == null) {
+      // Обязательное поле размонтировано ленивым списком и ушло от
+      // validate() (55.4) — показываем ошибки видимых полей, без сохранения.
+      _formKey.currentState?.validate();
+      return;
+    }
     setState(() => _saving = true);
     try {
-      final saved = await _repository.updateExercise(_buildUpdated());
+      final saved = await _repository.updateExercise(updated);
       if (mounted) {
         Navigator.of(context).pop(saved);
       }
@@ -239,34 +262,17 @@ class _ProgramDayExerciseParamsScreenState
       child: AppListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Шапка: миниатюра + название (образец «Параметры упражнения»).
-          AppCard(
-            child: Row(
-              children: [
-                ExerciseThumbnail(
-                  exercise: _exercise,
-                  mediaCache: locator.isRegistered<MediaCache>()
-                      ? locator.get<MediaCache>()
-                      : null,
-                  size: 64,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: AppText(
-                    _exercise?.name ?? '',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+          // Шапка: миниатюра + название (образец «Параметры упражнения»;
+          // общий компонент 55.4).
+          ExerciseParamsHeaderCard(
+            exercise: _exercise,
+            mediaCache: locator.isRegistered<MediaCache>()
+                ? locator.get<MediaCache>()
+                : null,
           ),
           const SizedBox(height: 16),
           if (type != ExerciseType.distance)
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _setsController,
               label: l10n.exerciseParamsSets,
               validator: _validateRequiredPositive,
@@ -274,14 +280,14 @@ class _ProgramDayExerciseParamsScreenState
             ),
           if (type == ExerciseType.strength ||
               type == ExerciseType.bodyweight) ...[
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _repsController,
               label: l10n.exerciseParamsReps,
               validator: _validateRequiredPositive,
               icon: Icons.repeat,
             ),
             if (type == ExerciseType.strength)
-              _buildStepperField(
+              ExerciseParamsStepperField(
                 controller: _weightController,
                 label: l10n.exerciseParamsWeightKg,
                 validator: _validateOptionalNotNegative,
@@ -291,20 +297,20 @@ class _ProgramDayExerciseParamsScreenState
               ),
           ],
           if (type == ExerciseType.plank)
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationSeconds,
               validator: _validateRequiredPositive,
               icon: Icons.timer,
             ),
           if (type == ExerciseType.distance) ...[
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,
               validator: _validateRequiredPositive,
               icon: Icons.timer,
             ),
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _distanceController,
               label: l10n.exerciseParamsDistanceKm,
               validator: _validateOptionalNotNegative,
@@ -313,7 +319,7 @@ class _ProgramDayExerciseParamsScreenState
               decimals: true,
             ),
           ],
-          _buildStepperField(
+          ExerciseParamsStepperField(
             controller: _restController,
             label: l10n.exerciseParamsRestSeconds,
             validator: _validateOptionalNotNegative,
@@ -347,36 +353,6 @@ class _ProgramDayExerciseParamsScreenState
           const SizedBox(height: 8),
           LinearProgressIndicator(value: day / total),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStepperField({
-    required TextEditingController controller,
-    required String label,
-    required String? Function(String?) validator,
-    required IconData icon,
-    double step = 1,
-    bool decimals = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: AppCard(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: AppNumberStepper(
-          controller: controller,
-          label: label,
-          validator: validator,
-          icon: icon,
-          step: step,
-          decimals: decimals,
-          // Крупное полужирное значение — как в образце «Параметры упражнения».
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-          increaseTooltip: l10n.commonIncrease,
-          decreaseTooltip: l10n.commonDecrease,
-        ),
       ),
     );
   }

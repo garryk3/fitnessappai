@@ -97,12 +97,8 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
         }),
       ),
       actions: [
-        if (time != null)
-          AppTextButton(
-            label: l10n.weekPlanClearTime,
-            onPressed: () =>
-                Navigator.of(context).pop(const ReminderTimeResult.clear()),
-          ),
+        // 55.4: ритм как в workout_run exit — cancel слева, primary по центру,
+        // деструктивное «Убрать время» справа.
         AppTextButton(
           label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
@@ -117,6 +113,13 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
           ),
           child: AppText(l10n.commonSave),
         ),
+        if (time != null)
+          AppTextButton(
+            label: l10n.weekPlanClearTime,
+            destructive: true,
+            onPressed: () =>
+                Navigator.of(context).pop(const ReminderTimeResult.clear()),
+          ),
       ],
     );
   }
