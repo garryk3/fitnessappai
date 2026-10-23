@@ -6,7 +6,7 @@ import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
-import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_params_form.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -81,12 +81,14 @@ class _SingleExerciseParamsScreenState
       return;
     }
     final type = _type!;
+    // 55.4: ленивый список + крупный шрифт — поле могло быть размонтировано
+    // до validate(), поэтому парсим через tryParse, а не int.parse.
     final sets = type == ExerciseType.distance
         ? 1
-        : int.parse(_setsController.text);
+        : int.tryParse(_setsController.text.trim());
     final reps =
         type == ExerciseType.strength || type == ExerciseType.bodyweight
-        ? int.parse(_repsController.text)
+        ? int.tryParse(_repsController.text.trim())
         : null;
     final weightKg = type == ExerciseType.strength
         ? _parseDouble(_weightController.text)
@@ -104,6 +106,17 @@ class _SingleExerciseParamsScreenState
         ? _kmToMeters(_distanceController.text)
         : null;
     final restSeconds = _parseInt(_restController.text);
+
+    // Обязательное поле не распарсилось (размонтировано ленивым списком) —
+    // повторная валидация видимых полей вместо навигации с пустыми данными.
+    // Plank-время на этом экране опционально (счётчик удержания) — не гвардим.
+    if (sets == null ||
+        ((type == ExerciseType.strength || type == ExerciseType.bodyweight) &&
+            reps == null) ||
+        (type == ExerciseType.distance && durationMinutes == null)) {
+      _formKey.currentState?.validate();
+      return;
+    }
 
     final query = <String, String>{
       'exerciseId': '${widget.exerciseId}',
@@ -179,34 +192,17 @@ class _SingleExerciseParamsScreenState
       child: AppListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Шапка: миниатюра + название (паттерн «Параметры упражнения», 54.4).
-          AppCard(
-            child: Row(
-              children: [
-                ExerciseThumbnail(
-                  exercise: exercise,
-                  mediaCache: locator.isRegistered<MediaCache>()
-                      ? locator.get<MediaCache>()
-                      : null,
-                  size: 64,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: AppText(
-                    exercise.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+          // Шапка: миниатюра + название (паттерн «Параметры упражнения», 54.4;
+          // общий компонент 55.4).
+          ExerciseParamsHeaderCard(
+            exercise: exercise,
+            mediaCache: locator.isRegistered<MediaCache>()
+                ? locator.get<MediaCache>()
+                : null,
           ),
           const SizedBox(height: 16),
           if (type != ExerciseType.distance)
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _setsController,
               label: l10n.exerciseParamsSets,
               validator: _validateRequiredPositive,
@@ -214,14 +210,14 @@ class _SingleExerciseParamsScreenState
             ),
           if (type == ExerciseType.strength ||
               type == ExerciseType.bodyweight) ...[
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _repsController,
               label: l10n.exerciseParamsReps,
               validator: _validateRequiredPositive,
               icon: Icons.repeat,
             ),
             if (type == ExerciseType.strength)
-              _buildStepperField(
+              ExerciseParamsStepperField(
                 controller: _weightController,
                 label: l10n.exerciseParamsWeightKg,
                 validator: _validateOptionalNotNegative,
@@ -231,7 +227,7 @@ class _SingleExerciseParamsScreenState
               ),
           ],
           if (type == ExerciseType.plank)
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationSeconds,
               validator: _validateOptionalNotNegative,
@@ -239,13 +235,13 @@ class _SingleExerciseParamsScreenState
               helperText: l10n.exerciseParamsHoldHint,
             ),
           if (type == ExerciseType.distance) ...[
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,
               validator: _validateRequiredPositive,
               icon: Icons.timer,
             ),
-            _buildStepperField(
+            ExerciseParamsStepperField(
               controller: _distanceController,
               label: l10n.exerciseParamsDistanceKm,
               validator: _validateOptionalNotNegative,
@@ -254,45 +250,13 @@ class _SingleExerciseParamsScreenState
               decimals: true,
             ),
           ],
-          _buildStepperField(
+          ExerciseParamsStepperField(
             controller: _restController,
             label: l10n.exerciseParamsRestSeconds,
             validator: _validateOptionalNotNegative,
             icon: Icons.hourglass_bottom,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStepperField({
-    required TextEditingController controller,
-    required String label,
-    required String? Function(String?) validator,
-    required IconData icon,
-    double step = 1,
-    bool decimals = false,
-    String? helperText,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: AppCard(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: AppNumberStepper(
-          controller: controller,
-          label: label,
-          validator: validator,
-          icon: icon,
-          step: step,
-          decimals: decimals,
-          helperText: helperText,
-          // Крупное полужирное значение — как в образце «Параметры упражнения».
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-          increaseTooltip: l10n.commonIncrease,
-          decreaseTooltip: l10n.commonDecrease,
-        ),
       ),
     );
   }

@@ -258,7 +258,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
+        matching: find.widgetWithText(FilledButton, 'Сохранить'),
       ),
     );
     await tester.pumpAndSettle();
@@ -286,7 +286,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.widgetWithText(ElevatedButton, 'Сохранить'),
+        matching: find.widgetWithText(FilledButton, 'Сохранить'),
       ),
     );
     await tester.pumpAndSettle();

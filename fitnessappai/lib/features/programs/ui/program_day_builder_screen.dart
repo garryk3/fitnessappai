@@ -145,10 +145,11 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               label: dialogL10n.commonCancel,
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
-            AppGradientButton(
+            // 55.4: диалоги = FilledButton (контракт 54.6), не градиент.
+            FilledButton(
               onPressed: () =>
                   Navigator.of(dialogContext).pop(controller.text.trim()),
-              label: dialogL10n.programBuilderRenameDaySave,
+              child: AppText(dialogL10n.programBuilderRenameDaySave),
             ),
           ],
         );
