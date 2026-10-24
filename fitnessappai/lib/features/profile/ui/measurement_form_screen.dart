@@ -64,7 +64,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
             // Дата (функциональность не менялась — вне образца, консервативно).
             AppCard(
               padding: EdgeInsets.zero,
-              child: ListTile(
+              child: AppListTile(
                 leading: const AppIcon(Icons.calendar_today_outlined),
                 title: AppText(DateFormat('d MMMM yyyy', 'ru').format(_date)),
                 trailing: const AppIcon(Icons.edit_outlined),

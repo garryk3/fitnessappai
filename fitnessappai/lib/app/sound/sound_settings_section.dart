@@ -42,7 +42,7 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SwitchListTile(
+            AppSwitchTile(
               contentPadding: EdgeInsets.zero,
               title: AppText(widget.title),
               value: controller.enabled.value,

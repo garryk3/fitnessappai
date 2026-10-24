@@ -457,7 +457,7 @@ class _WarningDialogState extends State<_WarningDialog> {
               ),
             ),
           if (widget.onDismiss != null)
-            CheckboxListTile(
+            AppCheckboxTile(
               value: _dontShowAgain,
               onChanged: (value) => setState(() {
                 _dontShowAgain = value ?? false;

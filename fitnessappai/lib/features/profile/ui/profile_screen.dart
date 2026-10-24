@@ -550,14 +550,14 @@ class _MetricChartCard extends StatelessWidget {
                   style: theme.textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
-                DropdownButton<BodyMetric>(
+                AppDropdownInline<BodyMetric>(
                   value: selectedMetric,
                   isExpanded: true,
                   items: [
                     for (final metric in BodyMetric.values)
-                      DropdownMenuItem(
+                      AppDropdownItem(
                         value: metric,
-                        child: AppText(bodyMetricLabel(l10n, metric)),
+                        label: bodyMetricLabel(l10n, metric),
                       ),
                   ],
                   onChanged: (metric) {
@@ -735,7 +735,7 @@ class _HistoryTile extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: ListTile(
+        child: AppListTile(
           contentPadding: EdgeInsets.zero,
           // Бейдж метрики (54.9, образец): весы при известном весе,
           // иначе линейка (заполненных обхватов).
@@ -787,7 +787,7 @@ class _LinksCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AppCard(
       padding: EdgeInsets.zero,
-      child: ListTile(
+      child: AppListTile(
         leading: const AppIcon(Icons.health_and_safety_outlined),
         title: AppText(l10n.contraindications),
         trailing: const AppIcon(Icons.chevron_right),

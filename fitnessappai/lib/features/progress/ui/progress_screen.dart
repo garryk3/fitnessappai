@@ -528,14 +528,15 @@ class _MetricChart extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            DropdownButton<int>(
+            AppDropdownInline<int>(
               value: selectedId,
               isExpanded: true,
               items: [
                 for (final exercise in exercises)
-                  DropdownMenuItem(
+                  AppDropdownItem(
                     value: exercise.id,
-                    child: AppText(
+                    label: exercise.name,
+                    labelWidget: AppText(
                       exercise.name,
                       overflow: TextOverflow.ellipsis,
                     ),

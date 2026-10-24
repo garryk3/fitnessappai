@@ -1096,12 +1096,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       child: AppCard(
         padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        child: ListTile(
+        child: AppListTile(
           onTap: _deleteMode
               ? () => _toggleDaySelection(index)
               : () => _openDayFill(index),
           leading: _deleteMode
-              ? Checkbox(
+              ? AppCheckbox(
                   value: _selectedDayKeys.contains(day.key),
                   onChanged: (_) => _toggleDaySelection(index),
                 )
@@ -1187,22 +1187,16 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownButtonFormField<int?>(
+          AppDropdown<int?>(
             initialValue: _selected,
-            decoration: InputDecoration(
-              labelText: l10n.programBuilderDayWeekday,
-              border: const OutlineInputBorder(),
-            ),
+            labelText: l10n.programBuilderDayWeekday,
             items: [
-              DropdownMenuItem(
+              AppDropdownItem(
                 value: null,
-                child: AppText(l10n.programBuilderDayNoWeekday),
+                label: l10n.programBuilderDayNoWeekday,
               ),
               for (var day = 1; day <= 7; day++)
-                DropdownMenuItem(
-                  value: day,
-                  child: AppText(_weekdayLabel(l10n, day)),
-                ),
+                AppDropdownItem(value: day, label: _weekdayLabel(l10n, day)),
             ],
             onChanged: (value) => setState(() {
               _selected = value;
@@ -1212,7 +1206,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
             }),
           ),
           const SizedBox(height: 8),
-          SwitchListTile(
+          AppSwitchTile(
             contentPadding: EdgeInsets.zero,
             title: AppText(l10n.reminderToggle),
             value: _remindEnabled,
@@ -1220,7 +1214,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
                 ? (value) => setState(() => _remindEnabled = value)
                 : null,
           ),
-          ListTile(
+          AppListTile(
             enabled: _remindEnabled,
             leading: const AppIcon(Icons.access_time),
             title: AppText(l10n.reminderTime),

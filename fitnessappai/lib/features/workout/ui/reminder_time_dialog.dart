@@ -158,7 +158,7 @@ class ReminderTimeFields extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ListTile(
+        AppListTile(
           contentPadding: EdgeInsets.zero,
           leading: const AppIcon(Icons.access_time),
           title: AppText(l10n.weekPlanTime),
@@ -176,7 +176,7 @@ class ReminderTimeFields extends StatelessWidget {
             onTimeChanged(picked);
           },
         ),
-        SwitchListTile(
+        AppSwitchTile(
           contentPadding: EdgeInsets.zero,
           title: AppText(l10n.reminderToggle),
           value: reminderEnabled && time != null,

@@ -563,7 +563,22 @@ Primary-действие дня в «Плане» приведено к един
 
 ---
 
+### Строчные и тумблерные uikit (56.2)
+
+Строковые/тумблерные компоненты в uikit (32 точки / 12 файлов):
+
+- **`AppListTile` (×16).** Обёртка ListTile: leading/title/subtitle/trailing, `onTap`, `selected`/`selectedTileColor` (задействован adaptive_navigation — pill-фон 54.2), `enabled`, `dense`, `contentPadding`.
+- **Итог по этапу:** сырых List/Switch/Checkbox/Dropdown в `lib/features|app` — 0 (34 точки / 13 файлов, калибровка ревью: 2 `DropdownButton` из profile/progress добавлены в объём).
+- **`AppSwitchTile` (×8) / `AppCheckboxTile` (×1).** Обёртки SwitchListTile/CheckboxListTile; тумблерные имеют `secondary` (иконка/бейдж-тега, slot по M3), чекбокс-тайл — `controlAffinity: leading` (предупреждения тренировки). Весь тайл тапается (M3), ≥48dp.
+- **`AppDropdown` (×4) / `AppDropdownInline` (×2).** Обёртки DropdownButtonFormField/DropdownButton; items описываются через `AppDropdownItem(value, label, labelWidget?)` — сырые `DropdownMenuItem` из call-site'ов ушли (`value: T?` — сигнатура `DropdownMenuItem.value`). Форма — `AppDropdown`: `labelText`/`hintText`, граница `OutlineInputBorder` — как во всех формах, `isDense`/`isExpanded` — параметрами (диалоговые пикеры плотные, поле формы — обычное). Селекторы внутри карточек (метрика профиля, упражнение прогресса — находка ревью, пропущенные аудитом) — `AppDropdownInline`: без подписи и границы, M3-подчёркивание дефолта; `labelWidget` поддерживает ellipsis длинных названий.
+- **`AppSwitch` (×1) / `AppCheckbox` (×2).** Голые тумблер-виджеты (строка «Только свои» 54.7, выбор дней/упражнений); колбеки — M3-сигнатуры (`AppCheckbox` несёт `ValueChanged<bool?>?` по API Checkbox, tristate не используется).
+- Визуально без изменений; finder-контракты `SwitchListTile`/`ListTile`/dropdown'ов целы (обёртки рендерят голые виджеты).
+
+---
+
 ## 12. Чейнджлог
+
+- 2026-10-24 — uikit-миграция 56.2 (§11): строчные/тумблерные в uikit — `AppListTile` (16), `AppSwitchTile` (8) + `AppCheckboxTile` (1), `AppDropdown` (+`AppDropdownItem` — без сырых `DropdownMenuItem`) (4), `AppDropdownInline` (2, находка ревью — селекторы profile/progress), `AppSwitch` (1) / `AppCheckbox` (2); 34 точки / 13 файлов (adaptive_navigation, настройки/звук, напоминания, конструкторы программ, формы упражнений/замеров, week-plan). Визуально без изменений; uikit-тесты +12; 1325/1325.
 
 - 2026-10-24 — uikit-миграция 56.1 (§11): модальный слой в uikit — `AppDialog`/`showAppDialog` (17 диалогов ×11 файлов), `showAppSnackBar` (17 снекбаров; аргумент — захваченный `messenger` для async-gap), `showAppBottomSheet` (2 листа; drag-handle по умолчанию), raw `FilledButton` → `AppButton` (27 точек; компонент расширен `tonal`/`pending`/`visualDensity`/`padding` вместо нового `AppFilledButton` — `AppButton` уже оборачивал `FilledButton`). Визуально без изменений (темы 54.9/55.2 несут оформление); finder-контракты `find.byType` целы, тесты без адаптации. uikit-тесты +13; 1313/1313.
 - 2026-10-21 — завершение перевода (задача 55.4, §11): унификация диалогов (переименование дня — `FilledButton` вместо градиента по контракту 54.6; `reminder_time` — ритм cancel|primary|destructive по образцу workout_run exit) + отложенные из 55.1: общий компонент params-форм (`ExerciseParamsHeaderCard`/`ExerciseParamsStepperField`) и безопасный `tryParse`-парсинг в обоих params-экранах (ленивый список + fontScale). Тесты адаптированы ×2; 1300/1300.
