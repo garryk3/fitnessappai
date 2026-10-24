@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) {
           final controller = _controller;
           if (controller.isLoading.value) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: AppSpinner());
           }
           return AppListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -288,7 +288,7 @@ class _ActiveProgramCard extends StatelessWidget {
                 runSpacing: 4,
                 children: [
                   for (final name in exerciseNames)
-                    Chip(
+                    AppChip(
                       avatar: const AppIcon(Icons.fitness_center, size: 14),
                       label: AppText(name, style: theme.textTheme.bodySmall),
                       visualDensity: VisualDensity.compact,

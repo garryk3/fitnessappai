@@ -126,7 +126,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
     final controller = _controller;
     final l10n = AppLocalizations.of(context);
     if (controller.isLoading.value) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     if (controller.notFound.value) {
       return Center(child: AppText(l10n.workoutPrepareNotFound));
@@ -257,7 +257,7 @@ class _ProgramHeader extends StatelessWidget {
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
-              child: LinearProgressIndicator(
+              child: AppLinearProgress(
                 // Доля пройденного пути: текущий день считается в прогресс
                 // (в образце «1/14» бар слегка заполнен).
                 value: dayNumber / total,

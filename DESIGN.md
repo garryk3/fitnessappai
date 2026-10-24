@@ -586,8 +586,21 @@ Primary-действие дня в «Плане» приведено к един
 
 ---
 
+### Служебные uikit (56.4)
+
+Служебные виджеты в uikit (49 точек / 16 файлов):
+
+- **`AppSpinner` (×25).** Обёртка CircularProgressIndicator; без параметров — M3-дефолты (цвет `colorScheme.primary`, strokeWidth 4); единственный точечный — run 20×20/spi 2 (SizedBox с сайта сохранён). Размещение — в `Center`-обёртках call-sites как было.
+- **`AppLinearProgress` (×4).** value (доля подходов/дней, `null` → бегущая полоса), `minHeight` (pill-подсветка 6dp в prepare, ClipRRect сохранён с сайта).
+- **`AppDivider` (×6) / `AppVerticalDivider` (×2).** Разделители списков (height 1/24) и вертикальные — rail/two-pane (width 1, thickness 1); все дефолт-thickness от темы.
+- **`AppChip` (×7).** Статические бейджи-чипы (muscle/status/side-rest/alt-set); label — Widget (AppText со стилем), avatar — иконка/`MuscleGroupIcon`, фон — токен-роли (54.7 StadiumBorder-пилль мышц, тинт primaryContainer), `side: none` у side-rest.
+- **`AppRefresh` (×4) / `AppDrawer` (×1).** Pull-to-refresh списков программ/упражнений и боковая панель адаптивной навигации — пасс-тру, M3-дефолты.
+
+---
+
 ## 12. Чейнджлог
 
+- 2026-10-24 — uikit-миграция 56.4 (§11): служебные в uikit — `AppSpinner` (25, не 26), `AppLinearProgress` (4), `AppDivider`+`AppVerticalDivider` (6+2), `AppChip` (7), `AppRefresh` (4), `AppDrawer` (1); 49 точек / 16 файлов. Визуально без изменений; uikit-тесты +9; 1343/1343.
 - 2026-10-24 — uikit-миграция 56.3 (§11): кнопки-иконки/тултипы в uikit — `AppIconButton` (31), `AppFab` (3; hero-теги сохранены), `AppTooltip` (5, не 6 по точному grep); 39 точек / 14 файлов. Визуально без изменений; uikit-тесты +9; 1334/1334.
 - 2026-10-24 — uikit-миграция 56.2 (§11): строчные/тумблерные в uikit — `AppListTile` (16), `AppSwitchTile` (8) + `AppCheckboxTile` (1), `AppDropdown` (+`AppDropdownItem` — без сырых `DropdownMenuItem`) (4), `AppDropdownInline` (2, находка ревью — селекторы profile/progress), `AppSwitch` (1) / `AppCheckbox` (2); 34 точки / 13 файлов (adaptive_navigation, настройки/звук, напоминания, конструкторы программ, формы упражнений/замеров, week-plan). Визуально без изменений; uikit-тесты +12; 1325/1325.
 

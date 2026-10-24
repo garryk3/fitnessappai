@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:fitnessappai/uikit/uikit.dart';
+
 /// Двухпанельный макет для широких экранов: список + детали.
 class TwoPaneLayout extends StatelessWidget {
   const TwoPaneLayout({
@@ -18,7 +20,7 @@ class TwoPaneLayout extends StatelessWidget {
     return Row(
       children: [
         SizedBox(width: leadingWidth, child: leading),
-        const VerticalDivider(width: 1, thickness: 1),
+        const AppVerticalDivider(width: 1, thickness: 1),
         Expanded(child: trailing),
       ],
     );

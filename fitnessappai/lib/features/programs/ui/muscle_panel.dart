@@ -88,7 +88,7 @@ class MusclePanel extends StatelessWidget {
             runSpacing: 4,
             children: [
               for (final group in unused)
-                Chip(
+                AppChip(
                   label: AppText(
                     group.labelRu,
                     style: theme.textTheme.labelSmall,

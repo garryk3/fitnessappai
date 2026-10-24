@@ -312,7 +312,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         title: isEditing ? l10n.exerciseEdit : l10n.exerciseNew,
       ),
       body: _allMuscles.isEmpty && widget.exerciseId != null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppSpinner())
           : Form(
               key: _formKey,
               child: AppListView(

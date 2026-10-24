@@ -314,10 +314,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     final l10n = AppLocalizations.of(context);
     final items = _controller.items.value;
     if (_controller.isLoading.value && items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     if (items.isEmpty) {
-      return RefreshIndicator(
+      return AppRefresh(
         onRefresh: _controller.refresh,
         child: AppListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -332,7 +332,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         ),
       );
     }
-    return RefreshIndicator(
+    return AppRefresh(
       onRefresh: _controller.refresh,
       child: AppListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),

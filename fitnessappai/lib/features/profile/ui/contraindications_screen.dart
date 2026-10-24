@@ -44,7 +44,7 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     if (_controller.isLoading.value) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final tags = _controller.tags.value;
     final selectedKeys = _controller.selectedKeys.value;

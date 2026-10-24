@@ -177,7 +177,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           body: SignalBuilder(
             builder: (context) {
               if (_controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: AppSpinner());
               }
               if (data == null) {
                 return Center(child: AppText(l10n.exerciseDetailNotFound));
@@ -502,7 +502,7 @@ class _MusclesSection extends StatelessWidget {
             runSpacing: 6,
             children: [
               for (final muscle in muscles)
-                Chip(
+                AppChip(
                   avatar: MuscleGroupIcon(muscleKey: muscle.key, size: 18),
                   label: AppText(muscle.labelRu),
                   // Пилюля (54.7): чипы мышц — в стиле карточек редизайна.
@@ -558,7 +558,7 @@ class _ContraindicationsSection extends StatelessWidget {
             runSpacing: 6,
             children: [
               for (final tag in tags)
-                Chip(
+                AppChip(
                   label: AppText(tag.labelRu),
                   avatar: AppIcon(
                     Icons.warning_amber_rounded,
