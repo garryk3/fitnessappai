@@ -524,7 +524,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       child: AppCard(
         padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        child: ListTile(
+        child: AppListTile(
           onTap: () => _openExerciseParams(draft),
           leading: ReorderableDragStartListener(
             index: index,
@@ -667,50 +667,32 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
         height: 360,
         child: Column(
           children: [
-            DropdownButtonFormField<MuscleGroup?>(
+            AppDropdown<MuscleGroup?>(
               initialValue: _selectedGroup,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: l10n.programBuilderMuscleFilter,
-                border: const OutlineInputBorder(),
-                isDense: true,
-              ),
+              isDense: true,
+              labelText: l10n.programBuilderMuscleFilter,
               items: [
-                DropdownMenuItem<MuscleGroup?>(
-                  value: null,
-                  child: AppText(l10n.commonAll),
-                ),
+                AppDropdownItem(value: null, label: l10n.commonAll),
                 for (final group in widget.muscleGroups)
-                  DropdownMenuItem<MuscleGroup?>(
-                    value: group,
-                    child: AppText(group.labelRu),
-                  ),
+                  AppDropdownItem(value: group, label: group.labelRu),
               ],
               onChanged: (value) => setState(() => _selectedGroup = value),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<ExerciseType?>(
+            AppDropdown<ExerciseType?>(
               initialValue: _selectedType,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: l10n.programBuilderTypeFilter,
-                border: const OutlineInputBorder(),
-                isDense: true,
-              ),
+              isDense: true,
+              labelText: l10n.programBuilderTypeFilter,
               items: [
-                DropdownMenuItem<ExerciseType?>(
-                  value: null,
-                  child: AppText(l10n.commonAll),
-                ),
+                AppDropdownItem(value: null, label: l10n.commonAll),
                 for (final type in ExerciseType.values)
-                  DropdownMenuItem<ExerciseType?>(
-                    value: type,
-                    child: AppText(_typeLabel(l10n, type)),
-                  ),
+                  AppDropdownItem(value: type, label: _typeLabel(l10n, type)),
               ],
               onChanged: (value) => setState(() => _selectedType = value),
             ),
-            SwitchListTile(
+            AppSwitchTile(
               value: _onlyCustom,
               onChanged: (value) => setState(() => _onlyCustom = value),
               title: AppText(l10n.exerciseListOnlyCustom),
@@ -731,7 +713,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
                           const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final exercise = _filtered[index];
-                        return ListTile(
+                        return AppListTile(
                           dense: true,
                           leading: const AppIcon(Icons.fitness_center),
                           title: AppText(exercise.name),

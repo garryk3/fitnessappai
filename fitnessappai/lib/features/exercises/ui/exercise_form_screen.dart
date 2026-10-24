@@ -394,7 +394,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
       title: l10n.exerciseFormMode,
       child: Column(
         children: [
-          SwitchListTile(
+          AppSwitchTile(
             value: _hideOptional,
             onChanged: (value) => setState(() => _hideOptional = value),
             contentPadding: EdgeInsets.zero,
@@ -403,7 +403,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             subtitle: AppText(l10n.exerciseFormHideOptionalHelp),
           ),
           if (_type != ExerciseType.bodyweight)
-            SwitchListTile(
+            AppSwitchTile(
               value: _fixedWeight,
               onChanged: (value) => setState(() => _fixedWeight = value),
               contentPadding: EdgeInsets.zero,
@@ -414,7 +414,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
           // У дистанции стороны нет (бег не делится на левую и правую),
           // поэтому тумблер скрыт — задача 48.5.
           if (_type != ExerciseType.distance)
-            SwitchListTile(
+            AppSwitchTile(
               value: _perSide,
               onChanged: (value) => setState(() => _perSide = value),
               contentPadding: EdgeInsets.zero,
@@ -461,15 +461,12 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   }
 
   Widget _typeField(AppLocalizations l10n) {
-    return DropdownButtonFormField<ExerciseType>(
+    return AppDropdown<ExerciseType>(
       initialValue: _type,
-      decoration: InputDecoration(
-        labelText: l10n.exerciseFormType,
-        border: const OutlineInputBorder(),
-      ),
+      labelText: l10n.exerciseFormType,
       items: [
         for (final type in ExerciseType.values)
-          DropdownMenuItem(value: type, child: AppText(_typeLabel(l10n, type))),
+          AppDropdownItem(value: type, label: _typeLabel(l10n, type)),
       ],
       onChanged: (value) {
         if (value != null) {

@@ -274,7 +274,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
         onPressed: _goToSettings,
       );
     } else {
-      footer = ListTile(
+      footer = AppListTile(
         dense: true,
         selected: selected,
         // Редизайн 54: активный пункт — pill-фон на приподнятой поверхности.
@@ -377,7 +377,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                 padding: EdgeInsets.zero,
                 children: [
                   for (final item in items)
-                    ListTile(
+                    AppListTile(
                       leading: AppIcon(item.icon),
                       selected:
                           item.branchIndex == navigationShell.currentIndex,
@@ -392,7 +392,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
             ),
             // «Настройки» прикреплены к низу меню, отделены divider-ом.
             const Divider(height: 1),
-            ListTile(
+            AppListTile(
               leading: const AppIcon(Icons.settings_outlined),
               selected: navigationShell.currentIndex == _settingsBranchIndex,
               title: AppText(AppLocalizations.of(context).settings),

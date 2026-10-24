@@ -231,7 +231,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                           excludeSemantics: true,
                           label: l10n.exerciseListOnlyCustom,
                           toggled: onlyCustom,
-                          child: Switch(
+                          child: AppSwitch(
                             value: onlyCustom,
                             onChanged: _controller.setOnlyCustom,
                           ),
@@ -412,7 +412,10 @@ class _ExerciseCard extends StatelessWidget {
               if (selectionMode)
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
-                  child: Checkbox(value: selected, onChanged: (_) => onTap()),
+                  child: AppCheckbox(
+                    value: selected,
+                    onChanged: (_) => onTap(),
+                  ),
                 ),
               ExerciseThumbnail(
                 exercise: exercise,

@@ -90,7 +90,7 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
         for (final tag in tags) ...[
           AppCard(
             padding: EdgeInsets.zero,
-            child: SwitchListTile(
+            child: AppSwitchTile(
               secondary: _TagBadge(icon: _iconFor(tag.key)),
               title: AppText(tag.labelRu),
               subtitle: AppText(_description(l10n, tag.key)),

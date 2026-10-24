@@ -540,7 +540,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             // планирование ещё одной. Отдельным разделителем — иначе неотличимо
             // от действия над чужой тренировкой.
             const Divider(height: 24),
-            ListTile(
+            AppListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               leading: const AppIcon(Icons.edit_calendar),
               title: AppText(l10n.weekPlanScheduleTitle),
@@ -1271,7 +1271,7 @@ class _DayActionTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ListTile(
+          AppListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             title: title,
           ),
@@ -1332,7 +1332,7 @@ class _DayActionTile extends StatelessWidget {
               child: _MissedWorkoutHint(),
             ),
           ],
-          ListTile(
+          AppListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             leading: const AppIcon(Icons.access_time, size: 20),
             title: AppText(l10n.weekPlanTimeAction),
@@ -1593,7 +1593,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
         ),
         const SizedBox(height: 8),
         for (final summary in programs)
-          ListTile(
+          AppListTile(
             title: AppText(summary.program.name),
             subtitle: AppText(
               l10n.programExercisesCount(summary.exercisesCount),
@@ -1635,7 +1635,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
         ),
         const SizedBox(height: 8),
         for (final day in detail.days)
-          ListTile(
+          AppListTile(
             title: AppText(
               day.day.title ?? l10n.programBuilderDay(day.day.dayIndex + 1),
             ),
