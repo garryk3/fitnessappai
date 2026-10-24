@@ -243,7 +243,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
               ),
             ),
             _buildRailProfile(),
-            const Divider(height: 1),
+            const AppDivider(height: 1),
           ],
         ),
       ),
@@ -290,7 +290,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
         padding: const EdgeInsets.only(bottom: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [const Divider(height: 1), footer],
+          children: [const AppDivider(height: 1), footer],
         ),
       ),
     );
@@ -316,7 +316,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                       extended: _railExtended,
                       destinations: _railDestinations(items),
                     ),
-                    const VerticalDivider(width: 1, thickness: 1),
+                    const AppVerticalDivider(width: 1, thickness: 1),
                     Expanded(child: navigationShell),
                   ],
                 ),
@@ -343,7 +343,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     >
     items,
   ) {
-    return Drawer(
+    return AppDrawer(
       child: SafeArea(
         child: Column(
           children: [
@@ -371,7 +371,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                 ),
               ),
             ),
-            const Divider(height: 1),
+            const AppDivider(height: 1),
             Expanded(
               child: AppListView(
                 padding: EdgeInsets.zero,
@@ -391,7 +391,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
               ),
             ),
             // «Настройки» прикреплены к низу меню, отделены divider-ом.
-            const Divider(height: 1),
+            const AppDivider(height: 1),
             AppListTile(
               leading: const AppIcon(Icons.settings_outlined),
               selected: navigationShell.currentIndex == _settingsBranchIndex,

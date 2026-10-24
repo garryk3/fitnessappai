@@ -248,7 +248,7 @@ class _ProgramDayExerciseParamsScreenState
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final item = _item;
     final type = _type;
@@ -349,7 +349,7 @@ class _ProgramDayExerciseParamsScreenState
             style: theme.textTheme.labelMedium,
           ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(value: day / total),
+          AppLinearProgress(value: day / total),
         ],
       ),
     );

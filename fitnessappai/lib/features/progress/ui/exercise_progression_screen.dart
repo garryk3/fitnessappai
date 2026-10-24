@@ -67,7 +67,7 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
     return AppScaffold(
       appBar: AppTopBar(title: _exercise?.name ?? l10n.progressProgression),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppSpinner())
           : _exercise == null
           ? Center(
               child: AppText(

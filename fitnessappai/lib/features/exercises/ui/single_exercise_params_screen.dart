@@ -180,7 +180,7 @@ class _SingleExerciseParamsScreenState
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final exercise = _exercise;
     final type = _type;

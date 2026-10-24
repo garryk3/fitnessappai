@@ -82,10 +82,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
   Widget _buildBody(BuildContext context) {
     final items = _controller.items.value;
     if (_controller.isLoading.value && items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     if (items.isEmpty) {
-      return RefreshIndicator(
+      return AppRefresh(
         onRefresh: _controller.refresh,
         child: LayoutBuilder(
           builder: (context, constraints) => AppListView(
@@ -102,7 +102,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
         ),
       );
     }
-    return RefreshIndicator(
+    return AppRefresh(
       onRefresh: _controller.refresh,
       child: AppListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),

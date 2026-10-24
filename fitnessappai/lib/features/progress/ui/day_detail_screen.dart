@@ -105,7 +105,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     return AppScaffold(
       appBar: AppTopBar(title: _title),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppSpinner())
           : _items.isEmpty
           ? AppEmptyState(
               icon: Icons.calendar_month_outlined,
@@ -178,7 +178,7 @@ class _SessionCard extends StatelessWidget {
                     ),
                   ),
                   if (session.variant == WorkoutVariant.alternative)
-                    Chip(
+                    AppChip(
                       visualDensity: VisualDensity.compact,
                       label: AppText(
                         l10n.programBuilderAlternativeSet,

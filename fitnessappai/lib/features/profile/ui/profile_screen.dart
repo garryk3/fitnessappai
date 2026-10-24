@@ -112,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildBody(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (_controller.isLoading.value) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final measurements = _controller.measurements.value;
     return AppListView(

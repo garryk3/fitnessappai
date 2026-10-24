@@ -867,7 +867,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           ],
         ),
         body: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: AppSpinner())
             : Form(
                 key: _formKey,
                 child: ReorderableListView.builder(

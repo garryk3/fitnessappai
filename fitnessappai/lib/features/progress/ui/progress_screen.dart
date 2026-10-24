@@ -68,7 +68,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget _buildBody(BuildContext context) {
     final controller = _controller;
     if (controller.isLoading.value) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final l10n = AppLocalizations.of(context);
     final period = AppSegmentedButton<StatPeriod>(

@@ -113,7 +113,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildBody(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (_controller.isLoading.value) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final dates = _controller.workoutDates.value;
     if (dates.isEmpty) {
@@ -277,7 +277,7 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
     return AppScaffold(
       appBar: AppTopBar(title: l10n.historyDetail),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppSpinner())
           : _detail == null
           ? Center(
               child: AppText(

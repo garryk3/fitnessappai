@@ -378,7 +378,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final detail = _detail;
     final currentDay = _currentDay;
@@ -424,7 +424,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 6),
-          LinearProgressIndicator(value: total == 0 ? 0 : filled / total),
+          AppLinearProgress(value: total == 0 ? 0 : filled / total),
         ],
       ),
     );
@@ -710,7 +710,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
                   : AppListView.separated(
                       itemCount: _filtered.length,
                       separatorBuilder: (context, index) =>
-                          const Divider(height: 1),
+                          const AppDivider(height: 1),
                       itemBuilder: (context, index) {
                         final exercise = _filtered[index];
                         return AppListTile(

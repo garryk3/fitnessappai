@@ -262,7 +262,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final month = controller.monthStart.value;
     final items = controller.items.value;
     if (controller.isLoading.value && items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     if (controller.hasError.value && items.isEmpty) {
       return _buildLoadError(context, controller, l10n);
@@ -397,7 +397,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   ) {
     final items = controller.items.value;
     if (controller.isLoading.value && items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     if (controller.hasError.value && items.isEmpty) {
       // 53.3: сбой чтения БД показываем явно, а не маскируем пустой неделей.
@@ -539,7 +539,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
             // 48.9: к действиям над существующими тренировками добавляем
             // планирование ещё одной. Отдельным разделителем — иначе неотличимо
             // от действия над чужой тренировкой.
-            const Divider(height: 24),
+            const AppDivider(height: 24),
             AppListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               leading: const AppIcon(Icons.edit_calendar),
@@ -1537,7 +1537,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
             ),
             const SizedBox(height: 16),
             if (_loading)
-              const Center(child: CircularProgressIndicator())
+              const Center(child: AppSpinner())
             else if (_selectedDay != null)
               _buildTimeStep(l10n, theme)
             else if (_selectedProgram == null)
@@ -1553,7 +1553,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   Widget _buildProgramList(AppLocalizations l10n) {
     final theme = Theme.of(context);
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     if (_loadError) {
       return Padding(
@@ -1608,7 +1608,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   Widget _buildDayList(AppLocalizations l10n, ThemeData theme) {
     final detail = _programDetail;
     if (detail == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     return Column(
       mainAxisSize: MainAxisSize.min,

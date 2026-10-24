@@ -425,7 +425,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     final l10n = AppLocalizations.of(context);
     final controller = _controller;
     if (controller.isLoading.value) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     if (controller.notFound.value) {
       return AppEmptyState(
@@ -463,7 +463,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     final theme = Theme.of(context);
     final exercise = workout.currentExercise;
     if (exercise == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppSpinner());
     }
     final index = workout.currentExerciseIndex.value;
     final total = workout.exercises.length;
@@ -482,9 +482,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LinearProgressIndicator(
-            value: totalSets == 0 ? 0 : completed / totalSets,
-          ),
+          AppLinearProgress(value: totalSets == 0 ? 0 : completed / totalSets),
           const SizedBox(height: 8),
           AppText(
             '${l10n.workoutRunExerciseOf(index + 1, total)}'
@@ -568,7 +566,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
           AppText(l10n.workoutRunRest, style: theme.textTheme.headlineMedium),
           if (sideRest != null) ...[
             const SizedBox(height: 8),
-            Chip(
+            AppChip(
               label: AppText(l10n.workoutRunSideRest),
               labelStyle: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSecondaryContainer,
@@ -1464,7 +1462,7 @@ class _FinishedViewState extends State<_FinishedView> {
                 runSpacing: 4,
                 children: [
                   for (final name in _muscleNames)
-                    Chip(
+                    AppChip(
                       label: AppText(name, style: theme.textTheme.labelSmall),
                       backgroundColor: colorScheme.primaryContainer.withValues(
                         alpha: AppTints.strong,
@@ -1480,7 +1478,7 @@ class _FinishedViewState extends State<_FinishedView> {
               const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: AppSpinner(strokeWidth: 2),
               )
             else ...[
               if (widget.saved)
