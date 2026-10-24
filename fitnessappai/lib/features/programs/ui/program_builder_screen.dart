@@ -853,13 +853,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           title: isEditing ? l10n.programEdit : l10n.programNew,
           actions: [
             if (isEditing && _days.length > 1)
-              IconButton(
+              AppIconButton(
                 tooltip: l10n.programBuilderDeleteDays,
                 icon: AppIcon(_deleteMode ? Icons.close : Icons.delete_outline),
                 onPressed: _toggleDeleteMode,
               ),
             if (isEditing && nextDay == null)
-              IconButton(
+              AppIconButton(
                 tooltip: l10n.programCopyJson,
                 icon: const AppIcon(Icons.copy_outlined),
                 onPressed: _copyProgramJson,
@@ -1051,7 +1051,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
             ),
             if (_imagePath != null) ...[
               const SizedBox(width: 8),
-              IconButton(
+              AppIconButton(
                 tooltip: l10n.programBuilderImageRemove,
                 icon: const AppIcon(Icons.delete_outline),
                 onPressed: _removeImage,
@@ -1122,12 +1122,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_days.length < 7)
-                      IconButton(
+                      AppIconButton(
                         tooltip: l10n.programBuilderCopyDay,
                         icon: const AppIcon(Icons.content_copy),
                         onPressed: () => _copyDay(index),
                       ),
-                    IconButton(
+                    AppIconButton(
                       tooltip: l10n.programBuilderDaySettings,
                       icon: const AppIcon(Icons.tune),
                       onPressed: () => _openDaySettings(day),

@@ -576,8 +576,19 @@ Primary-действие дня в «Плане» приведено к един
 
 ---
 
+### Кнопки-иконки и тултипы (56.3)
+
+Кнопки-иконки, FAB и тултипы в uikit (39 точек / 15 файлов):
+
+- **`AppIconButton` (×31).** Обёртка IconButton с M3-дефолтами тап-таргета (≥48dp) и отступов; иконка — Widget-пасc-through (`AppIcon`, включая кастомный size 20 в run-подсказке параметров); `tooltip` почти во всех точках (screen reader); `color` (rail-иконка профиля) и `visualDensity` (компактные строки плана и run) — точечные параметры.
+- **`AppFab` (×3).** Обёртка FloatingActionButton; `icon: IconData` → `AppIcon` внутри; `heroTag` сохранён (стековая навигация с двумя FAB — уникальные теги `programs-fab`, `program-day-builder-fab`, `stop_sound`), `mini` — компактный run «стоп-звук» (внутри AnimatedScale), `tooltip`. Основные CTA экранов — по-прежнему `AppGradientButton` (54.x); FAB — системные действия списков.
+- **`AppTooltip` (×5).** Обёртка Tooltip (аудит насчитывал 6 — точный grep дал 5); пустое `message` — ребёнок напрямую; тултипы вокруг pill-CTA «Добавить» (54.9) и avatar rail сохранены. `find.byType(IconButton/FloatingActionButton/Tooltip)` и `find.text(tooltip)` после long-press — целы.
+
+---
+
 ## 12. Чейнджлог
 
+- 2026-10-24 — uikit-миграция 56.3 (§11): кнопки-иконки/тултипы в uikit — `AppIconButton` (31), `AppFab` (3; hero-теги сохранены), `AppTooltip` (5, не 6 по точному grep); 39 точек / 14 файлов. Визуально без изменений; uikit-тесты +9; 1334/1334.
 - 2026-10-24 — uikit-миграция 56.2 (§11): строчные/тумблерные в uikit — `AppListTile` (16), `AppSwitchTile` (8) + `AppCheckboxTile` (1), `AppDropdown` (+`AppDropdownItem` — без сырых `DropdownMenuItem`) (4), `AppDropdownInline` (2, находка ревью — селекторы profile/progress), `AppSwitch` (1) / `AppCheckbox` (2); 34 точки / 13 файлов (adaptive_navigation, настройки/звук, напоминания, конструкторы программ, формы упражнений/замеров, week-plan). Визуально без изменений; uikit-тесты +12; 1325/1325.
 
 - 2026-10-24 — uikit-миграция 56.1 (§11): модальный слой в uikit — `AppDialog`/`showAppDialog` (17 диалогов ×11 файлов), `showAppSnackBar` (17 снекбаров; аргумент — захваченный `messenger` для async-gap), `showAppBottomSheet` (2 листа; drag-handle по умолчанию), raw `FilledButton` → `AppButton` (27 точек; компонент расширен `tonal`/`pending`/`visualDensity`/`padding` вместо нового `AppFilledButton` — `AppButton` уже оборачивал `FilledButton`). Визуально без изменений (темы 54.9/55.2 несут оформление); finder-контракты `find.byType` целы, тесты без адаптации. uikit-тесты +13; 1313/1313.

@@ -210,7 +210,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                   shape: BoxShape.circle,
                 )
               : null,
-          child: Tooltip(message: l10n.navProfile, child: avatar),
+          child: AppTooltip(message: l10n.navProfile, child: avatar),
         ),
       ),
     );
@@ -233,7 +233,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
                 alignment: _railExtended
                     ? Alignment.centerRight
                     : Alignment.center,
-                child: IconButton(
+                child: AppIconButton(
                   icon: AppIcon(_railExtended ? Icons.menu_open : Icons.menu),
                   tooltip: _railExtended
                       ? l10n.navRailCollapse
@@ -265,7 +265,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     final selected = navigationShell.currentIndex == _settingsBranchIndex;
     Widget footer;
     if (!_railExtended) {
-      footer = IconButton(
+      footer = AppIconButton(
         icon: AppIcon(
           selected ? Icons.settings : Icons.settings_outlined,
           color: selected ? scheme.primary : null,

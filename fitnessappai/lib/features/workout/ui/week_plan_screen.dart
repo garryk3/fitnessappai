@@ -596,7 +596,7 @@ class _WeekSwitcher extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
       child: Row(
         children: [
-          IconButton(
+          AppIconButton(
             onPressed: onPrev,
             tooltip: l10n.weekPlanPrevWeek,
             icon: const AppIcon(Icons.chevron_left),
@@ -606,7 +606,7 @@ class _WeekSwitcher extends StatelessWidget {
               child: AppText(label, style: theme.textTheme.titleMedium),
             ),
           ),
-          IconButton(
+          AppIconButton(
             onPressed: onNext,
             tooltip: l10n.weekPlanNextWeek,
             icon: const AppIcon(Icons.chevron_right),
@@ -1026,7 +1026,7 @@ class _PlannedWorkoutCard extends StatelessWidget {
                   ),
                 ),
                 if (showCancel)
-                  IconButton(
+                  AppIconButton(
                     onPressed: () => onCancel!(item),
                     tooltip: l10n.weekPlanRemove,
                     visualDensity: VisualDensity.compact,
@@ -1616,7 +1616,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
       children: [
         Row(
           children: [
-            IconButton(
+            AppIconButton(
               onPressed: () => setState(() {
                 _selectedProgram = null;
                 _programDetail = null;
@@ -1668,7 +1668,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
       children: [
         Row(
           children: [
-            IconButton(
+            AppIconButton(
               onPressed: () => setState(() {
                 _selectedDay = null;
               }),

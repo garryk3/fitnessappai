@@ -43,7 +43,7 @@ class AppMenuButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final l10n = AppLocalizations.of(context);
-    return IconButton(
+    return AppIconButton(
       icon: const AppIcon(Icons.menu),
       tooltip: l10n.navMenu,
       onPressed: opener.onOpenMenu,

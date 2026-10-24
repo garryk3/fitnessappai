@@ -403,13 +403,13 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                   return AnimatedScale(
                     scale: isPlaying ? 1 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: FloatingActionButton(
+                    child: AppFab(
                       mini: true,
                       heroTag: 'stop_sound',
                       onPressed: isPlaying
                           ? _controller.workout.stopSound
                           : null,
-                      child: const AppIcon(Icons.stop_circle),
+                      icon: Icons.stop_circle,
                     ),
                   );
                 },
@@ -508,7 +508,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
               ),
               if (exercise.id != null) ...[
                 const SizedBox(width: 4),
-                IconButton(
+                AppIconButton(
                   visualDensity: VisualDensity.compact,
                   tooltip: l10n.exerciseDetail,
                   icon: const AppIcon(Icons.info_outline, size: 20),
