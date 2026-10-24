@@ -189,9 +189,7 @@ class _ProgramDayExerciseParamsScreenState
       }
     } on ProgramValidationException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: AppText(e.errors.first)));
+        showAppSnackBar(ScaffoldMessenger.of(context), e.errors.first);
       }
     } finally {
       if (mounted) {

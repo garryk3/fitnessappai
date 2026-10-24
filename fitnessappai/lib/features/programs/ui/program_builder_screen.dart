@@ -446,7 +446,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   }
 
   Future<void> _openDaySettings(_DayDraft day) async {
-    final selected = await showDialog<DaySettings>(
+    final selected = await showAppDialog<DaySettings>(
       context: context,
       builder: (context) =>
           _DaySettingsDialog(dayOfWeek: day.dayOfWeek, reminder: day.reminder),
@@ -778,18 +778,18 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   Future<bool?> _showActivateDialog() {
     final l10n = AppLocalizations.of(context);
-    return showDialog<bool>(
+    return showAppDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.programActivatePrompt),
         actions: [
           AppTextButton(
             label: MaterialLocalizations.of(context).cancelButtonLabel,
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: AppText(l10n.programMakeActive),
+            label: l10n.programMakeActive,
           ),
         ],
       ),
@@ -804,16 +804,12 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
       return;
     }
     if (json == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: AppText(l10n.copyJsonNotFound)));
+      showAppSnackBar(ScaffoldMessenger.of(context), l10n.copyJsonNotFound);
       return;
     }
     await Clipboard.setData(ClipboardData(text: json));
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: AppText(l10n.copyJsonCopied)));
+      showAppSnackBar(ScaffoldMessenger.of(context), l10n.copyJsonCopied);
     }
   }
 
@@ -831,9 +827,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           return;
         }
         final l10n = AppLocalizations.of(context);
-        final exit = await showDialog<bool>(
+        final exit = await showAppDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (context) => AppDialog(
             title: AppText(l10n.programBuilderExitTitle),
             content: AppText(l10n.programBuilderExitBody),
             actions: [
@@ -841,9 +837,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                 label: l10n.commonCancel,
                 onPressed: () => Navigator.of(context).pop(false),
               ),
-              FilledButton(
+              AppButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: AppText(l10n.commonExit),
+                label: l10n.commonExit,
               ),
             ],
           ),
@@ -940,11 +936,11 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: _deleteMode
-                // Режим удаления — delete-действие: осознанное исключение
-                // остаётся FilledButton (как в 54.x, см. PLAN.md 54.4).
-                ? FilledButton(
+                // Режим удаления — delete-действие: осознанное отклонение от
+                // градиентной CTA (54.4), теперь через AppButton (56.1).
+                ? AppButton(
                     onPressed: _canDeleteSelected ? _deleteSelectedDays : null,
-                    child: AppText(l10n.programBuilderDeleteSelected),
+                    label: l10n.programBuilderDeleteSelected,
                   )
                 : AppGradientButton(
                     pill: true,
@@ -1003,9 +999,10 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
         return;
       }
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: AppText(l10n.programBuilderImageError)));
+      showAppSnackBar(
+        ScaffoldMessenger.of(context),
+        l10n.programBuilderImageError,
+      );
     }
   }
 
@@ -1185,7 +1182,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final hasWeekday = _selected != null;
-    return AlertDialog(
+    return AppDialog(
       title: AppText(l10n.programBuilderDaySettings),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1241,7 +1238,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
           label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        FilledButton(
+        AppButton(
           onPressed: () => Navigator.of(context).pop(
             DaySettings(
               dayOfWeek: _selected,
@@ -1255,7 +1252,7 @@ class _DaySettingsDialogState extends State<_DaySettingsDialog> {
                   : null,
             ),
           ),
-          child: AppText(l10n.commonSave),
+          label: l10n.commonSave,
         ),
       ],
     );

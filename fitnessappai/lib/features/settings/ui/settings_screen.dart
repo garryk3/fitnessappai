@@ -387,9 +387,9 @@ class _SyncSectionState extends State<_SyncSection> {
 
   Future<void> _import() async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.syncImportWarningTitle),
         content: AppText(l10n.syncImportWarningBody),
         actions: [
@@ -397,9 +397,9 @@ class _SyncSectionState extends State<_SyncSection> {
             label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: AppText(l10n.syncImportConfirm),
+            label: l10n.syncImportConfirm,
           ),
         ],
       ),
@@ -411,16 +411,16 @@ class _SyncSectionState extends State<_SyncSection> {
     if (!imported || !mounted) {
       return;
     }
-    final restart = await showDialog<bool>(
+    final restart = await showAppDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.syncImportSuccess),
         content: AppText(l10n.syncRestartHint),
         actions: [
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: AppText(l10n.commonOk),
+            label: l10n.commonOk,
           ),
         ],
       ),
@@ -644,9 +644,10 @@ class _PermissionTile extends StatelessWidget {
           const SizedBox(height: 6),
           Align(
             alignment: Alignment.centerRight,
-            child: FilledButton.tonal(
+            child: AppButton(
               onPressed: onAction,
-              child: AppText(actionLabel!),
+              label: actionLabel!,
+              tonal: true,
             ),
           ),
         ],
@@ -689,16 +690,12 @@ class _AboutSectionState extends State<_AboutSection> {
               ),
             ],
             const SizedBox(height: 16),
-            FilledButton.tonalIcon(
+            AppButton(
               onPressed: controller.isChecking.value ? null : _check,
-              icon: controller.isChecking.value
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const AppIcon(Icons.update),
-              label: AppText(l10n.settingsCheckUpdate),
+              icon: Icons.update,
+              label: l10n.settingsCheckUpdate,
+              tonal: true,
+              pending: controller.isChecking.value,
             ),
             if (status case final statusText?) ...[
               const SizedBox(height: 8),
@@ -724,9 +721,9 @@ class _AboutSectionState extends State<_AboutSection> {
       return;
     }
     final version = widget.controller.latestVersion.value;
-    final open = await showDialog<bool>(
+    final open = await showAppDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.settingsUpdateAvailable),
         content: AppText(l10n.settingsUpdateContent(version ?? '')),
         actions: [
@@ -734,9 +731,9 @@ class _AboutSectionState extends State<_AboutSection> {
             label: l10n.settingsUpdateLater,
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: AppText(l10n.settingsUpdateDownload),
+            label: l10n.settingsUpdateDownload,
           ),
         ],
       ),

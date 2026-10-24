@@ -551,8 +551,21 @@ Primary-действие дня в «Плане» приведено к един
 
 ---
 
+### Модальный слой uikit (56.1)
+
+Полная миграция модального слоя в uikit (аудит 2026-10-23: 17 `AlertDialog`/`showDialog` ×11 файлов, 17 `SnackBar`, 27 raw `FilledButton`, 2 `showModalBottomSheet`):
+
+- **Диалоги — `AppDialog` + `showAppDialog`.** `AppDialog` (обёртка `AlertDialog`, только параметры в использовании: `title`/`content`/`actions`/`scrollable`) и `showAppDialog` (обёртка `showDialog`; параметр `barrierDismissible` под единственный сайт «перезапуск после импорта»). Оформление не изменилось — уже токенизировано `dialogTheme` (§11 54.9/55.2). Контракт 54.6 «диалоги → FilledButton» внутри обёртки сохранён: primary теперь `AppButton`, чей сырой виджет — тот же `FilledButton`; finder-контракты `find.byType(...)` не пострадали.
+- **Снекбар — `showAppSnackBar(messenger, message)`.** Обёртка `ScaffoldMessengerState.showSnackBar` (тема — `snackBarTheme` 55.2). Аргумент — захваченный `messenger`, чтобы async-gap сайты (`final messenger = ...` до `await`) работали без обращений к контексту; системный вызов — `showAppSnackBar(ScaffoldMessenger.of(context), ...)`.
+- **Bottom sheet — `showAppBottomSheet`.** Обёртка `showModalBottomSheet` с `showDragHandle: true` по умолчанию (24 точки 54.5/55.2) и прокидыванием `isScrollControlled`.
+- **Отклонение от плана 56.1: `AppFilledButton` не создавался.** Разведка показала, что `AppButton` уже рендерит `FilledButton` де-факто, поэтому новый дублирующий компонент не нужен. Вместо этого `AppButton` расширен: `tonal` (вариант `FilledButton.tonal`/`tonalIcon`), `pending` (спиннер в слоте иконки при сохранении подписи; кнопка неактивна — «проверка обновления» в настройках), `visualDensity`/`padding` (компактный tonalIcon «Перенести» недели). Визуально без изменений.
+- **Delete-CTA конструктора программы** (режим удаления, 54.4 — осознанное отклонение от градиента) переведён на `AppButton` — сырого `FilledButton` в features больше нет.
+
+---
+
 ## 12. Чейнджлог
 
+- 2026-10-24 — uikit-миграция 56.1 (§11): модальный слой в uikit — `AppDialog`/`showAppDialog` (17 диалогов ×11 файлов), `showAppSnackBar` (17 снекбаров; аргумент — захваченный `messenger` для async-gap), `showAppBottomSheet` (2 листа; drag-handle по умолчанию), raw `FilledButton` → `AppButton` (27 точек; компонент расширен `tonal`/`pending`/`visualDensity`/`padding` вместо нового `AppFilledButton` — `AppButton` уже оборачивал `FilledButton`). Визуально без изменений (темы 54.9/55.2 несут оформление); finder-контракты `find.byType` целы, тесты без адаптации. uikit-тесты +13; 1313/1313.
 - 2026-10-21 — завершение перевода (задача 55.4, §11): унификация диалогов (переименование дня — `FilledButton` вместо градиента по контракту 54.6; `reminder_time` — ритм cancel|primary|destructive по образцу workout_run exit) + отложенные из 55.1: общий компонент params-форм (`ExerciseParamsHeaderCard`/`ExerciseParamsStepperField`) и безопасный `tryParse`-парсинг в обоих params-экранах (ленивый список + fontScale). Тесты адаптированы ×2; 1300/1300.
 - 2026-10-21 — завершение перевода (задача 55.3, §11): week-plan «Начать» → `AppGradientButton(pill, icon: play_arrow)` в обеих точках (`_WeekList`, `_DayActionTile`+bottom-sheet); «Перенести»/«Пропустить» — вторичные, без изменений; текстовые контракты unit/e2e сохранены, +1 тест pill-CTA. 1300/1300.
 

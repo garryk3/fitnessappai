@@ -20,6 +20,10 @@ class AppButton extends StatelessWidget {
     this.expanded = false,
     this.autofocus = false,
     this.tooltip,
+    this.tonal = false,
+    this.pending = false,
+    this.visualDensity,
+    this.padding,
   });
 
   /// Подпись кнопки; при [busy] заменяется спиннером.
@@ -42,9 +46,22 @@ class AppButton extends StatelessWidget {
   /// Всплывающая подсказка (long-press).
   final String? tooltip;
 
+  /// `true` — приглушённый (tonal) вариант Material 3: заливка
+  /// `surfaceContainerHighest`, текст `onSurfaceVariant`; вторичные
+  /// действия без градиентного акцента.
+  final bool tonal;
+
+  /// `true` — спиннер вместо иконки, кнопка неактивна (фоновая операция
+  /// при сохранении подписи; для отключения подписи используйте [busy]).
+  final bool pending;
+
+  final VisualDensity? visualDensity;
+
+  final EdgeInsetsGeometry? padding;
+
   @override
   Widget build(BuildContext context) {
-    final enabled = onPressed != null && !busy;
+    final enabled = onPressed != null && !busy && !pending;
     final effective = enabled ? onPressed : null;
     final Widget labelWidget = busy
         ? const SizedBox(
@@ -54,18 +71,45 @@ class AppButton extends StatelessWidget {
           )
         : AppText(label);
 
-    final Widget button = (icon == null || busy)
-        ? FilledButton(
-            onPressed: effective,
-            autofocus: autofocus,
-            child: labelWidget,
-          )
-        : FilledButton.icon(
-            onPressed: effective,
-            autofocus: autofocus,
-            icon: AppIcon(icon!),
-            label: labelWidget,
-          );
+    final Widget? iconWidget = switch ((busy, pending, icon)) {
+      (true, _, _) => null,
+      (false, true, _) when icon != null => const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      _ when icon != null => AppIcon(icon!),
+      _ => null,
+    };
+
+    final Widget button = switch ((tonal, iconWidget)) {
+      (false, null) => FilledButton(
+        onPressed: effective,
+        autofocus: autofocus,
+        style: _styleOverride,
+        child: labelWidget,
+      ),
+      (false, final Widget _) => FilledButton.icon(
+        onPressed: effective,
+        autofocus: autofocus,
+        style: _styleOverride,
+        icon: iconWidget!,
+        label: labelWidget,
+      ),
+      (true, null) => FilledButton.tonal(
+        onPressed: effective,
+        autofocus: autofocus,
+        style: _styleOverride,
+        child: labelWidget,
+      ),
+      (true, final Widget _) => FilledButton.tonalIcon(
+        onPressed: effective,
+        autofocus: autofocus,
+        style: _styleOverride,
+        icon: iconWidget!,
+        label: labelWidget,
+      ),
+    };
 
     final Widget wrapped = expanded
         ? SizedBox(width: double.infinity, child: button)
@@ -75,4 +119,8 @@ class AppButton extends StatelessWidget {
         ? wrapped
         : Tooltip(message: tooltip!, child: wrapped);
   }
+
+  ButtonStyle? get _styleOverride => (visualDensity == null && padding == null)
+      ? null
+      : FilledButton.styleFrom(visualDensity: visualDensity, padding: padding);
 }

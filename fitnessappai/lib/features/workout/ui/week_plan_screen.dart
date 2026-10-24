@@ -135,9 +135,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   Future<void> _editTime(WeekPlanItem item) async {
     final l10n = AppLocalizations.of(context);
     if (_isPast(item.scheduledDate, _controller.selectedDate.value)) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: AppText(l10n.weekPlanPastDateGuard)));
+      showAppSnackBar(
+        ScaffoldMessenger.of(context),
+        l10n.weekPlanPastDateGuard,
+      );
       return;
     }
     final result = await showReminderTimeDialog(
@@ -485,14 +486,15 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     if (dayItems.isEmpty) {
       // Не планируем на прошедшие даты.
       if (_isPast(date, controller.selectedDate.value)) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: AppText(l10n.weekPlanPastDateGuard)));
+        showAppSnackBar(
+          ScaffoldMessenger.of(context),
+          l10n.weekPlanPastDateGuard,
+        );
         return Future.value();
       }
       return _showScheduleSheet(context, controller, date, l10n);
     }
-    return showModalBottomSheet<void>(
+    return showAppBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
@@ -548,9 +550,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                 // Та же защита, что и у пустого дня: в прошедшей дате лист
                 // планирования молча ничего не сделал бы (48.9).
                 if (_isPast(date, controller.selectedDate.value)) {
-                  messenger.showSnackBar(
-                    SnackBar(content: AppText(l10n.weekPlanPastDateGuard)),
-                  );
+                  showAppSnackBar(messenger, l10n.weekPlanPastDateGuard);
                   return;
                 }
                 _showScheduleSheet(context, controller, date, l10n);
@@ -568,9 +568,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     DateTime date,
     AppLocalizations l10n,
   ) {
-    return showModalBottomSheet<void>(
+    return showAppBottomSheet<void>(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
       builder: (sheetContext) =>
           _ScheduleSheet(date: date, controller: controller),
@@ -1100,14 +1099,13 @@ class _PlannedWorkoutCard extends StatelessWidget {
                       label: l10n.weekPlanStart,
                     ),
                   if (actions.contains(DayAction.reschedule))
-                    FilledButton.tonalIcon(
+                    AppButton(
+                      tonal: true,
+                      icon: Icons.event_repeat_outlined,
+                      label: l10n.weekPlanReschedule,
                       onPressed: () => onStart(item),
-                      icon: const AppIcon(Icons.event_repeat_outlined),
-                      label: AppText(l10n.weekPlanReschedule),
-                      style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
                   if (actions.contains(DayAction.skip))
                     AppTextButton(
@@ -1294,10 +1292,11 @@ class _DayActionTile extends StatelessWidget {
                       label: l10n.weekPlanStart,
                     ),
                   if (actions.contains(DayAction.reschedule))
-                    FilledButton.tonalIcon(
+                    AppButton(
+                      tonal: true,
+                      icon: Icons.event_repeat_outlined,
+                      label: l10n.weekPlanReschedule,
                       onPressed: onStart,
-                      icon: const AppIcon(Icons.event_repeat_outlined),
-                      label: AppText(l10n.weekPlanReschedule),
                     ),
                   if (actions.contains(DayAction.skip))
                     AppTextButton(label: l10n.weekPlanSkip, onPressed: onSkip),
@@ -1482,9 +1481,7 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
       final messenger = ScaffoldMessenger.of(context);
       final l10n = AppLocalizations.of(context);
       Navigator.of(context).pop();
-      messenger.showSnackBar(
-        SnackBar(content: AppText(l10n.weekPlanAlreadyScheduled)),
-      );
+      showAppSnackBar(messenger, l10n.weekPlanAlreadyScheduled);
       return;
     }
     // 48.10: перед назначением — шаг времени и напоминания.

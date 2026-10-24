@@ -145,18 +145,18 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
       program.id!,
     );
     if (json == null) {
-      messenger.showSnackBar(SnackBar(content: AppText(l10n.copyJsonNotFound)));
+      showAppSnackBar(messenger, l10n.copyJsonNotFound);
       return;
     }
     await Clipboard.setData(ClipboardData(text: json));
-    messenger.showSnackBar(SnackBar(content: AppText(l10n.copyJsonCopied)));
+    showAppSnackBar(messenger, l10n.copyJsonCopied);
   }
 
   Future<void> _confirmDelete(BuildContext context, Program program) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.commonDelete),
         content: AppText(l10n.programDeleteConfirm(program.name)),
         actions: [
@@ -164,9 +164,9 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
             label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: AppText(l10n.commonDelete),
+            label: l10n.commonDelete,
           ),
         ],
       ),

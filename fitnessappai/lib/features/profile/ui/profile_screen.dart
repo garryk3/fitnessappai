@@ -171,18 +171,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     BodyMeasurement measurement,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.profileDeleteMeasurementConfirm),
         actions: [
           AppTextButton(
             label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: AppText(l10n.commonDelete),
+            label: l10n.commonDelete,
           ),
         ],
       ),

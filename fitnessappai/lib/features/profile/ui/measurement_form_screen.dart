@@ -166,9 +166,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
     );
     final result = widget.validator.validate(measurement);
     if (!result.isValid) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: AppText(result.errors.join('\n'))));
+      showAppSnackBar(ScaffoldMessenger.of(context), result.errors.join('\n'));
       return;
     }
     await _repository.add(measurement);

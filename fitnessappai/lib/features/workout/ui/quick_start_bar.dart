@@ -18,10 +18,9 @@ Future<void> startPlannedWorkout(
     return;
   }
   if (!exists) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: AppText(AppLocalizations.of(context).workoutPrepareNotFound),
-      ),
+    showAppSnackBar(
+      ScaffoldMessenger.of(context),
+      AppLocalizations.of(context).workoutPrepareNotFound,
     );
     await controller.refresh();
     return;
