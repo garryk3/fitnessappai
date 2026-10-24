@@ -117,9 +117,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           '${l10n.exerciseListDeleteWarning}\n\n${buffer.toString().trim()}';
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.exerciseListDeleteTitle(selected.length)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -149,11 +149,11 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             label: MaterialLocalizations.of(context).cancelButtonLabel,
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          FilledButton(
+          AppButton(
             onPressed: refsByName.isEmpty
                 ? () => Navigator.of(context).pop(true)
                 : null,
-            child: AppText(l10n.exerciseListDeleteButton),
+            label: l10n.exerciseListDeleteButton,
           ),
         ],
       ),

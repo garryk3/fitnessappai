@@ -125,11 +125,11 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       return;
     }
     final controller = TextEditingController(text: day?.title ?? '');
-    final updated = await showDialog<String?>(
+    final updated = await showAppDialog<String?>(
       context: context,
       builder: (dialogContext) {
         final dialogL10n = AppLocalizations.of(dialogContext);
-        return AlertDialog(
+        return AppDialog(
           title: AppText(dialogL10n.programBuilderRenameDayTitle),
           content: AppTextField(
             controller: controller,
@@ -145,11 +145,11 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               label: dialogL10n.commonCancel,
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
-            // 55.4: диалоги = FilledButton (контракт 54.6), не градиент.
-            FilledButton(
+            // 55.4/56.1: диалоги = FilledButton внутри AppButton (контракт 54.6).
+            AppButton(
               onPressed: () =>
                   Navigator.of(dialogContext).pop(controller.text.trim()),
-              child: AppText(dialogL10n.programBuilderRenameDaySave),
+              label: dialogL10n.programBuilderRenameDaySave,
             ),
           ],
         );
@@ -179,7 +179,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
     if (!mounted) {
       return;
     }
-    final selected = await showDialog<Exercise>(
+    final selected = await showAppDialog<Exercise>(
       context: context,
       builder: (context) => _ExercisePickerDialog(
         exercises: _exercisesById.values.toList(),
@@ -329,9 +329,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: AppText(message)));
+    showAppSnackBar(ScaffoldMessenger.of(context), message);
   }
 
   AppLocalizations get l10n => AppLocalizations.of(context);
@@ -662,7 +660,7 @@ class _ExercisePickerDialogState extends State<_ExercisePickerDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AlertDialog(
+    return AppDialog(
       title: AppText(l10n.programBuilderPickExercise),
       content: SizedBox(
         width: double.maxFinite,

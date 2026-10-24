@@ -125,10 +125,9 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: AppText(AppLocalizations.of(context).contraindicationsSaved),
-      ),
+    showAppSnackBar(
+      ScaffoldMessenger.of(context),
+      AppLocalizations.of(context).contraindicationsSaved,
     );
   }
 

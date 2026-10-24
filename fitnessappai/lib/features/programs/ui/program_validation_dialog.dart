@@ -12,9 +12,9 @@ Future<bool?> showProgramValidationDialog(
   required List<String> errors,
 }) {
   final l10n = AppLocalizations.of(context);
-  return showDialog<bool>(
+  return showAppDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => AppDialog(
       title: AppText(l10n.programValidationTitle),
       content: SingleChildScrollView(
         child: Column(
@@ -42,9 +42,9 @@ Future<bool?> showProgramValidationDialog(
           label: l10n.programValidationContinue,
           onPressed: () => Navigator.of(context).pop(false),
         ),
-        FilledButton(
+        AppButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: AppText(l10n.programValidationExit),
+          label: l10n.programValidationExit,
         ),
       ],
     ),

@@ -107,7 +107,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final json = await locator.get<LlmExportService>().historyToJson();
     await Clipboard.setData(ClipboardData(text: json));
-    messenger.showSnackBar(SnackBar(content: AppText(l10n.copyJsonCopied)));
+    showAppSnackBar(messenger, l10n.copyJsonCopied);
   }
 
   Widget _buildBody(BuildContext context) {

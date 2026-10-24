@@ -39,7 +39,7 @@ Future<ReminderTimeResult?> showReminderTimeDialog(
   int? minute,
   bool reminderEnabled = false,
 }) {
-  return showDialog<ReminderTimeResult>(
+  return showAppDialog<ReminderTimeResult>(
     context: context,
     builder: (dialogContext) => _ReminderTimeDialog(
       hour: hour,
@@ -84,7 +84,7 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final time = _time;
-    return AlertDialog(
+    return AppDialog(
       title: AppText(l10n.weekPlanTimeAction),
       content: ReminderTimeFields(
         time: time,
@@ -103,7 +103,7 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
           label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        FilledButton(
+        AppButton(
           onPressed: () => Navigator.of(context).pop(
             ReminderTimeResult(
               hour: time?.hour,
@@ -111,7 +111,7 @@ class _ReminderTimeDialogState extends State<_ReminderTimeDialog> {
               reminderEnabled: _reminderOn,
             ),
           ),
-          child: AppText(l10n.commonSave),
+          label: l10n.commonSave,
         ),
         if (time != null)
           AppTextButton(

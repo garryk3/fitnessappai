@@ -177,8 +177,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         return;
       }
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: AppText(l10n.exerciseFormAnimationError)),
+      showAppSnackBar(
+        ScaffoldMessenger.of(context),
+        l10n.exerciseFormAnimationError,
       );
     }
   }
@@ -199,8 +200,9 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         return;
       }
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: AppText(l10n.exerciseFormAnimationError)),
+      showAppSnackBar(
+        ScaffoldMessenger.of(context),
+        l10n.exerciseFormAnimationError,
       );
     }
   }

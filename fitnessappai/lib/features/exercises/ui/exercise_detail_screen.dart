@@ -90,18 +90,18 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       await _showReferencedDialog(data.exercise.name, referencedPrograms);
       return;
     }
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.exerciseDetailDeleteConfirm(data.exercise.name)),
         actions: [
           AppTextButton(
             label: l10n.commonCancel,
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: AppText(l10n.commonDelete),
+            label: l10n.commonDelete,
           ),
         ],
       ),
@@ -121,9 +121,9 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     Map<String, List<int>> referencedByProgram,
   ) async {
     final l10n = AppLocalizations.of(context);
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppDialog(
         title: AppText(l10n.exerciseDetailDeleteBlocked(exerciseName)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -139,9 +139,9 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           ],
         ),
         actions: [
-          FilledButton(
+          AppButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: AppText(l10n.commonOk),
+            label: l10n.commonOk,
           ),
         ],
       ),

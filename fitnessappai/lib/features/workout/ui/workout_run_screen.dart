@@ -299,12 +299,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       return;
     }
     final l10n = AppLocalizations.of(context);
-    final action = await showDialog<String>(
+    final action = await showAppDialog<String>(
       context: context,
       builder: (context) => LayoutBuilder(
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < 350;
-          return AlertDialog(
+          return AppDialog(
             title: AppText(l10n.workoutRunExitTitle),
             content: AppText(l10n.workoutRunExitBody),
             actions: narrow
@@ -314,9 +314,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                       onPressed: () => Navigator.of(context).pop('cancel'),
                     ),
                     const SizedBox(height: 16),
-                    FilledButton(
+                    AppButton(
                       onPressed: () => Navigator.of(context).pop('save'),
-                      child: AppText(l10n.workoutRunFinishEarly),
+                      label: l10n.workoutRunFinishEarly,
                     ),
                     const SizedBox(height: 16),
                     AppTextButton(
@@ -331,9 +331,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
                       onPressed: () => Navigator.of(context).pop('cancel'),
                     ),
                     const SizedBox(width: 8),
-                    FilledButton(
+                    AppButton(
                       onPressed: () => Navigator.of(context).pop('save'),
-                      child: AppText(l10n.workoutRunFinishEarly),
+                      label: l10n.workoutRunFinishEarly,
                     ),
                     const SizedBox(width: 8),
                     AppTextButton(
@@ -585,10 +585,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _skipRest,
-            child: AppText(l10n.workoutRunSkipRest),
-          ),
+          AppButton(onPressed: _skipRest, label: l10n.workoutRunSkipRest),
         ],
       ),
     );
@@ -1261,10 +1258,7 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
             ],
           },
           const SizedBox(height: 16),
-          FilledButton(
-            onPressed: _submit,
-            child: AppText(l10n.workoutRunApproachDone),
-          ),
+          AppButton(onPressed: _submit, label: l10n.workoutRunApproachDone),
         ],
       ),
     );

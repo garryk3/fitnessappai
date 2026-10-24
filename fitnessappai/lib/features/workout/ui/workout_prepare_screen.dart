@@ -85,7 +85,7 @@ class _WorkoutPrepareScreenState extends State<WorkoutPrepareScreen> {
       return;
     }
     if (warnings.isNotEmpty && !dismissed) {
-      final proceed = await showDialog<bool>(
+      final proceed = await showAppDialog<bool>(
         context: context,
         builder: (context) => _WarningDialog(
           warnings: warnings,
@@ -440,7 +440,7 @@ class _WarningDialogState extends State<_WarningDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AlertDialog(
+    return AppDialog(
       title: AppText(l10n.workoutWarningsTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -473,7 +473,7 @@ class _WarningDialogState extends State<_WarningDialog> {
           label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(false),
         ),
-        FilledButton(
+        AppButton(
           onPressed: () async {
             final dismiss = _dontShowAgain;
             Navigator.of(context).pop(true);
@@ -481,7 +481,7 @@ class _WarningDialogState extends State<_WarningDialog> {
               await widget.onDismiss?.call();
             }
           },
-          child: AppText(l10n.workoutWarningsProceed),
+          label: l10n.workoutWarningsProceed,
         ),
       ],
     );
