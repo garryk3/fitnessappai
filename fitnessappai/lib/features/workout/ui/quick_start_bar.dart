@@ -6,7 +6,7 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
 /// Запускает подготовку к тренировке [item]: при удалённом дне показывает
-/// SnackBar и обновляет план, иначе открывает экран подготовки.
+/// снекбар и обновляет план, иначе открывает экран подготовки.
 Future<void> startPlannedWorkout(
   BuildContext context,
   WeekPlanController controller,

@@ -331,7 +331,7 @@ class _ProgramCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        PopupMenuButton<String>(
+                        AppPopupMenuButton<String>(
                           onSelected: (value) {
                             if (value == 'edit') {
                               onEdit();
@@ -347,24 +347,24 @@ class _ProgramCard extends StatelessWidget {
                           },
                           itemBuilder: (context) => [
                             if (program.isActive)
-                              PopupMenuItem(
+                              AppPopupMenuItem(
                                 value: 'deactivate',
                                 child: AppText(l10n.programDeactivate),
                               )
                             else
-                              PopupMenuItem(
+                              AppPopupMenuItem(
                                 value: 'set-active',
                                 child: AppText(l10n.programMakeActive),
                               ),
-                            PopupMenuItem(
+                            AppPopupMenuItem(
                               value: 'edit',
                               child: AppText(l10n.commonEdit),
                             ),
-                            PopupMenuItem(
+                            AppPopupMenuItem(
                               value: 'copy-json',
                               child: AppText(l10n.programCopyJson),
                             ),
-                            PopupMenuItem(
+                            AppPopupMenuItem(
                               value: 'delete',
                               child: AppText(l10n.commonDelete),
                             ),

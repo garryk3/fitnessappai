@@ -45,6 +45,7 @@ export 'app_switch.dart';
 export 'app_switch_tile.dart';
 export 'app_text.dart';
 export 'app_text_button.dart';
+export 'app_popup_menu_button.dart';
 export 'app_tooltip.dart';
 export 'app_text_field.dart';
 export 'app_text_form_field.dart';

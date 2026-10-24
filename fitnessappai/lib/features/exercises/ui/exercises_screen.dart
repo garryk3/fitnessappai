@@ -473,7 +473,7 @@ class _ExerciseCard extends StatelessWidget {
                 // Градиентная play-кнопка (54.7, образец): круг на
                 // primaryCta. Glow не рисуем — на каждой карточке он
                 // конкурирует с primary-FAB (design-review 54.7); тап-таргет
-                // 48dp и роль button — через Tooltip+Semantics.
+                // 48dp и роль button — через тултип и Semantics.
                 AppTooltip(
                   message: l10n.exerciseListStartWorkout,
                   child: Semantics(
