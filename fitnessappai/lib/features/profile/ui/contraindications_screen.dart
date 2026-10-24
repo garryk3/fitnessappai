@@ -82,7 +82,7 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
         ),
         const SizedBox(height: 12),
         // Отдельная карточка на тумблер (54.9, образец): зазор вместо
-        // Divider внутри общей карточки. SwitchListTile сохраняется —
+        // разделителя между карточками (не внутри). Тумблер сохраняется —
         // контракт тестов и e2e (byType ×8, widgetWithText «Колени»,
         // title как AppText); `secondary` рендерится в слоте leading
         // (controlAffinity.platform), свитч — trailing: бейдж слева

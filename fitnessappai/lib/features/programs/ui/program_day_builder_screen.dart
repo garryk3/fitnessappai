@@ -145,7 +145,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
               label: dialogL10n.commonCancel,
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
-            // 55.4/56.1: диалоги = FilledButton внутри AppButton (контракт 54.6).
+            // 55.4/56.1: диалоги = M3-кнопка внутри AppButton (контракт 54.6).
             AppButton(
               onPressed: () =>
                   Navigator.of(dialogContext).pop(controller.text.trim()),

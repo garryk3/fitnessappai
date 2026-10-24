@@ -598,8 +598,21 @@ Primary-действие дня в «Плане» приведено к един
 
 ---
 
+### CI-гейт и системная база uikit (56.5)
+
+Полная системная база uikit на конец этапа 56 (запретная в приложении зона enforced CI-гейтом «Guard raw interactive widgets» в `.github/workflows/ci.yml`, word-boundary grep; зоны — `lib/uikit/**`, `lib/app/theme/**`, `test/**`, `integration_test/**`, generated-файлы):
+
+- **Модальный слой:** `AppDialog`/`showAppDialog`/`showAppSnackBar`/`showAppBottomSheet`; `AppButton` (тон — M3 `FilledButton`).
+- **Строчные/тумблерные:** `AppListTile`, `AppSwitchTile`, `AppCheckboxTile`, `AppSwitch`, `AppCheckbox`, `AppDropdown`/`AppDropdownItem`/`AppDropdownInline`.
+- **Кнопки-иконки/тултипы:** `AppIconButton`, `AppFab`, `AppTooltip`.
+- **Служебные:** `AppSpinner`, `AppLinearProgress`, `AppDivider`/`AppVerticalDivider`, `AppChip`, `AppRefresh`, `AppDrawer`.
+- **Меню (56.5):** `AppPopupMenuButton`/`AppPopupMenuItem` — `PopupMenuButton<String>` ×1 + `PopupMenuItem` ×5 в programs_screen, пропущенный 56.1–56.4; пасс-тру (itemBuilder возвращает `AppPopupMenuItem`, маппинг в `PopupMenuItem` внутри обёртки; padding M3-дефолт 8). Находку дал сам гейт (dry-run перед влитком шага).
+
+---
+
 ## 12. Чейнджлог
 
+- 2026-10-24 — этап 56 закрыт (§11): задача 56.5 — CI-гейт «Guard raw interactive widgets» (word-boundary grep по 25 идентификаторам вне `lib/uikit`/`lib/app/theme`/test/integration_test); dry-run гейта вскрыл пропущенный `PopupMenuButton`+`PopupMenuItem` ×6 в programs_screen — новый `AppPopupMenuButton`/`AppPopupMenuItem` (пасс-тру, тесты +2); 4 комментария в lib и ссылки в доке переписаны (гейт матчает и комментарии). 1345/1345; AGENTS.md — расширенный запретный список.
 - 2026-10-24 — uikit-миграция 56.4 (§11): служебные в uikit — `AppSpinner` (25, не 26), `AppLinearProgress` (4), `AppDivider`+`AppVerticalDivider` (6+2), `AppChip` (7), `AppRefresh` (4), `AppDrawer` (1); 49 точек / 16 файлов. Визуально без изменений; uikit-тесты +9; 1343/1343.
 - 2026-10-24 — uikit-миграция 56.3 (§11): кнопки-иконки/тултипы в uikit — `AppIconButton` (31), `AppFab` (3; hero-теги сохранены), `AppTooltip` (5, не 6 по точному grep); 39 точек / 14 файлов. Визуально без изменений; uikit-тесты +9; 1334/1334.
 - 2026-10-24 — uikit-миграция 56.2 (§11): строчные/тумблерные в uikit — `AppListTile` (16), `AppSwitchTile` (8) + `AppCheckboxTile` (1), `AppDropdown` (+`AppDropdownItem` — без сырых `DropdownMenuItem`) (4), `AppDropdownInline` (2, находка ревью — селекторы profile/progress), `AppSwitch` (1) / `AppCheckbox` (2); 34 точки / 13 файлов (adaptive_navigation, настройки/звук, напоминания, конструкторы программ, формы упражнений/замеров, week-plan). Визуально без изменений; uikit-тесты +12; 1325/1325.

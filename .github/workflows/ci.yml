@@ -51,6 +51,21 @@ jobs:
             exit 1
           fi
 
+      - name: Guard raw interactive widgets
+        # Этап 56: сырые интерактивные M3-виджеты/функции вне uikit запрещены —
+        # обязательны обёртки lib/uikit (AppDialog, AppButton, AppListTile, …).
+        # Разрешённые зоны: lib/uikit/**(реализация), lib/app/theme/**, test/**,
+        # integration_test/**; generated-файлы (*.g.dart, l10n) исключены всегда.
+        # Список идентификаторов сопровождается здесь же (word-boundary \b).
+        run: |
+          pattern='\b(AlertDialog|SnackBar|FilledButton|IconButton|ListTile|SwitchListTile|CheckboxListTile|DropdownButton|DropdownButtonFormField|DropdownMenuItem|FloatingActionButton|CircularProgressIndicator|LinearProgressIndicator|RefreshIndicator|Divider|VerticalDivider|Chip|Tooltip|Checkbox|Switch|Drawer|PopupMenuButton|PopupMenuItem|showDialog|showModalBottomSheet)\b'
+          violations=$(git grep -nE "$pattern" -- lib ':!lib/uikit' ':!lib/app/theme' ':!*.g.dart' ':!*.freezed.dart' ':!*.mocks.dart' ':!lib/l10n' || true)
+          if [ -n "$violations" ]; then
+            echo "$violations"
+            echo "::error::Сырые интерактивные M3-виджеты вне lib/uikit запрещены — используйте обёртки lib/uikit (этап 56)"
+            exit 1
+          fi
+
       - name: Run tests
         run: flutter test
 
