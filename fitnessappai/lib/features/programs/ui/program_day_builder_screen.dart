@@ -341,7 +341,7 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       appBar: AppTopBar(
         title: dayTitle ?? l10n.programBuilderDay(widget.dayIndex + 1),
         actions: [
-          IconButton(
+          AppIconButton(
             tooltip: l10n.programBuilderRenameDay,
             onPressed: _currentDay == null ? null : _renameDay,
             icon: const AppIcon(Icons.edit_outlined),
@@ -350,11 +350,11 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
       ),
       floatingActionButton: _loading
           ? null
-          : FloatingActionButton(
+          : AppFab(
               heroTag: 'program-day-builder-fab',
               tooltip: l10n.programBuilderAddExercise,
               onPressed: _addExercise,
-              child: const AppIcon(Icons.add),
+              icon: Icons.add,
             ),
       body: _buildBody(),
       bottomNavigationBar: _loading
@@ -549,12 +549,12 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
+              AppIconButton(
                 tooltip: l10n.programBuilderPickExercise,
                 icon: const AppIcon(Icons.tune),
                 onPressed: () => _openExerciseParams(draft),
               ),
-              IconButton(
+              AppIconButton(
                 tooltip: l10n.commonDelete,
                 icon: const AppIcon(Icons.delete_outline),
                 onPressed: () => _removeItem(draft),

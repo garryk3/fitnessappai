@@ -62,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // FAB — градиентная пилюля (54.9, образец) по паттерну 54.7:
       // glow + primaryCta + текст, e2e-контракт «Добавить замер» сохранён
       // (AppInkWell — предок текста, тап по нему проходит hit-test).
-      floatingActionButton: Tooltip(
+      floatingActionButton: AppTooltip(
         message: l10n.profileAddMeasurement,
         child: AppGlowContainer(
           radius: AppRadii.pill,
@@ -769,7 +769,7 @@ class _HistoryTile extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          trailing: IconButton(
+          trailing: AppIconButton(
             icon: const AppIcon(Icons.delete_outline),
             tooltip: l10n.commonDelete,
             onPressed: onDelete,

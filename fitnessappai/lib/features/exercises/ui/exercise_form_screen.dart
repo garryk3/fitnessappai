@@ -525,7 +525,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                     ),
                   ),
                 ),
-                IconButton(
+                AppIconButton(
                   icon: const AppIcon(Icons.close),
                   tooltip: l10n.commonDelete,
                   onPressed: () => setState(() {
@@ -746,7 +746,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             ),
             if (_thumbnailPath != null || _thumbnailBlob != null) ...[
               const SizedBox(width: 8),
-              IconButton(
+              AppIconButton(
                 tooltip: l10n.exerciseFormThumbnailRemove,
                 icon: const AppIcon(Icons.delete_outline),
                 onPressed: () => setState(() {
@@ -814,7 +814,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
             ),
             if (_animationPath != null || _animationBlob != null) ...[
               const SizedBox(width: 8),
-              IconButton(
+              AppIconButton(
                 tooltip: l10n.exerciseFormAnimationRemove,
                 icon: const AppIcon(Icons.delete_outline),
                 onPressed: () => setState(() {

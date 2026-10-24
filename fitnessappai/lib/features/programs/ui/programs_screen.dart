@@ -70,11 +70,11 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
         large: true,
       ),
       body: SignalBuilder(builder: (context) => _buildBody(context)),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab(
         heroTag: 'programs-fab',
         onPressed: () => context.push('/programs/new'),
         tooltip: l10n.programListCreate,
-        child: const AppIcon(Icons.add),
+        icon: Icons.add,
       ),
     );
   }

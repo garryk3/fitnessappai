@@ -91,7 +91,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         title: l10n.history,
         large: true,
         actions: [
-          IconButton(
+          AppIconButton(
             tooltip: l10n.historyCopyJsonTooltip,
             icon: const AppIcon(Icons.copy_all_outlined),
             onPressed: () => _copyHistoryJson(context),

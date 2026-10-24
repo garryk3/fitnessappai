@@ -179,14 +179,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         large: !_selectionMode,
         title: _selectionMode ? '${_selectedIds.length}' : l10n.navExercises,
         leading: _selectionMode
-            ? IconButton(
+            ? AppIconButton(
                 icon: const AppIcon(Icons.close),
                 onPressed: _exitSelectionMode,
               )
             : const AppMenuButton(),
         actions: _selectionMode
             ? [
-                IconButton(
+                AppIconButton(
                   icon: const AppIcon(Icons.delete),
                   onPressed: _deleteSelected,
                 ),
@@ -248,7 +248,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           ),
         ],
       ),
-      floatingActionButton: Tooltip(
+      floatingActionButton: AppTooltip(
         message: l10n.exerciseListCreate,
         child: AppGlowContainer(
           radius: AppRadii.lg,
@@ -474,7 +474,7 @@ class _ExerciseCard extends StatelessWidget {
                 // primaryCta. Glow не рисуем — на каждой карточке он
                 // конкурирует с primary-FAB (design-review 54.7); тап-таргет
                 // 48dp и роль button — через Tooltip+Semantics.
-                Tooltip(
+                AppTooltip(
                   message: l10n.exerciseListStartWorkout,
                   child: Semantics(
                     button: true,

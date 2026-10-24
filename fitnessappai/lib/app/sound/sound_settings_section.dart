@@ -109,13 +109,13 @@ class _SoundSettingsSectionState extends State<SoundSettingsSection> {
                       ),
                     ),
                     if (file != null) ...[
-                      IconButton(
+                      AppIconButton(
                         tooltip: l10n.soundReset,
                         icon: const AppIcon(Icons.restart_alt),
                         onPressed: () => controller.resetSoundFile(),
                       ),
                     ],
-                    IconButton(
+                    AppIconButton(
                       tooltip: controller.isPlaying.value
                           ? l10n.soundStop
                           : l10n.soundPreview,

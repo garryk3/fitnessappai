@@ -518,7 +518,7 @@ class _MetricChart extends StatelessWidget {
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
-                IconButton(
+                AppIconButton(
                   icon: const AppIcon(Icons.trending_up),
                   tooltip: l10n.progressProgressionOpen,
                   onPressed: selectedId == null
