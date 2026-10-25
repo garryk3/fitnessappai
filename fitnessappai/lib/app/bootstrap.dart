@@ -10,6 +10,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_cleanup.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 
@@ -90,8 +91,31 @@ Future<void> bootstrap({
     );
   }
   try {
-    restoredCheckpoint = await WorkoutCheckpoint.load();
+    restoredCheckpoint = await _restoreCheckpoint(sl);
   } catch (e) {
     log('Не удалось загрузить checkpoint', error: e, name: 'bootstrap');
   }
+}
+
+/// Загружает чекпойнт и возвращает его только «по факту» (задача 57.2):
+/// тренировка была начата и не завершена, снимок не старше
+/// [WorkoutCheckpoint.ttl], а день программы ещё существует в БД.
+/// Невалидный чекпойнт удаляется с диска — восстановление не происходит.
+Future<WorkoutCheckpoint?> _restoreCheckpoint(ServiceLocator sl) async {
+  final checkpoint = await WorkoutCheckpoint.load();
+  if (checkpoint == null) {
+    return null;
+  }
+  final bool expired = checkpoint.startedAt.isBefore(
+    DateTime.now().subtract(WorkoutCheckpoint.ttl),
+  );
+  final bool dayExists = await sl
+      .get<ProgramRepository>()
+      .getDay(checkpoint.programDayId)
+      .then((day) => day != null);
+  if (!expired && dayExists) {
+    return checkpoint;
+  }
+  await WorkoutCheckpoint.clear();
+  return null;
 }

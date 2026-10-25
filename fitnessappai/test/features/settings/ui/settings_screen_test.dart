@@ -153,10 +153,13 @@ void main() {
   late AppDatabase db;
   late ThemeController themeController;
 
+  int checkpointClearCalls = 0;
+
   setUp(() {
     service = _FakeSyncService();
     pickedPath = null;
     sharedPath = null;
+    checkpointClearCalls = 0;
     db = AppDatabase(executor: NativeDatabase.memory());
     themeController = ThemeController(ThemeSettingsRepository(db));
     addTearDown(db.close);
@@ -186,6 +189,9 @@ void main() {
             sharedPath = path;
           },
       saveFile: saveFile ?? (_, {dialogTitle}) async => true,
+      checkpointClearer: () async {
+        checkpointClearCalls++;
+      },
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -539,6 +545,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.importCalls, 1);
+    // Синхронно с импортом чистится чекпойнт тренировки (57.2).
+    expect(checkpointClearCalls, 1);
     expect(find.text('База данных импортирована'), findsWidgets);
     expect(
       find.text(
