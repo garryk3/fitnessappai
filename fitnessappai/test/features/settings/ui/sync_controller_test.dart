@@ -1,9 +1,14 @@
 // ignore_for_file: type=lint
-import 'package:flutter_test/flutter_test.dart';
+import 'dart:io';
 
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+
+import 'package:fitnessappai/app/bootstrap.dart';
 import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 
 class _FakeSyncService implements SyncService {
   _FakeSyncService({this.importError});
@@ -98,6 +103,39 @@ void main() {
     expect(controller.status.value, isNull);
   });
 
+  test(
+    'дефолтный клирер при успехе сбрасывает restoredCheckpoint и файл (57.2)',
+    () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final tempDir = await Directory.systemTemp.createTemp('ckpt_clear');
+      final original = PathProviderPlatform.instance;
+      PathProviderPlatform.instance = _TempPathProvider(tempDir.path);
+      addTearDown(() {
+        PathProviderPlatform.instance = original;
+        return tempDir.delete(recursive: true);
+      });
+
+      final checkpoint = _dummyCheckpoint();
+      await checkpoint.save();
+      restoredCheckpoint = checkpoint;
+
+      controller = SyncController(
+        syncServiceFactory: () => _FakeSyncService(),
+        pickFile: () async => 'good.sqlite',
+      );
+
+      final result = await controller.importDatabase();
+
+      expect(result, isTrue);
+      expect(restoredCheckpoint, isNull);
+      final remaining = Directory(tempDir.path).listSync().whereType<File>();
+      expect(
+        remaining.any((f) => f.path.endsWith('workout_checkpoint.json')),
+        isFalse,
+      );
+    },
+  );
+
   test('экспорт сохраняет файл в файловую систему', () async {
     String? savedTo;
     controller = SyncController(
@@ -155,4 +193,25 @@ void main() {
     expect(controller.status.value?.kind, SyncStatusKind.exportShared);
     expect(controller.hasError.value, isFalse);
   });
+}
+
+WorkoutCheckpoint _dummyCheckpoint() => WorkoutCheckpoint(
+  programDayId: 1,
+  exerciseIndex: 0,
+  currentSet: 1,
+  completedSets: 0,
+  resultsJson: '[]',
+  startedAt: DateTime.now(),
+  programName: 'Силовая',
+  dayIndex: 0,
+);
+
+/// Подставник path_provider: documents → temp-каталог теста.
+class _TempPathProvider extends PathProviderPlatform {
+  _TempPathProvider(this.tempPath);
+
+  final String tempPath;
+
+  @override
+  Future<String?> getApplicationDocumentsPath() async => tempPath;
 }

@@ -114,6 +114,11 @@ class WorkoutCheckpoint {
 
   static const _fileName = 'workout_checkpoint.json';
 
+  /// Срок жизни чекпойнта: тренировка восстанавливается только «по факту» —
+  /// незавершённая и начатая не позже 12 часов назад (задача 57.2). Более
+  /// старые снимки считаются утраченными и удаляются при загрузке.
+  static const ttl = Duration(hours: 12);
+
   /// Сохраняет чекпоинт на диск.
   Future<void> save() async {
     final dir = await getApplicationDocumentsDirectory();

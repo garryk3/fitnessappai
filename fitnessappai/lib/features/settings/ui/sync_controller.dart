@@ -5,14 +5,20 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:signals/signals.dart';
 
+import 'package:fitnessappai/app/bootstrap.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
+import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 typedef SyncServiceFactory = SyncService Function();
 typedef SyncFilePicker = Future<String?> Function();
 typedef SyncFileShare = Future<void> Function(String filePath);
+
+/// Очищает локальный чекпойнт активной тренировки (диск + глобал
+/// [restoredCheckpoint]).
+typedef CheckpointClearer = Future<void> Function();
 
 /// Возвращает `true`, если файл сохранён пользователем, `false` — при отмене.
 ///
@@ -64,15 +70,18 @@ class SyncController {
     SyncFilePicker? pickFile,
     SyncFileShare? shareFile,
     SyncFileSave? saveFile,
+    CheckpointClearer? checkpointClearer,
   }) : _service = syncServiceFactory ?? _defaultService,
        _pickFile = pickFile ?? _defaultPick,
        _shareFile = shareFile ?? _defaultShare,
-       _saveFile = saveFile ?? _defaultSave;
+       _saveFile = saveFile ?? _defaultSave,
+       _checkpointClearer = checkpointClearer ?? _defaultCheckpointClearer;
 
   final SyncServiceFactory _service;
   final SyncFilePicker _pickFile;
   final SyncFileShare _shareFile;
   final SyncFileSave _saveFile;
+  final CheckpointClearer _checkpointClearer;
 
   /// Сервис берётся заново при каждом действии, т.к. после импорта БД
   /// контейнер DI пересоздаётся.
@@ -175,6 +184,12 @@ class SyncController {
     isBusy.value = true;
     try {
       await _syncService.import(source);
+      // После замены БД локальный чекпойнт семантически мёртв: в момент
+      // импорта начатой тренировки быть не может, а ID дня из снимка может
+      // не существовать в новых данных (57.2). Чистим до перезапуска,
+      // иначе пере-созданный роутер redirect'нет на живую тренировку
+      // из stale-глобала `restoredCheckpoint`.
+      await _checkpointClearer();
       _setStatus(const SyncStatus(SyncStatusKind.importDone), error: false);
       return true;
     } on SyncValidationException catch (error) {
@@ -192,6 +207,13 @@ class SyncController {
   }
 
   static SyncService _defaultService() => locator.get<SyncService>();
+
+  /// Дефолт: полный сброс чекпойнта активности — файл на диске и
+  /// уже загруженный в память снимок из [bootstrap] (задача 57.2).
+  static Future<void> _defaultCheckpointClearer() async {
+    await WorkoutCheckpoint.clear();
+    restoredCheckpoint = null;
+  }
 
   static Future<String?> _defaultPick() async {
     try {
