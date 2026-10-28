@@ -140,13 +140,14 @@ class WorkoutRunController {
       restSeconds: params?.restSeconds ?? 60,
     );
     final exercises = [WorkoutExercise(position: position, exercise: exercise)];
+    final context = WorkoutSessionContext(
+      programName: exercise.name,
+      dayIndex: 0,
+    );
     if (checkpoint != null) {
-      workout.restoreFromCheckpoint(checkpoint, exercises);
+      workout.restoreFromCheckpoint(checkpoint, exercises, context: context);
     } else {
-      workout.start(
-        exercises,
-        context: WorkoutSessionContext(programName: exercise.name, dayIndex: 0),
-      );
+      workout.start(exercises, context: context);
     }
   }
 
@@ -185,20 +186,18 @@ class WorkoutRunController {
       emptyDay.value = true;
       return;
     }
+    final context = WorkoutSessionContext(
+      programId: program?.id,
+      programName: program?.name ?? '',
+      programDayId: day.id,
+      dayIndex: day.dayIndex,
+      variant: variant,
+      exerciseRestSeconds: program?.exerciseRestSeconds,
+    );
     if (checkpoint != null) {
-      workout.restoreFromCheckpoint(checkpoint, exercises);
+      workout.restoreFromCheckpoint(checkpoint, exercises, context: context);
     } else {
-      workout.start(
-        exercises,
-        context: WorkoutSessionContext(
-          programId: program?.id,
-          programName: program?.name ?? '',
-          programDayId: day.id,
-          dayIndex: day.dayIndex,
-          variant: variant,
-          exerciseRestSeconds: program?.exerciseRestSeconds,
-        ),
-      );
+      workout.start(exercises, context: context);
     }
   }
 

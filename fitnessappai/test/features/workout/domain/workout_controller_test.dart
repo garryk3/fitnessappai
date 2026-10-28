@@ -1033,7 +1033,13 @@ void main() {
         strengthExercise(sets: 2, rest: 60),
         distanceExercise(),
       ];
-      restored.restoreFromCheckpoint(checkpoint, exercises);
+      const context = WorkoutSessionContext(
+        programId: 5,
+        programName: 'База',
+        programDayId: 7,
+        dayIndex: 2,
+      );
+      restored.restoreFromCheckpoint(checkpoint, exercises, context: context);
 
       expect(restored.phase.value, WorkoutPhase.exercise);
       expect(restored.currentExerciseIndex.value, 1);
@@ -1043,6 +1049,9 @@ void main() {
       expect(restored.results.value[0].reps, 8);
       expect(restored.results.value[0].weightKg, 20);
       expect(restored.results.value[1].reps, 6);
+      // Контекст восстановлен — контроллер снова умеет писать чекпойнты
+      // (57.3: guard `_saveCheckpointIfNeeded` требует непустой context).
+      expect(restored.context, same(context));
       expect(restored.results.value[1].weightKg, 25);
       expect(restored.currentExercise!.name, 'Бег');
 

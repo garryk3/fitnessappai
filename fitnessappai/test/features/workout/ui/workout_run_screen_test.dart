@@ -1337,6 +1337,43 @@ void main() {
     expect(saveCalls, greaterThan(before));
   });
 
+  testWidgets(
+    'восстановленная тренировка снова пишет чекпоинт (57.3, TC-202)',
+    (tester) async {
+      final dayId = await createDay(sets: 2, restSeconds: 60);
+      final checkpoint = WorkoutCheckpoint(
+        programDayId: dayId,
+        exerciseIndex: 0,
+        currentSet: 1,
+        completedSets: 0,
+        resultsJson: '[]',
+        startedAt: DateTime(2025, 1, 15, 8, 0),
+        programName: 'База',
+        dayIndex: 0,
+      );
+      var saveCalls = 0;
+      await pumpRun(
+        tester,
+        dayId,
+        checkpointLoader: () async => checkpoint,
+        checkpointSaver: (_) async => saveCalls++,
+      );
+      // Восстановленное состояние: экран на входе подхода.
+      expect(find.text('Подход выполнен'), findsOneWidget);
+
+      // Раньше (TC-202): guard `_saveCheckpointIfNeeded` выходил при
+      // `context == null` — файл чекпойнта не переписывался, повторный
+      // force-stop терял тренировку.
+      final state = tester.state(find.byType(WorkoutRunScreen));
+      (state as WidgetsBindingObserver).didChangeAppLifecycleState(
+        AppLifecycleState.paused,
+      );
+      await tester.pump();
+
+      expect(saveCalls, 1);
+    },
+  );
+
   testWidgets('чекпоинт не сохраняется после завершения тренировки', (
     tester,
   ) async {
