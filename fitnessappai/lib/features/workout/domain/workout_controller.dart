@@ -200,12 +200,21 @@ class WorkoutController {
   }
 
   /// Восстанавливает state из чекпоинта.
+  /// Восстанавливает прерванную тренировку из [checkpoint] (57.3).
+  ///
+  /// [context] — контекст сессии, восстановленный живыми данными (программа,
+  /// день): после потребления снимка на диске контроллер обязан снова уметь
+  /// писать чекпойнты, а для этого `_saveCheckpointIfNeeded` экрана требует
+  /// непустого [WorkoutController.context]. Без контекста восстановленная
+  /// сессия «обезглавлена»: повторный force-stop теряет её навсегда (TC-202).
   void restoreFromCheckpoint(
     WorkoutCheckpoint checkpoint,
-    List<WorkoutExercise> exercises,
-  ) {
+    List<WorkoutExercise> exercises, {
+    WorkoutSessionContext? context,
+  }) {
     _generation++;
     _cancelTimers();
+    _context = context;
     _exercises
       ..clear()
       ..addAll(exercises);
