@@ -75,12 +75,15 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  WorkoutRunController makeController() => WorkoutRunController(
+  WorkoutRunController makeController({
+    Future<void> Function()? checkpointClearer,
+  }) => WorkoutRunController(
     programRepository: programRepo,
     exerciseRepository: exerciseRepo,
     workoutRepository: workoutRepo,
     programDayId: dayId,
     variant: WorkoutVariant.main,
+    checkpointClearer: checkpointClearer,
   );
 
   Future<List<WorkoutSession>> allSessions() =>
@@ -114,6 +117,50 @@ void main() {
 
     expect(await allSessions(), hasLength(1));
   });
+
+  test(
+    'успешное сохранение очищает чекпойнт завершённой сессии (57.6)',
+    () async {
+      var clearCalls = 0;
+      final controller = makeController(
+        checkpointClearer: () async => clearCalls++,
+      );
+      await controller.load();
+      controller.workout.finishEarly();
+
+      await controller.completeAndSave();
+
+      // Инвариант TC-203: завершённая сессия не возобновляется — снимок с
+      // диска исчезает в момент сохранения, до любого force-stop.
+      expect(await allSessions(), hasLength(1));
+      expect(clearCalls, 1);
+    },
+  );
+
+  test(
+    'неудачное сохранение чекпойнт не трогает; после успеха — очищает',
+    () async {
+      final flakyRepo = _FlakyWorkoutRepository(db, failTimes: 1);
+      var clearCalls = 0;
+      final controller = WorkoutRunController(
+        programRepository: programRepo,
+        exerciseRepository: exerciseRepo,
+        workoutRepository: flakyRepo,
+        programDayId: dayId,
+        variant: WorkoutVariant.main,
+        checkpointClearer: () async => clearCalls++,
+      );
+      await controller.load();
+      controller.workout.finishEarly();
+
+      await expectLater(controller.completeAndSave(), throwsA(anything));
+      expect(clearCalls, 0);
+
+      await controller.completeAndSave();
+      expect(await allSessions(), hasLength(1));
+      expect(clearCalls, 1);
+    },
+  );
 
   test('completeAndSave до завершения фазы ничего не сохраняет', () async {
     final controller = makeController();
