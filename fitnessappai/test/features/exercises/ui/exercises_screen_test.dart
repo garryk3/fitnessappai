@@ -316,6 +316,38 @@ void main() {
     expect(find.text('Удалить 2 упражнения?'), findsOneWidget);
   });
 
+  testWidgets('выход из режима выделения сбрасывает selection (TC-189)', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await repository.create(exercise('Жим штанги'), const []);
+    await repository.create(exercise('Приседания'), const []);
+    await pumpExercises(tester);
+
+    await selectExercises(tester, ['Жим штанги', 'Приседания']);
+    expect(find.text('2'), findsOneWidget);
+
+    // ✕ выходит из режима: счётчик исчезает, чекбоксы пропадают.
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    expect(find.text('2'), findsNothing);
+    expect(find.byType(AppCheckbox), findsNothing);
+
+    // Повторный вход — long-press (штатный жест входа) по той же карточке:
+    // счётчик «1», отмечена ровно нажатая карточка. Ровно «1» (не «2») —
+    // доказывает, что прежний selection не пережил выход.
+    await tester.longPress(find.text('Жим штанги'));
+    await tester.pumpAndSettle();
+    expect(find.text('1'), findsOneWidget);
+    final checkboxes = tester.widgetList<AppCheckbox>(find.byType(AppCheckbox));
+    // В режиме выделения обе карточки получили чекбокс (обязательный слот);
+    // отмечена — ровно нажатая (уже учтено счётчиком «1»).
+    expect(checkboxes, hasLength(2));
+    expect(checkboxes.where((cb) => cb.value == true), hasLength(1));
+  });
+
   testWidgets('кнопка удаления заблокирована, если выбранное используется', (
     tester,
   ) async {
