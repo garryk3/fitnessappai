@@ -31,15 +31,23 @@ class WorkoutRunController {
     DateTime Function()? clock,
     TimerFactory? timerFactory,
     SoundService? soundService,
+    Future<void> Function()? checkpointClearer,
   }) : assert(
          (programDayId != null) != (exerciseId != null),
          'Укажите либо programDayId, либо exerciseId',
        ),
+       _checkpointClearer = checkpointClearer ?? WorkoutCheckpoint.clear,
        workout = WorkoutController(
          clock: clock,
          timerFactory: timerFactory,
          soundService: soundService,
        );
+
+  /// Очищает чекпойнт активной тренировки. После успешного сохранения сессии
+  /// снимок обязан покинуть диск: завершённая тренировка не возобновляется
+  /// (57.6, TC-203) — иначе force-stop на экране итогов восстанавливает
+  /// «зомби»-сессию и создаёт дубль в БД.
+  final Future<void> Function() _checkpointClearer;
 
   /// Бизнес-логика сессии.
   final WorkoutController workout;
@@ -233,6 +241,17 @@ class WorkoutRunController {
         result.session,
         result.results,
       );
+      // Сессия записана — снимок на диске обязан исчезнуть до чего угодно
+      // ещё: «Повторить тренировку», сворачивание, force-stop на экране
+      // итогов не должны воскрешать завершённую тренировку (57.6, TC-203).
+      try {
+        await _checkpointClearer();
+      } catch (e) {
+        // Очистка не должна портить уже сохранённую сессию; dispose экрана
+        // повторит попытку при фазе finished, а TTL-валидация bootstrap (57.2)
+        // пережил бы и «застрявший» файл.
+        log('Не удалось очистить чекпойнт завершённой тренировки', error: e);
+      }
       await _markRescheduledIfAny();
       saved.value = true;
     } finally {

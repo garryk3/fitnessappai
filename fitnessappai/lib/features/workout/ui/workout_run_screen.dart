@@ -143,6 +143,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       soundService: widget.soundService ?? locator.get<SoundService>(),
       clock: widget.clock,
       timerFactory: widget.timerFactory,
+      // Тот же clearer, что и у dispose-пути экрана (57.6): сохранение
+      // потребляет снимок сразу после записи сессии.
+      checkpointClearer: widget.checkpointClearer,
     );
     _wakelock = widget.wakelockService ?? locator.get<WakelockService>();
     _foregroundService =
