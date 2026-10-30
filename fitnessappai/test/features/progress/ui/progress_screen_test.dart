@@ -316,6 +316,53 @@ void main() {
     expect(widths.last, closeTo(widths.first, 0.001));
   });
 
+  testWidgets(
+    'селектор упражнения открывается и меняет состав графика (TC-187)',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final squats = await insertExercise('Приседания');
+      final run = await insertExercise('Бег');
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+        setResult(exerciseId: squats),
+      ]);
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 11)), [
+        setResult(exerciseId: run),
+      ]);
+
+      await pumpProgress(tester);
+
+      final dropdown = find.byType(AppDropdownInline<int>);
+      expect(dropdown, findsOneWidget);
+      // По умолчанию выбрано первое из списка (список по имени — «Бег»).
+      var button = tester.widget<DropdownButton<int>>(
+        find.descendant(
+          of: dropdown,
+          matching: find.byType(DropdownButton<int>),
+        ),
+      );
+      expect(button.value, run);
+
+      // Тап по селектору открывает меню (не диалог, не навигация).
+      await tester.tap(dropdown);
+      await tester.pumpAndSettle();
+      expect(find.text('Приседания'), findsWidgets);
+
+      // Выбор сменяет selected-значение селектора без закрытия экрана.
+      await tester.tap(find.text('Приседания').last);
+      await tester.pumpAndSettle();
+      button = tester.widget<DropdownButton<int>>(
+        find.descendant(
+          of: dropdown,
+          matching: find.byType(DropdownButton<int>),
+        ),
+      );
+      expect(button.value, squats);
+    },
+  );
+
   testWidgets('редизайн 54.8: тап «Тренировок» открывает историю', (
     tester,
   ) async {
