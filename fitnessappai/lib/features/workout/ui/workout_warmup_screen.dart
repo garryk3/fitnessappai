@@ -82,6 +82,11 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
     if (_navigated) {
       return;
     }
+    // Отменяет отсчёт разминки: «Пропустить» не должен оставлять живой
+    // периодический таймер у mounted-экрана, иначе тот дотикает и сыграет
+    // завершение уже во время тренировки (58.1, ящик).
+    _timer?.cancel();
+    _timer = null;
     _navigated = true;
     _soundService.stop();
     final weekStart = widget.rescheduleWeekStart;
