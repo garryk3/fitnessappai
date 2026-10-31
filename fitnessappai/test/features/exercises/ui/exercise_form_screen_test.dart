@@ -332,20 +332,52 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Выберите хотя бы одну мышцу'), findsOneWidget);
+    // Инлайн-метка у блока мышц + снекбар у кнопки (57.1, TC-007).
+    expect(find.text('Выберите хотя бы одну мышцу'), findsNWidgets(2));
+    expect(find.byType(SnackBar), findsOneWidget);
     expect(await repository.getAll(), isEmpty);
 
-    await tester.tap(chipInRow('Грудь', 'Основная'));
+    // Даём снекбару уйти по автоскрытию (4 c), остаётся только инлайн-метка.
+    await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
-
-    expect(find.text('Выберите хотя бы одну мышцу'), findsNothing);
-
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
-    await tester.pumpAndSettle();
-
-    final created = (await repository.getAll()).single;
-    expect(created.name, 'Без мышц');
+    expect(find.byType(SnackBar), findsNothing);
+    expect(find.text('Выберите хотя бы одну мышцу'), findsOneWidget);
   });
+
+  testWidgets(
+    'блок мышц за пределами экрана: снекбар + прокрутка к блоку (TC-007)',
+    (tester) async {
+      // Вьюпорт 2000: блок мышц (~860 логических px) помещается целиком —
+      // центрирование 0.5 может вывести и заголовок, и инлайн-метку в экран.
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await pumpForm(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Название *'),
+        'Без мышц (внизу)',
+      );
+      // Прокрутка ЗА блок мышц — как в репорте QA: пользователь снизу формы.
+      await scrollFormTo(tester, find.text('Противопоказания'));
+      expect(
+        tester.getRect(find.text('Задействованные мышцы')).top,
+        isNegative,
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
+      await tester.pumpAndSettle();
+
+      // Снекбар виден у кнопки «Сохранить», БД не тронута.
+      expect(find.text('Выберите хотя бы одну мышцу'), findsNWidgets(2));
+      expect(await repository.getAll(), isEmpty);
+
+      // Форма прокрутилась к блоку мышц: заголовок и инлайн-метка в экране.
+      final rect = tester.getRect(find.text('Задействованные мышцы'));
+      expect(rect.top, isNonNegative);
+      expect(rect.bottom, lessThanOrEqualTo(2000));
+    },
+  );
 
   testWidgets('выбор типа меняет тип упражнения', (tester) async {
     await pumpForm(tester);

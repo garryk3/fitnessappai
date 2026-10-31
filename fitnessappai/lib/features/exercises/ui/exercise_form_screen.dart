@@ -44,6 +44,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
+  // Для прокрутки к блоку мышц при валидации обязательного поля (57.1).
+  final _musclesSectionKey = GlobalKey();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instructionsController = TextEditingController();
@@ -225,11 +227,19 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
       return;
     }
     if (_muscleSelections.isEmpty) {
+      // Обратная связь всегда видима: снекбар у кнопки «Сохранить» (57.1,
+      // TC-007) — инлайн-метка у блока мышц может остаться вне экрана
+      // (ленивый ListView, кнопка — фиксированная нижняя панель).
+      showAppSnackBar(
+        ScaffoldMessenger.of(context),
+        AppLocalizations.of(context).exerciseFormMusclesRequired,
+      );
       setState(
         () => _musclesError = AppLocalizations.of(
           context,
         ).exerciseFormMusclesRequired,
       );
+      _revealMusclesSection();
       return;
     }
     setState(() => _saving = true);
@@ -297,6 +307,25 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     if (_scrollController.hasClients && _scrollController.offset > 0) {
       _scrollController.animateTo(
         0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  /// Прокручивает форму к блоку «Задействованные мышцы», чтобы показать
+  /// причину блокировки сохранения (57.1, TC-007). Элемент может быть ещё
+  /// не построен в ленивом списке — тогда просто не прокручиваем.
+  void _revealMusclesSection() {
+    final context = _musclesSectionKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        // Центрирует секцию: при top-edge (0.0) инлайн-метка ошибки — в
+        // самом низу секции (после всех строк выбора) осталась бы ниже
+        // виджета, при bottom-edge (1.0) за экран уходит заголовок
+        // (design-review 57.1). 0.5 держит обе границы в виджете.
+        alignment: 0.5,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
       );
@@ -553,6 +582,7 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
 
   Widget _musclesEditor(AppLocalizations l10n) {
     return _Section(
+      key: _musclesSectionKey,
       title: l10n.exerciseFormMuscles,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -845,7 +875,7 @@ String _typeLabel(AppLocalizations l10n, ExerciseType type) => switch (type) {
 };
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
+  const _Section({required this.title, required this.child, super.key});
 
   final String title;
   final Widget child;
