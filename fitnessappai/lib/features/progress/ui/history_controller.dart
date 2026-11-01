@@ -11,6 +11,7 @@ class HistoryItem {
     required this.session,
     required this.exercisesCount,
     this.imagePath,
+    this.displayDuration,
   });
 
   final WorkoutSession session;
@@ -21,7 +22,12 @@ class HistoryItem {
   /// Путь к изображению программы (может отсутствовать).
   final String? imagePath;
 
-  Duration get duration => session.endedAt.difference(session.startedAt);
+  /// Длительность для карточки (58.2): тренированное время, не время ввода
+  /// метрик. `null` — не вычислена (fallback — старое wall-clock).
+  final Duration? displayDuration;
+
+  Duration get duration =>
+      displayDuration ?? session.endedAt.difference(session.startedAt);
 }
 
 /// Управляет экраном истории тренировок.
@@ -62,6 +68,11 @@ class HistoryController {
             session: session,
             exercisesCount: count,
             imagePath: await _imagePathOf(session),
+            // 58.2: тренированное время (ввод «дистанции» после пробежки вне
+            // приложения даёт wall-clock в 1 мин при 30-минутной пробежке).
+            displayDuration: detail == null
+                ? null
+                : workoutDisplayDuration(session, detail.results),
           ),
         );
         dates.add(_dateOnly(session.performedDate));

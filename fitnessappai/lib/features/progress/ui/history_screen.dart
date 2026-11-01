@@ -294,7 +294,8 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
     final theme = Theme.of(context);
     final session = detail.session;
     final date = DateFormat('d MMMM yyyy', 'ru').format(session.performedDate);
-    final minutes = session.endedAt.difference(session.startedAt).inMinutes;
+    // 58.2: тренированное время (временные подходы), а не время ввода.
+    final minutes = workoutDisplayDuration(session, detail.results).inMinutes;
     final groups = _groupByExercise(detail.results);
     return AppListView(
       padding: const EdgeInsets.all(16),

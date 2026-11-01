@@ -94,12 +94,15 @@ class WorkoutRunController {
 
   /// Длительность тренировки в минутах (минимум 1).
   ///
-  /// До сохранения считается от старта сессии, после — из сохранённой сессии.
+  /// До сохранения считается от старта сессии, после — тренированное время
+  /// (58.2): временные подходы «дистанции», введённые вручную после
+  /// тренировки вне приложения, дают корректную длительность (max из
+  /// wall-clock и суммы подходов с длительностью).
   int get durationMinutes {
-    final session = _savedDetail?.session;
-    final duration = session == null
+    final detail = _savedDetail;
+    final duration = detail == null
         ? workout.elapsed()
-        : session.endedAt.difference(session.startedAt);
+        : workoutDisplayDuration(detail.session, detail.results);
     return duration.inMinutes.clamp(1, 1 << 31);
   }
 

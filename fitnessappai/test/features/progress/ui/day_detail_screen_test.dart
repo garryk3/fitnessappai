@@ -146,17 +146,22 @@ void main() {
     endedAt: performedDate.add(const Duration(hours: 18, minutes: 40)),
   );
 
-  WorkoutSetResult setResult({String name = 'Приседания', int? exerciseId}) =>
-      WorkoutSetResult(
-        sessionId: 0,
-        exerciseId: exerciseId,
-        exerciseName: name,
-        exerciseType: ExerciseType.strength,
-        setIndex: 1,
-        reps: 8,
-        weightKg: 20,
-        completedAt: DateTime(2026, 8, 12, 12),
-      );
+  WorkoutSetResult setResult({
+    String name = 'Приседания',
+    int? exerciseId,
+    ExerciseType exerciseType = ExerciseType.strength,
+    int? durationSeconds,
+  }) => WorkoutSetResult(
+    sessionId: 0,
+    exerciseId: exerciseId,
+    exerciseName: name,
+    exerciseType: exerciseType,
+    setIndex: 1,
+    reps: 8,
+    weightKg: 20,
+    durationSeconds: durationSeconds,
+    completedAt: DateTime(2026, 8, 12, 12),
+  );
 
   Future<void> pumpDayDetail(
     WidgetTester tester, {
@@ -204,6 +209,40 @@ void main() {
     expect(find.text('2 упражнения · 40 мин'), findsOneWidget);
     expect(find.text('1 упражнение · 40 мин'), findsOneWidget);
   });
+
+  testWidgets(
+    'дистанция после факта: тренированное время, не wall-clock (58.2)',
+    (tester) async {
+      // Пробежка 30 мин введена через минуту после старта сессии (ввод после
+      // факта): wall-clock 1 мин, длительность временного подхода 30 мин.
+      await workoutRepo.saveSession(
+        WorkoutSession(
+          programName: 'База',
+          programId: null,
+          dayIndex: 0,
+          performedDate: DateTime(2026, 8, 12),
+          startedAt: DateTime(2026, 8, 12, 18),
+          endedAt: DateTime(2026, 8, 12, 18, 1),
+        ),
+        [
+          setResult(
+            name: 'Бег',
+            exerciseType: ExerciseType.distance,
+            durationSeconds: 30 * 60,
+          ),
+        ],
+      );
+
+      await pumpDayDetail(
+        tester,
+        start: DateTime(2026, 8, 12),
+        end: DateTime(2026, 8, 13),
+      );
+
+      expect(find.textContaining('1 мин'), findsNothing);
+      expect(find.textContaining('30 мин'), findsOneWidget);
+    },
+  );
 
   testWidgets('изображение программы показывается на карточке сессии', (
     tester,

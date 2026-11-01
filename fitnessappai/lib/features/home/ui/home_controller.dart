@@ -18,14 +18,23 @@ export 'package:fitnessappai/core/domain/weekly_progress.dart'
 
 /// Последняя тренировка на домашнем экране.
 class HomeWorkoutItem {
-  const HomeWorkoutItem({required this.session, required this.exercisesCount});
+  const HomeWorkoutItem({
+    required this.session,
+    required this.exercisesCount,
+    this.displayDuration,
+  });
 
   final WorkoutSession session;
 
   /// Количество различных упражнений в сессии.
   final int exercisesCount;
 
-  Duration get duration => session.endedAt.difference(session.startedAt);
+  /// Длительность для карточки (58.2): тренированное время, не время ввода
+  /// метрик. `null` — не вычислена (fallback — старое wall-clock).
+  final Duration? displayDuration;
+
+  Duration get duration =>
+      displayDuration ?? session.endedAt.difference(session.startedAt);
 }
 
 /// Информация об одной активной программе для домашнего экрана.
@@ -166,6 +175,10 @@ class HomeController {
             exercisesCount: detail == null
                 ? 0
                 : detail.results.map((r) => r.exerciseName).toSet().length,
+            // 58.2: тренированное время (временные подходы, не wall-clock).
+            displayDuration: detail == null
+                ? null
+                : workoutDisplayDuration(session, detail.results),
           ),
         );
       }
