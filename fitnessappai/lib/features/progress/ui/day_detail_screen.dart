@@ -69,6 +69,11 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           session: session,
           exercisesCount: count,
           imagePath: await _imagePathOf(session),
+          // 58.2: тренированное время (временные подходы), не wall-clock
+          // ввода метрик — как и на карточках истории.
+          displayDuration: detail == null
+              ? null
+              : workoutDisplayDuration(session, detail.results),
         ),
       );
     }

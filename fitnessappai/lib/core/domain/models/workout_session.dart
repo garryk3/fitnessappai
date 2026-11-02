@@ -1,3 +1,5 @@
+import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
+
 /// Выбранный набор упражнений в тренировочном дне.
 enum WorkoutVariant { main, alternative }
 
@@ -95,4 +97,23 @@ class WorkoutSession {
   @override
   String toString() =>
       'WorkoutSession(id: $id, programName: $programName, dayIndex: $dayIndex, status: $status)';
+}
+
+/// Длительность тренировки для карточек истории/главной и итогового экрана.
+///
+/// Wall-clock (endedAt − startedAt) не отражает тренировку, когда время
+/// «дистанции»/«планки» внесено вручную после тренировки вне приложения:
+/// сессия выглядит «1 мин» при 30-минутной пробежке (58.2). Правило —
+/// максимум из wall-clock и суммарного времени подходов с длительностью:
+/// силовые не задают `durationSeconds` (не влияют), а всё, что было
+/// «вживую» в приложении, накапливает wall-clock сам.
+Duration workoutDisplayDuration(
+  WorkoutSession session,
+  Iterable<WorkoutSetResult> results,
+) {
+  final wall = session.endedAt.difference(session.startedAt);
+  final timed = Duration(
+    seconds: results.fold<int>(0, (sum, r) => sum + (r.durationSeconds ?? 0)),
+  );
+  return timed > wall ? timed : wall;
 }
