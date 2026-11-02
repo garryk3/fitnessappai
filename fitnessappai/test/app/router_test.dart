@@ -64,6 +64,40 @@ void main() {
       expect(find.byType(NavigationBar), findsOneWidget);
     });
 
+    testWidgets('системный «Назад» из истории возвращает на главную (58.4)', (
+      WidgetTester tester,
+    ) async {
+      final GoRouter router = AppRouter.create();
+      await tester.pumpWidget(buildApp(router));
+
+      router.go('/history');
+      await tester.pumpAndSettle();
+      expect(find.text('Пока нет тренировок'), findsOneWidget);
+
+      // Системный «Назад» (до 58.4 закрывал приложение — ветвь shell
+      // без родителя в стеке).
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Нет программ'), findsOneWidget);
+      expect(find.text('Пока нет тренировок'), findsNothing);
+    });
+
+    testWidgets('системный «Назад» из прогресса возвращает на главную (58.4)', (
+      WidgetTester tester,
+    ) async {
+      final GoRouter router = AppRouter.create();
+      await tester.pumpWidget(buildApp(router));
+
+      router.go('/progress');
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Нет программ'), findsOneWidget);
+    });
+
     testWidgets('deep-link на динамику упражнения открывает экран', (
       WidgetTester tester,
     ) async {

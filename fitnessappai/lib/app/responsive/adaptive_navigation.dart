@@ -35,6 +35,7 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
   bool _railExtended = false;
 
   static const int _programsBranchIndex = 2;
+  static const int _homeBranchIndex = 0;
   static const int _planBranchIndex = 3;
   static const int _profileBranchIndex = 5;
   static const int _historyBranchIndex = 6;
@@ -330,7 +331,21 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
 
         return MenuOpener(
           onOpenMenu: useRail ? _toggleRailExtended : _openDrawer,
-          child: child,
+          // 58.4: ветви истории/прогресса — корневые ветви shell, системный
+          // «Назад» с них закрывал приложение. Из ветви ≠ главная — назад
+          // возврат на главную; из главной — штатное закрытие приложения.
+          // Инвариант для этого PopScope: вложенные push-роуты в ветвях
+          // shell недопустимы (все detail-роуты — root-уровень); иначе back
+          // с под-роута уходил бы на /home вместо корня ветви.
+          child: PopScope(
+            canPop: navigationShell.currentIndex == _homeBranchIndex,
+            onPopInvokedWithResult: (didPop, result) {
+              if (!didPop) {
+                context.go('/home');
+              }
+            },
+            child: child,
+          ),
         );
       },
     );
