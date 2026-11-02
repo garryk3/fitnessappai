@@ -83,7 +83,9 @@ class ProfileController {
       );
       measurements.value = page;
       hasMore.value = page.length < total;
-      latest.value = page.isEmpty ? null : page.first;
+      // 58.3: сводка последних известных значений — свежая строка с
+      // незаполненными полями не «стирает» ранние значения в сводке/ИМТ.
+      latest.value = await measurementRepository.latestEffective();
       await _refreshChart();
     } finally {
       isLoading.value = false;
