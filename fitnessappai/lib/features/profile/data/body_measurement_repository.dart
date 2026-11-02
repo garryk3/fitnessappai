@@ -72,6 +72,21 @@ class BodyMeasurementRepository {
     return row == null ? null : _toModel(row);
   }
 
+  /// Сводка последних известных значений по каждой метрике или `null`.
+  ///
+  /// Свежая строка замера может содержать не все поля (замеряли только
+  /// вес) — сводим её со старыми строками, чтобы сводка профиля и ИМТ не
+  /// «теряли» ранее измеренные значения (58.3).
+  Future<BodyMeasurement?> latestEffective() async {
+    final rows =
+        await (_db.select(_db.bodyMeasurements)..orderBy([
+              (t) => OrderingTerm.desc(t.date),
+              (t) => OrderingTerm.desc(t.id),
+            ]))
+            .get();
+    return coalesceLatest(rows.map(_toModel).toList());
+  }
+
   /// Удаляет замер по id (нет записи — ничего не делает).
   Future<void> delete(int id) async {
     await (_db.delete(

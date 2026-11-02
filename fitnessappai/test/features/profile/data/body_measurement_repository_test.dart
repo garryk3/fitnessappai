@@ -98,6 +98,31 @@ void main() {
     test('latest возвращает null, если замеров нет', () async {
       expect(await repo.latest(), isNull);
     });
+
+    test(
+      'latestEffective: свежий замер с одним полем не стирает старые (58.3)',
+      () async {
+        await repo.add(
+          measurement(
+            date: DateTime(2026, 8, 1),
+            heightCm: 180,
+            weightKg: 80,
+            hipsCm: 98,
+          ),
+        );
+        await repo.add(measurement(date: DateTime(2026, 8, 10), weightKg: 82));
+
+        final summary = await repo.latestEffective();
+
+        expect(summary!.weightKg, 82); // заполненное поле перезаписано
+        expect(summary.heightCm, 180); // незаполненные сохранились
+        expect(summary.hipsCm, 98);
+      },
+    );
+
+    test('latestEffective возвращает null, если замеров нет', () async {
+      expect(await repo.latestEffective(), isNull);
+    });
   });
 
   group('count и getPage', () {

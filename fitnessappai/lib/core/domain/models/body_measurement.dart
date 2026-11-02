@@ -99,3 +99,52 @@ class BodyMeasurement {
   String toString() =>
       'BodyMeasurement(id: $id, date: $date, weightKg: $weightKg)';
 }
+
+/// Сводка последних известных значений по каждой метрике.
+///
+/// Замер тела хранит только измеренные в этот раз поля: свежая строка с
+/// одним весом не должна «стирать» рост и обхваты на сводке профиля (58.3).
+/// Идём по замерам от свежих к старым и для каждой метрики берём первое
+/// ненулевое значение. Строки БД остаются честными (только измеренное):
+/// график метрики по-прежнему строится по реально измеренным точкам.
+BodyMeasurement? coalesceLatest(List<BodyMeasurement> newestFirst) {
+  if (newestFirst.isEmpty) {
+    return null;
+  }
+  double? heightCm;
+  double? weightKg;
+  double? neckCm;
+  double? chestCm;
+  double? waistCm;
+  double? hipsCm;
+  double? bicepsCm;
+  double? forearmCm;
+  double? thighCm;
+  double? calfCm;
+  for (final m in newestFirst) {
+    heightCm ??= m.heightCm;
+    weightKg ??= m.weightKg;
+    neckCm ??= m.neckCm;
+    chestCm ??= m.chestCm;
+    waistCm ??= m.waistCm;
+    hipsCm ??= m.hipsCm;
+    bicepsCm ??= m.bicepsCm;
+    forearmCm ??= m.forearmCm;
+    thighCm ??= m.thighCm;
+    calfCm ??= m.calfCm;
+  }
+  return BodyMeasurement(
+    // Синтетическая сводка без id строк; дата — дата свежайшего замера.
+    date: newestFirst.first.date,
+    heightCm: heightCm,
+    weightKg: weightKg,
+    neckCm: neckCm,
+    chestCm: chestCm,
+    waistCm: waistCm,
+    hipsCm: hipsCm,
+    bicepsCm: bicepsCm,
+    forearmCm: forearmCm,
+    thighCm: thighCm,
+    calfCm: calfCm,
+  );
+}
