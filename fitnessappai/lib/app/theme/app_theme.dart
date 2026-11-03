@@ -44,6 +44,15 @@ abstract final class AppTheme {
     return ThemeData(
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
+      // 58.6: переходы по умолчанию (PredictiveBack/Zoom с blur-масштабом)
+      // подёргивались на Android — весь экран пересчитывается каждый кадр
+      // transition-а. FadeForwards — лёгкий M3-переход (fade + сдвиг 40dp),
+      // поддерживает predictive back.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         // Редизайн 54 (§11): шапка «сливается» со scaffold — без тинта и

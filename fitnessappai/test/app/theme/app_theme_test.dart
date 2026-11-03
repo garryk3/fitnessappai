@@ -159,6 +159,15 @@ void main() {
       expect(theme.dialogTheme, isNotNull);
     });
 
+    test('58.6: переходы на Android — лёгкий FadeForwards (без zoom-blur)', () {
+      final ThemeData theme = AppTheme.dark();
+
+      expect(
+        theme.pageTransitionsTheme.builders[TargetPlatform.android],
+        isA<FadeForwardsPageTransitionsBuilder>(),
+      );
+    });
+
     test('55.2: снекбар и лист — токенизированные роли и радиусы', () {
       for (final ThemeData theme in [AppTheme.light(), AppTheme.dark()]) {
         final ColorScheme scheme = theme.colorScheme;
