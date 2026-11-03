@@ -76,6 +76,10 @@ class _FitnessAppAiState extends State<FitnessAppAi>
 
   Future<void> _rescheduleReminders() async {
     try {
+      // Гасим висящие напоминания (58.5): их звук не остановить без cancel,
+      // а пользователь уже вернулся в приложение. До перепланирования —
+      // иначе rescheduleAll успеет перезапланировать то, что снимаем.
+      await _reminders?.dismissActiveReminders();
       await _reminders?.rescheduleAll();
       // Пока приложение было в фоне, система могла не доставить напоминание
       // (Doze, «Остановить приложение», отзыв точного режима) — показываем

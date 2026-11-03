@@ -31,6 +31,8 @@ class _MockReminderRepository extends Mock
 class _MockPlanScheduleRepository extends Mock
     implements PlanScheduleRepository {}
 
+class _MockDeliveredLog extends Mock implements ReminderDeliveredLog {}
+
 void main() {
   // initialize() ходит в FlutterTimezone через method channel — нужен binding.
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -183,6 +185,67 @@ void main() {
   test('cancel отменяет уведомление по id дня', () async {
     await service.cancel(42);
     verify(() => plugin.cancel(id: 42)).called(1);
+  });
+
+  group('dismissActiveReminders (58.5)', () {
+    setUp(() {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(android);
+      when(() => plugin.getActiveNotifications()).thenAnswer(
+        (_) async => [
+          const ActiveNotification(id: 42),
+          ActiveNotification(id: ReminderService.manualReminderId(7)),
+          const ActiveNotification(id: -1),
+        ],
+      );
+    });
+
+    test('гасит раньше висевшие напоминания', () async {
+      await service.dismissActiveReminders();
+
+      verify(() => plugin.cancel(id: 42)).called(1);
+      verify(
+        () => plugin.cancel(id: ReminderService.manualReminderId(7)),
+      ).called(1);
+      // Битый id (-1) не канцелят.
+      verifyNever(() => plugin.cancel(id: -1));
+    });
+
+    test('еженедельному пишется отметка доставки, ручному — нет', () async {
+      final deliveredLog = _MockDeliveredLog();
+      when(
+        () => deliveredLog.markDelivered(any(), any()),
+      ).thenAnswer((_) async {});
+      final marked = ReminderService(
+        repository: repository,
+        plugin: plugin,
+        deliveredLog: deliveredLog,
+      );
+
+      await marked.dismissActiveReminders();
+
+      verify(
+        () => deliveredLog.markDelivered(42, any()),
+      ).called(1); // догон не покажет снятый день заново
+      verifyNever(() => deliveredLog.markDelivered(any(), any()));
+    });
+
+    test('вне Android не читает активные уведомления', () async {
+      when(
+        () => plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >(),
+      ).thenReturn(null);
+
+      await service.dismissActiveReminders();
+
+      verifyNever(() => plugin.getActiveNotifications());
+    });
   });
 
   group('requestNotificationsPermission', () {
