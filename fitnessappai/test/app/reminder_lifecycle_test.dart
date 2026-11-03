@@ -23,15 +23,29 @@ class _CountingReminderService extends ReminderService {
 
   int rescheduleCalls = 0;
   int catchUpCalls = 0;
+  int dismissCalls = 0;
+
+  /// Порядок вызовов: dismiss обязан идти до rescheduleAll (cancel в плагине
+  /// снимает и будильник того же id — обратный порядок гасит недельный
+  /// цикл, 58.5).
+  final List<String> calls = [];
 
   @override
   Future<void> rescheduleAll() async {
+    calls.add('reschedule');
     rescheduleCalls++;
   }
 
   @override
   Future<void> catchUpMissed() async {
+    calls.add('catchUp');
     catchUpCalls++;
+  }
+
+  @override
+  Future<void> dismissActiveReminders() async {
+    calls.add('dismiss');
+    dismissCalls++;
   }
 }
 
@@ -59,10 +73,16 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    // 58.5: перед перепланированием гасим висящие напоминания — их звук
+    // не остановить без снятия уведомления, а пользователь уже в приложении.
+    expect(reminders.dismissCalls, 1, reason: 'гашение при возврате из фона');
     expect(reminders.rescheduleCalls, 1);
     // Возврат из фона — тот же момент, что и разблокировка экрана: догон
     // обязан выполняться и он (48.8, ранее не покрывался вовсе).
     expect(reminders.catchUpCalls, 1, reason: 'догон при возврате из фона');
+    // Инвариант порядка: dismiss до rescheduleAll (cancel снимает будильник
+    // того же id — обратный порядок молча гасит недельный цикл, 58.5).
+    expect(reminders.calls, ['dismiss', 'reschedule', 'catchUp']);
   });
 
   testWidgets('приложение стартует без зарегистрированных напоминаний', (

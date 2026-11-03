@@ -68,6 +68,20 @@ Future<void> bootstrap({
     );
   }
   try {
+    // Гасим висящие напоминания (58.5) ДО rescheduleAll: cancel в плагине
+    // снимает не только трей, но и будильник того же id — перепланирование
+    // после dismiss сразу восстанавливает недельный цикл. Пользователь уже
+    // видит приложение: звук не остановить без снятия уведомления.
+    await sl.get<ReminderService>().dismissActiveReminders();
+  } catch (e, st) {
+    logNotificationIssue(
+      'Активные напоминания не сняты при запуске',
+      error: e,
+      stackTrace: st,
+      name: 'bootstrap',
+    );
+  }
+  try {
     await sl.get<ReminderService>().rescheduleAll();
   } catch (e, st) {
     logNotificationIssue(

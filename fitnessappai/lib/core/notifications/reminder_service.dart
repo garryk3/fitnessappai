@@ -895,7 +895,9 @@ class ReminderService {
             id: programDayId,
             title: item.programName,
             body: '${_body(item.dayNumber)} ($_catchUpReason)',
-            notificationDetails: _notificationDetails(),
+            // Догон срабатывает, когда пользователь уже в приложении
+            // (старт/resume) — без звука (58.5).
+            notificationDetails: _notificationDetails(silent: true),
             payload: programDayId.toString(),
           );
         } catch (_) {
@@ -982,20 +984,61 @@ class ReminderService {
     }
   }
 
+  /// Гасит напоминания, которые ещё висят в трее (58.5).
+  ///
+  /// Звук уведомления играет системный процесс: пока напоминание висит —
+  /// остановить звук можно только сняв уведомление. Пользователь уже в
+  /// приложении — оно для него «увидено»: еженедельным пишется отметка
+  /// доставки (догон не покажет день заново), ручные просто снимаются.
+  Future<void> dismissActiveReminders() async {
+    if (_plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >() ==
+        null) {
+      return;
+    }
+    final ids = await _activeNotificationIds();
+    for (final id in ids) {
+      if (id < 0) {
+        continue;
+      }
+      if (id < manualReminderIdBase) {
+        // Еженедельное: «увидено сегодня» — тем же протоколом, что тап.
+        await _markDelivered(id);
+      }
+      try {
+        await _plugin.cancel(id: id);
+      } catch (e, st) {
+        logNotificationIssue(
+          'Не удалось снять активное напоминание при входе в приложение '
+          '(id=$id)',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+  }
+
   /// Описание уведомления с текущими настройками звука.
-  NotificationDetails _notificationDetails() => NotificationDetails(
-    android: AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: _soundEnabled,
-      sound: _androidSound,
-    ),
-    iOS: const DarwinNotificationDetails(),
-    macOS: const DarwinNotificationDetails(),
-  );
+  ///
+  /// [silent] — для догона пропущенных: он срабатывает, когда пользователь
+  /// уже в приложении (58.5), звук снова громко играть не нужно, уведомление
+  /// достаточно видно в трее.
+  NotificationDetails _notificationDetails({bool silent = false}) =>
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: _channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: _soundEnabled && !silent,
+          sound: _androidSound,
+        ),
+        iOS: const DarwinNotificationDetails(),
+        macOS: const DarwinNotificationDetails(),
+      );
 
   static String _body(int dayNumber) => 'Тренировка: день $dayNumber';
 
