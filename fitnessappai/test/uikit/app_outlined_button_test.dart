@@ -54,5 +54,13 @@ void main() {
 
       expect(tester.widget<Icon>(find.byType(Icon)).size, isNull);
     });
+
+    testWidgets('минимальная высота — тач-таргет 48dp (59.1)', (tester) async {
+      await _pump(tester, AppOutlinedButton(label: 'Отмена', onPressed: () {}));
+      await tester.pumpAndSettle();
+
+      final size = tester.getSize(find.byType(OutlinedButton));
+      expect(size.height, greaterThanOrEqualTo(48));
+    });
   });
 }

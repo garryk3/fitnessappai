@@ -570,6 +570,98 @@ void main() {
     });
   });
 
+  group('skipExercise (59.1)', () {
+    test('середина сессии: несделанные подходы не пишутся, идём дальше', () {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start([
+        strengthExercise(sets: 3, rest: 0),
+        bodyweightExercise(),
+      ]);
+
+      // Первый подход выполнен, два оставшихся пропускаем целиком.
+      controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
+      controller.confirmSet();
+      expect(controller.results.value, hasLength(1));
+
+      controller.skipExercise();
+      expect(controller.currentExerciseIndex.value, 1);
+      expect(controller.currentSet.value, 1);
+      expect(controller.phase.value, WorkoutPhase.exercise);
+      // Выполненный подход первого упражнения сохранён, пропущенные нет.
+      expect(controller.results.value, hasLength(1));
+      expect(controller.results.value.first.exerciseId, 10);
+      controller.dispose();
+    });
+
+    test('по сторонам: пропуск сбрасывает сторону и отдых между сторонами', () {
+      final controller = WorkoutController(clock: () => startTime);
+      controller.start([perSideExercise(sets: 2, rest: 60)]);
+
+      controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
+      controller.confirmSet();
+      expect(controller.currentSide.value, 'right');
+      expect(controller.phase.value, WorkoutPhase.rest);
+      expect(controller.sideRest.value, isNotNull);
+
+      controller.skipExercise();
+      expect(controller.currentSide.value, isNull);
+      expect(controller.sideRest.value, isNull);
+      // Упражнение одно — пропуск ведёт к финишу.
+      expect(controller.phase.value, WorkoutPhase.finished);
+      controller.dispose();
+    });
+
+    test('во время отдыха между подходами: отдых отменён, переход дальше', () {
+      fakeAsync((async) {
+        final controller = WorkoutController(clock: () => startTime);
+        controller.start([
+          strengthExercise(sets: 2, rest: 60),
+          bodyweightExercise(),
+        ]);
+
+        controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
+        controller.confirmSet();
+        expect(controller.phase.value, WorkoutPhase.rest);
+
+        controller.skipExercise();
+        expect(controller.phase.value, WorkoutPhase.exercise);
+        expect(controller.currentExerciseIndex.value, 1);
+        expect(controller.restRemainingSeconds.value, isNull);
+        // Тик отменённого отдыха не прогрессирует состояние.
+        async.elapse(const Duration(seconds: 90));
+        expect(controller.currentExerciseIndex.value, 1);
+        controller.dispose();
+      });
+    });
+
+    test(
+      'на последнем упражнении завершает тренировку (частичные результаты)',
+      () {
+        final controller = WorkoutController(clock: () => startTime);
+        controller.start([strengthExercise(sets: 3, rest: 0)]);
+
+        controller.setResult(const WorkoutSetInput(reps: 8, weightKg: 20));
+        controller.confirmSet();
+
+        controller.skipExercise();
+        expect(controller.phase.value, WorkoutPhase.finished);
+
+        final outcome = controller.completeWorkout();
+        expect(outcome.results, hasLength(1));
+        controller.dispose();
+      },
+    );
+
+    test('неактивная тренировка бросает WorkoutStateException', () {
+      final controller = WorkoutController(clock: () => startTime);
+      expect(
+        () => controller.skipExercise(),
+        throwsA(isA<WorkoutStateException>()),
+      );
+      controller.dispose();
+    });
+  });
+
   test('completeWorkout возвращает сессию и результаты', () {
     final controller = WorkoutController(clock: () => startTime);
     controller.start(

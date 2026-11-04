@@ -142,6 +142,7 @@ void main() {
     int sets = 3,
     int? restSeconds = 60,
     bool withAlternative = false,
+    bool withSecondExercise = false,
     bool fixedWeight = false,
     bool perSide = false,
     ExerciseType type = ExerciseType.strength,
@@ -178,6 +179,18 @@ void main() {
         durationSeconds: durationSeconds,
       ),
     );
+    if (withSecondExercise) {
+      final secondId = await insertExercise(
+        'Отжимания',
+        type: ExerciseType.bodyweight,
+      );
+      await programRepo.addExerciseToDay(day.id!, secondId);
+      await programRepo.updateExercise(
+        (await programRepo.getExercises(
+          day.id!,
+        )).last.copyWith(sets: 1, reps: 15),
+      );
+    }
     if (withAlternative) {
       final altExId = await insertExercise('Жим ногами');
       await programRepo.addExerciseToDay(day.id!, altExId, isAlternative: true);
@@ -445,6 +458,101 @@ void main() {
     await tester.tap(find.text('К прогрессу'));
     await tester.pumpAndSettle();
     expect(find.text('progress'), findsOneWidget);
+  });
+
+  testWidgets(
+    'пропуск упражнения: несделанные подходы не пишутся, идём к следующему (59.1)',
+    (tester) async {
+      final dayId = await createDay(
+        sets: 2,
+        restSeconds: 0,
+        withSecondExercise: true,
+      );
+      await pumpRun(tester, dayId);
+
+      // Первый подход первого упражнения выполнен.
+      await tester.enterText(find.byType(TextFormField).first, '8');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+      expect(find.text('Упражнение 1 из 2 · Подход 2 из 2'), findsOneWidget);
+
+      // Пропускаем упражнение целиком: второй подход не фиксируется.
+      await tester.ensureVisible(find.text('Пропустить упражнение'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Пропустить упражнение'));
+      await tester.pumpAndSettle();
+      expect(find.text('Упражнение 2 из 2 · Подход 1 из 1'), findsOneWidget);
+      expect(find.text('Отжимания'), findsOneWidget);
+      expect(find.text('Приседания'), findsNothing);
+
+      // Доводим второе упражнение до конца и сохраняем.
+      await tester.enterText(find.byType(TextFormField).first, '15');
+      await tester.tap(find.text('Подход выполнен'));
+      await tester.pumpAndSettle();
+      expect(find.text('Тренировка завершена'), findsOneWidget);
+      await tester.pumpAndSettle();
+
+      final sessions = await workoutRepo.getSessionsBetween(
+        DateTime(2020),
+        DateTime(2030),
+      );
+      final detail = await workoutRepo.getSession(sessions.first.id!);
+      // Только фактически выполненные подходы: 1 приседаний + 1 отжиманий.
+      expect(detail!.results, hasLength(2));
+      expect(detail.results.map((r) => r.exerciseName).toSet(), {
+        'Приседания',
+        'Отжимания',
+      });
+    },
+  );
+
+  testWidgets('пропуск последнего упражнения завершает тренировку (59.1)', (
+    tester,
+  ) async {
+    final dayId = await createDay(sets: 2, restSeconds: 0);
+    await pumpRun(tester, dayId);
+
+    await tester.enterText(find.byType(TextFormField).first, '8');
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
+    expect(find.text('Упражнение 1 из 1 · Подход 2 из 2'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Пропустить упражнение'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Пропустить упражнение'));
+    await tester.pumpAndSettle();
+    expect(find.text('Тренировка завершена'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    final sessions = await workoutRepo.getSessionsBetween(
+      DateTime(2020),
+      DateTime(2030),
+    );
+    final detail = await workoutRepo.getSession(sessions.first.id!);
+    // Частичные результаты: выполненный подход сохранён, пропущенный нет.
+    expect(detail!.results, hasLength(1));
+  });
+
+  testWidgets('пропуск упражнения доступен во время отдыха (59.1)', (
+    tester,
+  ) async {
+    final dayId = await createDay(
+      sets: 2,
+      restSeconds: 60,
+      withSecondExercise: true,
+    );
+    await pumpRun(tester, dayId);
+
+    await tester.enterText(find.byType(TextFormField).first, '8');
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
+    expect(find.text('Отдых'), findsOneWidget);
+    expect(find.text('Пропустить упражнение'), findsOneWidget);
+
+    await tester.tap(find.text('Пропустить упражнение'));
+    await tester.pumpAndSettle();
+    expect(find.text('Упражнение 2 из 2 · Подход 1 из 1'), findsOneWidget);
+    expect(find.text('Отдых'), findsNothing);
   });
 
   testWidgets(

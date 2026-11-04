@@ -456,6 +456,7 @@
   "workoutRunApproachDone": "Подход выполнен",
   "workoutRunRest": "Отдых",
   "workoutRunSkipRest": "Пропустить отдых",
+  "workoutRunSkipExercise": "Пропустить упражнение",
   "workoutRunSideRest": "Отдых между сторонами",
   "workoutSideLeft": "левая",
   "workoutSideRight": "правая",

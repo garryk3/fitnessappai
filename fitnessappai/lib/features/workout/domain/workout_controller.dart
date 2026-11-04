@@ -372,15 +372,48 @@ class WorkoutController {
     if (isLastExercise || phase.value == WorkoutPhase.finished) {
       return;
     }
+    _resetRestState();
+    currentExerciseIndex.value++;
+    currentSet.value = 1;
+    phase.value = WorkoutPhase.exercise;
+    _prepareHoldTimer();
+  }
+
+  /// Пропускает текущее упражнение целиком (59.1).
+  ///
+  /// Несделанные подходы в результаты не пишутся (пользователь явно
+  /// отказался от них), выполненные ранее подходы этого упражнения
+  /// сохраняются. Переход к следующему упражнению; на последнем —
+  /// досрочное завершение тренировки с сохранением частичных результатов.
+  /// Доступно из фаз exercise и rest (в т.ч. во время отдыха между
+  /// подходами/сторонами — отдых текущего упражнения отменяется).
+  void skipExercise() {
+    _requireActive();
+    if (phase.value == WorkoutPhase.finished) {
+      return;
+    }
+    _soundService?.stop();
+    _resetRestState();
+    if (isLastExercise) {
+      finishEarly();
+      return;
+    }
+    _advanceToNextExercise();
+  }
+
+  /// Сбрасывает состояние отдыха и сторон перед сменой упражнения.
+  ///
+  /// Общий для [nextExercise] и [skipExercise]: новое состояние отдыха
+  /// (например, side-rest) обязано сбрасываться здесь же — пропущенный
+  /// сброс оставит stale-состояние после смены упражнения. В [skipRest]
+  /// не используется: он возвращает к подходу того же упражнения и
+  /// намеренно сохраняет [currentSide].
+  void _resetRestState() {
     _cancelRestTimer();
     restRemainingSeconds.value = null;
     sideRest.value = null;
     currentSide.value = null;
     _restBetweenExercises = false;
-    currentExerciseIndex.value++;
-    currentSet.value = 1;
-    phase.value = WorkoutPhase.exercise;
-    _prepareHoldTimer();
   }
 
   /// Завершает тренировку и возвращает сессию с результатами.

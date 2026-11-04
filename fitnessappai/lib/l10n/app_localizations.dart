@@ -1846,6 +1846,12 @@ abstract class AppLocalizations {
   /// **'Пропустить отдых'**
   String get workoutRunSkipRest;
 
+  /// No description provided for @workoutRunSkipExercise.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить упражнение'**
+  String get workoutRunSkipExercise;
+
   /// No description provided for @workoutRunSideRest.
   ///
   /// In ru, this message translates to:
