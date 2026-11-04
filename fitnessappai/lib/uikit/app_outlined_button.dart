@@ -55,15 +55,21 @@ class AppOutlinedButton extends StatelessWidget {
           )
         : AppText(label);
 
+    final buttonStyle = OutlinedButton.styleFrom(
+      // Тач-таргет 48dp (a11y, Material): дефолт M3 — 40dp (59.1).
+      minimumSize: const Size(64, 48),
+    );
     final Widget button = (icon == null || busy)
         ? OutlinedButton(
             onPressed: effective,
             autofocus: autofocus,
+            style: buttonStyle,
             child: labelWidget,
           )
         : OutlinedButton.icon(
             onPressed: effective,
             autofocus: autofocus,
+            style: buttonStyle,
             icon: AppIcon(icon!, size: iconSize),
             label: labelWidget,
           );

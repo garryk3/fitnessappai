@@ -200,6 +200,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     _saveCheckpoint();
   }
 
+  /// Пропускает текущее упражнение целиком и сохраняет чекпоинт (59.1).
+  void _skipExercise() {
+    _controller.workout.skipExercise();
+    _saveCheckpoint();
+  }
+
   /// Запускает удержание планки и сохраняет чекпоинт.
   void _startHold() {
     _controller.workout.startHoldTimer();
@@ -552,6 +558,15 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             onConfirm: _confirmSet,
             holdElapsed: () => workout.holdElapsedSeconds.value,
           ),
+          const SizedBox(height: 12),
+          // 59.1: пропуск упражнения целиком — несделанные подходы не
+          // пишутся в результаты; на последнем упражнении завершает
+          // тренировку с частичными результатами.
+          AppOutlinedButton(
+            onPressed: _skipExercise,
+            label: l10n.workoutRunSkipExercise,
+            expanded: true,
+          ),
         ],
       ),
     );
@@ -587,6 +602,13 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
           ),
           const SizedBox(height: 24),
           AppButton(onPressed: _skipRest, label: l10n.workoutRunSkipRest),
+          const SizedBox(height: 12),
+          // 59.1: пропуск упражнения доступен и во время отдыха — без
+          // промежуточного «Пропустить отдых» → возврат к подходу.
+          AppOutlinedButton(
+            onPressed: _skipExercise,
+            label: l10n.workoutRunSkipExercise,
+          ),
         ],
       ),
     );
