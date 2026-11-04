@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
@@ -17,6 +16,7 @@ import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/progress/ui/day_sessions_sheet.dart';
 import 'package:fitnessappai/features/progress/ui/history_controller.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -181,8 +181,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void _openDay(BuildContext context, DateTime date) {
     final start = DateTime(date.year, date.month, date.day);
     final end = start.add(const Duration(days: 1));
-    context.push(
-      '/progress/day?start=${start.millisecondsSinceEpoch}&end=${end.millisecondsSinceEpoch}',
+    // 59.2: детали дня — нижний дравер, а не отдельная страница.
+    // Репозитории пробрасываются: в тестах locator может быть неполным.
+    showDaySessionsSheet(
+      context,
+      start: start,
+      end: end,
+      workoutRepository: widget.workoutRepository,
     );
   }
 }

@@ -14,6 +14,8 @@ import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/progress/domain/stats_aggregator.dart';
+import 'package:fitnessappai/features/progress/ui/day_sessions_sheet.dart';
+import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/progress/ui/progress_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
@@ -25,10 +27,15 @@ class ProgressScreen extends StatefulWidget {
     super.key,
     this.statsAggregator,
     this.exerciseRepository,
+    this.workoutRepository,
   });
 
   final StatsAggregator? statsAggregator;
   final ExerciseRepository? exerciseRepository;
+
+  /// Репозиторий тренировок для дравера деталей дня (59.2); в проде
+  /// дравер берёт его из locator, в тестах пробрасывается напрямую.
+  final WorkoutRepository? workoutRepository;
 
   @override
   State<ProgressScreen> createState() => _ProgressScreenState();
@@ -108,7 +115,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ...[
           _StatCards(controller: controller),
           const SizedBox(height: 16),
-          _WorkoutsChart(controller: controller),
+          _WorkoutsChart(
+            controller: controller,
+            workoutRepository: widget.workoutRepository,
+          ),
           const SizedBox(height: 16),
           if (controller.exercises.value.isNotEmpty) ...[
             _MetricChart(controller: controller),
@@ -250,9 +260,13 @@ class _StatCards extends StatelessWidget {
 
 /// BarChart «Тренировки по срезам».
 class _WorkoutsChart extends StatelessWidget {
-  const _WorkoutsChart({required this.controller});
+  const _WorkoutsChart({required this.controller, this.workoutRepository});
 
   final ProgressController controller;
+
+  /// Репозиторий для дравера деталей дня (59.2); null — дравер берёт
+  /// из locator (прод).
+  final WorkoutRepository? workoutRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -351,10 +365,12 @@ class _WorkoutsChart extends StatelessWidget {
                         return;
                       }
                       final (start, end) = slices[index];
-                      context.push(
-                        '/progress/day'
-                        '?start=${start.millisecondsSinceEpoch}'
-                        '&end=${end.millisecondsSinceEpoch}',
+                      // 59.2: детали дня — нижний дравер, а не страница.
+                      showDaySessionsSheet(
+                        context,
+                        start: start,
+                        end: end,
+                        workoutRepository: workoutRepository,
                       );
                     },
                   ),
