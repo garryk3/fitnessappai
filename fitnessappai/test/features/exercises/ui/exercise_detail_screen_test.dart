@@ -549,7 +549,9 @@ void main() {
     await tester.tap(find.text('Вся история'));
     await tester.pumpAndSettle();
 
-    expect(find.text('История упражнения'), findsOneWidget);
+    expect(find.text('История упражнения'), findsNothing);
+    // Имя упражнения в appBar (design-review 59.3).
+    expect(find.text('Приседания'), findsOneWidget);
     // Сессии от новых к старым.
     expect(find.text('14 августа 2026'), findsOneWidget);
     expect(find.text('10 августа 2026'), findsOneWidget);

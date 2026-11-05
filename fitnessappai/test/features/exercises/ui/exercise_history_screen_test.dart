@@ -110,7 +110,8 @@ void main() {
     ]);
     await pumpHistory(tester, exerciseId: exerciseId);
 
-    expect(find.text('История упражнения'), findsOneWidget);
+    // Имя упражнения в appBar (design-review 59.3).
+    expect(find.text('Приседания'), findsOneWidget);
     expect(find.text('14 августа 2026'), findsOneWidget);
     expect(find.text('10 августа 2026'), findsOneWidget);
     expect(find.textContaining('12 ×'), findsOneWidget);
@@ -145,6 +146,7 @@ void main() {
     await pumpHistory(tester, exerciseId: 999);
 
     expect(find.text('Это упражнение ещё не выполнялось'), findsOneWidget);
-    expect(find.text('Приседания'), findsOneWidget);
+    // Имя упражнения: appBar + hint empty state.
+    expect(find.text('Приседания'), findsNWidgets(2));
   });
 }

@@ -73,7 +73,13 @@ class _ExerciseHistoryScreenState extends State<ExerciseHistoryScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AppScaffold(
-      appBar: AppTopBar(title: l10n.exerciseHistoryTitle),
+      // Имя упражнения в appBar (design-review 59.3): при прокрутке видно,
+      // чья история; fallback — generic-заголовок для deep-link без ?name=.
+      appBar: AppTopBar(
+        title: widget.exerciseName.isNotEmpty
+            ? widget.exerciseName
+            : l10n.exerciseHistoryTitle,
+      ),
       body: FutureBuilder<List<WorkoutSessionDetail>>(
         future: _future,
         builder: (context, snapshot) {
