@@ -7,6 +7,7 @@ import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_history_screen.dart';
 import 'package:fitnessappai/app/bootstrap.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/single_exercise_params_screen.dart';
@@ -165,6 +166,13 @@ class AppRouter {
           path: '/exercises/:id',
           builder: (context, state) => ExerciseDetailScreen(
             exerciseId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: '/exercises/:id/history',
+          builder: (context, state) => ExerciseHistoryScreen(
+            exerciseId: int.parse(state.pathParameters['id']!),
+            exerciseName: state.uri.queryParameters['name'] ?? '',
           ),
         ),
         GoRoute(

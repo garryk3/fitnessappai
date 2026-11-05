@@ -982,11 +982,29 @@ abstract class AppLocalizations {
   /// **'Задействованные мышцы'**
   String get exerciseDetailMuscles;
 
-  /// No description provided for @exerciseDetailHistoryRecent.
+  /// No description provided for @exerciseDetailHistoryLast.
   ///
   /// In ru, this message translates to:
-  /// **'История за последние 3 дня'**
-  String get exerciseDetailHistoryRecent;
+  /// **'Последнее выполнение'**
+  String get exerciseDetailHistoryLast;
+
+  /// No description provided for @exerciseDetailHistoryAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вся история'**
+  String get exerciseDetailHistoryAll;
+
+  /// No description provided for @exerciseHistoryTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'История упражнения'**
+  String get exerciseHistoryTitle;
+
+  /// No description provided for @exerciseHistoryEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это упражнение ещё не выполнялось'**
+  String get exerciseHistoryEmpty;
 
   /// Подтверждение удаления упражнения
   ///

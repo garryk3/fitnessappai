@@ -308,6 +308,49 @@ void main() {
     expect(results, isEmpty);
   });
 
+  test(
+    'resultsHistoryForExercise группирует по сессиям от новых к старым (59.3)',
+    () async {
+      final squats = await insertExercise('Приседания');
+      final bench = await insertExercise('Жим');
+      await repo.saveSession(session(performedDate: DateTime(2026, 8, 10)), [
+        setResult(exerciseId: squats, setIndex: 1, reps: 8),
+        setResult(exerciseId: bench),
+      ]);
+      await repo.saveSession(session(performedDate: DateTime(2026, 8, 13)), [
+        setResult(exerciseId: squats, setIndex: 1, reps: 10),
+        setResult(exerciseId: squats, setIndex: 2, reps: 8),
+      ]);
+      await repo.saveSession(session(performedDate: DateTime(2026, 8, 12)), [
+        setResult(exerciseId: squats, setIndex: 1, reps: 9),
+      ]);
+
+      final history = await repo.resultsHistoryForExercise(squats);
+
+      // Три сессии с приседаниями, от новых к старым; подходы жима не
+      // попадают ни в одну группу.
+      expect(history, hasLength(3));
+      expect(history[0].session.performedDate, DateTime(2026, 8, 13));
+      expect(history[0].results.map((r) => r.reps), [10, 8]);
+      expect(history[0].results.map((r) => r.setIndex), [1, 2]);
+      expect(history[1].session.performedDate, DateTime(2026, 8, 12));
+      expect(history[1].results, hasLength(1));
+      expect(history[2].session.performedDate, DateTime(2026, 8, 10));
+      expect(history[2].results, hasLength(1));
+      expect(history[2].results.single.reps, 8);
+    },
+  );
+
+  test(
+    'resultsHistoryForExercise для невыполненного упражнения пуст',
+    () async {
+      final squats = await insertExercise('Приседания');
+      await repo.saveSession(session(), [setResult(exerciseId: squats)]);
+
+      expect(await repo.resultsHistoryForExercise(999), isEmpty);
+    },
+  );
+
   test('saveSession и getSession сохраняют сторону результата', () async {
     final squats = await insertExercise('Приседания');
     final saved = await repo.saveSession(session(), [
