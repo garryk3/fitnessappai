@@ -36,16 +36,40 @@ Future<void> showDaySessionsSheet(
     context: context,
     isScrollControlled: true,
     builder: (sheetContext) => SafeArea(
-      child: DaySessionsContent(
-        start: start,
-        end: end,
-        workoutRepository: workoutRepository,
-        programRepository: programRepository,
-        // Дравер ограничен по высоте: список прокручивается внутри.
-        constrained: true,
-        // Тап по сессии из дравера: сначала закрыть sheet, затем открыть
-        // детали сессии.
-        onSessionTap: () => Navigator.of(sheetContext).pop(),
+      // Поджимание под контент с потолком 60% экрана (design-review 59.2):
+      // при 1–2 сессиях дравер не оставляет пустое дно, при длинном
+      // списке ограничивается и прокручивается внутри.
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(sheetContext).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Заголовок с датой/диапазоном — как в дравере «Плана»
+            // (design-review 59.2, High): срезы графика «Прогресса» —
+            // неделя/месяц, диапазон должен быть виден целиком.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: AppText(
+                dayDetailTitle(start, end),
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
+            ),
+            Flexible(
+              child: DaySessionsContent(
+                start: start,
+                end: end,
+                workoutRepository: workoutRepository,
+                programRepository: programRepository,
+                shrinkWrap: true,
+                // Тап по сессии из дравера: сначала закрыть sheet, затем
+                // открыть детали сессии.
+                onSessionTap: () => Navigator.of(sheetContext).pop(),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -63,7 +87,7 @@ class DaySessionsContent extends StatefulWidget {
     required this.end,
     this.workoutRepository,
     this.programRepository,
-    this.constrained = false,
+    this.shrinkWrap = false,
     this.onSessionTap,
   });
 
@@ -72,9 +96,9 @@ class DaySessionsContent extends StatefulWidget {
   final WorkoutRepository? workoutRepository;
   final ProgramRepository? programRepository;
 
-  /// `true` — контент внутри bottom sheet: ограничить высоту (60% экрана),
-  /// чтобы дравер не раскрывался на весь экран.
-  final bool constrained;
+  /// `true` — контент внутри bottom sheet: список поджимается под контент,
+  /// loading/empty — компактной фиксированной высоты.
+  final bool shrinkWrap;
 
   /// Вызывается перед переходом к деталям сессии; в дравере закрывает sheet.
   /// `null` — переход без закрытия (экран деталей дня).
@@ -151,15 +175,29 @@ class _DaySessionsContentState extends State<DaySessionsContent> {
     final l10n = AppLocalizations.of(context);
     Widget content;
     if (_loading) {
-      content = const Center(child: AppSpinner());
+      content = widget.shrinkWrap
+          // Компактный loading в дравере: дравер не распахивается на
+          // 60% экрана на время загрузки.
+          ? const SizedBox(height: 160, child: Center(child: AppSpinner()))
+          : const Center(child: AppSpinner());
     } else if (_items.isEmpty) {
-      content = AppEmptyState(
-        icon: Icons.calendar_month_outlined,
-        title: l10n.progressDayEmpty,
-        hint: l10n.progressDayEmptyHint,
-      );
+      content = widget.shrinkWrap
+          ? SizedBox(
+              height: 240,
+              child: AppEmptyState(
+                icon: Icons.calendar_month_outlined,
+                title: l10n.progressDayEmpty,
+                hint: l10n.progressDayEmptyHint,
+              ),
+            )
+          : AppEmptyState(
+              icon: Icons.calendar_month_outlined,
+              title: l10n.progressDayEmpty,
+              hint: l10n.progressDayEmptyHint,
+            );
     } else {
       content = AppListView.separated(
+        shrinkWrap: widget.shrinkWrap,
         padding: const EdgeInsets.all(16),
         itemCount: _items.length,
         separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -167,13 +205,7 @@ class _DaySessionsContentState extends State<DaySessionsContent> {
             _SessionCard(item: _items[index], onOpen: widget.onSessionTap),
       );
     }
-    if (!widget.constrained) {
-      return content;
-    }
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.6,
-      child: content,
-    );
+    return content;
   }
 }
 

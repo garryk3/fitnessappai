@@ -119,7 +119,7 @@ void main() {
       router.go('/progress/day?start=0&end=0');
       await tester.pumpAndSettle();
 
-      expect(find.text('Нет тренировок за этот день'), findsOneWidget);
+      expect(find.text('Нет тренировок за этот период'), findsOneWidget);
     });
 
     testWidgets('deep-link с параметром открывает экран упражнения', (

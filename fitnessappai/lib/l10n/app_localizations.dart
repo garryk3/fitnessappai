@@ -2101,13 +2101,13 @@ abstract class AppLocalizations {
   /// No description provided for @progressDayEmpty.
   ///
   /// In ru, this message translates to:
-  /// **'Нет тренировок за этот день'**
+  /// **'Нет тренировок за этот период'**
   String get progressDayEmpty;
 
   /// No description provided for @progressDayEmptyHint.
   ///
   /// In ru, this message translates to:
-  /// **'Вернитесь к календарю и выберите день с тренировкой.'**
+  /// **'Выберите другой день или период.'**
   String get progressDayEmptyHint;
 
   /// No description provided for @monthShortJan.
