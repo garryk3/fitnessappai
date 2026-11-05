@@ -299,7 +299,7 @@ void main() {
     );
 
     expect(find.text('10 августа 2026'), findsOneWidget);
-    expect(find.text('Нет тренировок за этот день'), findsOneWidget);
+    expect(find.text('Нет тренировок за этот период'), findsOneWidget);
   });
 
   testWidgets('иконка упражнения показывается в деталях истории', (

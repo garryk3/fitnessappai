@@ -577,6 +577,7 @@ void main() {
         builder: (context, state) => ProgressScreen(
           statsAggregator: aggregator,
           exerciseRepository: exerciseRepo,
+          workoutRepository: workoutRepo,
         ),
       ),
       GoRoute(
@@ -659,7 +660,9 @@ void main() {
     await tester.tapAt(Offset(groupCenterX, chartRect.top + usableH * 0.75));
     await tester.pumpAndSettle();
 
-    expect(find.byType(DayDetailScreen), findsOneWidget);
+    // 59.2: детали дня — нижний дравер, а не отдельная страница.
+    expect(find.byType(DayDetailScreen), findsNothing);
+    expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.text('База'), findsOneWidget);
     expect(find.text('6 августа 2026'), findsWidgets);
   });

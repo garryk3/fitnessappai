@@ -14,6 +14,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
+import 'package:fitnessappai/features/progress/ui/day_detail_screen.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
@@ -34,6 +35,9 @@ void main() {
   setUp(() {
     db = AppDatabase(executor: NativeDatabase.memory());
     workoutRepo = WorkoutRepository(db);
+    // 59.2: дравер деталей дня рендерит ProgramThumbnail (MediaCache).
+    locator.registerLazySingleton<MediaCache>(() => MediaCache());
+    addTearDown(locator.reset);
   });
 
   tearDown(() async {
@@ -134,10 +138,12 @@ void main() {
 
     // Календарь отображает день 10 текущего месяца.
     expect(find.text('10'), findsOneWidget);
-    // Навигация на /progress/day при тапе.
+    // 59.2: тап по дню открывает нижний дравер с сессиями дня.
     await tester.tap(find.text('10'));
     await tester.pumpAndSettle();
-    expect(find.text('day detail'), findsOneWidget);
+    expect(find.text('База'), findsOneWidget);
+    // Отдельной страницы деталей дня больше нет.
+    expect(find.byType(DayDetailScreen), findsNothing);
   });
 
   testWidgets('тап по дню без тренировки ничего не делает', (tester) async {
@@ -448,10 +454,10 @@ void main() {
     expect(find.text('$lastDay'), findsWidgets);
     expect(tester.takeException(), isNull);
 
-    // Тап по тренировочному дню работает.
+    // Тап по тренировочному дню открывает дравер (59.2).
     await tester.tap(find.text('10'));
     await tester.pumpAndSettle();
-    expect(find.text('day detail'), findsOneWidget);
+    expect(find.text('База'), findsOneWidget);
   });
 
   testWidgets('день с тренировкой выглядит как в плане (иконка в ячейке)', (

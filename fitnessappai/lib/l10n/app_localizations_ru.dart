@@ -1130,11 +1130,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get progressDayDetail => 'Тренировки за день';
 
   @override
-  String get progressDayEmpty => 'Нет тренировок за этот день';
+  String get progressDayEmpty => 'Нет тренировок за этот период';
 
   @override
-  String get progressDayEmptyHint =>
-      'Вернитесь к календарю и выберите день с тренировкой.';
+  String get progressDayEmptyHint => 'Выберите другой день или период.';
 
   @override
   String get monthShortJan => 'Янв';
