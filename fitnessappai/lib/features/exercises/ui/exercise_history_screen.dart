@@ -81,7 +81,7 @@ class _ExerciseHistoryScreenState extends State<ExerciseHistoryScreen> {
             return AppEmptyState(
               icon: Icons.history_outlined,
               title: l10n.exerciseHistoryTitle,
-              hint: l10n.progressDayEmptyHint,
+              hint: widget.exerciseName,
             );
           }
           final entries = snapshot.data;
