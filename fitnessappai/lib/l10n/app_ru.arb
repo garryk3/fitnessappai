@@ -179,7 +179,10 @@
   "exerciseDetailTechnique": "Техника выполнения",
   "exerciseDetailMistakes": "Частые ошибки",
   "exerciseDetailMuscles": "Задействованные мышцы",
-  "exerciseDetailHistoryRecent": "История за последние 3 дня",
+  "exerciseDetailHistoryLast": "Последнее выполнение",
+  "exerciseDetailHistoryAll": "Вся история",
+  "exerciseHistoryTitle": "История упражнения",
+  "exerciseHistoryEmpty": "Это упражнение ещё не выполнялось",
   "exerciseDetailDeleteConfirm": "Удалить упражнение «{name}»?",
   "@exerciseDetailDeleteConfirm": {
     "description": "Подтверждение удаления упражнения",

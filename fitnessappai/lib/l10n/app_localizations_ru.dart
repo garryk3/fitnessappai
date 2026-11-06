@@ -491,7 +491,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseDetailMuscles => 'Задействованные мышцы';
 
   @override
-  String get exerciseDetailHistoryRecent => 'История за последние 3 дня';
+  String get exerciseDetailHistoryLast => 'Последнее выполнение';
+
+  @override
+  String get exerciseDetailHistoryAll => 'Вся история';
+
+  @override
+  String get exerciseHistoryTitle => 'История упражнения';
+
+  @override
+  String get exerciseHistoryEmpty => 'Это упражнение ещё не выполнялось';
 
   @override
   String exerciseDetailDeleteConfirm(String name) {

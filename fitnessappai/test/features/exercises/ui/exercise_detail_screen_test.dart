@@ -18,6 +18,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_screen.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_history_screen.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
@@ -441,7 +442,7 @@ void main() {
 
     await pumpDetail(tester, exerciseId: created.id!);
 
-    expect(find.text('История за последние 3 дня'), findsOneWidget);
+    expect(find.text('Последнее выполнение'), findsOneWidget);
     expect(find.text('14 августа 2026'), findsOneWidget);
     expect(find.textContaining('8 ×'), findsOneWidget);
     expect(find.textContaining('6 ×'), findsOneWidget);
@@ -452,6 +453,109 @@ void main() {
 
     await pumpDetail(tester, exerciseId: created.id!);
 
-    expect(find.text('История за последние 3 дня'), findsNothing);
+    expect(find.text('Последнее выполнение'), findsNothing);
+  });
+
+  testWidgets('ссылка «Вся история» открывает историю упражнения (59.3)', (
+    tester,
+  ) async {
+    final created = await repository.create(exercise('Приседания'), const []);
+    final workoutRepository = WorkoutRepository(db);
+    await workoutRepository.saveSession(
+      WorkoutSession(
+        programName: 'База',
+        dayIndex: 0,
+        variant: WorkoutVariant.main,
+        performedDate: DateTime(2026, 8, 10),
+        startedAt: DateTime(2026, 8, 10, 18),
+        endedAt: DateTime(2026, 8, 10, 18, 40),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: created.id,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 8,
+          weightKg: 20,
+          completedAt: DateTime(2026, 8, 10, 18, 5),
+        ),
+      ],
+    );
+    await workoutRepository.saveSession(
+      WorkoutSession(
+        programName: 'База',
+        dayIndex: 0,
+        variant: WorkoutVariant.main,
+        performedDate: DateTime(2026, 8, 14),
+        startedAt: DateTime(2026, 8, 14, 18),
+        endedAt: DateTime(2026, 8, 14, 18, 40),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: created.id,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 12,
+          weightKg: 22,
+          completedAt: DateTime(2026, 8, 14, 18, 5),
+        ),
+      ],
+    );
+
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => ExerciseDetailScreen(
+            key: UniqueKey(),
+            exerciseId: created.id!,
+            repository: repository,
+            mediaCache: MediaCache(),
+            profileRepository: profileRepository,
+            statsAggregator: StatsAggregator(
+              workoutRepository: workoutRepository,
+              exerciseRepository: repository,
+            ),
+            workoutRepository: workoutRepository,
+          ),
+        ),
+        GoRoute(
+          path: '/exercises/:id/history',
+          builder: (context, state) => ExerciseHistoryScreen(
+            exerciseId: int.parse(state.pathParameters['id']!),
+            exerciseName: state.uri.queryParameters['name'] ?? '',
+            workoutRepository: workoutRepository,
+          ),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Последнее выполнение'), findsOneWidget);
+    await tester.tap(find.text('Вся история'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('История упражнения'), findsNothing);
+    // Имя упражнения в appBar (design-review 59.3).
+    expect(find.text('Приседания'), findsOneWidget);
+    // Сессии от новых к старым.
+    expect(find.text('14 августа 2026'), findsOneWidget);
+    expect(find.text('10 августа 2026'), findsOneWidget);
+    expect(find.textContaining('12 ×'), findsOneWidget);
+    expect(find.textContaining('8 ×'), findsOneWidget);
   });
 }

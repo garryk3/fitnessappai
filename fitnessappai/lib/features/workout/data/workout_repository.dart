@@ -159,6 +159,43 @@ class WorkoutRepository {
     return rows.map(_toResult).toList();
   }
 
+  /// История выполнения упражнения [exerciseId] по сессиям (59.3):
+  /// от новых к старым, внутри сессии — подходы по порядку. Пустой
+  /// список, если упражнение ещё не выполнялось.
+  Future<List<WorkoutSessionDetail>> resultsHistoryForExercise(
+    int exerciseId,
+  ) async {
+    final rows =
+        await (_db.select(_db.workoutSetResults).join([
+                innerJoin(
+                  _db.workoutSessions,
+                  _db.workoutSessions.id.equalsExp(
+                    _db.workoutSetResults.sessionId,
+                  ),
+                ),
+              ])
+              ..where(_db.workoutSetResults.exerciseId.equals(exerciseId))
+              ..orderBy([
+                OrderingTerm.desc(_db.workoutSessions.performedDate),
+                OrderingTerm.desc(_db.workoutSessions.startedAt),
+                OrderingTerm.desc(_db.workoutSetResults.sessionId),
+                OrderingTerm.asc(_db.workoutSetResults.setIndex),
+                OrderingTerm.asc(_db.workoutSetResults.id),
+              ]))
+            .get();
+    final entries = <WorkoutSessionDetail>[];
+    for (final row in rows) {
+      final session = _toSession(row.readTable(_db.workoutSessions));
+      final result = _toResult(row.readTable(_db.workoutSetResults));
+      if (entries.isEmpty || entries.last.session.id != session.id) {
+        entries.add(WorkoutSessionDetail(session: session, results: [result]));
+      } else {
+        entries.last.results.add(result);
+      }
+    }
+    return entries;
+  }
+
   /// Отмечает день пропущенным на неделе [weekStart]. Идемпотентно.
   Future<void> markSkipped(int programDayId, DateTime weekStart) async {
     final existing =

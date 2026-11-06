@@ -10,6 +10,7 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/exercises/ui/exercise_history_screen.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_detail_controller.dart';
 import 'package:fitnessappai/features/exercises/ui/muscle_diagram.dart';
@@ -280,7 +281,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 }
 
-/// Секция истории выполнения упражнения: последние выполнения с подходами.
+/// Секция последнего выполнения упражнения (59.3): дата и подходы
+/// последней сессии + ссылка на полную историю упражнения.
 class _RecentHistorySection extends StatefulWidget {
   const _RecentHistorySection({
     required this.exercise,
@@ -323,7 +325,7 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
         final theme = Theme.of(context);
         final date = results.first.completedAt;
         return AppSection(
-          title: l10n.exerciseDetailHistoryRecent,
+          title: l10n.exerciseDetailHistoryLast,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -340,45 +342,28 @@ class _RecentHistorySectionState extends State<_RecentHistorySection> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 1),
                   child: AppText(
-                    '${_sideLabel(result.setIndex, result.side)} '
-                    '${_formatResult(l10n, result)}',
+                    '${sideLabel(result.setIndex, result.side)} '
+                    '${formatSetResult(l10n, result)}',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
+              const SizedBox(height: 8),
+              // 59.3: полная история выполнения упражнения — отдельный
+              // экран со всеми сессиями и подходами.
+              AppTextButton(
+                label: l10n.exerciseDetailHistoryAll,
+                onPressed: () => context.push(
+                  '/exercises/${widget.exercise.id}/history'
+                  '?name=${Uri.encodeComponent(widget.exercise.name)}',
+                ),
+              ),
             ],
           ),
         );
       },
     );
   }
-
-  String _sideLabel(int setIndex, String? side) {
-    final suffix = switch (side) {
-      'left' => 'л',
-      'right' => 'п',
-      _ => '',
-    };
-    return '$setIndex$suffix.';
-  }
-
-  String _formatResult(AppLocalizations l10n, WorkoutSetResult result) {
-    return switch (result.exerciseType) {
-      ExerciseType.strength when result.weightKg != null =>
-        '${result.reps ?? 0} × ${_fmt(result.weightKg!)} ${l10n.workoutUnitKg}',
-      ExerciseType.strength ||
-      ExerciseType.bodyweight => '${result.reps ?? 0} ${l10n.workoutUnitReps}',
-      ExerciseType.plank =>
-        '${result.durationSeconds ?? 0} ${l10n.workoutUnitSeconds}',
-      ExerciseType.distance =>
-        '${_fmt((result.distanceMeters ?? 0) / 1000)} ${l10n.workoutUnitKm} × '
-            '${(result.durationSeconds ?? 0) ~/ 60} ${l10n.workoutUnitMinutes}',
-    };
-  }
 }
-
-String _fmt(double value) => value == value.roundToDouble()
-    ? value.toInt().toString()
-    : value.toStringAsFixed(1);
 
 class _ExercisePreview extends StatelessWidget {
   const _ExercisePreview({required this.exercise, required this.mediaCache});
