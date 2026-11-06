@@ -79,7 +79,6 @@ void main() {
     String description = '',
     List<String> commonMistakes = const [],
     bool isCustom = true,
-    bool hideOptional = false,
     bool fixedWeight = false,
     bool perSide = false,
     String? thumbnailPath,
@@ -91,7 +90,6 @@ void main() {
       description: description,
       commonMistakes: commonMistakes,
       isCustom: isCustom,
-      hideOptional: hideOptional,
       fixedWeight: fixedWeight,
       perSide: perSide,
       thumbnailPath: thumbnailPath,
@@ -397,48 +395,6 @@ void main() {
 
     final created = (await repository.getAll()).single;
     expect(created.type, ExerciseType.distance);
-  });
-
-  testWidgets('чекбокс скрытия необязательных полей сохраняется', (
-    tester,
-  ) async {
-    await pumpForm(tester);
-
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Название *'),
-      'Скрытое',
-    );
-    await scrollFormTo(
-      tester,
-      find.textContaining('Скрывать необязательные поля'),
-    );
-    await tester.tap(switchInRow('Скрывать необязательные поля'));
-    await tester.pumpAndSettle();
-
-    await selectChestMuscle(tester);
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
-    await tester.pumpAndSettle();
-
-    final created = (await repository.getAll()).single;
-    expect(created.hideOptional, isTrue);
-  });
-
-  testWidgets('редактирование восстанавливает чекбокс скрытия', (tester) async {
-    final saved = await repository.create(
-      exercise('Скрытое', description: 'Описание', hideOptional: true),
-      const [],
-    );
-
-    await pumpForm(tester, exerciseId: saved.id);
-    await scrollFormTo(
-      tester,
-      find.textContaining('Скрывать необязательные поля'),
-    );
-
-    final checkbox = tester.widget<SwitchListTile>(
-      switchInRow('Скрывать необязательные поля'),
-    );
-    expect(checkbox.value, isTrue);
   });
 
   testWidgets('чекбоксы фиксированного веса и сторон сохраняются', (
@@ -1003,10 +959,12 @@ void main() {
       await pumpForm(tester);
       await scrollFormTo(tester, find.text('Режим выполнения'));
 
+      // 59.4: тумблер «скрывать необязательные поля» удалён — осталось
+      // два (фиксированный вес, выполнение по сторонам).
       final toggles = tester
           .widgetList<SwitchListTile>(find.byType(SwitchListTile))
           .toList();
-      expect(toggles, hasLength(3));
+      expect(toggles, hasLength(2));
       expect(toggles.every((t) => t.secondary != null), isTrue);
       expect(toggles.every((t) => t.subtitle != null), isTrue);
       expect(toggles.first.value, isFalse);

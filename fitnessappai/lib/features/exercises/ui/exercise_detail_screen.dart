@@ -221,21 +221,21 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         ),
         const SizedBox(height: 8),
         Center(child: _TypeBadge(type: exercise.type)),
-        if (!exercise.hideOptional && exercise.description.isNotEmpty) ...[
+        if (exercise.description.isNotEmpty) ...[
           const SizedBox(height: 16),
           AppSection(
             title: l10n.exerciseDetailDescription,
             child: AppText(exercise.description),
           ),
         ],
-        if (!exercise.hideOptional && exercise.instructions.isNotEmpty) ...[
+        if (exercise.instructions.isNotEmpty) ...[
           const SizedBox(height: 16),
           AppSection(
             title: l10n.exerciseDetailTechnique,
             child: AppText(exercise.instructions),
           ),
         ],
-        if (!exercise.hideOptional && exercise.commonMistakes.isNotEmpty) ...[
+        if (exercise.commonMistakes.isNotEmpty) ...[
           const SizedBox(height: 16),
           AppSection(
             title: l10n.exerciseDetailMistakes,

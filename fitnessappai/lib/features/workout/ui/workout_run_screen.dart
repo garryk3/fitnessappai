@@ -524,7 +524,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
               ],
             ],
           ),
-          if (!exercise.exercise.hideOptional) ...[
+          // 59.4: сводка параметров безусловна, но при пустой сводке
+          // (нет спланированных метрик) пустую строку не рисуем.
+          if (_paramsSummary(l10n, exercise).isNotEmpty) ...[
             const SizedBox(height: 4),
             AppText(
               _paramsSummary(l10n, exercise),

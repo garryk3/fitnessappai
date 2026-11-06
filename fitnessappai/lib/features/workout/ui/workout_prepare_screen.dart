@@ -342,7 +342,7 @@ class _ExerciseCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (!exercise.hideOptional) ...[
+                    ...[
                       const SizedBox(height: 4),
                       AppText(
                         _paramsSummary(l10n, exercise.type, item.params),
@@ -354,8 +354,7 @@ class _ExerciseCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (!exercise.hideOptional &&
-                  item.params.restSeconds != null) ...[
+              if (item.params.restSeconds != null) ...[
                 const SizedBox(width: 8),
                 AppText(
                   l10n.workoutPrepareRest(item.params.restSeconds!),
