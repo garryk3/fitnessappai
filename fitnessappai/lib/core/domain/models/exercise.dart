@@ -16,7 +16,6 @@ class Exercise {
     this.thumbnailBlob,
     this.animationBlob,
     this.isCustom = false,
-    this.hideOptional = false,
     this.fixedWeight = false,
     this.perSide = false,
     required this.createdAt,
@@ -34,7 +33,6 @@ class Exercise {
   final Uint8List? thumbnailBlob;
   final Uint8List? animationBlob;
   final bool isCustom;
-  final bool hideOptional;
   final bool fixedWeight;
   final bool perSide;
   final DateTime createdAt;
@@ -61,7 +59,6 @@ class Exercise {
     Uint8List? thumbnailBlob,
     Uint8List? animationBlob,
     bool? isCustom,
-    bool? hideOptional,
     bool? fixedWeight,
     bool? perSide,
     DateTime? createdAt,
@@ -86,7 +83,6 @@ class Exercise {
           ? null
           : (animationBlob ?? this.animationBlob),
       isCustom: isCustom ?? this.isCustom,
-      hideOptional: hideOptional ?? this.hideOptional,
       fixedWeight: fixedWeight ?? this.fixedWeight,
       perSide: perSide ?? this.perSide,
       createdAt: createdAt ?? this.createdAt,
@@ -109,7 +105,6 @@ class Exercise {
             _bytesEquals(other.thumbnailBlob, thumbnailBlob) &&
             _bytesEquals(other.animationBlob, animationBlob) &&
             other.isCustom == isCustom &&
-            other.hideOptional == hideOptional &&
             other.fixedWeight == fixedWeight &&
             other.perSide == perSide &&
             other.createdAt == createdAt &&
@@ -132,7 +127,6 @@ class Exercise {
         animationBlob?.lengthInBytes,
       ]),
       isCustom,
-      hideOptional,
       fixedWeight,
       perSide,
       createdAt,

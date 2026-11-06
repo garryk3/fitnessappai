@@ -594,14 +594,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseFormSave => 'Сохранить';
 
   @override
-  String get exerciseFormHideOptional =>
-      'Скрывать необязательные поля в тренировке';
-
-  @override
-  String get exerciseFormHideOptionalHelp =>
-      'Описание, техника и параметры не будут показываться при выполнении';
-
-  @override
   String get exerciseFormFixedWeight => 'Фиксированный вес';
 
   @override

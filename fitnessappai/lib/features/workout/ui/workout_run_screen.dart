@@ -524,7 +524,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
               ],
             ],
           ),
-          if (!exercise.exercise.hideOptional) ...[
+          ...[
             const SizedBox(height: 4),
             AppText(
               _paramsSummary(l10n, exercise),

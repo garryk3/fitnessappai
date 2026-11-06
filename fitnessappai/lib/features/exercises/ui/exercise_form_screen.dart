@@ -62,7 +62,6 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
   Uint8List? _animationBlob;
   bool _saving = false;
   bool _isCustom = true;
-  bool _hideOptional = false;
   bool _fixedWeight = false;
   bool _perSide = false;
   DateTime? _createdAt;
@@ -131,7 +130,6 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
     _thumbnailBlob = exercise.thumbnailBlob;
     _animationBlob = exercise.animationBlob;
     _isCustom = exercise.isCustom;
-    _hideOptional = exercise.hideOptional;
     _fixedWeight = exercise.fixedWeight;
     _perSide = exercise.perSide;
     _createdAt = exercise.createdAt;
@@ -259,7 +257,6 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
         thumbnailBlob: _thumbnailBlob,
         animationBlob: _animationBlob,
         isCustom: _isCustom,
-        hideOptional: _hideOptional,
         fixedWeight: _fixedWeight,
         // Страховка от данных, созданных до 48.5: дистанция сохраняется без
         // флага сторон даже если он остался в состоянии формы.
@@ -423,14 +420,6 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
       title: l10n.exerciseFormMode,
       child: Column(
         children: [
-          AppSwitchTile(
-            value: _hideOptional,
-            onChanged: (value) => setState(() => _hideOptional = value),
-            contentPadding: EdgeInsets.zero,
-            secondary: const AppIcon(Icons.visibility_outlined),
-            title: AppText(l10n.exerciseFormHideOptional),
-            subtitle: AppText(l10n.exerciseFormHideOptionalHelp),
-          ),
           if (_type != ExerciseType.bodyweight)
             AppSwitchTile(
               value: _fixedWeight,
@@ -563,6 +552,8 @@ class _ExerciseFormScreenState extends State<ExerciseFormScreen> {
                 ),
               ],
             ),
+          // Отступ между полем ввода и кнопкой «Добавить» (59.4).
+          const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
             child: AppGradientButton(

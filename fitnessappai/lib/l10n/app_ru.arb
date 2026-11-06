@@ -230,8 +230,6 @@
   "exerciseFormMediaInfo": "Форматы: jpg, png, webp, gif. Максимум: 5 МБ",
   "exerciseFormNameRequired": "Введите название",
   "exerciseFormSave": "Сохранить",
-  "exerciseFormHideOptional": "Скрывать необязательные поля в тренировке",
-  "exerciseFormHideOptionalHelp": "Описание, техника и параметры не будут показываться при выполнении",
   "exerciseFormFixedWeight": "Фиксированный вес",
   "exerciseFormFixedWeightHelp": "Вес будет подставляться из параметров тренировки, но его можно изменить",
   "exerciseFormPerSide": "Выполнение по сторонам (левая/правая)",
