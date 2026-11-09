@@ -676,12 +676,6 @@ abstract class AppLocalizations {
   /// **'Начать'**
   String get weekPlanStart;
 
-  /// No description provided for @weekPlanReschedule.
-  ///
-  /// In ru, this message translates to:
-  /// **'Перенести на сегодня'**
-  String get weekPlanReschedule;
-
   /// No description provided for @weekPlanSkip.
   ///
   /// In ru, this message translates to:
@@ -699,12 +693,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Удалить назначение'**
   String get weekPlanRemove;
-
-  /// No description provided for @weekPlanMissedHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Пропущенная тренировка — перенести можно только в рамках тренировочной недели'**
-  String get weekPlanMissedHint;
 
   /// No description provided for @weekPlanScheduleTitle.
   ///
@@ -747,30 +735,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Этот день уже запланирован на эту дату'**
   String get weekPlanAlreadyScheduled;
-
-  /// No description provided for @weekPlanEmpty.
-  ///
-  /// In ru, this message translates to:
-  /// **'Нет запланированных тренировок'**
-  String get weekPlanEmpty;
-
-  /// No description provided for @weekPlanHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане'**
-  String get weekPlanHint;
-
-  /// No description provided for @weekPlanNextWeek.
-  ///
-  /// In ru, this message translates to:
-  /// **'Следующая неделя'**
-  String get weekPlanNextWeek;
-
-  /// No description provided for @weekPlanPrevWeek.
-  ///
-  /// In ru, this message translates to:
-  /// **'Предыдущая неделя'**
-  String get weekPlanPrevWeek;
 
   /// No description provided for @weekPlanPrevMonth.
   ///
@@ -817,7 +781,7 @@ abstract class AppLocalizations {
   /// No description provided for @weekPlanLoadError.
   ///
   /// In ru, this message translates to:
-  /// **'Не удалось загрузить план недели'**
+  /// **'Не удалось загрузить план'**
   String get weekPlanLoadError;
 
   /// No description provided for @weekPlanScheduleLoadError.

@@ -333,9 +333,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanStart => 'Начать';
 
   @override
-  String get weekPlanReschedule => 'Перенести на сегодня';
-
-  @override
   String get weekPlanSkip => 'Пропустить';
 
   @override
@@ -343,10 +340,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get weekPlanRemove => 'Удалить назначение';
-
-  @override
-  String get weekPlanMissedHint =>
-      'Пропущенная тренировка — перенести можно только в рамках тренировочной недели';
 
   @override
   String get weekPlanScheduleTitle => 'Запланировать тренировку';
@@ -372,19 +365,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот день уже запланирован на эту дату';
 
   @override
-  String get weekPlanEmpty => 'Нет запланированных тренировок';
-
-  @override
-  String get weekPlanHint =>
-      'Привяжите дни программы к дням недели в конструкторе, чтобы они появились в плане';
-
-  @override
-  String get weekPlanNextWeek => 'Следующая неделя';
-
-  @override
-  String get weekPlanPrevWeek => 'Предыдущая неделя';
-
-  @override
   String get weekPlanPrevMonth => 'Предыдущий месяц';
 
   @override
@@ -406,7 +386,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanClearTime => 'Убрать время';
 
   @override
-  String get weekPlanLoadError => 'Не удалось загрузить план недели';
+  String get weekPlanLoadError => 'Не удалось загрузить план';
 
   @override
   String get weekPlanScheduleLoadError =>

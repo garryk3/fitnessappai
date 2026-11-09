@@ -10,9 +10,8 @@ import 'package:fitnessappai/uikit/uikit.dart';
 Future<void> startPlannedWorkout(
   BuildContext context,
   WeekPlanController controller,
-  WeekPlanItem item, {
-  DateTime? rescheduleWeekStart,
-}) async {
+  WeekPlanItem item,
+) async {
   final exists = await controller.dayExists(item.programDayId);
   if (!context.mounted) {
     return;
@@ -25,9 +24,5 @@ Future<void> startPlannedWorkout(
     await controller.refresh();
     return;
   }
-  final weekStart = rescheduleWeekStart;
-  context.push(
-    '/workout/prepare/${item.programDayId}'
-    '${weekStart == null ? '' : '?rescheduleWeekStart=${weekStart.millisecondsSinceEpoch}'}',
-  );
+  context.push('/workout/prepare/${item.programDayId}');
 }

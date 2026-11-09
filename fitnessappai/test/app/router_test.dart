@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
@@ -47,7 +48,10 @@ void main() {
       await tester.tap(find.text('План'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Нет запланированных тренировок'), findsOneWidget);
+      // 59.5: план — календарь-месяц; пустое состояние без программы —
+      // сетка месяца без тренировочных дней (кнопки действий — в дравере).
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(MonthGridView), findsOneWidget);
     });
 
     testWidgets('deep-link на роут истории открывает экран', (

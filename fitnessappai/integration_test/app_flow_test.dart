@@ -10,7 +10,9 @@ import 'package:fitnessappai/core/di/register_core_services.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/features/exercises/ui/exercises_screen.dart';
+import 'package:intl/intl.dart';
 import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
@@ -47,63 +49,80 @@ int day2Weekday(int today) =>
 
 /// Реальный «следующий календарный день» (через сутки от сегодня).
 ///
-/// В воскресенье он попадает в следующую неделю плана: программа,
-/// активированная сегодня, на прошлые даты не планируется (47.2), поэтому
-/// wrap `sunday → saturday` из [day2Weekday] в тестах переноса давал бы день,
-/// который вовсе не отображается. Используется вместе с [goToWeekOf].
+/// В конце месяца он попадает в следующий месяц плана (59.5.в), поэтому
+/// тесты вместе с ним используют [goToMonthOf].
 DateTime nextDay() => DateTime.now().add(const Duration(days: 1));
 
-/// Понедельник недели, содержащей [date].
-DateTime weekMonday(DateTime date) {
-  final day = DateTime(date.year, date.month, date.day);
-  return day.subtract(Duration(days: day.weekday - DateTime.monday));
+/// Подпись месяца в переключателе плана — капитализированная «Ноябрь 2026».
+String planMonthLabel(DateTime date) {
+  final formatted = DateFormat('LLLL yyyy', 'ru').format(date);
+  return formatted[0].toUpperCase() + formatted.substring(1);
 }
 
-/// Переводит план недели на неделю, содержащую [date].
-///
-/// Ориентируется на **отображаемую** неделю (по заголовку-диапазону), а не на
-/// «сегодня»: иначе возврат из следующей недели на текущую не срабатывал бы
-/// (недель от «сегодня» до «сегодня» — ноль). В воскресенье «завтра» — это
-/// следующий понедельник (48.3), тогда уходит на неделю вперёд; в остальные
-/// дни «завтра» — та же неделя, и вызов ничего не делает.
-Future<void> goToWeekOf(WidgetTester tester, DateTime date) async {
-  final targetDay = weekMonday(date).day;
-  final forward = weekMonday(date).isAfter(weekMonday(DateTime.now()));
-  final tooltip = forward ? 'Следующая неделя' : 'Предыдущая неделя';
-  for (var i = 0; i < 4 && _displayedWeekStartDay(tester) != targetDay; i++) {
-    await tester.tap(find.byTooltip(tooltip));
-    await tester.pumpAndSettle();
-  }
-}
-
-/// Заголовок-диапазон отображаемой недели — первый `Text`, содержащий «–»
-/// («5–11 октября» или «29 сентября – 5 октября»).
-String displayedWeekLabel(WidgetTester tester) => tester
+/// Подпись месяца, отображаемая на вкладке плана.
+String displayedMonthLabel(WidgetTester tester) => tester
     .widgetList<Text>(
       find.byWidgetPredicate(
-        (w) => w is Text && (w.data?.contains('–') ?? false),
+        (w) =>
+            w is Text &&
+            (w.data?.contains(RegExp(r'[а-я]{3,} \d{4}')) ?? false),
       ),
     )
     .first
     .data!;
 
-/// День месяца понедельника отображаемой недели — первое число в заголовке
-/// диапазона (см. [displayedWeekLabel]).
-int _displayedWeekStartDay(WidgetTester tester) =>
-    int.parse(RegExp(r'\d+').firstMatch(displayedWeekLabel(tester))!.group(0)!);
-
-/// Кнопка «Перенести на сегодня» в карточке дня [dayNumber] плана недели.
+/// Переходит на месяц, содержащий [date] (59.5.в): вперёд без ограничения,
+/// назад — по пройденным (в тестах достаточно «сейчас» и «завтра»).
 ///
-/// Нужна там, где в одной неделе несколько pending-дней с переносом: например,
-/// в воскресенье на следующей неделе это и «сегодняшний» (день 1), и
-/// «завтрашний» (день 2) дни программы, поэтому `find.text('Перенести на
-/// сегодня')` даёт два совпадения. Карточка дня подписана «День N · <дата>».
-Finder weekRescheduleButtonForDay(int dayNumber) {
+/// Ориентируется на заголовок переключателя месяца, а не на «сегодня», —
+/// иначе возврат при `today == last day of month` не срабатывал бы (аналог
+/// стратегии из упразднённого [goToWeekOf], 48.3).
+Future<void> goToMonthOf(WidgetTester tester, DateTime date) async {
+  final target = planMonthLabel(date);
+  final now = DateTime.now();
+  final forward = DateTime(
+    date.year,
+    date.month,
+  ).isAfter(DateTime(now.year, now.month));
+  final tooltip = forward ? 'Следующий месяц' : 'Предыдущий месяц';
+  for (
+    var i = 0;
+    i < 24 && tester.widgetList(find.textContaining(target)).isEmpty;
+    i++
+  ) {
+    await tester.tap(find.byTooltip(tooltip));
+    await tester.pumpAndSettle();
+  }
+  expect(tester.widgetList(find.textContaining(target)), isNotEmpty);
+}
+
+/// Открывает дравер дня [date] (59.5.б): тап по ячейке календаря месяца.
+Future<void> openDayDrawer(WidgetTester tester, DateTime date) async {
+  final cell = find.text('${date.day}').last;
+  await scrollUntilVisibleIn(tester, cell);
+  await tester.tap(cell);
+  await tester.pumpAndSettle();
+}
+
+/// Закрывает открытый дравер/шит тапом по барьеру (47.16): в широкой
+/// раскладке барьер не перекрывает NavigationRail, поэтому тап по верхнему
+/// краю барьера — в страницу, а не в рельс.
+Future<void> closeBottomSheetByBarrier(WidgetTester tester) async {
+  final barrier = find.byType(ModalBarrier).hitTestable();
+  final barrierRect = tester.getRect(barrier);
+  await tester.tapAt(Offset(barrierRect.center.dx, barrierRect.top + 20));
+  await tester.pumpAndSettle();
+  expect(find.byType(BottomSheet), findsNothing);
+}
+
+/// Кнопка [label] в карточке дня [dayNumber] дравера дня (59.5): заголовок
+/// карточки — композит «Программа → День N».
+Finder drawerButtonFor(int dayNumber, String label) {
   final card = find.ancestor(
-    of: find.textContaining('День $dayNumber ·'),
+    of: find.textContaining('День $dayNumber'),
     matching: find.byType(AppCard),
   );
-  return find.descendant(of: card, matching: find.text('Перенести на сегодня'));
+  return find.descendant(of: card, matching: find.text(label));
 }
 
 Future<void> pumpApp(
@@ -618,10 +637,6 @@ Future<void> saveProgramBuilder(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// Запускает тренировку из плана недели: «Начать» → подготовка →
-/// «Начать тренировку» → (диалог противопоказаний) → (разминка).
-///
-/// После завершения тест остаётся на экране выполнения первого упражнения.
 /// Пропускает экран разминки, если он показан (после 54.4 разминка
 /// префиллится 10 мин — старт почти всегда идёт через неё).
 ///
@@ -643,8 +658,21 @@ Future<bool> skipWarmupIfShown(WidgetTester tester) async {
 Future<bool> startWorkout(
   WidgetTester tester, {
   bool expectContraindications = false,
+  int? dayNumber,
+  String? programName,
 }) async {
-  await tester.tap(find.text('Начать'));
+  // 59.5: действия дня живут в дравере — открываем дравер сегодняшнего дня.
+  await openDayDrawer(tester, DateTime.now());
+  if (programName != null) {
+    // 59.5: имя программы — композитный заголовок карточки дравера.
+    expect(find.textContaining(programName), findsOneWidget);
+  }
+  final startBtn =
+      (dayNumber == null
+              ? find.text('Начать')
+              : drawerButtonFor(dayNumber, 'Начать'))
+          .first;
+  await tester.tap(startBtn);
   await tester.pumpAndSettle();
 
   final startWorkoutBtn = find.widgetWithText(
@@ -935,9 +963,8 @@ void main() {
     expect(find.text(_programName), findsOneWidget);
 
     await goToTab(tester, Icons.event_note_outlined);
-    expect(find.text(_programName), findsWidgets);
 
-    await startWorkout(tester);
+    await startWorkout(tester, programName: _programName);
     expect(find.widgetWithText(TextFormField, 'Повторения'), findsOneWidget);
 
     await completeStrengthSet(tester, repeats: '10', weight: '40');
@@ -964,9 +991,7 @@ void main() {
     expect(detail!.results, hasLength(3));
   });
 
-  testWidgets('флоу: перенос дня и тренировка альтернативного набора', (
-    tester,
-  ) async {
+  testWidgets('флоу: тренировка альтернативного набора', (tester) async {
     final db = AppDatabase(executor: NativeDatabase.memory());
     addTearDown(() => db.close());
     await pumpApp(tester, db);
@@ -979,8 +1004,6 @@ void main() {
     await pullToRefreshExercises(tester);
 
     final today = DateTime.now().weekday;
-    final nextDay = DateTime.now().add(const Duration(days: 1));
-    final tomorrow = nextDay.weekday;
 
     await goToTab(tester, Icons.calendar_month_outlined);
     await tester.tap(find.byTooltip('Новая программа'));
@@ -1015,7 +1038,7 @@ void main() {
     await configureDay(
       tester,
       2,
-      tomorrow,
+      today,
       mainSets: [
         (
           _running,
@@ -1039,14 +1062,15 @@ void main() {
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    expect(find.text('Начать'), findsOneWidget);
-    // Соседний день (завтра) в воскресенье — уже следующая неделя плана (48.3),
-    // поэтому перенос ищем после перехода на её неделю.
-    await goToWeekOf(tester, nextDay);
-    final rescheduleBtn = weekRescheduleButtonForDay(2);
-    expect(rescheduleBtn, findsOneWidget);
-    await scrollUntilVisibleIn(tester, rescheduleBtn);
-    await tester.tap(rescheduleBtn);
+    // 59.5: старт — только из дравера дня; обе тренировки привязаны к
+    // сегодня, т.к. будущий день из плана не стартуется (59.5.д).
+    await openDayDrawer(tester, DateTime.now());
+    final altSheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: altSheet, matching: find.text('Начать')),
+      findsNWidgets(2),
+    );
+    await tester.tap(drawerButtonFor(2, 'Начать'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Альтернативный набор'));
@@ -1139,7 +1163,9 @@ void main() {
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    await tester.tap(find.text('Начать'));
+    // 59.5: старт только из дравера дня.
+    await openDayDrawer(tester, DateTime.now());
+    await tester.tap(find.text('Начать').first);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
     await tester.pumpAndSettle();
@@ -1157,7 +1183,7 @@ void main() {
     await expectWorkoutCount(tester, '1');
   });
 
-  testWidgets('план недели: пропуск, отмена пропуска и перенос дня', (
+  testWidgets('план: пропуск, отмена пропуска и paging месяцев', (
     tester,
   ) async {
     final db = AppDatabase(executor: NativeDatabase.memory());
@@ -1169,13 +1195,11 @@ void main() {
     await createExercise(tester, _running, ExerciseType.distance);
     await pullToRefreshExercises(tester);
 
-    // Программа из двух дней: сегодняшний (пропуск доступен только тренировке
-    // текущего дня) и соседний день той же недели (перенос). В воскресенье
-    // «завтра» уже в следующей неделе, поэтому второй день — пятница.
-    final now = DateTime.now();
-    final today = now.weekday;
+    // Программа из двух дней: сегодняшний (пропуск доступен только
+    // тренировке текущего дня) и соседний день (только бейдж «Запланировано»,
+    // 59.5.д).
     final otherDate = nextDay();
-    final other = otherDate.weekday;
+    final otherWeekday = otherDate.weekday;
 
     await goToTab(tester, Icons.calendar_month_outlined);
     await tester.tap(find.byTooltip('Новая программа'));
@@ -1187,7 +1211,10 @@ void main() {
     );
     await setDayCount(tester, '2');
 
-    for (final (index, weekday) in [(1, today), (2, other)]) {
+    for (final (index, weekday) in [
+      (1, DateTime.now().weekday),
+      (2, otherWeekday),
+    ]) {
       await configureDay(
         tester,
         index,
@@ -1207,67 +1234,61 @@ void main() {
 
     await goToTab(tester, Icons.event_note_outlined);
 
-    // Переход недель туда-обратно (48.3): вперёд до следующей, назад на
-    // текущую — стрелка «назад» включается, как только неделя не текущая.
-    String weekLabel() => displayedWeekLabel(tester);
-    final initialWeek = weekLabel();
-    await tester.tap(find.byTooltip('Следующая неделя'));
+    // 59.5.в: paging месяцев туда-обратно — вперёд без ограничения, назад
+    // по пройденным (после перехода вперёд стрелка «назад» доступна).
+    final initialMonth = displayedMonthLabel(tester);
+    await tester.tap(find.byTooltip('Следующий месяц'));
     await tester.pumpAndSettle();
-    expect(weekLabel(), isNot(initialWeek));
-    await tester.tap(find.byTooltip('Предыдущая неделя'));
+    expect(displayedMonthLabel(tester), isNot(initialMonth));
+    await tester.tap(find.byTooltip('Предыдущий месяц'));
     await tester.pumpAndSettle();
-    expect(weekLabel(), initialWeek);
+    expect(displayedMonthLabel(tester), initialMonth);
 
-    // Сегодня: старт и пропуск (пропуск доступен только тренировке текущего
-    // дня). Соседний день (завтра): только перенос. Удаления у дня программы
-    // нет (47.1). «Завтра» в воскресенье — уже следующая неделя (48.3),
-    // поэтому перенос ищем после перехода на её неделю.
-    expect(find.text('Начать'), findsOneWidget);
-    expect(find.text('Пропустить'), findsOneWidget);
+    // Сегодня: пропуск и отмена пропуска — действия живут в дравере дня
+    // (59.5.б); после действия дравер закрывается.
+    await openDayDrawer(tester, DateTime.now());
+    var sheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Начать')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Пропустить')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Пропустить'));
     await tester.pumpAndSettle();
-    expect(find.text('Пропущено'), findsOneWidget);
-    expect(find.text('Отменить пропуск'), findsOneWidget);
-    expect(find.text('Начать'), findsNothing);
+    expect(find.byType(BottomSheet), findsNothing);
+
+    await openDayDrawer(tester, DateTime.now());
+    sheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Отменить пропуск')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Начать')),
+      findsNothing,
+    );
 
     await tester.tap(find.text('Отменить пропуск'));
     await tester.pumpAndSettle();
-    expect(find.text('Начать'), findsOneWidget);
-    expect(find.text('Пропущено'), findsNothing);
+    expect(find.byType(BottomSheet), findsNothing);
 
-    await goToWeekOf(tester, otherDate);
-    final rescheduleBtn = weekRescheduleButtonForDay(2);
-    expect(rescheduleBtn, findsOneWidget);
-    await scrollUntilVisibleIn(tester, rescheduleBtn);
-    await tester.tap(rescheduleBtn);
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Начать тренировку'));
-    await tester.pumpAndSettle();
-    await skipWarmupIfShown(tester);
-
-    await completeRunningSet(tester, minutes: '15', distance: '3');
-    await skipRestIfShown(tester);
-    await finishAndGoProgress(tester);
-    await expectWorkoutCount(tester, '1');
-
-    await goToTab(tester, Icons.event_note_outlined);
-    await reloadWeekPlan(tester);
-    // Возвращаемся на текущую неделю: «завтра» в воскресенье — уже следующая
-    // неделя, а проверки «Запланировано»/количества сессий живут на текущей.
-    await goToWeekOf(tester, DateTime.now());
-    // Сегодняшний день программы не начинали — он остался «Запланировано».
-    expect(find.text('Запланировано'), findsWidgets);
-    expect(find.text('Пропущено'), findsNothing);
-
-    // День-источник переноса очищен (47.3): в соседнем дне тренировки нет,
-    // поэтому тап открывает лист планирования, а не действия дня.
-    expect(find.text('Перенести на сегодня'), findsNothing);
-    await goToWeekOf(tester, otherDate);
-    await tester.tap(find.text('${otherDate.day}').last);
-    await tester.pumpAndSettle();
-    final sheet = find.byType(BottomSheet);
-    expect(sheet, findsWidgets);
+    // Будущий день (завтра) — без действий (59.5.д): дравер показывает
+    // бейдж «Запланировано», старт недоступен.
+    await goToMonthOf(tester, otherDate);
+    await openDayDrawer(tester, otherDate);
+    sheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Запланировано')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Начать')),
+      findsNothing,
+    );
     expect(
       find.descendant(
         of: sheet,
@@ -1275,44 +1296,22 @@ void main() {
       ),
       findsOneWidget,
     );
+    await closeBottomSheetByBarrier(tester);
 
-    // Лист действий сегодняшнего дня: старт и пропуск, удаления нет.
-    // Закрываем лист планирования тапом по самому барьеру: в широкой
-    // раскладке барьер не перекрывает NavigationRail, поэтому тап по
-    // Offset.zero попадал в рельс, лист оставался открытым, а следующий тап
-    // закрывал его вместо открытия действий дня (47.16).
-    final sheetBarrier = find.byType(ModalBarrier).hitTestable();
-    expect(sheetBarrier, findsOneWidget);
-    final barrierRect = tester.getRect(sheetBarrier);
-    await tester.tapAt(Offset(barrierRect.center.dx, barrierRect.top + 20));
-    await tester.pumpAndSettle();
-    expect(find.byType(BottomSheet), findsNothing);
-
-    // Обратно на текущую неделю перед тапом по числу текущего дня
-    // («завтра» в воскресенье — следующая неделя).
-    await goToWeekOf(tester, DateTime.now());
-
-    // Тапаем по числу дня — в широкой раскладке это заголовок колонки, он же
-    // открывает лист действий. Прокручиваем к нему: сетка после прокрутки к
-    // кнопке переноса могла увести число за край.
-    final todayNumber = find.text('${now.day}').last;
-    await scrollUntilVisibleIn(tester, todayNumber);
-    await tester.tap(todayNumber);
-    await tester.pumpAndSettle();
+    // Сегодняшний день программы не начинали — в дравере остаётся «Начать»;
+    // удаления у дня программы нет (47.1), но «Запланировать тренировку»
+    // появится после чужой сессии — проверяем базовый набор (59.5).
+    await openDayDrawer(tester, DateTime.now());
+    sheet = find.byType(BottomSheet);
     expect(
-      find.descendant(
-        of: find.byType(BottomSheet),
-        matching: find.text('Начать'),
-      ),
+      find.descendant(of: sheet, matching: find.text('Начать')),
       findsOneWidget,
     );
     expect(
-      find.descendant(
-        of: find.byType(BottomSheet),
-        matching: find.text('Удалить назначение'),
-      ),
+      find.descendant(of: sheet, matching: find.text('Удалить назначение')),
       findsNothing,
     );
+    await closeBottomSheetByBarrier(tester);
   });
 
   testWidgets('флоу: тренировка по сторонам с фиксированным весом', (
@@ -1592,9 +1591,12 @@ void main() {
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    expect(find.text(_programName), findsWidgets);
 
-    expect(await startWorkout(tester), isTrue, reason: 'разминка показана');
+    expect(
+      await startWorkout(tester, programName: _programName),
+      isTrue,
+      reason: 'разминка показана',
+    );
 
     expect(find.widgetWithText(TextFormField, 'Повторения'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Вес (кг)'), findsNothing);
@@ -1614,106 +1616,111 @@ void main() {
     expect(detail.results.single.weightKg, isNull);
   });
 
-  testWidgets(
-    'редактирование и удаление: блокировка, активность, план недели',
-    (tester) async {
-      final db = AppDatabase(executor: NativeDatabase.memory());
-      addTearDown(() => db.close());
-      await pumpApp(tester, db);
+  testWidgets('редактирование и удаление: блокировка, активность, план', (
+    tester,
+  ) async {
+    final db = AppDatabase(executor: NativeDatabase.memory());
+    addTearDown(() => db.close());
+    await pumpApp(tester, db);
 
-      await goToTab(tester, Icons.fitness_center_outlined);
-      await createExercise(tester, _squat, ExerciseType.strength);
-      await pullToRefreshExercises(tester);
-      expect(find.text(_squat), findsOneWidget);
+    await goToTab(tester, Icons.fitness_center_outlined);
+    await createExercise(tester, _squat, ExerciseType.strength);
+    await pullToRefreshExercises(tester);
+    expect(find.text(_squat), findsOneWidget);
 
-      final today = DateTime.now().weekday;
+    final today = DateTime.now().weekday;
 
-      await goToTab(tester, Icons.calendar_month_outlined);
-      await tester.tap(find.byTooltip('Новая программа'));
-      await tester.pumpAndSettle();
-      await enterField(
-        tester,
-        find.widgetWithText(TextFormField, 'Название'),
-        _programName,
-      );
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byTooltip('Новая программа'));
+    await tester.pumpAndSettle();
+    await enterField(
+      tester,
+      find.widgetWithText(TextFormField, 'Название'),
+      _programName,
+    );
 
-      await configureDay(
-        tester,
-        1,
-        today,
-        mainSets: [
-          (
-            _squat,
-            {
-              'Подходы': '1',
-              'Повторения': '10',
-              'Вес (кг)': '40',
-              'Отдых (сек)': '10',
-            },
-          ),
-        ],
-        alternativeSets: const [],
-      );
+    await configureDay(
+      tester,
+      1,
+      today,
+      mainSets: [
+        (
+          _squat,
+          {
+            'Подходы': '1',
+            'Повторения': '10',
+            'Вес (кг)': '40',
+            'Отдых (сек)': '10',
+          },
+        ),
+      ],
+      alternativeSets: const [],
+    );
 
-      await saveProgramBuilder(tester);
-      await pullToRefreshPrograms(tester);
-      expect(find.text(_programName), findsOneWidget);
+    await saveProgramBuilder(tester);
+    await pullToRefreshPrograms(tester);
+    expect(find.text(_programName), findsOneWidget);
 
-      // Программа уже активна (saveProgramBuilder активирует по умолчанию).
-      await goToTab(tester, Icons.calendar_month_outlined);
-      await tester.pumpAndSettle();
-      expect(find.text('Активная'), findsOneWidget);
+    // Программа уже активна (saveProgramBuilder активирует по умолчанию).
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.pumpAndSettle();
+    expect(find.text('Активная'), findsOneWidget);
 
-      await goToTab(tester, Icons.fitness_center_outlined);
-      await tester.tap(find.text(_squat));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Удалить'));
-      await tester.pumpAndSettle();
-      expect(find.text('Нельзя удалить «$_squat»'), findsOneWidget);
-      expect(
-        find.text('Упражнение используется в программах:'),
-        findsOneWidget,
-      );
-      expect(find.text('• $_programName → День 1'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'ОК'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(BackButton));
-      await tester.pumpAndSettle();
-      expect(find.text(_squat), findsOneWidget);
+    await goToTab(tester, Icons.fitness_center_outlined);
+    await tester.tap(find.text(_squat));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Удалить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Нельзя удалить «$_squat»'), findsOneWidget);
+    expect(find.text('Упражнение используется в программах:'), findsOneWidget);
+    expect(find.text('• $_programName → День 1'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'ОК'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text(_squat), findsOneWidget);
 
-      await goToTab(tester, Icons.calendar_month_outlined);
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Редактировать'));
-      await tester.pumpAndSettle();
-      final nameField = find.widgetWithText(TextFormField, 'Название');
-      await enterField(tester, nameField, '$_programName 2');
-      await saveProgramBuilder(tester);
-      await pullToRefreshPrograms(tester);
-      expect(find.text('$_programName 2'), findsOneWidget);
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Редактировать'));
+    await tester.pumpAndSettle();
+    final nameField = find.widgetWithText(TextFormField, 'Название');
+    await enterField(tester, nameField, '$_programName 2');
+    await saveProgramBuilder(tester);
+    await pullToRefreshPrograms(tester);
+    expect(find.text('$_programName 2'), findsOneWidget);
 
-      await goToTab(tester, Icons.home_outlined);
-      await tester.pumpAndSettle();
-      expect(find.text('Активная программа'), findsOneWidget);
-      expect(find.text('$_programName 2'), findsWidgets);
+    await goToTab(tester, Icons.home_outlined);
+    await tester.pumpAndSettle();
+    expect(find.text('Активная программа'), findsOneWidget);
+    expect(find.text('$_programName 2'), findsWidgets);
 
-      await goToTab(tester, Icons.calendar_month_outlined);
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Удалить'));
-      await tester.pumpAndSettle();
-      expect(find.text('Удалить программу «$_programName 2»?'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'Удалить').last);
-      await tester.pumpAndSettle();
-      await pullToRefreshPrograms(tester);
-      expect(find.text('$_programName 2'), findsNothing);
+    await goToTab(tester, Icons.calendar_month_outlined);
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Удалить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Удалить программу «$_programName 2»?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Удалить').last);
+    await tester.pumpAndSettle();
+    await pullToRefreshPrograms(tester);
+    expect(find.text('$_programName 2'), findsNothing);
 
-      await goToTab(tester, Icons.event_note_outlined);
-      await reloadWeekPlan(tester);
-      expect(find.text('$_programName 2'), findsNothing);
-      expect(find.text('Нет запланированных тренировок'), findsOneWidget);
-    },
-  );
+    await goToTab(tester, Icons.event_note_outlined);
+    await reloadWeekPlan(tester);
+    // 59.5: план — календарь месяца; после удаления программ дравер дня
+    // показывает только «Запланировать тренировку».
+    expect(find.byType(MonthGridView), findsOneWidget);
+    await openDayDrawer(tester, DateTime.now());
+    expect(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.textContaining('$_programName 2'),
+      ),
+      findsNothing,
+    );
+  });
 
   testWidgets('замеры тела: добавление, текущие значения и график', (
     tester,
@@ -1820,7 +1827,7 @@ void main() {
     await configureDay(
       tester,
       2,
-      nextDay().weekday,
+      today,
       mainSets: [
         (
           _squat,
@@ -1839,7 +1846,9 @@ void main() {
     await pullToRefreshPrograms(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    await tester.tap(find.text('Начать'));
+    // 59.5: старт только из дравера дня.
+    await openDayDrawer(tester, DateTime.now());
+    await tester.tap(find.text('Начать').first);
     await tester.pumpAndSettle();
     final startWorkoutBtn = find.widgetWithText(
       ElevatedButton,
@@ -1866,13 +1875,10 @@ void main() {
     await finishAndGoProgress(tester);
 
     await goToTab(tester, Icons.event_note_outlined);
-    // «Завтра» в воскресенье — уже следующая неделя плана (48.3), туда и идём
-    // за кнопкой переноса.
-    await goToWeekOf(tester, nextDay());
-    final rescheduleBtn2 = weekRescheduleButtonForDay(2);
-    expect(rescheduleBtn2, findsOneWidget);
-    await scrollUntilVisibleIn(tester, rescheduleBtn2);
-    await tester.tap(rescheduleBtn2);
+    // 59.5.д: будущий день из плана не стартуется — обе тренировки привязаны
+    // к сегодня, старт из дравера по карточке «День 2».
+    await openDayDrawer(tester, DateTime.now());
+    await tester.tap(drawerButtonFor(2, 'Начать'));
     await tester.pumpAndSettle();
     final startWorkoutBtn2 = find.widgetWithText(
       ElevatedButton,
@@ -1886,9 +1892,7 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'Повторения'), findsOneWidget);
   });
 
-  testWidgets('непривязанный день: быстрый старт из плана недели', (
-    tester,
-  ) async {
+  testWidgets('непривязанный день: быстрый старт из плана', (tester) async {
     final db = AppDatabase(executor: NativeDatabase.memory());
     addTearDown(() => db.close());
     await pumpApp(tester, db);
@@ -1930,8 +1934,17 @@ void main() {
 
     await goToTab(tester, Icons.event_note_outlined);
     await tester.pumpAndSettle();
-    expect(find.text(_programName), findsWidgets);
-    expect(find.text('Запланировано'), findsOneWidget);
+    // 59.5: статус дня и старт — в дравере дня.
+    await openDayDrawer(tester, DateTime.now());
+    final sheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.textContaining(_programName)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Начать')),
+      findsOneWidget,
+    );
 
     await goToTab(tester, Icons.home_outlined);
     await tester.pumpAndSettle();
