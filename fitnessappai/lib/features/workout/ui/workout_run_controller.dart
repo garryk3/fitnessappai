@@ -27,7 +27,6 @@ class WorkoutRunController {
     this.variant,
     this.exerciseId,
     this.singleExerciseParams,
-    this.rescheduleWeekStart,
     DateTime Function()? clock,
     TimerFactory? timerFactory,
     SoundService? soundService,
@@ -60,16 +59,6 @@ class WorkoutRunController {
 
   /// Параметры одиночного упражнения из экрана [SingleExerciseParamsScreen].
   final SingleExerciseParams? singleExerciseParams;
-
-  /// Понедельник недели-источника, если тренировка запущена как перенос
-  /// («Перенести на сегодня», задача 48.4).
-  ///
-  /// Отметка `rescheduled` ставится **не при тапе**, а только после
-  /// фактического сохранения сессии (см. [completeAndSave]) — иначе день-
-  /// источник пустел ещё до выполнения тренировки. `null` — тренировка
-  /// запущена не как перенос, отметка не нужна. Mutable: значение подхватывается
-  /// из чекпоинта при восстановлении после убийства процесса ОС.
-  DateTime? rescheduleWeekStart;
 
   final Signal<bool> isLoading = Signal(true);
   final Signal<bool> notFound = Signal(false);
@@ -110,11 +99,6 @@ class WorkoutRunController {
   /// экрана. Если передан [checkpoint], восстанавливает состояние из него
   /// вместо запуска новой сессии.
   Future<void> load({WorkoutCheckpoint? checkpoint}) async {
-    // Восстановление после убийства процесса: параметр переноса жил только в
-    // query-строке и при перенаправлении из чекпоинта потерялся бы (48.4).
-    if (checkpoint != null && rescheduleWeekStart == null) {
-      rescheduleWeekStart = checkpoint.rescheduleWeekStart;
-    }
     isLoading.value = true;
     notFound.value = false;
     emptyDay.value = false;
@@ -255,7 +239,6 @@ class WorkoutRunController {
         // пережил бы и «застрявший» файл.
         log('Не удалось очистить чекпойнт завершённой тренировки', error: e);
       }
-      await _markRescheduledIfAny();
       saved.value = true;
     } finally {
       saving.value = false;
@@ -277,35 +260,5 @@ class WorkoutRunController {
     saved.value = false;
     saving.value = false;
     await load();
-  }
-
-  /// Помечает исходный день перенесённым — только по факту сохранения сессии.
-  ///
-  /// Раньше отметка ставилась при тапе «Перенести на сегодня», и день-источник
-  /// пустел ещё до выполнения тренировки (задача 48.4). Выход без завершения
-  /// ничего не пишет: исходный день остаётся запланированным.
-  ///
-  /// Ошибка отметки не должна ломать уже сохранённую сессию — план догонит
-  /// статус по сессии (47.1).
-  Future<void> _markRescheduledIfAny() async {
-    final dayId = programDayId;
-    final weekStart = rescheduleWeekStart;
-    if (dayId == null || weekStart == null) {
-      return;
-    }
-    try {
-      // День могли удалить, пока тренировка шла: отметка ссылается на него по
-      // FK, поэтому сначала убеждаемся, что день ещё есть.
-      if (await programRepository.getDay(dayId) == null) {
-        return;
-      }
-      await workoutRepository.markRescheduled(dayId, weekStart);
-    } catch (e, st) {
-      log(
-        'Не удалось пометить перенос дня $dayId на неделе $weekStart',
-        error: e,
-        stackTrace: st,
-      );
-    }
   }
 }

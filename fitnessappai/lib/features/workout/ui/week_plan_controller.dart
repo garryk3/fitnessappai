@@ -15,19 +15,16 @@ import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 
-/// Режим отображения плана тренировок: сетка недели или календарь месяца (54.5).
-enum WeekPlanView { week, month }
-
-/// Статус запланированного тренировочного дня на неделе.
+/// Статус запланированного тренировочного дня на конкретную дату.
 ///
-/// [pastSkipped] — невыполненная тренировка из истёкшей тренировочной недели:
+/// [pastSkipped] — невыполненная тренировка прошедшего дня (59.5.г: день
+/// прошёл без факта — «пропущено», включая вчера в текущей неделе);
 /// отображается как «Пропущено», но только в отображении (в БД не пишется).
-/// Перенос тренировки допускается только внутри её тренировочной недели
-/// (задача 47.2), поэтому такой день действий не имеет.
+/// Такой день действий не имеет: планировать/запускать на прошлое нельзя.
 enum WeekPlanStatus { pending, performed, rescheduled, skipped, pastSkipped }
 
 /// Действия, доступные для тренировки в дне плана (задача 47.1).
-enum DayAction { start, reschedule, skip, unskip, remove }
+enum DayAction { start, skip, unskip, remove }
 
 /// Запланированная на дату тренировка: день программы с вычисленным статусом.
 class WeekPlanItem {
@@ -104,15 +101,15 @@ class WeekPlanItem {
       '$programDayId|${_dateOnly(scheduledDate).millisecondsSinceEpoch}';
 }
 
-/// Набор действий дня для [item] на дату [today] (задача 47.1).
+/// Набор действий дня для [item] на дату [today] (задача 47.1, 59.5).
 ///
 /// - «Кастомное» назначение ([WeekPlanItem.isManual]) умеет только одно —
-///   удаление из расписания: переносить и пропускать его нечего;
-/// - тренировку программы можно начать (сегодня) или перенести на сегодня;
-/// - пропуск и отмена пропуска доступны только тренировкам текущего дня
-///   (амендмент второй партии TASKS.md);
-/// - выполненные, перенесённые и тренировки из истёкшей недели (перенос
-///   возможен только внутри своей тренировочной недели, 47.2) действий не имеют.
+///   удаление из расписания: пропускать его нечего;
+/// - тренировку программы можно начать, только если это сегодняшний день
+///   (решение владельца 59.5.д: будущие дни — без действий);
+/// - пропуск и отмена пропуска доступны только тренировкам текущего дня;
+/// - выполненные и прошедшие без факта дни действий не имеют (прошедший
+///   день отображается «Пропущено», редактировать прошлое нельзя).
 Set<DayAction> dayActionsFor(WeekPlanItem item, DateTime today) {
   if (item.status == WeekPlanStatus.skipped) {
     return _sameDay(item.scheduledDate, today) ? {DayAction.unskip} : const {};
@@ -123,19 +120,21 @@ Set<DayAction> dayActionsFor(WeekPlanItem item, DateTime today) {
   if (item.isManual) {
     return {DayAction.remove};
   }
+  // 59.5.д: «Перенести на сегодня» удалено; «Начать» — только на
+  // сегодняшний день (решение владельца). Будущий день в дравере
+  // ограничен правкой времени/напоминания и отменой.
   if (_sameDay(item.scheduledDate, today)) {
     return {DayAction.start, DayAction.skip};
   }
-  return {DayAction.reschedule};
+  return const {};
 }
 
-/// Управляет планом тренировок: сетка недели, календарь месяца (54.5),
-/// статусы, пропуски.
+/// Управляет планом тренировок: календарь месяца (59.5.а — единственный
+/// вид), статусы, пропуски.
 ///
-/// Вид «Месяц» вернулся в 54.5 как визуальный слой над теми же данными
-/// планирования: навигация ограничена текущим и следующим периодом, назад —
-/// только из следующего на текущий. Прошлое в плане не просматривается
-/// (51.2): выполненные тренировки доступны на экране «История».
+/// Навигация: вперёд — без ограничения (59.5.в), назад — только из следующего
+/// месяца на текущий. Прошлое в плане не просматривается (51.2): выполненные
+/// тренировки доступны на экране «История».
 class WeekPlanController {
   WeekPlanController({
     required this.programRepository,
@@ -147,7 +146,6 @@ class WeekPlanController {
     DataChangeNotifier? changes,
   }) : _now = clock ?? DateTime.now {
     final today = _dateOnly(_now());
-    weekStart.value = mondayOf(today);
     monthStart.value = DateTime(today.year, today.month, 1);
     selectedDate.value = today;
     _reloadSubscription = ChangeReloadSubscription(
@@ -183,78 +181,25 @@ class WeekPlanController {
   /// загрузкой; при успешной — остаётся `false`, данные важнее ошибки.
   final Signal<bool> hasError = Signal(false);
 
-  /// Понедельник отображаемой недели.
-  final Signal<DateTime> weekStart = Signal(DateTime.now());
-
   /// Сегодняшняя дата.
   final Signal<DateTime> selectedDate = Signal(DateTime.now());
 
-  /// Отображаемый вид плана (54.5): сетка недели или календарь месяца.
-  final Signal<WeekPlanView> view = Signal(WeekPlanView.week);
-
   /// Первое число отображаемого месяца.
   final Signal<DateTime> monthStart = Signal(DateTime.now());
-
-  /// Выбранный в календаре день месяца для карточки под сеткой (54.5).
-  ///
-  /// `null` — выбора не было; отображаемую дату считает [effectiveMonthDate].
-  final Signal<DateTime?> monthSelectedDate = Signal(null);
-
-  /// Переключает вид плана, загружая данные соответствующего периода.
-  void setView(WeekPlanView next) {
-    if (view.value == next) {
-      return;
-    }
-    view.value = next;
-    // Сброс старого периода: сетка нового рисуется сразу по новым данным,
-    // без «pop-in» устаревших тренировок (design-review 54.5, находка 1).
-    // `refresh()` item'ы не трогает — авто-перезагрузки без мигания.
-    items.value = const [];
-    _load();
-  }
-
-  /// Дата, выбранная в календаре месяца: всегда внутри отображаемого месяца.
-  ///
-  /// По умолчанию — «сегодня», когда оно в этом месяце; иначе — 1-е число
-  /// месяца (карточка дня показывается всегда, 54.5).
-  DateTime? get effectiveMonthDate {
-    final stored = monthSelectedDate.value;
-    final month = monthStart.value;
-    if (stored != null &&
-        stored.year == month.year &&
-        stored.month == month.month) {
-      return stored;
-    }
-    final today = _dateOnly(_now());
-    return today.year == month.year && today.month == month.month
-        ? today
-        : DateTime(month.year, month.month, 1);
-  }
-
-  /// Выбирает день месяца в календаре (тап по ячейке).
-  void selectMonthDate(DateTime date) =>
-      monthSelectedDate.value = _dateOnly(date);
 
   /// Смещает отображаемый месяц на [delta] месяцев.
   void shiftMonth(int delta) {
     final current = monthStart.value;
     monthStart.value = DateTime(current.year, current.month + delta, 1);
-    monthSelectedDate.value = null;
-    // Сброс данных старого месяца — см. [setView] (design-review 54.5).
+    // Сброс данных старого месяца: сетка нового рисуется сразу по новым
+    // данным, без «pop-in» устаревших тренировок (design-review 54.5).
     items.value = const [];
     _load();
   }
 
-  /// Можно ли перейти на следующий месяц: граница данных — текущая и следующая
-  /// недели (47.10/51.2), поэтому дальше конца следующей недели не открываем.
-  bool get canGoNextMonth {
-    final maxDate = mondayOf(_dateOnly(_now())).add(const Duration(days: 13));
-    final next = DateTime(monthStart.value.year, monthStart.value.month + 1, 1);
-    return !next.isAfter(maxDate);
-  }
-
   /// Можно ли перейти на предыдущий месяц: назад — только из следующего
-  /// месяца на текущий (51.2), прошлое не просматривается.
+  /// месяца на текущий (51.2), прошлое не просматривается. Вперёд — без
+  /// ограничения (59.5.в).
   bool get canGoPrevMonth {
     final today = _dateOnly(_now());
     final currentMonth = DateTime(today.year, today.month, 1);
@@ -281,27 +226,6 @@ class WeekPlanController {
     }
     return earliest;
   }
-
-  /// Смещает отображаемую неделю на [delta] недель.
-  void shiftWeek(int delta) {
-    weekStart.value = weekStart.value.add(Duration(days: 7 * delta));
-    _load();
-  }
-
-  /// Можно ли перейти на следующую неделю.
-  ///
-  /// План показывает только текущую и следующую недели (47.10).
-  bool get canGoNextWeek => weekStart.value.isBefore(
-    mondayOf(_dateOnly(_now())).add(const Duration(days: 7)),
-  );
-
-  /// Можно ли перейти на предыдущую неделю.
-  ///
-  /// Назад можно только из следующей недели на текущую: раньше текущей
-  /// недели навигация запрещена (51.2). Прошлое в плане не просматривается —
-  /// выполненные тренировки доступны на экране «История».
-  bool get canGoPrevWeek =>
-      weekStart.value.isAfter(mondayOf(_dateOnly(_now())));
 
   /// Проверяет, существует ли тренировочный день в базе.
   Future<bool> dayExists(int programDayId) async =>
@@ -434,15 +358,11 @@ class WeekPlanController {
   }
 
   Future<void> _load() {
-    if (view.value == WeekPlanView.month) {
-      final month = monthStart.value;
-      return _loadRange(
-        DateTime(month.year, month.month, 1),
-        DateTime(month.year, month.month + 1, 0),
-      );
-    }
-    final week = weekStart.value;
-    return _loadRange(week, week.add(const Duration(days: 6)));
+    final month = monthStart.value;
+    return _loadRange(
+      DateTime(month.year, month.month, 1),
+      DateTime(month.year, month.month + 1, 0),
+    );
   }
 
   Future<void> _loadRange(DateTime rangeStart, DateTime rangeEnd) async {
@@ -727,10 +647,10 @@ class WeekPlanController {
         return WeekPlanStatus.performed;
       }
       // Будущую запись нельзя «перенести»: чужая сессия того же programDayId
-      // принадлежит другому вхождению (например выполнение на своём дне), а
-      // не этой будущей тренировке. Если вхождение пропущено — «Пропущено»,
-      // иначе — «Запланировано».
-      if (item.scheduledDate.isAfter(now)) {
+      // принадлежит другому вхождению (например выполнение на своём дне),
+      // а не этой будущей тренировке. Сегодняшний день — так же: день ещё
+      // не «прошёл» (59.5.г), чужая сессия — досрочное выполнение.
+      if (!item.scheduledDate.isBefore(now)) {
         return isSkipped ? WeekPlanStatus.skipped : WeekPlanStatus.pending;
       }
       return WeekPlanStatus.rescheduled;
@@ -738,7 +658,10 @@ class WeekPlanController {
     if (isSkipped) {
       return WeekPlanStatus.skipped;
     }
-    if (mondayOf(item.scheduledDate).isBefore(mondayOf(now))) {
+    // 59.5.г: «пропущено» — по факту дня, а не по границе недели: любой
+    // прошедший день без сессии (включая вчера в текущей неделе) —
+    // «Пропущено». Сегодня без факта ещё не «прошёл».
+    if (_dateOnly(item.scheduledDate).isBefore(_dateOnly(now))) {
       return WeekPlanStatus.pastSkipped;
     }
     return WeekPlanStatus.pending;

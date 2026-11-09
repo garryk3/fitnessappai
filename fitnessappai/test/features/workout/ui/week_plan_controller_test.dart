@@ -103,7 +103,7 @@ void main() {
       // 15 августа 2026 — суббота той же недели, что и fixedNow.
       await scheduleRepo.schedule(manual, DateTime(2026, 8, 15));
 
-      controller.weekStart.value = DateTime(2026, 8, 10);
+      controller.monthStart.value = DateTime(2026, 8, 1);
       await controller.refresh();
 
       String? titleOf(int dayId, int day) {
@@ -125,7 +125,7 @@ void main() {
     await scheduleRepo.schedule(dayId, DateTime(2026, 8, 15));
 
     // 15 августа 2026 — суббота недели 10–16.08 (47.10: месяца больше нет).
-    controller.weekStart.value = DateTime(2026, 8, 10);
+    controller.monthStart.value = DateTime(2026, 8, 1);
     await controller.refresh();
 
     final items = controller.items.value;
@@ -140,7 +140,7 @@ void main() {
     final dayId = await createUnlinkedDay();
     await scheduleRepo.schedule(dayId, DateTime(2026, 8, 15));
 
-    controller.weekStart.value = DateTime(2026, 8, 10);
+    controller.monthStart.value = DateTime(2026, 8, 1);
     await controller.refresh();
     expect(controller.items.value, isNotEmpty);
 
@@ -155,7 +155,7 @@ void main() {
   test('scheduleDay adds to items', () async {
     final dayId = await createUnlinkedDay();
 
-    controller.weekStart.value = DateTime(2026, 8, 10);
+    controller.monthStart.value = DateTime(2026, 8, 1);
     await controller.refresh();
 
     // До назначения четверг 13.08 пуст.
@@ -178,7 +178,7 @@ void main() {
     // Manually schedule on the same date as the recurring.
     await scheduleRepo.schedule(dayId, DateTime(2026, 8, 10));
 
-    controller.weekStart.value = DateTime(2026, 8, 10);
+    controller.monthStart.value = DateTime(2026, 8, 1);
     await controller.refresh();
 
     final items = controller.items.value.where(
@@ -191,26 +191,27 @@ void main() {
   });
 
   test(
-    'навигация плана: вперёд до следующей, назад только на текущую (47.10, 51.2)',
+    'навигация месяцами: вперёд без ограничения, назад только с соседнего (59.5.в, 51.2)',
     () async {
       await controller.refresh();
-      // Сегодня — понедельник 10.08.2026, отображается текущая неделя.
-      expect(controller.weekStart.value, DateTime(2026, 8, 10));
-      expect(controller.canGoNextWeek, isTrue);
-      // Назад нельзя: текущая неделя — нижняя граница навигации.
-      expect(controller.canGoPrevWeek, isFalse);
+      // Сегодня — 10.08.2026, отображается текущий месяц.
+      expect(controller.monthStart.value, DateTime(2026, 8, 1));
+      // Назад нельзя: текущий месяц — нижняя граница навигации.
+      expect(controller.canGoPrevMonth, isFalse);
 
-      controller.shiftWeek(1);
-      expect(controller.weekStart.value, DateTime(2026, 8, 17));
-      expect(controller.canGoNextWeek, isFalse);
-      // Даже без истории из будущей недели можно вернуться на текущую.
-      expect(controller.canGoPrevWeek, isTrue);
+      // Вперёд — без ограничения (59.5.в).
+      controller.shiftMonth(1);
+      expect(controller.monthStart.value, DateTime(2026, 9, 1));
+      expect(controller.canGoPrevMonth, isTrue);
+      controller.shiftMonth(1);
+      expect(controller.monthStart.value, DateTime(2026, 10, 1));
+      expect(controller.canGoPrevMonth, isTrue);
 
-      // Дальше вперёд нельзя: неделя не выходит за пределы текущей+следующей.
-      controller.shiftWeek(1);
-      expect(controller.weekStart.value, DateTime(2026, 8, 24));
-      expect(controller.canGoNextWeek, isFalse);
-      expect(controller.canGoPrevWeek, isTrue);
+      // Возврат на текущий возможен.
+      controller.shiftMonth(-1);
+      controller.shiftMonth(-1);
+      expect(controller.monthStart.value, DateTime(2026, 8, 1));
+      expect(controller.canGoPrevMonth, isFalse);
     },
   );
 
@@ -233,16 +234,10 @@ void main() {
       );
       await controller.refresh();
 
-      // Сегодня — текущая неделя: назад нельзя.
-      expect(controller.weekStart.value, DateTime(2026, 8, 10));
-      expect(controller.canGoPrevWeek, isFalse);
-
-      // Из следующей недели возврат возможен только на текущую.
-      controller.shiftWeek(1);
-      expect(controller.canGoPrevWeek, isTrue);
-      controller.shiftWeek(-1);
-      expect(controller.weekStart.value, DateTime(2026, 8, 10));
-      expect(controller.canGoPrevWeek, isFalse);
+      // Сегодня — текущий месяц: назад нельзя, старые программа и сессии
+      // нижнюю границу навигации не сдвигают (51.2).
+      expect(controller.monthStart.value, DateTime(2026, 8, 1));
+      expect(controller.canGoPrevMonth, isFalse);
     },
   );
 
@@ -285,7 +280,7 @@ void main() {
     final linkedId = await createLinkedDay(DateTime.thursday);
     final unlinkedId = await createUnlinkedDay();
     await scheduleRepo.schedule(linkedId, DateTime(2026, 8, 14));
-    controller.weekStart.value = DateTime(2026, 8, 10);
+    controller.monthStart.value = DateTime(2026, 8, 1);
     await controller.refresh();
 
     final manual = controller.items.value.firstWhere(
@@ -304,7 +299,7 @@ void main() {
     expect(unlinked.scheduledDate, DateTime(2026, 8, 10));
   });
 
-  group('окно переноса — только в рамках тренировочной недели (47.2)', () {
+  group('прошедший день без факта — «Пропущено» (59.5.г)', () {
     Future<WeekPlanItem> itemOn(DateTime now, int dayOfWeek) async {
       // 10.08.2026 — понедельник.
       final dayId = await createLinkedDay(dayOfWeek);
@@ -315,7 +310,7 @@ void main() {
         planScheduleRepository: scheduleRepo,
         clock: () => now,
       );
-      controller.weekStart.value = DateTime(2026, 8, 10);
+      controller.monthStart.value = DateTime(2026, 8, 1);
       await controller.refresh();
       return controller.items.value.firstWhere(
         (i) =>
@@ -324,60 +319,43 @@ void main() {
       );
     }
 
-    test(
-      'прошедший день своей недели ещё можно перенести на сегодня',
-      () async {
-        // Воскресенье: понедельник той же недели — перенос доступен.
-        final item = await itemOn(DateTime(2026, 8, 16), DateTime.monday);
+    test('вчерашний день текущей недели уже «Пропущено»', () async {
+      // Воскресенье 16.08: понедельник 10.08 прошёл без факта — теперь
+      // «Пропущено» по дню, а не по границе недели.
+      final item = await itemOn(DateTime(2026, 8, 16), DateTime.monday);
 
-        expect(item.status, WeekPlanStatus.pending);
-        expect(dayActionsFor(item, DateTime(2026, 8, 16)), {
-          DayAction.reschedule,
-        });
-      },
-    );
+      expect(item.status, WeekPlanStatus.pastSkipped);
+      expect(dayActionsFor(item, DateTime(2026, 8, 16)), isEmpty);
+    });
 
-    test(
-      'в следующий понедельник понедельник прошлой недели — переноса нет',
-      () async {
-        final item = await itemOn(DateTime(2026, 8, 17), DateTime.monday);
+    test('сегодня без факта — ещё «Запланировано» со стартом', () async {
+      // 16.08 — воскресенье, тренировка «сегодня» (старт + пропуск).
+      final item = await itemOn(DateTime(2026, 8, 16), DateTime.sunday);
 
-        expect(item.status, WeekPlanStatus.pastSkipped);
-        expect(dayActionsFor(item, DateTime(2026, 8, 17)), isEmpty);
-      },
-    );
+      expect(item.status, WeekPlanStatus.pending);
+      expect(dayActionsFor(item, DateTime(2026, 8, 16)), {
+        DayAction.start,
+        DayAction.skip,
+      });
 
-    test(
-      'последний день недели (воскресенье) в понедельник — уже неделя',
-      () async {
-        // 16.08 — воскресенье, тренировка «сегодня» (старт + пропуск);
-        // 17.08 — понедельник следующей недели: переноса уже нет.
-        final sunday = await itemOn(DateTime(2026, 8, 16), DateTime.sunday);
-        expect(sunday.status, WeekPlanStatus.pending);
-        expect(dayActionsFor(sunday, DateTime(2026, 8, 16)), {
-          DayAction.start,
-          DayAction.skip,
-        });
-
-        controller.dispose();
-        controller = WeekPlanController(
-          programRepository: programRepo,
-          workoutRepository: WorkoutRepository(db),
-          planScheduleRepository: scheduleRepo,
-          clock: () => DateTime(2026, 8, 17),
-        );
-        controller.weekStart.value = DateTime(2026, 8, 10);
-        await controller.refresh();
-        final sundayNextMonday = controller.items.value.firstWhere(
-          (i) =>
-              i.programName == 'По расписанию' &&
-              i.scheduledDate.day == 16 &&
-              i.scheduledDate.month == 8,
-        );
-        expect(sundayNextMonday.status, WeekPlanStatus.pastSkipped);
-        expect(dayActionsFor(sundayNextMonday, DateTime(2026, 8, 17)), isEmpty);
-      },
-    );
+      controller.dispose();
+      controller = WeekPlanController(
+        programRepository: programRepo,
+        workoutRepository: WorkoutRepository(db),
+        planScheduleRepository: scheduleRepo,
+        clock: () => DateTime(2026, 8, 17),
+      );
+      controller.monthStart.value = DateTime(2026, 8, 1);
+      await controller.refresh();
+      final sundayNextMonday = controller.items.value.firstWhere(
+        (i) =>
+            i.programName == 'По расписанию' &&
+            i.scheduledDate.day == 16 &&
+            i.scheduledDate.month == 8,
+      );
+      expect(sundayNextMonday.status, WeekPlanStatus.pastSkipped);
+      expect(dayActionsFor(sundayNextMonday, DateTime(2026, 8, 17)), isEmpty);
+    });
   });
 
   group('перенос очищает день-источник (47.3)', () {
@@ -403,7 +381,7 @@ void main() {
 
     test('после переноса вторника понедельник остаётся в плане', () async {
       final ids = await createTwoDayProgram();
-      controller.weekStart.value = DateTime(2026, 8, 10);
+      controller.monthStart.value = DateTime(2026, 8, 1);
       await controller.refresh();
 
       final tuesday = controller.items.value.firstWhere(
@@ -426,7 +404,7 @@ void main() {
 
     test('на следующей неделе тренировка снова в плане', () async {
       final ids = await createTwoDayProgram();
-      controller.weekStart.value = DateTime(2026, 8, 10);
+      controller.monthStart.value = DateTime(2026, 8, 1);
       await controller.refresh();
 
       final monday = controller.items.value.firstWhere(
@@ -440,11 +418,12 @@ void main() {
         isFalse,
       );
 
-      controller.weekStart.value = DateTime(2026, 8, 17);
-      await controller.refresh();
+      // Сентябрь: та же привязка к понедельнику снова в плане.
+      controller.shiftMonth(1);
+      await pumpEventQueue();
       expect(
         controller.items.value.any(
-          (i) => i.programDayId == ids[0] && i.scheduledDate.day == 17,
+          (i) => i.programDayId == ids[0] && i.scheduledDate.month == 9,
         ),
         isTrue,
       );
@@ -467,7 +446,7 @@ void main() {
         ],
       );
       final days = await programRepo.getDays(program.id!);
-      controller.weekStart.value = DateTime(2026, 8, 10);
+      controller.monthStart.value = DateTime(2026, 8, 1);
       await controller.refresh();
 
       final tuesdayItems = controller.items.value
@@ -485,7 +464,7 @@ void main() {
 
     test('маркер переноса не трогает пропуски', () async {
       final ids = await createTwoDayProgram();
-      controller.weekStart.value = DateTime(2026, 8, 10);
+      controller.monthStart.value = DateTime(2026, 8, 1);
       await controller.refresh();
 
       final monday = controller.items.value.firstWhere(
@@ -522,7 +501,7 @@ void main() {
 
     expect(await scheduleRepo.isScheduled(dayId, DateTime(2026, 8, 5)), isTrue);
 
-    controller.weekStart.value = DateTime(2026, 8, 10);
+    controller.monthStart.value = DateTime(2026, 8, 1);
     await controller.refresh();
 
     expect(
@@ -583,17 +562,10 @@ void main() {
     },
   );
 
-  test('вид «Месяц»: месяц целиком, возврат к неделе (54.5)', () async {
+  test('месяц — единственный вид: загрузка сразу за месяц (59.5.а)', () async {
     await createLinkedDay(DateTime.monday);
     await controller.refresh();
 
-    expect(controller.view.value, WeekPlanView.week);
-    expect(controller.items.value.map((i) => i.scheduledDate.day), [10]);
-
-    controller.setView(WeekPlanView.month);
-    await pumpEventQueue();
-
-    expect(controller.view.value, WeekPlanView.month);
     // Август целиком: понедельники 3, 10, 17, 24 и 31.
     expect(controller.items.value.map((i) => i.scheduledDate.day).toList(), [
       3,
@@ -602,32 +574,20 @@ void main() {
       24,
       31,
     ]);
-    // Текущий месяц — нижняя граница: назад некуда, вперёд тоже — конец
-    // следующей недели (23.08) раньше 01.09.
+    // Текущий месяц — нижняя граница: назад некуда; вперёд — без
+    // ограничения (59.5.в).
     expect(controller.canGoPrevMonth, isFalse);
-    expect(controller.canGoNextMonth, isFalse);
-
-    controller.setView(WeekPlanView.week);
-    await pumpEventQueue();
-    expect(controller.items.value.map((i) => i.scheduledDate.day), [10]);
   });
 
   test(
-    'смена вида/месяца синхронно сбрасывает items (без pop-in, design-review)',
+    'смена месяца синхронно сбрасывает items (без pop-in, design-review)',
     () async {
       await createLinkedDay(DateTime.monday);
       await controller.refresh();
       expect(controller.items.value, isNotEmpty);
 
-      // setView: старые item'ы очищаются синхронно до завершения загрузки —
+      // shiftMonth: старые item'ы очищаются синхронно до завершения загрузки —
       // спиннер включается сразу, сетка не рисуется по данным чужого периода.
-      controller.setView(WeekPlanView.month);
-      expect(controller.items.value, isEmpty);
-      expect(controller.view.value, WeekPlanView.month);
-      await pumpEventQueue();
-      expect(controller.items.value, isNotEmpty);
-
-      // shiftMonth: то же при переходе на соседний месяц.
       controller.shiftMonth(1);
       expect(controller.items.value, isEmpty);
       await pumpEventQueue();
@@ -641,63 +601,6 @@ void main() {
         controller.items.value.map((i) => i.scheduledDate.day),
         before.map((i) => i.scheduledDate.day),
       );
-    },
-  );
-
-  test('навигация месяцами в границах данных (54.5)', () async {
-    await createLinkedDay(DateTime.monday);
-    final late = WeekPlanController(
-      programRepository: programRepo,
-      workoutRepository: WorkoutRepository(db),
-      planScheduleRepository: scheduleRepo,
-      clock: () => DateTime(2026, 8, 25),
-    );
-    addTearDown(() async {
-      await pumpEventQueue();
-      late.dispose();
-    });
-    late.setView(WeekPlanView.month);
-    await pumpEventQueue();
-
-    expect(late.monthStart.value, DateTime(2026, 8, 1));
-    expect(late.canGoPrevMonth, isFalse);
-    // Конец следующей недели — 06.09: сентябрь в границах, октябрь нет.
-    expect(late.canGoNextMonth, isTrue);
-
-    late.shiftMonth(1);
-    await pumpEventQueue();
-    expect(late.monthStart.value, DateTime(2026, 9, 1));
-    expect(late.canGoPrevMonth, isTrue);
-    expect(late.canGoNextMonth, isFalse);
-
-    late.shiftMonth(-1);
-    await pumpEventQueue();
-    expect(late.monthStart.value, DateTime(2026, 8, 1));
-    expect(late.canGoPrevMonth, isFalse);
-  });
-
-  test(
-    'выбор дня месяца: по умолчанию «сегодня», смена месяца сбрасывает',
-    () async {
-      controller.setView(WeekPlanView.month);
-      await pumpEventQueue();
-
-      expect(controller.effectiveMonthDate, DateTime(2026, 8, 10));
-
-      // Тап по ячейке выбирает день (время суток отбрасывается).
-      controller.selectMonthDate(DateTime(2026, 8, 17, 15));
-      expect(controller.effectiveMonthDate, DateTime(2026, 8, 17));
-
-      // В другом месяце «сегодня» (10.08) вне его — fallback на 1-е число,
-      // карточка дня остаётся видимой (54.5).
-      controller.shiftMonth(1);
-      await pumpEventQueue();
-      expect(controller.monthSelectedDate.value, isNull);
-      expect(controller.effectiveMonthDate, DateTime(2026, 9, 1));
-
-      controller.shiftMonth(-1);
-      await pumpEventQueue();
-      expect(controller.effectiveMonthDate, DateTime(2026, 8, 10));
     },
   );
 

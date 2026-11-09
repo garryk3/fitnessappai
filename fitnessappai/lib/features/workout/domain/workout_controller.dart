@@ -162,7 +162,6 @@ class WorkoutController {
     int? programId,
     required String programName,
     required int dayIndex,
-    DateTime? rescheduleWeekStart,
   }) {
     return WorkoutCheckpoint(
       programDayId: programDayId,
@@ -195,7 +194,6 @@ class WorkoutController {
       holdElapsedSeconds: holdElapsedSeconds.value,
       holdTargetSeconds: holdTargetSeconds.value,
       holdRunning: holdRunning.value,
-      rescheduleWeekStart: rescheduleWeekStart,
     );
   }
 

@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/sound/sound_service.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
@@ -17,7 +16,6 @@ import 'package:fitnessappai/core/domain/models/exercise_type.dart';
 import 'package:fitnessappai/core/domain/models/exercise_muscle.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
-import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
 import 'package:fitnessappai/core/domain/models/single_exercise_params.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/domain/models/workout_set_result.dart';
@@ -210,17 +208,12 @@ void main() {
     String initialLocation = '',
     Future<void> Function(WorkoutCheckpoint)? checkpointSaver,
     Future<WorkoutCheckpoint?> Function()? checkpointLoader,
-    DateTime? rescheduleWeekStart,
     WorkoutForegroundService? foregroundService,
     WakelockService? wakelockService,
     SoundService? soundService,
   }) async {
-    final rescheduleQuery = rescheduleWeekStart == null
-        ? ''
-        : '&rescheduleWeekStart=${rescheduleWeekStart.millisecondsSinceEpoch}';
     final location = initialLocation.isEmpty
         ? '/workout/run?programDayId=$dayId&variant=${variant.name}'
-              '$rescheduleQuery'
         : initialLocation;
     final router = GoRouter(
       initialLocation: location,
@@ -250,7 +243,6 @@ void main() {
             foregroundService:
                 foregroundService ?? StubWorkoutForegroundService(),
             soundService: soundService ?? StubSoundService(),
-            rescheduleWeekStart: rescheduleWeekStartOf(state),
             checkpointLoader: checkpointLoader ?? () async => null,
             checkpointSaver: checkpointSaver ?? (_) async {},
             checkpointClearer: () async {},
@@ -662,33 +654,6 @@ void main() {
     expect(find.text('Приседания'), findsNothing);
   });
 
-  testWidgets(
-    'перенос (48.4): отметка дня-источника пишется только после сохранения',
-    (tester) async {
-      final dayId = await createDay(sets: 1, restSeconds: null);
-      final weekStart = DateTime(2026, 8, 10);
-      await pumpRun(tester, dayId, rescheduleWeekStart: weekStart);
-
-      // Тренировка только запущена — день-источник пока нетронут.
-      expect(await workoutRepo.getMarks(weekStart), isEmpty);
-
-      await tester.enterText(find.byType(TextFormField).first, '8');
-      await tester.tap(find.text('Подход выполнен'));
-      await tester.pumpAndSettle();
-      expect(find.text('Тренировка завершена'), findsOneWidget);
-
-      // Сохранение асинхронное: ждём подтверждения — и только к этому
-      // моменту должна появиться отметка переноса.
-      await tester.pumpAndSettle();
-      expect(find.text('Тренировка сохранена'), findsOneWidget);
-
-      final marks = await workoutRepo.getMarks(weekStart);
-      expect(marks, hasLength(1));
-      expect(marks.single.programDayId, dayId);
-      expect(marks.single.status, ScheduleMarkStatus.rescheduled);
-    },
-  );
-
   testWidgets('обычная тренировка не ставит отметку переноса (48.4)', (
     tester,
   ) async {
@@ -703,40 +668,6 @@ void main() {
 
     // Ни на одной неделе отметок нет — запрос в БД, а не по одному weekStart.
     expect(await db.select(db.scheduleMarks).get(), isEmpty);
-  });
-
-  testWidgets('перенос (48.4): флаг доживает до чекпоинта после сбоя', (
-    tester,
-  ) async {
-    final dayId = await createDay(sets: 1, restSeconds: null);
-    final weekStart = DateTime(2026, 8, 10);
-    final checkpoint = WorkoutCheckpoint(
-      programDayId: dayId,
-      exerciseIndex: 0,
-      currentSet: 1,
-      completedSets: 0,
-      resultsJson: '[]',
-      startedAt: DateTime(2025, 1, 15, 8, 0),
-      programName: 'База',
-      dayIndex: 0,
-      rescheduleWeekStart: weekStart,
-    );
-
-    // Параметра переноса в query-строке нет — он восстановлен из снимка.
-    await pumpRun(tester, dayId, checkpointLoader: () async => checkpoint);
-    expect(await workoutRepo.getMarks(weekStart), isEmpty);
-    // Восстановленное состояние: экран показывает вход подхода, а не финал.
-    expect(find.text('Подход выполнен'), findsOneWidget);
-    expect(find.text('Тренировка завершена'), findsNothing);
-
-    await tester.enterText(find.byType(TextFormField).first, '8');
-    await tester.tap(find.text('Подход выполнен'));
-    await tester.pumpAndSettle();
-    await tester.pumpAndSettle();
-
-    final marks = await workoutRepo.getMarks(weekStart);
-    expect(marks, hasLength(1));
-    expect(marks.single.status, ScheduleMarkStatus.rescheduled);
   });
 
   testWidgets('выход без завершения подтверждается и отменяет тренировку', (

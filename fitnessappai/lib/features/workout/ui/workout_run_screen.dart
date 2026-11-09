@@ -67,7 +67,6 @@ class WorkoutRunScreen extends StatefulWidget {
     this.variant,
     this.exerciseId,
     this.singleExerciseParams,
-    this.rescheduleWeekStart,
     this.programRepository,
     this.exerciseRepository,
     this.workoutRepository,
@@ -87,9 +86,6 @@ class WorkoutRunScreen extends StatefulWidget {
   final int? exerciseId;
   final SingleExerciseParams? singleExerciseParams;
 
-  /// Понедельник недели-источника, если тренировка запущена как перенос
-  /// (задача 48.4). Подробнее — в [WorkoutRunController.rescheduleWeekStart].
-  final DateTime? rescheduleWeekStart;
   final ProgramRepository? programRepository;
   final ExerciseRepository? exerciseRepository;
   final WorkoutRepository? workoutRepository;
@@ -133,7 +129,6 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       variant: widget.variant,
       exerciseId: widget.exerciseId,
       singleExerciseParams: widget.singleExerciseParams,
-      rescheduleWeekStart: widget.rescheduleWeekStart,
       programRepository:
           widget.programRepository ?? locator.get<ProgramRepository>(),
       exerciseRepository:
@@ -267,10 +262,6 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       programId: ctx.programId,
       programName: ctx.programName,
       dayIndex: ctx.dayIndex,
-      // Параметр переноса иначе потеряется вместе с query-строкой при
-      // перенаправлении из чекпоинта (48.4).
-      rescheduleWeekStart:
-          widget.rescheduleWeekStart ?? _controller.rescheduleWeekStart,
     );
     final saver = widget.checkpointSaver ?? WorkoutCheckpoint.saveStatic;
     await saver(checkpoint);
