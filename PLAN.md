@@ -71,7 +71,7 @@
 | 56 | Полная миграция интерактивов в uikit (аудит 2026-10-23: события/dialogs/snackbars/кнопки-иконки/строчные/служебные + свой CI-гейт) | 56.1–56.5 | ✅ | 2026-10-24 |
 | 57 | QA-прогон релиза v1.0.29-alpha — дефекты + догон TC-175+ (TEST_PLAN.md, 2026-10-25/28) | 57.1–57.7 | ✅ | 2026-10-31 |
 | 58 | Багфиксы из ящика — данные, таймеры/звук, навигация (TASKS.md, 2026-10-31) | 58.1–58.6 | (в работе) | — |
-| 59 | Функциональность из ящика — выполнение, история/драверы, упражнение, план-месяц | 59.1–59.5 | (в работе) | — |
+| 59 | Функциональность из ящика — выполнение, история/драверы, упражнение, план-месяц | 59.1–59.6 | (в работе) | — |
 | 60 | Редизайн/UI-полировка/адаптив из ящика (design-reviewer на каждую) | 60.1–60.12 | (в работе) | — |
 
 ## Этап 57 — QA-прогон релиза v1.0.29-alpha (дефекты, 2026-10-25)
@@ -291,6 +291,15 @@
   - **l10n:** удалены `weekPlanReschedule`/`weekPlanMissedHint`/`weekPlanEmpty`/`weekPlanHint` и мёртвые `weekPlanNextWeek`/`weekPlanPrevWeek`; `weekPlanLoadError` перетекстован («Не удалось загрузить план»); gen-l10n перегенерирован (коммитится).
   - **e2e под месяц (блокер task-reviewer, решением владельца 2026-11-08 «обновить в ветке»):** `app_flow_test.dart` переписан: week-хелперы `goToWeekOf`/`displayedWeekLabel`/`weekRescheduleButtonForDay` → `goToMonthOf`/`displayedMonthLabel`/`openDayDrawer`/`drawerButtonFor`/`closeBottomSheetByBarrier`; старт тренировки — из дравера дня (`startWorkout(dayNumber:, programName:)`); future-day flows, завязанные на «Перенести на сегодня», перепривязаны к сегодня (59.5.д); добавлен сценарий «план: пропуск, отмена пропуска и paging месяцев». Прогон: **19/19 зелёные** (linux, ~8 мин, 2026-11-09).
   - **Тесты:** контроллер 20/20, экран плана 52/52; `router_test` — вкладка «План» ассертит `MonthGridView`; полный suite 1363/1363 зелёный; format/analyze чисты.
+
+### 59.6 — Дравер дня: ProgramRepository из locator по `isRegistered` (WILL COST из ревью 59.2)
+- **Статус:** ✅ 2026-11-10 — ветка `task/59.6-day-sessions-locator-fix`.
+- **Проблема:** task-reviewer 59.2 (WILL COST, отложено): в `DaySessionsContent.initState` необязательная зависимость `ProgramRepository` достаётся из locator через `try/catch (_) { _programRepository = widget.programRepository; }` — проверка регистрации исключением. В repo принят идиом `locator.isRegistered<T>()` (см. `workout_prepare_screen.dart`), catch (_) мог бы молча проглотить любой другой StateError.
+- **Решение/Рабочий план:**
+  1. `initState`: `widget.programRepository ?? (locator.isRegistered<ProgramRepository>() ? locator.get<ProgramRepository>() : null)` — без try/catch.
+  2. Widget-тест: `DaySessionsContent` (или дравер) без `ProgramRepository` в locator и без проброса — экран рендерится, миниатюра программы просто не запрашивается.
+  3. Гейты: format/analyze/тесты; task-reviewer (файл UI, но изменений интерфейса нет — полагаю design-reviewer не нужен, отмечу в PR).
+- **Реализовано (2026-11-10, ветка `task/59.6-day-sessions-locator-fix`):** (1) `DaySessionsContent.initState`: `_programRepository = widget.programRepository ?? (locator.isRegistered<ProgramRepository>() ? locator.get<ProgramRepository>() : null)` — try/catch (_) убран, проверка регистрации по идиоме репо (как `workout_prepare_screen.dart` для MediaCache); (2) widget-тест в `day_detail_screen_test.dart`: locator без `ProgramRepository` (программа создаётся до сброса locator так, что у сессии валидный programId, миниатюра просто не запрашивается) — контент рендерится, сессия показана; (3) отклонение от плана п.2: тест добавлен на `DayDetailScreen` (обёртку контента), дравер отдельно не требовался — покрытие то же. Гейты: format/analyze 0, файл-тесты 7/7, полный suite 1364/1364. task-reviewer: SHIP. Ретест не требуется (визуального изменения нет).
 
 ## Этап 60 — Редизайн/UI/адаптив из ящика (TASKS.md, 2026-10-31)
 
