@@ -1210,6 +1210,12 @@ abstract class AppLocalizations {
   /// **'Активная'**
   String get programActive;
 
+  /// No description provided for @programInactive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неактивная'**
+  String get programInactive;
+
   /// No description provided for @programDeactivate.
   ///
   /// In ru, this message translates to:

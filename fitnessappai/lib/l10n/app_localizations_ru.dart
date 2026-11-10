@@ -612,6 +612,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programActive => 'Активная';
 
   @override
+  String get programInactive => 'Неактивная';
+
+  @override
   String get programDeactivate => 'Деактивировать';
 
   @override

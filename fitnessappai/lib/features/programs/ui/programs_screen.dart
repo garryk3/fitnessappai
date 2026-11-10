@@ -114,10 +114,9 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: _ProgramCard(
               item: item,
-              onStart: item.days.isEmpty
-                  ? null
-                  : () =>
-                        context.push('/workout/prepare/${item.days.first.id}'),
+              onStart: item.program.isActive && item.days.isNotEmpty
+                  ? () => context.push('/workout/prepare/${item.days.first.id}')
+                  : null,
               onEdit: () => context.push('/programs/${item.program.id}/edit'),
               onDelete: () => _confirmDelete(context, item.program),
               onCopyJson: () => _copyProgramJson(context, item.program),
@@ -201,6 +200,7 @@ class _ProgramCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final program = item.program;
     final weekProgress = item.weekProgress;
     final nearest = nearestWeekday(
@@ -208,234 +208,199 @@ class _ProgramCard extends StatelessWidget {
       todayWeekday: DateTime.now().weekday,
     );
     return AppCard(
-      padding: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: AppInkWell(
-        onTap: onEdit,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: AppText(
-                              l10n.programDaysCount(program.daysCount),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                          ),
-                          if (item.exercisesCount > 0) ...[
-                            const SizedBox(width: 6),
-                            AppContainer(
-                              width: 1,
-                              height: 10,
-                              color: theme.colorScheme.outlineVariant,
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: AppText(
-                                l10n.programExercisesCount(item.exercisesCount),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 0.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (program.isActive) ...[
-                            const SizedBox(width: 8),
-                            _ActiveBadge(label: l10n.programActive),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ProgramThumbnail(
-                            imagePath: program.imagePath,
-                            size: 56,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                AppText(
-                                  program.name,
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (item.days.any(
-                                  (day) => day.dayOfWeek != null,
-                                )) ...[
-                                  const SizedBox(height: 6),
-                                  Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    children: [
-                                      for (final day in item.days)
-                                        if (day.dayOfWeek != null)
-                                          _DayBadge(
-                                            label: _weekdayLabel(
-                                              l10n,
-                                              day.dayOfWeek!,
-                                            ),
-                                          ),
-                                    ],
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                AppContainer(
-                  width: 1,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  color: theme.colorScheme.outlineVariant,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+      onTap: onEdit,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 60.1: вертикальная композиция вместо Row с правой колонкой —
+          // на узких экранах боковая колонка выжимала и обрезала имя/мету.
+          // Приоритет контента: mini-фото + имя (Expanded) + меню.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProgramThumbnail(imagePath: program.imagePath, size: 56),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    AppText(
+                      program.name,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Мета + маркировка активности (60.1): Wrap, чтобы строка
+                    // переносилась, а не обрезалась на узких экранах.
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        if (nearest != null)
-                          Flexible(
-                            child: AppText(
-                              '${l10n.homeUpcomingDay}: '
-                              '${_weekdayLabel(l10n, nearest)}',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                        if (program.isActive)
+                          AppBadge(
+                            label: l10n.programActive,
+                            background: colorScheme.primaryContainer.withValues(
+                              alpha: AppTints.faint,
+                            ),
+                            foreground: colorScheme.primary,
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(AppRadii.pill),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                          )
+                        else
+                          AppBadge(
+                            label: l10n.programInactive,
+                            background: theme.colorScheme.surfaceContainerHigh,
+                            foreground: colorScheme.onSurfaceVariant,
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(AppRadii.pill),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
                             ),
                           ),
-                        AppPopupMenuButton<String>(
-                          onSelected: (value) {
-                            if (value == 'edit') {
-                              onEdit();
-                            } else if (value == 'delete') {
-                              onDelete();
-                            } else if (value == 'copy-json') {
-                              onCopyJson();
-                            } else if (value == 'set-active') {
-                              onSetActive();
-                            } else if (value == 'deactivate') {
-                              onDeactivate();
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            if (program.isActive)
-                              AppPopupMenuItem(
-                                value: 'deactivate',
-                                child: AppText(l10n.programDeactivate),
-                              )
-                            else
-                              AppPopupMenuItem(
-                                value: 'set-active',
-                                child: AppText(l10n.programMakeActive),
+                        AppText(
+                          l10n.programDaysCount(program.daysCount),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        if (item.exercisesCount > 0)
+                          AppText(
+                            l10n.programExercisesCount(item.exercisesCount),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              AppPopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    onEdit();
+                  } else if (value == 'delete') {
+                    onDelete();
+                  } else if (value == 'copy-json') {
+                    onCopyJson();
+                  } else if (value == 'set-active') {
+                    onSetActive();
+                  } else if (value == 'deactivate') {
+                    onDeactivate();
+                  }
+                },
+                itemBuilder: (context) => [
+                  if (program.isActive)
+                    AppPopupMenuItem(
+                      value: 'deactivate',
+                      child: AppText(l10n.programDeactivate),
+                    )
+                  else
+                    AppPopupMenuItem(
+                      value: 'set-active',
+                      child: AppText(l10n.programMakeActive),
+                    ),
+                  AppPopupMenuItem(
+                    value: 'edit',
+                    child: AppText(l10n.commonEdit),
+                  ),
+                  AppPopupMenuItem(
+                    value: 'copy-json',
+                    child: AppText(l10n.programCopyJson),
+                  ),
+                  AppPopupMenuItem(
+                    value: 'delete',
+                    child: AppText(l10n.commonDelete),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (item.days.any((day) => day.dayOfWeek != null)) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final day in item.days)
+                  if (day.dayOfWeek != null)
+                    _DayBadge(label: _weekdayLabel(l10n, day.dayOfWeek!)),
+              ],
+            ),
+          ],
+          if (nearest != null || weekProgress != null || onStart != null) ...[
+            const SizedBox(height: 12),
+            // Ближайший день и недельный прогресс — в подвале слева,
+            // кнопка «Начать» — справа; тесноты узкого экрана больше нет.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (nearest != null)
+                        AppText(
+                          '${l10n.homeUpcomingDay}: ${_weekdayLabel(l10n, nearest)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      if (weekProgress != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppProgressRing(
+                              percent: item.weekPercent!,
+                              label: l10n.homeWeekProgressLabel(
+                                item.weekPercent!,
                               ),
-                            AppPopupMenuItem(
-                              value: 'edit',
-                              child: AppText(l10n.commonEdit),
                             ),
-                            AppPopupMenuItem(
-                              value: 'copy-json',
-                              child: AppText(l10n.programCopyJson),
-                            ),
-                            AppPopupMenuItem(
-                              value: 'delete',
-                              child: AppText(l10n.commonDelete),
+                            const SizedBox(width: 8),
+                            AppText(
+                              l10n.programListWeekFraction(
+                                weekProgress.performed,
+                                weekProgress.assigned,
+                              ),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    if (weekProgress != null) ...[
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          AppProgressRing(
-                            percent: item.weekPercent!,
-                            label: l10n.homeWeekProgressLabel(
-                              item.weekPercent!,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          AppText(
-                            l10n.programListWeekFraction(
-                              weekProgress.performed,
-                              weekProgress.assigned,
-                            ),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
                     ],
-                    if (onStart != null)
-                      AppGradientButton(
-                        pill: true,
-                        icon: Icons.play_arrow,
-                        label: l10n.weekPlanStart,
-                        onPressed: onStart,
-                      ),
-                  ],
+                  ),
                 ),
+                if (onStart != null)
+                  AppGradientButton(
+                    pill: true,
+                    icon: Icons.play_arrow,
+                    label: l10n.weekPlanStart,
+                    onPressed: onStart,
+                  ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActiveBadge extends StatelessWidget {
-  const _ActiveBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return AppContainer(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        border: Border.all(color: colorScheme.primary),
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-      ),
-      child: AppText(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: colorScheme.primary,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.3,
-        ),
+          ],
+        ],
       ),
     );
   }

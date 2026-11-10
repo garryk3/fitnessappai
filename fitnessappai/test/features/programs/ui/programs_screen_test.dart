@@ -211,6 +211,7 @@ void main() {
       ProgramDay(programId: 0, dayIndex: 0),
       ProgramDay(programId: 0, dayIndex: 1),
     ]);
+    await repository.setActive(created.id!);
     final days = await repository.getDays(created.id!);
     final firstDay = days.first.id!;
 
@@ -388,6 +389,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Сделать активной'), findsNothing);
+  });
+
+  testWidgets('неактивная программа показывает бейдж «Неактивная» (60.1)', (
+    tester,
+  ) async {
+    await repository.create(program('Сплит'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await pumpPrograms(tester);
+
+    expect(find.text('Активная'), findsNothing);
+    expect(find.text('Неактивная'), findsOneWidget);
+    // Решение владельца (60.1): у неактивной программы CTA «Начать» скрыт.
+    expect(find.text('Начать'), findsNothing);
+  });
+
+  testWidgets('карточка укладывается в узкий экран без переполнения (60.1)', (
+    tester,
+  ) async {
+    final created = await repository
+        .create(program('Очень длинное название программы', daysCount: 2), [
+          ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 1),
+          ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: 4),
+        ]);
+    await repository.setActive(created.id!);
+    final exId = await insertExercise();
+    final days = await repository.getDays(created.id!);
+    await repository.addExerciseToDay(days.first.id!, exId);
+
+    // Узкий вертикальный экран 320 dp: раньше правая колонка выжимала имя.
+    tester.view.devicePixelRatio = 1.0;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await pumpPrograms(tester);
+
+    expect(find.text('Очень длинное название программы'), findsOneWidget);
+    expect(find.text('Активная'), findsOneWidget);
+    expect(find.text('2 дня'), findsOneWidget);
+    expect(find.text('1 упражнение'), findsOneWidget);
   });
 
   testWidgets('«Сделать активной» помечает программу и показывает бейдж', (
