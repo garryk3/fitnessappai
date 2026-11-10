@@ -236,6 +236,7 @@
   "programMakeActive": "Сделать активной",
   "programActivatePrompt": "Сделать программу активной?",
   "programActive": "Активная",
+  "programInactive": "Неактивная",
   "programDeactivate": "Деактивировать",
   "programListWeekFraction": "{performed}/{assigned} дн",
   "@programListWeekFraction": {

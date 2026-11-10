@@ -440,13 +440,12 @@ Low из 54.1 закрыты: disabled `AppGradientButton` отличим (по�
 
 ### Программы (54.4)
 
-Список программ (`programs_screen.dart`, `_ProgramCard`, образец `templates/IMG_20260920_204537.jpg`):
+Список программ (`programs_screen.dart`, `_ProgramCard`, образец `templates/IMG_20260920_204537.jpg`; обновлено в 60.1 — после жалоб на тесноту/обрезки на узких экранах):
 
-- **Две колонки через вертикальный разделитель** (`outlineVariant`, `IntrinsicHeight`): слева — `ProgramThumbnail` 56, название `titleLarge` w600 (maxLines 2), дневные бейджи; справа — ближайший день, кольцо прогресса, pill-CTA. Строка метаданных сверху слева: «N дня | M упражнений» — labelSmall `onSurfaceVariant`, letter-spacing 0.4, тонкий разделитель-чертка.
-- **Кольцо `AppProgressRing`** (перенесено из home; подпись `%` в `FittedBox(scaleDown)`, `excludeSemantics: true` — иначе label мержится с детским текстом) — недельный прогресс сессий `[пн, пн+7)`; справа дробь `programListWeekFraction` («1/3 дн»). Данных нет (нет `WorkoutRepository`/дней у программы) — кольцо и дробь скрыты («без данных — без элементов»). Расчёт — домен `weeklyProgramProgress` (`lib/core/domain/weekly_progress.dart`), `ProgramListController` получает необязательные `WorkoutRepository` и `clock`.
+- **Вертикальная композиция (60.1, вместо прежних «двух колонок через разделитель»):** строка 1 — `ProgramThumbnail` 56 + название `titleLarge` w600 (`Expanded`, maxLines 2 + ellipsis) + `AppPopupMenuButton` (kebab) справа; строка 2 — мета-`Wrap` («Активная»/«Неактивная» бейдж + «N дней» + «M упражнений» labelSmall `onSurfaceVariant` letter-spacing 0.4) — переносится, не обрезается; далее — бейджи дней (`Wrap`); подвал — ближайший день (`homeUpcomingDay`) и кольцо недельного прогресса с дробью слева, CTA «Начать» справа. `IntrinsicHeight` и вертикальные разделители-чертки удалены (60.1).
+- **Кольцо `AppProgressRing`** (перенесено из home; подпись `%` в `FittedBox(scaleDown)`, `excludeSemantics: true` — иначе label мержится с детским текстом) — недельный прогресс сессий `[пн, пн+7)`, подпись дробью `programListWeekFraction` («1/3 дн»). Данных нет (нет `WorkoutRepository`/дней у программы) — кольцо и дробь скрыты («без данных — без элементов»). Расчёт — домен `weeklyProgramProgress` (`lib/core/domain/weekly_progress.dart`), `ProgramListController` получает необязательные `WorkoutRepository` и `clock`.
 - **Ближайший день** — compound-строка «Ближайший день: Пн» через `homeUpcomingDay` (без привязок — скрывается; отдельный `find.text('Пн')` не задваивается — бейджи остаются отдельными); расчет — домен `nearestWeekday`.
-- **Бейдж «Активная»** — outline-pill: обводка `primary`, текст `primary` labelSmall w600 (вместо залитого).
-- **CTA «Начать»** — `AppGradientButton(pill, icon: play_arrow)` в правой колонке, рендерится при наличии дней (поведение прежнее).
+- **Маркировка активности (60.1):** залитый `AppBadge`-pill (паддинг 10/4); активная — `primaryContainer` ×`AppTints.faint` + текст `primary` (house-роль streak-бейджа home), неактивная — `surfaceContainerHigh` + `onSurfaceVariant`, l10n `programInactive` («Неактивная»). Решение владельца (60.1): у неактивной программы CTA «Начать» не рендерится (`onStart` только при `isActive`).
 
 **`AppNumberStepper`** (`lib/uikit/app_number_stepper.dart`, новый) — поле-строка ± вместо outlined-поля с цифровой клавиатурой (образец «Параметры упражнения»):
 
