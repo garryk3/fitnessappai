@@ -1492,7 +1492,7 @@ void main() {
     },
   );
 
-  testWidgets('диалог выхода на узком экране: кнопки с отступом 16px', (
+  testWidgets('диалог выхода на узком экране: primary на всю ширину, cancel и destructive строкой ниже', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 640);
@@ -1512,11 +1512,27 @@ void main() {
     expect(find.text('Выйти из тренировки?'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    final spacers = tester
+    // 61.1: stacked-ритм вместо авто-стека OverflowBar — залитая primary
+    // на всю ширину, под ней строка cancel|destructive с зазором 12dp.
+    // Тексты кнопок не изменились — обе доступны finder'ам.
+    expect(
+      find.widgetWithText(AppButton, 'Завершить и сохранить'),
+      findsOneWidget,
+    );
+    expect(find.text('Отмена'), findsOneWidget);
+    expect(find.text('Выйти'), findsOneWidget);
+    final gaps12 = tester
         .widgetList<SizedBox>(find.byType(SizedBox))
-        .where((s) => s.height == 16)
+        .where((s) => s.height == 12)
         .length;
-    expect(spacers, greaterThanOrEqualTo(2));
+    expect(gaps12, greaterThanOrEqualTo(1));
+    // Primary на всю ширину области действий (stretch): при 320dp поверхность
+    // кнопки ~192dp, а wrap-content с Ahem-шрифтом дала бы ~185dp для
+    // «Завершить и сохранить» — порог 190dp отличает stretch от wrap.
+    final primaryWidth = tester
+        .getSize(find.widgetWithText(AppButton, 'Завершить и сохранить'))
+        .width;
+    expect(primaryWidth, greaterThan(190));
   });
 
   testWidgets('шрифт удержания планки headlineMedium на всех экранах', (

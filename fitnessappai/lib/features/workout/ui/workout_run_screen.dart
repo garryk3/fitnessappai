@@ -301,49 +301,26 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     final l10n = AppLocalizations.of(context);
     final action = await showAppDialog<String>(
       context: context,
-      builder: (context) => LayoutBuilder(
-        builder: (context, constraints) {
-          final narrow = constraints.maxWidth < 350;
-          return AppDialog(
-            title: AppText(l10n.workoutRunExitTitle),
-            content: AppText(l10n.workoutRunExitBody),
-            actions: narrow
-                ? [
-                    AppTextButton(
-                      label: l10n.commonCancel,
-                      onPressed: () => Navigator.of(context).pop('cancel'),
-                    ),
-                    const SizedBox(height: 16),
-                    AppButton(
-                      onPressed: () => Navigator.of(context).pop('save'),
-                      label: l10n.workoutRunFinishEarly,
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextButton(
-                      label: l10n.workoutRunExit,
-                      destructive: true,
-                      onPressed: () => Navigator.of(context).pop('exit'),
-                    ),
-                  ]
-                : [
-                    AppTextButton(
-                      label: l10n.commonCancel,
-                      onPressed: () => Navigator.of(context).pop('cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    AppButton(
-                      onPressed: () => Navigator.of(context).pop('save'),
-                      label: l10n.workoutRunFinishEarly,
-                    ),
-                    const SizedBox(width: 8),
-                    AppTextButton(
-                      label: l10n.workoutRunExit,
-                      destructive: true,
-                      onPressed: () => Navigator.of(context).pop('exit'),
-                    ),
-                  ],
-          );
-        },
+      builder: (context) => AppDialog(
+        title: AppText(l10n.workoutRunExitTitle),
+        content: AppText(l10n.workoutRunExitBody),
+        // Ритм кнопок по контракту 55.4 (cancel|primary|destructive). Ряд
+        // влезает только когда область действий ≥ ~380dp (экран ≥ 508dp с
+        // учётом инсетов диалога 80dp и паддинга 48dp): primary-лейбл
+        // «Завершить и сохранить» (~200dp с паддингом) + две text-кнопки
+        // на телефоне не помещаются — там осознанный M3-паттерн stacked
+        // actions: primary на всю ширину, cancel и destructive строкой ниже
+        // (61.1). Тексты кнопок в обоих вариантах одинаковые — finder-
+        // контракты тестов не меняются. Breakpoint по MediaQuery, а не по
+        // LayoutBuilder: AlertDialog считает действия через IntrinsicWidth,
+        // LayoutBuilder внутри actions не поддерживает intrinsic-размеры.
+        actions: [
+          _WorkoutExitDialogActions(
+            onCancel: () => Navigator.of(context).pop('cancel'),
+            onSave: () => Navigator.of(context).pop('save'),
+            onExit: () => Navigator.of(context).pop('exit'),
+          ),
+        ],
       ),
     );
     if (!mounted) {
@@ -1564,5 +1541,69 @@ class DoubleTextInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     return _regExp.hasMatch(newValue.text) ? newValue : oldValue;
+  }
+}
+
+/// Кнопки диалога выхода из тренировки (61.1).
+///
+/// Контракт 55.4 — cancel|primary|destructive. При экране ≥ 508dp действия
+/// идут одним рядом (область действий ~380dp вмещает длинный лейбл primary
+/// и две text-кнопки). Уже — осознанный M3-паттерн stacked actions: primary
+/// на всю ширину, cancel и destructive строкой ниже с зазором 12dp.
+/// Breakpoint по ширине экрана, а не LayoutBuilder: AlertDialog считает
+/// действия через IntrinsicWidth, LayoutBuilder внутри actions не поддерживает
+/// intrinsic-размеры.
+class _WorkoutExitDialogActions extends StatelessWidget {
+  const _WorkoutExitDialogActions({
+    required this.onCancel,
+    required this.onSave,
+    required this.onExit,
+  });
+
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
+  final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final stacked = MediaQuery.of(context).size.width < 508;
+    if (stacked) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppButton(onPressed: onSave, label: l10n.workoutRunFinishEarly),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              AppTextButton(
+                label: l10n.commonCancel,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                onPressed: onCancel,
+              ),
+              const Spacer(),
+              AppTextButton(
+                label: l10n.workoutRunExit,
+                destructive: true,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                onPressed: onExit,
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+    return OverflowBar(
+      spacing: 8,
+      children: [
+        AppTextButton(label: l10n.commonCancel, onPressed: onCancel),
+        AppButton(onPressed: onSave, label: l10n.workoutRunFinishEarly),
+        AppTextButton(
+          label: l10n.workoutRunExit,
+          destructive: true,
+          onPressed: onExit,
+        ),
+      ],
+    );
   }
 }
