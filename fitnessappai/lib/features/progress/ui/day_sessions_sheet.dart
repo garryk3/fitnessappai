@@ -118,12 +118,14 @@ class _DaySessionsContentState extends State<DaySessionsContent> {
   void initState() {
     super.initState();
     _repository = widget.workoutRepository ?? locator.get<WorkoutRepository>();
-    try {
-      _programRepository =
-          widget.programRepository ?? locator.get<ProgramRepository>();
-    } catch (_) {
-      _programRepository = widget.programRepository;
-    }
+    // Необязательная зависимость: в тестах/дравере locator может быть
+    // неполным — проверяем регистрацию, а не ловим StateError (59.6,
+    // WILL COST из ревью 59.2).
+    _programRepository =
+        widget.programRepository ??
+        (locator.isRegistered<ProgramRepository>()
+            ? locator.get<ProgramRepository>()
+            : null);
     _load();
   }
 

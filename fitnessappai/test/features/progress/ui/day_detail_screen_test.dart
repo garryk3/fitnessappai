@@ -211,6 +211,41 @@ void main() {
   });
 
   testWidgets(
+    'locator без ProgramRepository: контент рендерится без миниатюр (59.6)',
+    (tester) async {
+      // Создаём программу до сброса locator: у сессии будет реальный programId,
+      // но ProgramRepository в locator не зарегистрирован — миниатюра не
+      // запрашивается, контент рендерится (59.6: isRegistered вместо catch).
+      final program = await programRepo.create(
+        Program(
+          name: 'База',
+          daysCount: 1,
+          createdAt: DateTime(2026, 1, 1),
+          updatedAt: DateTime(2026, 1, 1),
+        ),
+        const [ProgramDay(programId: 0, dayIndex: 0)],
+      );
+      final programId = program.id!;
+      await workoutRepo.saveSession(
+        session(DateTime(2026, 8, 10), programId: programId),
+        [setResult(name: 'Приседания')],
+      );
+      locator.reset();
+      locator.registerLazySingleton<MediaCache>(() => MediaCache());
+
+      await pumpDayDetail(
+        tester,
+        start: DateTime(2026, 8, 10),
+        end: DateTime(2026, 8, 11),
+      );
+
+      expect(find.text('10 августа 2026'), findsNWidgets(2));
+      expect(find.text('База'), findsOneWidget);
+      expect(find.text('1 упражнение · 40 мин'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'дистанция после факта: тренированное время, не wall-clock (58.2)',
     (tester) async {
       // Пробежка 30 мин введена через минуту после старта сессии (ввод после
