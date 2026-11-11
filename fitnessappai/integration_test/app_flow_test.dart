@@ -709,7 +709,7 @@ Future<void> completeStrengthSet(
     find.widgetWithText(TextFormField, 'Вес (кг)'),
     weight,
   );
-  final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  final done = find.widgetWithText(ElevatedButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
@@ -725,7 +725,7 @@ Future<void> completePlankSet(
     find.widgetWithText(TextFormField, 'Время (сек)'),
     seconds,
   );
-  final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  final done = find.widgetWithText(ElevatedButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
@@ -747,7 +747,7 @@ Future<void> completeRunningSet(
     find.widgetWithText(TextFormField, 'Дистанция (км)'),
     distance,
   );
-  final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  final done = find.widgetWithText(ElevatedButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
@@ -771,7 +771,7 @@ Future<void> completePerSideSet(
       weight,
     );
   }
-  final leftDone = find.widgetWithText(FilledButton, 'Подход выполнен');
+  final leftDone = find.widgetWithText(ElevatedButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, leftDone);
   await tester.tap(leftDone);
@@ -795,7 +795,7 @@ Future<void> completePerSideSet(
       weight,
     );
   }
-  final rightDone = find.widgetWithText(FilledButton, 'Подход выполнен');
+  final rightDone = find.widgetWithText(ElevatedButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, rightDone);
   await tester.tap(rightDone);
@@ -812,7 +812,7 @@ Future<void> completeBodyweightSet(
     repeats,
   );
   expect(find.widgetWithText(TextFormField, 'Вес (кг)'), findsNothing);
-  final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  final done = find.widgetWithText(ElevatedButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
@@ -830,7 +830,7 @@ Future<void> completePlankHoldSet(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(seconds: 1));
   await tester.pump(const Duration(seconds: 1));
-  final done = find.widgetWithText(FilledButton, 'Подход выполнен');
+  final done = find.widgetWithText(ElevatedButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);

@@ -550,6 +550,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
             side: effectiveSide,
             onConfirm: _confirmSet,
             holdElapsed: () => workout.holdElapsedSeconds.value,
+            // 61.2: до старта таймера удержания primary CTA — «Начать»
+            // панели удержания; кнопку подхода рендерим вторичной.
+            holdPending:
+                exercise.type == ExerciseType.plank &&
+                holdTarget != null &&
+                !holdRunning,
           ),
           const SizedBox(height: 12),
           // 59.1: пропуск упражнения целиком — несделанные подходы не
@@ -898,6 +904,7 @@ class _ExerciseInputForm extends StatefulWidget {
     required this.onConfirm,
     this.side,
     this.holdElapsed,
+    this.holdPending = false,
   });
 
   final WorkoutExercise exercise;
@@ -909,6 +916,12 @@ class _ExerciseInputForm extends StatefulWidget {
   /// Фактическое время удержания планки. Для планки пустое поле времени
   /// заменяется текущим значением счётчика.
   final int Function()? holdElapsed;
+
+  /// Панель удержания планки показывает primary CTA «Начать» (таймер ещё не
+  /// запущен) — кнопку подтверждения подхода рендерим вторичной (tonal), чтобы
+  /// на экране оставался ровно один градиентный CTA (язык 54; фикс
+  /// WILL BREAK ревью 61.2: два градиентных pill'а одновременно).
+  final bool holdPending;
 
   @override
   State<_ExerciseInputForm> createState() => _ExerciseInputFormState();
@@ -1277,15 +1290,26 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
           // 61.2: главное действие экрана — градиентный pill по языку
           // редизайна 54 (как «Начать тренировку» в подготовке): светлый
           // tonal-вариант читался как «disabled». Полная ширина — как CTA
-          // подготовки/главной. Текст кнопки не менялся (find.text-тесты).
-          SizedBox(
-            width: double.infinity,
-            child: AppGradientButton(
+          // подготовки/главной. Исключение: планка с панелью удержания до
+          // старта таймера — там primary CTA панели «Начать», кнопка подхода
+          // вторичная (ровно один градиент на экран). Текст не менялся
+          // (find.text-тесты).
+          if (widget.holdPending)
+            AppButton(
+              tonal: true,
+              expanded: true,
               onPressed: _submit,
-              pill: true,
               label: l10n.workoutRunApproachDone,
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: AppGradientButton(
+                onPressed: _submit,
+                pill: true,
+                label: l10n.workoutRunApproachDone,
+              ),
             ),
-          ),
         ],
       ),
     );
