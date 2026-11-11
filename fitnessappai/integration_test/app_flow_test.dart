@@ -725,7 +725,9 @@ Future<void> completePlankSet(
     find.widgetWithText(TextFormField, 'Время (сек)'),
     seconds,
   );
-  final done = find.widgetWithText(ElevatedButton, 'Подход выполнен');
+  // 61.2: сценарий вводит время вручную, не запуская таймер удержания —
+  // кнопка подхода в holdPending-состоянии (AppButton tonal → FilledButton).
+  final done = find.widgetWithText(FilledButton, 'Подход выполнен');
   await hideKeyboard(tester);
   await ensureFieldVisible(tester, done);
   await tester.tap(done);
