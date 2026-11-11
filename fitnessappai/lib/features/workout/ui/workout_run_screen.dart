@@ -312,8 +312,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
         // actions: primary на всю ширину, cancel и destructive строкой ниже
         // (61.1). Тексты кнопок в обоих вариантах одинаковые — finder-
         // контракты тестов не меняются. Breakpoint по MediaQuery, а не по
-        // LayoutBuilder: AlertDialog считает действия через IntrinsicWidth,
-        // LayoutBuilder внутри actions не поддерживает intrinsic-размеры.
+        // constraints LayoutBuilder'а: виджет диалога из uikit меряет действия
+        // через IntrinsicWidth, LayoutBuilder внутри actions не поддерживает
+        // intrinsic-размеры.
         actions: [
           _WorkoutExitDialogActions(
             onCancel: () => Navigator.of(context).pop('cancel'),
@@ -1550,9 +1551,9 @@ class DoubleTextInputFormatter extends TextInputFormatter {
 /// идут одним рядом (область действий ~380dp вмещает длинный лейбл primary
 /// и две text-кнопки). Уже — осознанный M3-паттерн stacked actions: primary
 /// на всю ширину, cancel и destructive строкой ниже с зазором 12dp.
-/// Breakpoint по ширине экрана, а не LayoutBuilder: AlertDialog считает
-/// действия через IntrinsicWidth, LayoutBuilder внутри actions не поддерживает
-/// intrinsic-размеры.
+/// Breakpoint по ширине экрана, а не по constraints LayoutBuilder'а: виджет
+/// диалога из uikit меряет действия через IntrinsicWidth, LayoutBuilder внутри
+/// actions не поддерживает intrinsic-размеры.
 class _WorkoutExitDialogActions extends StatelessWidget {
   const _WorkoutExitDialogActions({
     required this.onCancel,
