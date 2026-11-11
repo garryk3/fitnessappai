@@ -31,6 +31,9 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   late final Map<BodyMetric, TextEditingController> _controllers;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   DateTime _date = DateTime.now();
+  // 60.4 (design-review Low): busy-состояние кнопки — двойной тап по
+  // теперь всегда видимой CTA не должен вставлять два одинаковых замера.
+  bool _saving = false;
 
   @override
   void initState() {
@@ -124,12 +127,24 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
               },
             ),
             const SizedBox(height: 16),
-            AppGradientButton(
-              onPressed: _save,
-              icon: Icons.check,
-              label: l10n.commonSave,
-            ),
           ],
+        ),
+      ),
+      // 60.4: кнопка «Сохранить» фиксирована снизу (паттерн формы
+      // упражнения) — не уезжает при скролле. Scaffold панель над
+      // клавиатурой НЕ поднимает (панель позиционируется от низа вью);
+      // на Android видимость при клавиатуре даёт resize окна
+      // (adjustResize, как в эталоне).
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: AppGradientButton(
+            pill: true,
+            busy: _saving,
+            onPressed: _saving ? null : _save,
+            icon: Icons.check,
+            label: l10n.commonSave,
+          ),
         ),
       ),
     );
@@ -148,6 +163,9 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) {
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -169,7 +187,16 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
       showAppSnackBar(ScaffoldMessenger.of(context), result.errors.join('\n'));
       return;
     }
-    await _repository.add(measurement);
+    setState(() => _saving = true);
+    // try/finally как в эталоне: throw из БД не должен оставлять кнопку
+    // навсегда busy — иначе пользователь теряет всю введённую форму.
+    try {
+      await _repository.add(measurement);
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
     if (mounted) {
       Navigator.of(context).pop(true);
     }

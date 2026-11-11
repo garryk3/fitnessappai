@@ -201,6 +201,68 @@ void main() {
     expect(await repo.getAll(), isEmpty);
   });
 
+  testWidgets('60.4: «Сохранить» фиксирована снизу — видна без прокрутки '
+      'на маленьком экране', (tester) async {
+    await pumpProfile(tester);
+    tester.view.physicalSize = const Size(600, 1100);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Добавить замер'));
+    await tester.pumpAndSettle();
+
+    // Кнопка в bottomNavigationBar, вне скроллируемого списка.
+    expect(
+      find.descendant(
+        of: find.byType(Scrollable),
+        matching: find.byType(AppGradientButton),
+      ),
+      findsNothing,
+    );
+    final rect = tester.getRect(find.byType(AppGradientButton));
+    expect(rect.bottom, greaterThanOrEqualTo(1100 - 80));
+    expect(rect.top, greaterThan(0));
+  });
+
+  testWidgets('60.4: «Сохранить» не уезжает при прокрутке формы до конца', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+    tester.view.physicalSize = const Size(600, 1100);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.tap(find.text('Добавить замер'));
+    await tester.pumpAndSettle();
+
+    final rectBefore = tester.getRect(find.byType(AppGradientButton));
+
+    // Прокрутка формы (обхваты — 8 карточек) вниз до конца.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    final rectAfter = tester.getRect(find.byType(AppGradientButton));
+    expect(rectAfter, rectBefore);
+    expect(find.text('Сохранить'), findsOneWidget);
+  });
+
+  testWidgets('60.4: двойной тап по «Сохранить» не вставляет дубль замера', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+
+    await tester.tap(find.text('Добавить замер'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Вес'), '82');
+    // Два тапа подряд до перерисовки — busy-гвард пропускает только первый.
+    await tester.tap(find.text('Сохранить'), warnIfMissed: false);
+    await tester.tap(find.text('Сохранить'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(await repo.getAll(), hasLength(1));
+  });
+
   testWidgets('выбор метрики меняет Dropdown и график', (tester) async {
     await repo.add(
       measurement(date: DateTime(2026, 8, 1), weightKg: 84, heightCm: 180),
