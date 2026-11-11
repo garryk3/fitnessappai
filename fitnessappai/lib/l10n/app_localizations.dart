@@ -2440,12 +2440,6 @@ abstract class AppLocalizations {
   /// **'Отметьте свои противопоказания. Упражнения с ними будут отмечены предупреждением.'**
   String get contraindicationsHint;
 
-  /// No description provided for @contraindicationsSaved.
-  ///
-  /// In ru, this message translates to:
-  /// **'Настройки сохранены'**
-  String get contraindicationsSaved;
-
   /// No description provided for @contraindicationWarningForYou.
   ///
   /// In ru, this message translates to:
