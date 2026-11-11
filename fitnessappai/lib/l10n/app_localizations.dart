@@ -1210,6 +1210,12 @@ abstract class AppLocalizations {
   /// **'Активная'**
   String get programActive;
 
+  /// No description provided for @programInactive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неактивная'**
+  String get programInactive;
+
   /// No description provided for @programDeactivate.
   ///
   /// In ru, this message translates to:
@@ -2697,6 +2703,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Шкала ИМТ: от 15 до 40'**
   String get profileBmiScaleLabel;
+
+  /// No description provided for @profileBmiNoData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите пол и заполните рост и вес, чтобы вычислить ИМТ'**
+  String get profileBmiNoData;
 
   /// A11y-подпись шкалы ИМТ
   ///

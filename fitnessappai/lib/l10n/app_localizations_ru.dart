@@ -612,6 +612,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programActive => 'Активная';
 
   @override
+  String get programInactive => 'Неактивная';
+
+  @override
   String get programDeactivate => 'Деактивировать';
 
   @override
@@ -1468,6 +1471,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileBmiScaleLabel => 'Шкала ИМТ: от 15 до 40';
+
+  @override
+  String get profileBmiNoData =>
+      'Укажите пол и заполните рост и вес, чтобы вычислить ИМТ';
 
   @override
   String profileBmiScale(String value, String category) {

@@ -374,7 +374,7 @@ void main() {
   });
 
   group('пол и ИМТ', () {
-    testWidgets('поле пола отображается, ИМТ скрыт без замеров', (
+    testWidgets('поле пола отображается, ИМТ — заглушка без замеров (60.2)', (
       tester,
     ) async {
       await pumpProfile(tester);
@@ -382,7 +382,12 @@ void main() {
       expect(find.text('Пол'), findsOneWidget);
       expect(find.text('Мужской'), findsOneWidget);
       expect(find.text('Женский'), findsOneWidget);
-      expect(find.textContaining('Индекс массы тела'), findsNothing);
+      // 60.2: вместо скрытия карточки — заглушка с подсказкой.
+      expect(find.text('Индекс массы тела (ИМТ)'), findsOneWidget);
+      expect(
+        find.text('Укажите пол и заполните рост и вес, чтобы вычислить ИМТ'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('выбор пола сохраняется в профиле', (tester) async {
@@ -402,12 +407,16 @@ void main() {
       expect(button.selected, {Gender.female});
     });
 
-    testWidgets('без пола карточка ИМТ не показывается', (tester) async {
+    testWidgets('без пола: заглушка ИМТ с подсказкой (60.2)', (tester) async {
       await repo.add(measurement(weightKg: 70, heightCm: 175));
 
       await pumpProfile(tester);
 
-      expect(find.textContaining('Индекс массы тела'), findsNothing);
+      expect(find.text('Индекс массы тела (ИМТ)'), findsOneWidget);
+      expect(
+        find.text('Укажите пол и заполните рост и вес, чтобы вычислить ИМТ'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('ИМТ считается по последнему замеру и показывает шкалу', (
@@ -449,14 +458,39 @@ void main() {
       },
     );
 
-    testWidgets('без роста в замере ИМТ не рассчитывается', (tester) async {
+    testWidgets('без роста в замере ИМТ: заглушка с подсказкой (60.2)', (
+      tester,
+    ) async {
       await repo.add(measurement(weightKg: 70));
       await profileRepo.setGender('female');
 
       await pumpProfile(tester);
 
-      expect(find.textContaining('Индекс массы тела'), findsNothing);
+      expect(find.text('Индекс массы тела (ИМТ)'), findsOneWidget);
+      expect(
+        find.text('Укажите пол и заполните рост и вес, чтобы вычислить ИМТ'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('шкала: подпись ниже маркера, наложения нет (60.2)', (
+      tester,
+    ) async {
+      // Малое значение ИМТ (16 → fraction ≈ 0.04): маркер слева, где
+      // раньше накладывался на длинную подпись «Шкала ИМТ…».
+      await repo.add(measurement(weightKg: 49, heightCm: 175));
+      await profileRepo.setGender('male');
+
+      await pumpProfile(tester);
+
+      final marker = tester.getRect(
+        find.byWidgetPredicate(
+          (w) => w is AppContainer && w.width == 10 && w.height == 26,
+        ),
+      );
+      final caption = tester.getRect(find.text('Шкала ИМТ: от 15 до 40'));
+      expect(caption.top, greaterThanOrEqualTo(marker.bottom));
     });
   });
 }

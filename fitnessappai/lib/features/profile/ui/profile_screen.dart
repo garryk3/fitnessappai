@@ -123,10 +123,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           _SummaryCard(latest: _controller.latest.value!),
         ],
-        if (_controller.bmi != null) ...[
-          const SizedBox(height: 12),
-          _BmiCard(controller: _controller),
-        ],
+        const SizedBox(height: 12),
+        // 60.2: карточка ИМТ показывается всегда — без пола/роста/веса
+        // вместо скрытия рендерится заглушка с подсказкой.
+        _BmiCard(controller: _controller),
         // Вложенная «пустая динамика» скрыта вместе с карточкой графика,
         // если замеров нет вообще: под ней и так AppEmptyState истории —
         // два последовательных «нет данных» подряд не показываем.
@@ -231,6 +231,7 @@ class _GenderCard extends StatelessWidget {
 }
 
 /// Карточка ИМТ: значение, категория и цветная шкала с маркером.
+/// Без пола/роста/веса — заглушка с подсказкой (60.2), карточка не скрывается.
 class _BmiCard extends StatelessWidget {
   const _BmiCard({required this.controller});
 
@@ -239,9 +240,21 @@ class _BmiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final value = controller.bmi;
+    final category = controller.bmiCategory;
+    if (value == null || category == null) {
+      // 60.2 (design-review Medium): заглушка в AppCard — на пустом профиле
+      // два AppEmptyState подряд (ИМТ + история) читались «стеной пустоты»,
+      // карточка возвращает контейнерный ритм секции.
+      return AppCard(
+        child: AppEmptyState(
+          icon: Icons.show_chart,
+          title: l10n.profileBmi,
+          hint: l10n.profileBmiNoData,
+        ),
+      );
+    }
     final theme = Theme.of(context);
-    final value = controller.bmi!;
-    final category = controller.bmiCategory!;
     final gender = controller.gender.value!;
     final color = _bmiCategoryColor(theme, category);
     return AppCard(
@@ -320,84 +333,93 @@ class _BmiScale extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        return SizedBox(
-          height: 34,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned(
-                top: 8,
-                left: 0,
-                right: 0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadii.sm),
-                  child: SizedBox(
-                    height: 10,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: (normalStart * 1000).round(),
-                          child: ColoredBox(
-                            color: _categoryColor(
-                              theme,
-                              BmiCategory.underweight,
+        // 60.2: шкала и подпись — раздельные ярусы. Раньше маркер (10×26)
+        // и подпись жили в одном Stack: при left маркера < ширины подписи
+        // полоска накладывалась на текст («вертикальная полоска-артефакт»).
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 26,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    top: 8,
+                    left: 0,
+                    right: 0,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                      child: SizedBox(
+                        height: 10,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: (normalStart * 1000).round(),
+                              child: ColoredBox(
+                                color: _categoryColor(
+                                  theme,
+                                  BmiCategory.underweight,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: ((normalEnd - normalStart) * 1000).round(),
-                          child: ColoredBox(
-                            color: _categoryColor(theme, BmiCategory.normal),
-                          ),
-                        ),
-                        Expanded(
-                          flex: ((obeseStart - normalEnd) * 1000).round(),
-                          child: ColoredBox(
-                            color: _categoryColor(
-                              theme,
-                              BmiCategory.overweight,
+                            Expanded(
+                              flex: ((normalEnd - normalStart) * 1000).round(),
+                              child: ColoredBox(
+                                color: _categoryColor(
+                                  theme,
+                                  BmiCategory.normal,
+                                ),
+                              ),
                             ),
-                          ),
+                            Expanded(
+                              flex: ((obeseStart - normalEnd) * 1000).round(),
+                              child: ColoredBox(
+                                color: _categoryColor(
+                                  theme,
+                                  BmiCategory.overweight,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: ((1 - obeseStart) * 1000).round(),
+                              child: ColoredBox(
+                                color: _categoryColor(theme, BmiCategory.obese),
+                              ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          flex: ((1 - obeseStart) * 1000).round(),
-                          child: ColoredBox(
-                            color: _categoryColor(theme, BmiCategory.obese),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Positioned(
-                left: (width * fraction - 5).clamp(0.0, width - 10),
-                top: 0,
-                child: AppContainer(
-                  width: 10,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: accent,
-                    borderRadius: BorderRadius.circular(AppRadii.xs),
-                    border: Border.all(
-                      color: theme.colorScheme.surface,
-                      width: 2,
+                  Positioned(
+                    left: (width * fraction - 5).clamp(0.0, width - 10),
+                    top: 0,
+                    child: AppContainer(
+                      width: 10,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: accent,
+                        borderRadius: BorderRadius.circular(AppRadii.xs),
+                        border: Border.all(
+                          color: theme.colorScheme.surface,
+                          width: 2,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-              Positioned(
-                left: 0,
-                bottom: 0,
-                child: AppText(
-                  l10n.profileBmiScaleLabel,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+            ),
+            const SizedBox(height: 4),
+            AppText(
+              l10n.profileBmiScaleLabel,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
