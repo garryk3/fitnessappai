@@ -1274,7 +1274,18 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
             ],
           },
           const SizedBox(height: 16),
-          AppButton(onPressed: _submit, label: l10n.workoutRunApproachDone),
+          // 61.2: главное действие экрана — градиентный pill по языку
+          // редизайна 54 (как «Начать тренировку» в подготовке): светлый
+          // tonal-вариант читался как «disabled». Полная ширина — как CTA
+          // подготовки/главной. Текст кнопки не менялся (find.text-тесты).
+          SizedBox(
+            width: double.infinity,
+            child: AppGradientButton(
+              onPressed: _submit,
+              pill: true,
+              label: l10n.workoutRunApproachDone,
+            ),
+          ),
         ],
       ),
     );

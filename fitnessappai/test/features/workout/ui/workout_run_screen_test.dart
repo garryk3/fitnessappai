@@ -280,6 +280,12 @@ void main() {
     expect(find.text('Повторения'), findsOneWidget);
     expect(find.text('Вес (кг)'), findsOneWidget);
     expect(find.text('Подход выполнен'), findsOneWidget);
+    // 61.2: главное действие экрана — градиентный pill (язык редизайна 54),
+    // а не tonal-заливка, читающаяся как «disabled».
+    final doneButton = tester.widget<AppGradientButton>(
+      find.widgetWithText(AppGradientButton, 'Подход выполнен'),
+    );
+    expect(doneButton.pill, isTrue);
   });
 
   testWidgets('пустой ввод показывает ошибку валидации', (tester) async {
