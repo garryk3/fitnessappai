@@ -81,27 +81,35 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        // Отдельная карточка на тумблер (54.9, образец): зазор вместо
-        // разделителя между карточками (не внутри). Тумблер сохраняется —
-        // контракт тестов и e2e (byType ×8, widgetWithText «Колени»,
-        // title как AppText); `secondary` рендерится в слоте leading
-        // (controlAffinity.platform), свитч — trailing: бейдж слева
-        // и участвует в тапе плитки.
-        for (final tag in tags) ...[
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: AppSwitchTile(
-              secondary: _TagBadge(icon: _iconFor(tag.key)),
-              title: AppText(tag.labelRu),
-              subtitle: AppText(_description(l10n, tag.key)),
-              value: selectedKeys.contains(tag.key),
-              onChanged: isSaving
-                  ? null
-                  : (enabled) => _toggleWithFeedback(tag.key, enabled),
-            ),
+        // 60.3: двухколоночный grid карточек тегов (в стиле карточек
+        // замеров): тап по карточке — toggle, выбранная — градиент + галка.
+        AppGridView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          // 60.3 (design-review High): extent масштабируется textScaler —
+          // фиксированная высота резала описания при крупном системном
+          // шрифте (fontScale 1.3, скриншот ревью).
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            mainAxisExtent: 124 * MediaQuery.textScalerOf(context).scale(1),
           ),
-          const SizedBox(height: 8),
-        ],
+          children: [
+            for (final tag in tags)
+              _TagCard(
+                label: tag.labelRu,
+                description: _description(l10n, tag.key),
+                icon: _iconFor(tag.key),
+                selected: selectedKeys.contains(tag.key),
+                enabled: !isSaving,
+                onToggle: () => _toggleWithFeedback(
+                  tag.key,
+                  !selectedKeys.contains(tag.key),
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -121,14 +129,10 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
   };
 
   Future<void> _toggleWithFeedback(String key, bool enabled) async {
+    // 60.3 (решение владельца): снекбар «Настройки сохранены» на каждый
+    // тап убран — в карточном мультивыборе это болтливый фидбек; сохранение
+    // и так видно состоянием карточки.
     await _controller.toggle(key, enabled);
-    if (!mounted) {
-      return;
-    }
-    showAppSnackBar(
-      ScaffoldMessenger.of(context),
-      AppLocalizations.of(context).contraindicationsSaved,
-    );
   }
 
   String _description(AppLocalizations l10n, String key) => switch (key) {
@@ -144,25 +148,110 @@ class _ContraindicationsScreenState extends State<ContraindicationsScreen> {
   };
 }
 
-/// Скруглённый бейдж-иконка строки тега (роли темы, 40dp).
+/// Карточка тега «Моё здоровье» (60.3): иконка-бейдж + название +
+/// описание; выбранная — градиент карточек замеров и галка, тап — toggle.
+class _TagCard extends StatelessWidget {
+  const _TagCard({
+    required this.label,
+    required this.description,
+    required this.icon,
+    required this.selected,
+    required this.enabled,
+    required this.onToggle,
+  });
+
+  final String label;
+  final String description;
+  final IconData icon;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Градиент выбранных — как у карточек формы замера (54.9/60.3):
+    // тёмная тема — heroCard, светлая — лёгкий ролевой (DESIGN.md §11).
+    final gradient = theme.brightness == Brightness.dark
+        ? AppGradients.heroCard
+        : AppGradients.roleSurface(theme.colorScheme);
+    return Semantics(
+      // 60.3 (design-review Medium): без label — текст карточки уже даёт
+      // имя, иначе TalkBack произносит название дважды.
+      toggled: selected,
+      child: AppCard(
+        onTap: enabled ? onToggle : null,
+        gradient: selected ? gradient : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _TagBadge(icon: icon, small: true),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AppText(
+                    label,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // Индикатор выбора: невыбранный — «пусто» (карточка без
+                // градиента читается off), выбранный — галка роли primary.
+                if (selected)
+                  AppIcon(
+                    Icons.check_circle,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Expanded(
+              child: AppText(
+                description,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Скруглённый бейдж-иконка тега (роли темы): 28dp в grid-карточке (60.3),
+/// 40dp — прежний крупный режим.
 class _TagBadge extends StatelessWidget {
-  const _TagBadge({required this.icon});
+  const _TagBadge({required this.icon, this.small = false});
 
   final IconData icon;
+  final bool small;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AppContainer(
-      width: 40,
-      height: 40,
+      width: small ? 28 : 40,
+      height: small ? 28 : 40,
       padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: scheme.secondaryContainer,
         borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: Center(
-        child: AppIcon(icon, size: 22, color: scheme.onSecondaryContainer),
+        child: AppIcon(
+          icon,
+          size: small ? 16 : 22,
+          color: scheme.onSecondaryContainer,
+        ),
       ),
     );
   }

@@ -20,6 +20,7 @@ class AppTextButton extends StatelessWidget {
     this.autofocus = false,
     this.tooltip,
     this.destructive = false,
+    this.padding,
   });
 
   /// Подпись кнопки; при [busy] заменяется спиннером.
@@ -44,6 +45,10 @@ class AppTextButton extends StatelessWidget {
   /// (вариант «уйти/удалить безвозвратно», визуально подчинён главному).
   final bool destructive;
 
+  /// Паддинг поверх M3-дефолта; компактные варианты — для рядов из
+  /// нескольких text-кнопок в узких диалогах (61.1).
+  final EdgeInsetsGeometry? padding;
+
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !busy;
@@ -56,25 +61,23 @@ class AppTextButton extends StatelessWidget {
           )
         : AppText(label);
 
+    // styleFrom(null-поля игнорируются — M3-дефолты сохраняются.
+    final style = TextButton.styleFrom(
+      foregroundColor: destructive ? Theme.of(context).colorScheme.error : null,
+      padding: padding,
+    );
+
     final Widget button = (icon == null || busy)
         ? TextButton(
             onPressed: effective,
             autofocus: autofocus,
-            style: destructive
-                ? TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  )
-                : null,
+            style: style,
             child: labelWidget,
           )
         : TextButton.icon(
             onPressed: effective,
             autofocus: autofocus,
-            style: destructive
-                ? TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  )
-                : null,
+            style: style,
             icon: AppIcon(icon!, size: iconSize),
             label: labelWidget,
           );
