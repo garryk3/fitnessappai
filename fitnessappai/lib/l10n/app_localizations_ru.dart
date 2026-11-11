@@ -1331,9 +1331,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Отметьте свои противопоказания. Упражнения с ними будут отмечены предупреждением.';
 
   @override
-  String get contraindicationsSaved => 'Настройки сохранены';
-
-  @override
   String get contraindicationWarningForYou => 'Есть противопоказания для вас';
 
   @override
