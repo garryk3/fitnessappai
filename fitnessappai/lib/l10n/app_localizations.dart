@@ -2704,6 +2704,12 @@ abstract class AppLocalizations {
   /// **'Шкала ИМТ: от 15 до 40'**
   String get profileBmiScaleLabel;
 
+  /// No description provided for @profileBmiNoData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите пол и заполните рост и вес, чтобы вычислить ИМТ'**
+  String get profileBmiNoData;
+
   /// A11y-подпись шкалы ИМТ
   ///
   /// In ru, this message translates to:

@@ -1473,6 +1473,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileBmiScaleLabel => 'Шкала ИМТ: от 15 до 40';
 
   @override
+  String get profileBmiNoData =>
+      'Укажите пол и заполните рост и вес, чтобы вычислить ИМТ';
+
+  @override
   String profileBmiScale(String value, String category) {
     return 'Шкала ИМТ: значение $value, $category';
   }

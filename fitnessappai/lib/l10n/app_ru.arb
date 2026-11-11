@@ -690,6 +690,7 @@
     }
   },
   "profileBmiScaleLabel": "Шкала ИМТ: от 15 до 40",
+  "profileBmiNoData": "Укажите пол и заполните рост и вес, чтобы вычислить ИМТ",
   "profileBmiScale": "Шкала ИМТ: значение {value}, {category}",
   "@profileBmiScale": {
     "description": "A11y-подпись шкалы ИМТ",
