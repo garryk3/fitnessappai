@@ -1574,14 +1574,17 @@ class _WorkoutExitDialogActions extends StatelessWidget {
         children: [
           AppButton(onPressed: onSave, label: l10n.workoutRunFinishEarly),
           const SizedBox(height: 12),
-          Row(
+          // OverflowBar, а не Row+Spacer: при экстремальном масштабе шрифта
+          // (≳3.0 на 320dp) кнопки честно падают в столбец без overflow-полосы
+          // (фикс по Low design-ревью 61.1).
+          OverflowBar(
+            alignment: MainAxisAlignment.spaceBetween,
             children: [
               AppTextButton(
                 label: l10n.commonCancel,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 onPressed: onCancel,
               ),
-              const Spacer(),
               AppTextButton(
                 label: l10n.workoutRunExit,
                 destructive: true,

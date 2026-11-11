@@ -1492,48 +1492,49 @@ void main() {
     },
   );
 
-  testWidgets('диалог выхода на узком экране: primary на всю ширину, cancel и destructive строкой ниже', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(320, 640);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'диалог выхода на узком экране: primary на всю ширину, cancel и destructive строкой ниже',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
 
-    final dayId = await createDay();
-    await pumpRun(tester, dayId, initialLocation: '/');
+      final dayId = await createDay();
+      await pumpRun(tester, dayId, initialLocation: '/');
 
-    final router = GoRouter.of(tester.element(find.text('home')));
-    router.push('/workout/run?programDayId=$dayId&variant=main');
-    await tester.pumpAndSettle();
+      final router = GoRouter.of(tester.element(find.text('home')));
+      router.push('/workout/run?programDayId=$dayId&variant=main');
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Выйти из тренировки?'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      expect(find.text('Выйти из тренировки?'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
-    // 61.1: stacked-ритм вместо авто-стека OverflowBar — залитая primary
-    // на всю ширину, под ней строка cancel|destructive с зазором 12dp.
-    // Тексты кнопок не изменились — обе доступны finder'ам.
-    expect(
-      find.widgetWithText(AppButton, 'Завершить и сохранить'),
-      findsOneWidget,
-    );
-    expect(find.text('Отмена'), findsOneWidget);
-    expect(find.text('Выйти'), findsOneWidget);
-    final gaps12 = tester
-        .widgetList<SizedBox>(find.byType(SizedBox))
-        .where((s) => s.height == 12)
-        .length;
-    expect(gaps12, greaterThanOrEqualTo(1));
-    // Primary на всю ширину области действий (stretch): при 320dp поверхность
-    // кнопки ~192dp, а wrap-content с Ahem-шрифтом дала бы ~185dp для
-    // «Завершить и сохранить» — порог 190dp отличает stretch от wrap.
-    final primaryWidth = tester
-        .getSize(find.widgetWithText(AppButton, 'Завершить и сохранить'))
-        .width;
-    expect(primaryWidth, greaterThan(190));
-  });
+      // 61.1: stacked-ритм вместо авто-стека OverflowBar — залитая primary
+      // на всю ширину, под ней строка cancel|destructive с зазором 12dp.
+      // Тексты кнопок не изменились — обе доступны finder'ам.
+      expect(
+        find.widgetWithText(AppButton, 'Завершить и сохранить'),
+        findsOneWidget,
+      );
+      expect(find.text('Отмена'), findsOneWidget);
+      expect(find.text('Выйти'), findsOneWidget);
+      final gaps12 = tester
+          .widgetList<SizedBox>(find.byType(SizedBox))
+          .where((s) => s.height == 12)
+          .length;
+      expect(gaps12, greaterThanOrEqualTo(1));
+      // Primary на всю ширину области действий (stretch): при 320dp поверхность
+      // кнопки ~192dp, а wrap-content с Ahem-шрифтом дала бы ~185dp для
+      // «Завершить и сохранить» — порог 190dp отличает stretch от wrap.
+      final primaryWidth = tester
+          .getSize(find.widgetWithText(AppButton, 'Завершить и сохранить'))
+          .width;
+      expect(primaryWidth, greaterThan(190));
+    },
+  );
 
   testWidgets('шрифт удержания планки headlineMedium на всех экранах', (
     tester,
