@@ -1,6 +1,6 @@
 // ignore_for_file: type=lint
 import 'package:drift/drift.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:fitnessappai/core/database/app_database.dart';
 

@@ -74,6 +74,7 @@
 | 59 | Функциональность из ящика — выполнение, история/драверы, упражнение, план-месяц | 59.1–59.6 | (в работе) | — |
 | 60 | Редизайн/UI-полировка/адаптив из ящика (design-reviewer на каждую) | 60.1–60.12 | (в работе; 60.1–60.5 ✅) | — |
 | 61 | Дизайн-улучшения по оценке 2026-11-11 (`docs/design_improvements_proposal.md`) | 61.1–61.9 | (в работе) | — |
+| 62 | Миграция на Flutter 3.50.0 + `material_ui` (deprecation `package:flutter/material.dart`, CI red с 2026-11-12) | 62.1–62.3 | (в работе; 62.1 ✅) | — |
 
 ## Этап 57 — QA-прогон релиза v1.0.29-alpha (дефекты, 2026-10-25)
 
@@ -420,3 +421,32 @@
 ### 61.9 — Разминка: убрать дубль таймера (P1-6)
 - **Проблема (P1-6):** «09:57» и «осталось 597 с» — одна информация дважды; карточка таймера прижата к нижней половине, верх экрана пуст.
 - **Рабочий план:** `workout_warmup_screen.dart` — убрать строку «осталось N с» (крупный `displayMedium` таймер остаётся); карточку отцентрировать по вертикали между шапкой и кнопкой(-ками); l10n-ключ `осталось` вывести из arb (проверить неиспользуемость); e2e/unit-контракты на «Пропустить»/экран не трогать; widget-тест; design-reviewer.
+
+## Этап 62 — Миграция на Flutter 3.50.0 + `material_ui` (2026-11-12)
+
+Flutter 3.50.0 (stable, 2026-11-11) формально депрекировал встроенные
+`package:flutter/material.dart` / `package:flutter/cupertino.dart` — замена
+стенд-алонные пакеты `material_ui` / `cupertino_ui`. CI (плавающий
+`channel: stable` в `.github/workflows/ci.yml`) поднялся на 3.50.0 и упал на
+шаге статического анализа: `deprecated_member_use` × ~360 файлов →
+`--fatal-infos` красит `validate` (PR #292 слился, т.к. validate не в
+branch protection; слияния PR заблокированы до зелёного CI). Локальный SDK —
+3.47.4 (деграции нет). Решение владельца (чат 2026-11-12): миграция, не пин.
+Официальный гайд: `docs.flutter.dev/release/breaking-changes/material-ui-and-cupertino-ui` —
+автоматическая миграция `dart fix --apply --code=migrate_design_widgets`,
+при необходимости `MaterialUiCompatibilityBridge` в `MaterialApp.builder`
+(совместимость с зависимостями, читающими тему/локали из контекста).
+
+### 62.1 — SDK 3.50.0 + механическая миграция импортов на `material_ui`
+- **Статус:** ✅ 2026-11-12 — ветка `task/62.1-flutter-350`.
+- **Рабочий план:** (1) `flutter upgrade` локально до 3.50.0; (2) `flutter pub add material_ui` (`cupertino_ui` — если dart fix спросит); (3) `dart fix --apply --code=migrate_design_widgets` по всему пакету (lib/test/tool/integration_test + generated l10n — перегенерировать `flutter gen-l10n`); (4) проверить `GlobalMaterialLocalizations.delegates` (локализации развязаны: delegates теперь в `material_ui`); (5) при типовых конфликтах с зависимостями (go_router/fl_chart/drift) — `MaterialUiCompatibilityBridge` в `MaterialApp.builder`; (6) гейты: format/оба analyze --fatal-infos (0 диагностика, включая deprecation)/flutter test/build apk; полный suite; (7) design-reviewer НЕ требуется (без UI-изменений), task-reviewer обязателен; e2e — вопрос владельцу.
+- **Реализовано (2026-11-12, ветка `task/62.1-flutter-350`):** (1) Flutter 3.50.0 (Dart 3.14.0) локально, `pub add material_ui` 1.11.0 (`cupertino_ui` не потребовался — cupertino-импортов в репо нет); (2) `dart fix --code=migrate_design_widgets` переписал 46 файлов lib/features; файлы с `ignore_for_file: type=lint` dart fix пропускает (подавлена диагностика → нет deprecation-подсказки), поэтому оставшиеся 136 файлов (lib/uikit, lib/app/theme, test, integration_test, tool) — sed-замена импорта `package:flutter/material.dart` → `package:material_ui/material_ui.dart`; (3) локали: material_ui-виджеты ищут в контексте `MaterialLocalizations` пакета material_ui, а ген-l10n отдаёт framework-делегаты flutter_localizations → 480 тестов падало; мост `MaterialUiCompatibilityBridge` не помог (deprecated → fatal infos) и убран; фикс — хелпер `lib/app/localization_delegates.dart` (`appLocalizationsDelegates` = `[...GlobalMaterialLocalizations.delegates` (material_ui) `, AppLocalizations.delegate]`), подставлен в main.dart и в 27 тест-файлов (ген-l10n перезаписал бы правку в generated — потому хелпер вынесен); `l10n_test.dart` ассерты обновлены (contains AppLocalizations.delegate + material_ui delegate); (4) Flutter 3.50 требует Gradle ≥ 9.3.1 и AGP ≥ 9.1.1: wrapper 9.1.0→9.3.1 (`gradle-wrapper.properties`), AGP 9.0.1→9.1.1 (`android/settings.gradle.kts`); warning про Built-in Kotlin (plugin authors) — на будущее; (5) APK `flutter build apk --debug` собирается; (6) e2e-прогон по требованию владельца (2026-11-12): 2/19 падали на `find.widgetWithText(SwitchListTile, 'Колени')` — e2e-контракт устарел ещё с редизайна 60.3 (тумблеры заменены карточками `_TagCard`, PR #290; в тех PR e2e не запускался — «Без e2e»), не фоллбэк 62.1; finder'ы переписаны на `AppCard` (карточка тега с onTap), полный e2e 19/19. Отклонение от плана: снапшоты/рестарты прерывали работу — гейты перегонялись после восстановления. Гейты: format 0, `dart analyze --fatal-infos` 0, `flutter analyze --fatal-infos` 0, полный suite 1372/1372. Известная граница: плагин-гейт `restrict_raw_flutter` на Dart 3.14 мёртв (см. 62.2 — восстановление вендорным форком). Ретест приложения в эмуляторе — после слияния (62.3/релизный прогон).
+
+### 62.2 — `restrict_raw_flutter` распознаёт импорты `material_ui`
+- **Проблема:** гейты этапов 52/56 работают по импортам `package:flutter/material.dart`; после 62.1 сырые виджеты будут импортироваться из `package:material_ui` — плагин (pub ^0.2.2) молча перестанет ловить нарушения, CI-гейты потеряют смысл.
+- **Рабочий план:** изучить матчинг плагина (по типу или по import-URI); при URI-матчинге — обновить пакет (локальная копия/новая версия) на `package:material_ui`; прогнать гейт на искусственном нарушении (тест плагина); проверить «Guard raw interactive widgets» (grep word-boundary — идентификаторы не меняются, шаг без изменений).
+- **Реализовано:** _заполнить по завершении._
+
+### 62.3 — CI: закрепить версию/канал после миграции
+- **Рабочий план:** после зелёного 62.1/62.2 — решение: оставить плавающий `channel: stable` (миграция завершена, deprecation-волна пройдена) или запинить `flutter-version` на протестированной 3.50.0; зафиксировать решение в ci.yml-комментарии и AGENTS.md/памяти (инцидент 2026-11-12: плавающий stable внезапно поднялся и уронил CI на deprecation-волне).
+- **Реализовано:** _заполнить по завершении._

@@ -1,5 +1,5 @@
 // ignore_for_file: type=lint
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Секция UI-кита: заголовок и содержимое в колонке.
 class AppSection extends StatelessWidget {
