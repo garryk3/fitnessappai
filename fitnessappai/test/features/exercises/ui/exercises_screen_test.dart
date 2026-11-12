@@ -468,44 +468,55 @@ void main() {
     expect(find.text('Встроенный присед'), findsNothing);
   });
 
-  testWidgets('выбранный фильтр типа подсвечен AppGlowContainer', (
-    tester,
-  ) async {
-    await repository.create(exercise('Жим штанги'), const []);
-    await pumpExercises(tester);
+  testWidgets(
+    'выбранный фильтр — та же геометрия, индикатор только цветом (60.5)',
+    (tester) async {
+      await repository.create(exercise('Жим штанги'), const []);
+      await pumpExercises(tester);
 
-    final glowFinder = find.ancestor(
-      of: find.text('Все'),
-      matching: find.byType(AppGlowContainer),
-    );
-    expect(glowFinder, findsOneWidget);
-
-    await tester.tap(
-      find.ancestor(of: find.text('Время'), matching: find.byType(FilterChip)),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find
+      // Glow-обёртка на фильтрах убрана (60.5) — ни в одном состоянии
+      // (глобальный Glow остаётся только у других виджетов экрана).
+      bool hasGlow(String label) => find
           .ancestor(
-            of: find.text('Все'),
+            of: find.text(label),
             matching: find.byType(AppGlowContainer),
           )
           .evaluate()
-          .isEmpty,
-      isTrue,
-    );
-    expect(
-      find
-          .ancestor(
-            of: find.text('Время'),
-            matching: find.byType(AppGlowContainer),
-          )
-          .evaluate()
-          .isNotEmpty,
-      isTrue,
-    );
-  });
+          .isNotEmpty;
+      expect(hasGlow('Все'), isFalse);
+      expect(hasGlow('Время'), isFalse);
+
+      // Выбираем «Время».
+      await tester.tap(
+        find.ancestor(
+          of: find.text('Время'),
+          matching: find.byType(FilterChip),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final selectedChip = tester.widget<FilterChip>(
+        find.ancestor(
+          of: find.text('Время'),
+          matching: find.byType(FilterChip),
+        ),
+      );
+      expect(selectedChip.selected, isTrue);
+      expect(selectedChip.showCheckmark, isFalse);
+
+      // Геометрия выбранного = обычному (без glow-обёртки высоты совпадают).
+      final selectedRect = tester.getRect(
+        find.ancestor(
+          of: find.text('Время'),
+          matching: find.byType(FilterChip),
+        ),
+      );
+      final unselectedRect = tester.getRect(
+        find.ancestor(of: find.text('Все'), matching: find.byType(FilterChip)),
+      );
+      expect(selectedRect.height, unselectedRect.height);
+    },
+  );
 
   testWidgets('в карточке не больше трёх иконок мышц с дедупом по ассету', (
     tester,

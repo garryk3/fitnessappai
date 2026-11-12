@@ -554,8 +554,10 @@ class _Badge extends StatelessWidget {
   }
 }
 
-/// Пилюля-фильтр по типу (54.7, образец «Упражнения»): выбранная —
-/// неон-обводка и свечение [AppGlowContainer], невыбранная — plain-чип.
+/// Пилюля-фильтр по типу (54.7, образец «Упражнения»; 60.5): оба
+/// состояния — одинаковый `FilterChip`, выбранность = заливка
+/// selectedColor M3 — без галки и glow-обёртки (выбранный должен быть
+/// той же геометрии, что обычный).
 class _FilterPill extends StatelessWidget {
   const _FilterPill({
     required this.label,
@@ -569,19 +571,14 @@ class _FilterPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chip = FilterChip(
+    // 60.5 (владелец): выбранный фильтр — та же геометрия, что и обычный
+    // (без glow-обёртки и галки, которые делали его крупнее и шире);
+    // выбранность читается только заливкой selectedColor (M3).
+    return FilterChip(
       label: AppText(label),
       selected: selected,
-      showCheckmark: selected,
+      showCheckmark: false,
       onSelected: (_) => onTap(),
-    );
-    if (!selected) {
-      return chip;
-    }
-    return AppGlowContainer(
-      radius: AppRadii.pill,
-      padding: EdgeInsets.zero,
-      child: chip,
     );
   }
 }
