@@ -1,7 +1,7 @@
 // ignore_for_file: type=lint
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/theme/app_tokens.dart';
