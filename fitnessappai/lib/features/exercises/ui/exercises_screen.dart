@@ -468,32 +468,36 @@ class _ExerciseCard extends StatelessWidget {
               if (onStart != null) ...[
                 const SizedBox(width: 8),
                 // Градиентная play-кнопка (54.7, образец): круг на
-                // primaryCta. Glow не рисуем — на каждой карточке он
-                // конкурирует с primary-FAB (design-review 54.7); тап-таргет
-                // 48dp и роль button — через тултип и Semantics.
+                // primaryCta. Glow — по аналогии с кнопкой «+» (60.7,
+                // решение владельца: отменяет оговорку 54.7 «конкурирует с
+                // primary-FAB»); тап-таргет 48dp и роль button — через
+                // тултип и Semantics.
                 AppTooltip(
                   message: l10n.exerciseListStartWorkout,
                   child: Semantics(
                     button: true,
                     label: l10n.exerciseListStartWorkout,
-                    child: AppContainer(
-                      width: 48,
-                      height: 48,
-                      padding: EdgeInsets.zero,
-                      decoration: const BoxDecoration(
-                        gradient: AppGradients.primaryCta,
-                        shape: BoxShape.circle,
-                      ),
-                      child: AppInkWell(
-                        borderRadius: BorderRadius.circular(AppRadii.pill),
-                        onTap: onStart,
-                        child: Center(
-                          child: AppIcon(
-                            Icons.play_arrow,
-                            size: 26,
-                            // На градиенте primaryCta — всегда белый (токен,
-                            // design-review 54.9).
-                            color: AppColors.primaryCtaContent,
+                    child: AppGlowContainer(
+                      radius: AppRadii.pill,
+                      child: AppContainer(
+                        width: 48,
+                        height: 48,
+                        padding: EdgeInsets.zero,
+                        decoration: const BoxDecoration(
+                          gradient: AppGradients.primaryCta,
+                          shape: BoxShape.circle,
+                        ),
+                        child: AppInkWell(
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                          onTap: onStart,
+                          child: Center(
+                            child: AppIcon(
+                              Icons.play_arrow,
+                              size: 26,
+                              // На градиенте primaryCta — всегда белый (токен,
+                              // design-review 54.9).
+                              color: AppColors.primaryCtaContent,
+                            ),
                           ),
                         ),
                       ),
