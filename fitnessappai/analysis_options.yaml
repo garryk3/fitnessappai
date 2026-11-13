@@ -42,7 +42,13 @@ linter:
 # (unused_import, unused_local_variable и т.п.) и ошибки по-прежнему видны.
 plugins:
   restrict_raw_flutter:
-    version: ^0.2.2
+    # Вендорный форк (62.2): pub-версия 0.2.2 несовместима с SDK 3.14
+    # (analysis_server_plugin >=0.3.21 в генераторе SDK против <0.3.15 у
+    # плагина — синтетический pub upgrade падает, плагин молча не грузится)
+    # и не матчит импорты package:material_ui (миграция 62.1). Форк лежит в
+    # vendor/restrict_raw_flutter (обновлённые зависимости + матчинг
+    # material_ui); upstream: github.com/SoutaTanaka/restrict_raw_flutter.
+    path: vendor/restrict_raw_flutter
     diagnostics:
       ban_text_widget: true
       ban_icon_widget: true

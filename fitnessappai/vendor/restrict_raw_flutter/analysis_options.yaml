@@ -1,0 +1,15 @@
+# Вендорный форк (62.2). Упрощённые опции: upstream-include
+# very_good_analysis не добавлен в dev_dependencies, чтобы не тянуть
+# лишние зависимости в синтетический плагин-пакет.
+include: package:lints/recommended.yaml
+
+analyzer:
+  errors:
+    # Тесты плагина используют reflective-хелперы upstream.
+    invalid_use_of_protected_member: ignore
+    invalid_use_of_visible_for_testing_member: ignore
+
+linter:
+  rules:
+    # Стиль upstream-кода; вендорный код не приводим к нашему стилю.
+    non_constant_identifier_names: false
