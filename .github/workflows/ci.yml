@@ -43,6 +43,17 @@ jobs:
         # `// ignore_for_file: type=lint`).
         run: dart analyze lib --fatal-infos
 
+      - name: Vendor restrict_raw_flutter
+        # Вендорный форк (62.2) — вложенный пакет: анализируется и тестируется
+        # отдельно (из основного контекста он исключён в analysis_options,
+        # его dev-deps недоступны снаружи). Свежий pub get обязателен: без
+        # .dart_tool вендора его файлы могли бы попасть в чужой контекст.
+        working-directory: fitnessappai/vendor/restrict_raw_flutter
+        run: |
+          dart pub get
+          dart analyze --fatal-infos
+          dart test
+
       - name: Guard uikit exemptions
         # `// ignore_for_file: type=lint` — это же и лазейка в обход запрета.
         # Разрешаем её только в `lib/uikit/**` и `lib/app/theme/**`;
