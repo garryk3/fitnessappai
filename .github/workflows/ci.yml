@@ -30,14 +30,29 @@ jobs:
 
       - name: Static analysis (analyzer plugins)
         # Гарантированная точка проверки запрета сырых Material-виджетов
-        # (restrict_raw_flutter, этап 52). `flutter analyze` показывает такую
-        # диагностику не на всех версиях (3.47.4 — не показывает, 3.47.7 в CI —
-        # показывает; проверено 2026-10-12), поэтому дублирующий шаг обязателен.
-        # ВАЖНО: путь передавать НЕЛЬЗЯ — `dart analyze lib` плагины не грузит
-        # вообще (проверено 2026-10-12: 0 диагностик вместо 703), поэтому гейт
-        # идёт по всему пакету, а `test/` и `integration_test/` покрыты
-        # `// ignore_for_file: type=lint`.
-        run: dart analyze --fatal-infos
+        # (restrict_raw_flutter, этапы 52/56). Плагин — вендорный форк
+        # vendor/restrict_raw_flutter (этап 62.2): pub-версия 0.2.2 несовместима
+        # с Dart 3.14 (генератор SDK требует analysis_server_plugin >=0.3.21,
+        # у плагина <0.3.15 — синтетический pub upgrade падает, плагин молча не
+        # грузится) и не матчит импорты package:material_ui (миграция 62.1).
+        # Гонка отдачи плагин-диагностик (dart-lang/sdk#64208): при запуске по
+        # всему пакету `dart analyze` теряет диагностику плагина, при
+        # каталоге-таргете — стабильно отдаёт (проверено 2026-11-12, 3/3
+        # прогона). Гейт идёт по `lib/` — единственная зона, где сырые виджеты
+        # запрещены (в `test/`, `integration_test/` разрешено подавление
+        # `// ignore_for_file: type=lint`).
+        run: dart analyze lib --fatal-infos
+
+      - name: Vendor restrict_raw_flutter
+        # Вендорный форк (62.2) — вложенный пакет: анализируется и тестируется
+        # отдельно (из основного контекста он исключён в analysis_options,
+        # его dev-deps недоступны снаружи). Свежий pub get обязателен: без
+        # .dart_tool вендора его файлы могли бы попасть в чужой контекст.
+        working-directory: fitnessappai/vendor/restrict_raw_flutter
+        run: |
+          dart pub get
+          dart analyze --fatal-infos
+          dart test
 
       - name: Guard uikit exemptions
         # `// ignore_for_file: type=lint` — это же и лазейка в обход запрета.
