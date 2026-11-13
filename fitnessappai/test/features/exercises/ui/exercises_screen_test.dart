@@ -419,6 +419,21 @@ void main() {
     expect(find.byIcon(Icons.play_arrow), findsOneWidget);
   });
 
+  testWidgets('play-кнопка — с glow по аналогии с кнопкой «+» (60.7)', (
+    tester,
+  ) async {
+    await repository.create(exercise('Жим штанги'), const []);
+    await pumpExercises(tester);
+
+    expect(
+      find.ancestor(
+        of: find.byIcon(Icons.play_arrow),
+        matching: find.byType(AppGlowContainer),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('нажатие play открывает экран параметров упражнения', (
     tester,
   ) async {
