@@ -519,7 +519,7 @@ void main() {
     },
   );
 
-  testWidgets('в карточке не больше трёх иконок мышц с дедупом по ассету', (
+  testWidgets('капсула мышц: иконка + название в одном чипе (60.6)', (
     tester,
   ) async {
     final chestId = await muscleId('chest');
@@ -538,7 +538,16 @@ void main() {
     expect(created.id, isNotNull);
     await pumpExercises(tester);
 
-    // Пять групп, но «грудь» и «пресс» — один ассет: итог 4 → лимит 3.
-    expect(find.byType(MuscleGroupIcon), findsNWidgets(3));
+    // Пять групп → пять капсул (иконка + название, паттерн карточки
+    // деталей 54.7): без дедупа по ассету и лимита — капсула показывает
+    // название, скрытие группы теряло бы информацию.
+    expect(find.byType(AppChip), findsNWidgets(5));
+    expect(find.byType(MuscleGroupIcon), findsNWidgets(5));
+    for (final label in const ['Грудь', 'Пресс', 'Руки', 'Спина', 'Ноги']) {
+      expect(find.text(label), findsOneWidget);
+    }
+
+    // Отдельная строка joined-названий убрана (60.6).
+    expect(find.text('Грудь, Пресс, Руки, Спина, Ноги'), findsNothing);
   });
 }

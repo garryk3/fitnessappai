@@ -442,12 +442,18 @@ class _ExerciseCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         _Badge(label: _typeLabel(l10n, exercise.type)),
-                        // Иконки групп (54.7, образец): до трёх пиктограмм
-                        // с дедупом по ассету — дубли «грудь/пресс» не рисуем.
-                        for (final key in MuscleGroupIcon.dedupeByAsset(
-                          item.muscles.map((m) => m.key),
-                        ).take(3))
-                          MuscleGroupIcon(muscleKey: key, size: 18),
+                        // Плашки мышц (60.6): иконка + название в одной
+                        // капсуле — паттерн карточки деталей (54.7). Голых
+                        // иконок и отдельной строки названий больше нет.
+                        for (final muscle in item.muscles)
+                          AppChip(
+                            avatar: MuscleGroupIcon(
+                              muscleKey: muscle.key,
+                              size: 18,
+                            ),
+                            label: AppText(muscle.labelRu),
+                            shape: const StadiumBorder(),
+                          ),
                         if (item.hasContraindications)
                           _Badge(
                             label: l10n.contraindications,
@@ -456,15 +462,6 @@ class _ExerciseCard extends StatelessWidget {
                           ),
                       ],
                     ),
-                    if (item.muscles.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      AppText(
-                        item.muscles.map((m) => m.labelRu).join(', '),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
                   ],
                 ),
               ),
