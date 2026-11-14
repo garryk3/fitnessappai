@@ -133,7 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
             imagePath: info.program.imagePath,
             day: info.upcomingDay,
             exerciseNames: info.exerciseNames,
-            onTap: () => context.push('/programs/${info.program.id}/edit'),
             onStart: info.upcomingDay != null
                 ? () => context.push('/workout/prepare/${info.upcomingDay!.id}')
                 : null,
@@ -201,7 +200,6 @@ class _ActiveProgramCard extends StatelessWidget {
     required this.programName,
     required this.day,
     required this.exerciseNames,
-    required this.onTap,
     this.imagePath,
     this.onStart,
     this.todayStatus,
@@ -211,7 +209,6 @@ class _ActiveProgramCard extends StatelessWidget {
   final String programName;
   final ProgramDay? day;
   final List<String> exerciseNames;
-  final VoidCallback onTap;
   final String? imagePath;
   final VoidCallback? onStart;
   final WeekPlanStatus? todayStatus;
@@ -238,7 +235,9 @@ class _ActiveProgramCard extends StatelessWidget {
       radius: AppRadii.xl,
       child: AppCard(
         gradient: heroGradient,
-        onTap: onTap,
+        // Без onTap (60.10): клик карточки не открывает редактор программы —
+        // старт через CTA «Начать», управление программой — со вкладки
+        // «Программы». AppCard при onTap: null не ставит InkWell.
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
