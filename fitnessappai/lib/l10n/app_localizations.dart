@@ -1471,13 +1471,13 @@ abstract class AppLocalizations {
   /// No description provided for @programBuilderMainSet.
   ///
   /// In ru, this message translates to:
-  /// **'Основной набор'**
+  /// **'Основной'**
   String get programBuilderMainSet;
 
   /// No description provided for @programBuilderAlternativeSet.
   ///
   /// In ru, this message translates to:
-  /// **'Альтернативный набор'**
+  /// **'Альтернативный'**
   String get programBuilderAlternativeSet;
 
   /// No description provided for @programBuilderMuscles.

@@ -570,7 +570,7 @@ Future<void> configureDay(
     await addDayExercise(tester, name, params);
   }
   if (alternativeSets.isNotEmpty) {
-    await tester.tap(find.text('Альтернативный набор'));
+    await tester.tap(find.text('Альтернативный'));
     await tester.pumpAndSettle();
     for (final (name, params) in alternativeSets) {
       await addDayExercise(tester, name, params);
@@ -1073,7 +1073,7 @@ void main() {
     await tester.tap(drawerButtonFor(2, 'Начать'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Альтернативный набор'));
+    await tester.tap(find.text('Альтернативный'));
     await tester.pumpAndSettle();
     expect(find.text(_squat), findsOneWidget);
 
@@ -2259,15 +2259,22 @@ void main() {
 
     final today = DateTime.now().weekday;
     final todayLabel = weekdayLabel(today);
-    final chip = find.widgetWithText(ChoiceChip, todayLabel);
-    await scrollUntilVisibleIn(tester, chip);
-    await tester.ensureVisible(chip);
+    // Сегмент дня недели (60.8): AppSegmentedButton вместо сетки ChoiceChip.
+    final segment = find.text(todayLabel);
+    await scrollUntilVisibleIn(tester, segment);
+    await tester.ensureVisible(segment);
     await tester.pumpAndSettle();
-    await tester.tap(chip);
+    await tester.tap(segment);
     await tester.pumpAndSettle();
 
-    final selectedChip = tester.widget<ChoiceChip>(chip);
-    expect(selectedChip.selected, isTrue);
+    final segmented = find.ancestor(
+      of: segment,
+      matching: find.byType(SegmentedButton<int>),
+    );
+    final selectedSegments = tester
+        .widget<SegmentedButton<int>>(segmented)
+        .selected;
+    expect(selectedSegments, {today});
 
     final save = find.descendant(
       of: find.byType(ProgramDayBuilderScreen),

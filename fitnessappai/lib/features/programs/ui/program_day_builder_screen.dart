@@ -442,16 +442,11 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 6),
-          AppGridView.count(
-            // Фиксированная сетка вместо Wrap: ячейки не «прыгают»
-            // при смене выбранного дня (рефлоу строк).
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-            mainAxisExtent: 48,
-            children: [
+          // Сегмент-пилюля (60.8, пожелание владельца): день недели —
+          // единый контрол вместо сетки чипов. Пустой выбор разрешён —
+          // повторный тап по выбранному дню сбрасывает привязку.
+          AppSegmentedButton<int>(
+            segments: [
               for (final entry in [
                 (1, l10n.weekdayMon),
                 (2, l10n.weekdayTue),
@@ -461,26 +456,23 @@ class _ProgramDayBuilderScreenState extends State<ProgramDayBuilderScreen> {
                 (6, l10n.weekdaySat),
                 (7, l10n.weekdaySun),
               ])
-                Center(
-                  child: ChoiceChip(
-                    // 48dp-тап-зона на всех платформах (на десктопе
-                    // иначе остаётся 32dp из-за shrinkWrap).
-                    materialTapTargetSize: MaterialTapTargetSize.padded,
-                    label: AppText(entry.$2),
-                    selected: selected == entry.$1,
-                    onSelected: (_) => _setDayOfWeek(day, entry.$1),
-                  ),
-                ),
+                AppSegment(value: entry.$1, label: entry.$2),
             ],
+            selected: selected == null ? {} : {selected},
+            expanded: true,
+            emptySelectionAllowed: true,
+            onSelectionChanged: (selection) =>
+                _setDayOfWeek(day, selection.isEmpty ? null : selection.first),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _setDayOfWeek(ProgramDay day, int dayOfWeek) async {
+  Future<void> _setDayOfWeek(ProgramDay day, int? dayOfWeek) async {
     final updated = day.copyWith(
-      dayOfWeek: day.dayOfWeek == dayOfWeek ? null : dayOfWeek,
+      clearDayOfWeek: dayOfWeek == null,
+      dayOfWeek: dayOfWeek,
     );
     final saved = await _repository.updateDay(updated);
     await _repository.reorderDaysByDayOfWeek(widget.programId);

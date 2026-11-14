@@ -103,6 +103,40 @@ void main() {
       expect(row.children.single, isA<Expanded>());
     });
 
+    testWidgets('expanded: компактный padding сегментов (60.8)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 320,
+                child: AppSegmentedButton<_Period>(
+                  expanded: true,
+                  segments: const [
+                    AppSegment(value: _Period.week, label: 'Неделя'),
+                    AppSegment(value: _Period.month, label: 'Месяц'),
+                  ],
+                  selected: const {_Period.week},
+                  onSelectionChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final SegmentedButton<_Period> button = tester
+          .widget<SegmentedButton<_Period>>(
+            find.byType(SegmentedButton<_Period>),
+          );
+      final EdgeInsets resolved =
+          button.style!.padding!.resolve(const {})! as EdgeInsets;
+      expect(resolved.horizontal, 8);
+    });
+
     testWidgets('onSelectionChanged=null — не реагирует на тап', (
       tester,
     ) async {

@@ -178,7 +178,7 @@ void main() {
     expect(find.text('Приседания'), findsOneWidget);
     expect(find.text('Альт 0'), findsNothing);
 
-    await tester.tap(find.text('Альтернативный набор'));
+    await tester.tap(find.text('Альтернативный'));
     await tester.pumpAndSettle();
 
     expect(find.text('Приседания'), findsNothing);
@@ -216,7 +216,7 @@ void main() {
     final dayId = await createDay();
     await pumpPrepare(tester, dayId);
 
-    expect(find.text('Альтернативный набор'), findsNothing);
+    expect(find.text('Альтернативный'), findsNothing);
     expect(find.byType(SegmentedButton<WorkoutVariant>), findsNothing);
   });
 
