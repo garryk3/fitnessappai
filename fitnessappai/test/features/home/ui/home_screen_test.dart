@@ -357,6 +357,83 @@ void main() {
     expect(find.byType(HomeScreen), findsOneWidget);
   });
 
+  testWidgets(
+    '60.11: две активные программы на широком экране — карточки в две колонки',
+    (WidgetTester tester) async {
+      await createProgram(name: 'Силовая', dayOfWeek: null);
+      await createProgram(name: 'Кардио', dayOfWeek: null);
+      final programs = await programRepo.getPrograms();
+      for (final item in programs) {
+        await programRepo.setActive(item.program.id!);
+      }
+
+      // Окно по умолчанию (800dp) — medium и шире (>= 600dp).
+      await pumpHome(tester);
+
+      final first = tester.getTopLeft(find.text('Силовая'));
+      final second = tester.getTopLeft(find.text('Кардио'));
+      expect(second.dy, first.dy, reason: 'карточки в одной строке');
+      expect(second.dx, greaterThan(first.dx + 200), reason: 'вторая колонка');
+    },
+  );
+
+  testWidgets('60.11: на компактном экране карточки в одну колонку', (
+    WidgetTester tester,
+  ) async {
+    await createProgram(name: 'Силовая', dayOfWeek: null);
+    await createProgram(name: 'Кардио', dayOfWeek: null);
+    final programs = await programRepo.getPrograms();
+    for (final item in programs) {
+      await programRepo.setActive(item.program.id!);
+    }
+
+    tester.view.physicalSize = const Size(400, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await pumpHome(tester);
+
+    final first = tester.getTopLeft(find.text('Силовая'));
+    final second = tester.getTopLeft(find.text('Кардио'));
+    expect(second.dy, greaterThan(first.dy), reason: 'карточки в столбце');
+    expect(second.dx, first.dx, reason: 'одна колонка');
+  });
+
+  testWidgets(
+    '60.11: нечётная третья карточка на широком экране — полноширинная',
+    (WidgetTester tester) async {
+      for (final name in ['Силовая', 'Кардио', 'Стретчинг']) {
+        await createProgram(name: name, dayOfWeek: null);
+      }
+      final programs = await programRepo.getPrograms();
+      for (final item in programs) {
+        await programRepo.setActive(item.program.id!);
+      }
+
+      // Окно по умолчанию (800dp) — medium и шире (>= 600dp).
+      await pumpHome(tester);
+
+      double cardWidth(String name) => tester
+          .getSize(
+            find
+                .ancestor(
+                  of: find.text(name),
+                  matching: find.byType(AppGlowContainer),
+                )
+                .first,
+          )
+          .width;
+
+      final half = cardWidth('Силовая');
+      final full = cardWidth('Стретчинг');
+      expect(
+        full,
+        greaterThan(half + 100),
+        reason: 'нечётная карточка занимает полную ширину секции',
+      );
+    },
+  );
+
   testWidgets('последние тренировки и переход к деталям', (
     WidgetTester tester,
   ) async {
