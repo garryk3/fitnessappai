@@ -642,14 +642,9 @@ class _PermissionTile extends StatelessWidget {
         ),
         if (onAction != null && actionLabel != null) ...[
           const SizedBox(height: 6),
-          Align(
-            alignment: Alignment.centerRight,
-            child: AppButton(
-              onPressed: onAction,
-              label: actionLabel!,
-              tonal: true,
-            ),
-          ),
+          // Кнопка по левому краю (60.9, пожелание владельца): Column
+          // с crossAxisAlignment.start уже выравнивает — Align справа убран.
+          AppButton(onPressed: onAction, label: actionLabel!, tonal: true),
         ],
       ],
     );
