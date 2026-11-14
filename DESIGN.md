@@ -456,7 +456,7 @@ Low из 54.1 закрыты: disabled `AppGradientButton` отличим (по�
 Экраны 54.4:
 
 - **Конструктор программы:** «Количество дней» — `AppSegmentedButton<int>` (1–7) вместо сырого `SegmentedButton`; степперы разминка/отдых — в `AppCard` (тот же вид, что на params); новая программа стартует с префиллом дефолтов по образцу — разминка 10, отдых 60 (запись до подписки на контроллеры, форма не «изменённая»); нижний CTA — `AppGradientButton(pill, busy)` («Сохранить» / «Заполнить день N»). Режим удаления дней остаётся `FilledButton` — осознанное delete-исключение; диалоги не тронуты.
-- **Наполнение дня:** сегмент основной/альтернативный набор — `AppSegmentedButton<bool>` (expanded), CTA — `AppGradientButton(pill)`.
+- **Наполнение дня (60.8):** сегмент основной/альтернативный — `AppSegmentedButton<bool>` (expanded), подписи без слова «набор» («Основной»/«Альтернативный» — контракт и workout_prepare_screen); выбор дня недели — `AppSegmentedButton<int>` (7 сегментов Пн…Вс, expanded, `emptySelectionAllowed` — повторный тап по выбранному дню сбрасывает привязку; попутно исправлен латентный баг: `copyWith(dayOfWeek: null)` раньше не сбрасывал поле), сетка ChoiceChip убрана; CTA — `AppGradientButton(pill)`.
 - **Параметры упражнения (образец 204634):** шапка — `AppCard` с `ExerciseThumbnail(size: 64)` и названием `titleLarge` w600; каждое поле — `AppCard` со степпером (иконочный бейдж типа слева, крупное значение titleLarge w600, ± справа); футер-карточка `AppCard` «Прогресс плана: День N / M» (`exerciseParamsPlanProgress`) + `LinearProgressIndicator` — позиция дня в программе (`getDay` + `getById`), без данных — скрыт; CTA — `AppGradientButton(pill, icon: save)`.
 
 ### План (54.5)
