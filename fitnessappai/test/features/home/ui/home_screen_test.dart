@@ -340,7 +340,7 @@ void main() {
     },
   );
 
-  testWidgets('карточка активной программы открывает редактирование', (
+  testWidgets('карточка активной программы не открывает редактирование', (
     WidgetTester tester,
   ) async {
     final program = await createProgram(name: 'Силовая', dayOfWeek: 1);
@@ -351,7 +351,10 @@ void main() {
     await tester.tap(find.text('Силовая'));
     await tester.pumpAndSettle();
 
-    expect(find.text('program-edit-route'), findsOneWidget);
+    // 60.10: клик карточки программы — без действия (переход в редактор
+    // убран; старт через CTA «Начать»).
+    expect(find.text('program-edit-route'), findsNothing);
+    expect(find.byType(HomeScreen), findsOneWidget);
   });
 
   testWidgets('последние тренировки и переход к деталям', (
