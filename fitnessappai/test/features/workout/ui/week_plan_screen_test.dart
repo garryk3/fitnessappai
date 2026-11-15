@@ -1585,6 +1585,18 @@ void main() {
     expect(find.textContaining('Выполнено 1'), findsOneWidget);
     expect(find.textContaining('Серия 2 дн.'), findsOneWidget);
   });
+
+  testWidgets('61.4: прерванная серия (0) — сегмент серии скрыт (54.3)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'База');
+    // Сессия давно прервана (последняя — не вчера): серия 0.
+    await saveSession(workoutRepo, day, DateTime(2026, 8, 1));
+    await pumpPlan(tester);
+
+    expect(find.textContaining('Запланировано'), findsOneWidget);
+    expect(find.textContaining('Серия'), findsNothing);
+  });
 }
 
 IconButton monthArrow(WidgetTester tester, String tooltip) =>

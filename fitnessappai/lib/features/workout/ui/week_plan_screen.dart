@@ -198,11 +198,15 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final performed = items
         .where((item) => item.status == WeekPlanStatus.performed)
         .length;
-    final summary = [
+    // Паттерн 54.3 (как на Главной): нулевую (прерванную) серию не
+    // показываем — только живую.
+    final parts = [
       l10n.weekPlanSummaryScheduled(planned),
       l10n.weekPlanSummaryPerformed(performed),
-      l10n.weekPlanSummaryStreak(controller.streakDays.value),
-    ].join(' · ');
+      if (controller.streakDays.value > 0)
+        l10n.weekPlanSummaryStreak(controller.streakDays.value),
+    ];
+    final summary = parts.join(' · ');
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: AppCard(
