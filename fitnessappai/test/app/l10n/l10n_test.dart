@@ -1,7 +1,8 @@
 // ignore_for_file: type=lint
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/main.dart';
 
@@ -30,7 +31,13 @@ void main() {
     );
     expect(app.locale, const Locale('ru'));
     expect(app.supportedLocales, const [Locale('ru')]);
-    expect(app.localizationsDelegates, AppLocalizations.localizationsDelegates);
+    // 62.1: делегаты Material/Cupertino/Widgets — из material_ui.
+    expect(app.localizationsDelegates, appLocalizationsDelegates);
+    expect(app.localizationsDelegates, contains(AppLocalizations.delegate));
+    expect(
+      app.localizationsDelegates,
+      contains(GlobalMaterialLocalizations.delegate),
+    );
   });
 
   test('AppLocalizations содержит русские значения', () async {

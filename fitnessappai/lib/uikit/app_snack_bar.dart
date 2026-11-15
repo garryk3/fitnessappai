@@ -1,5 +1,5 @@
 // ignore_for_file: type=lint
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:fitnessappai/uikit/app_text.dart';
 

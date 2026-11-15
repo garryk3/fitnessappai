@@ -1,5 +1,5 @@
 // ignore_for_file: type=lint
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/uikit/app_text.dart';
@@ -61,7 +61,18 @@ class AppSegmentedButton<T> extends StatelessWidget {
         ),
     ];
     final ButtonStyle effectiveStyle = expanded
-        ? style.copyWith(visualDensity: VisualDensity.compact)
+        ? style.copyWith(
+            visualDensity: VisualDensity.compact,
+            // Компактный горизонтальный padding (60.8): expanded-сегменты
+            // делят ширину контейнера — при 7 коротких подписях (Пн…Вс на
+            // 360dp ≈ 47dp на сегмент) M3-дефолт 28dp по горизонтали
+            // оставлял тексту ~19dp и обрезал «Пн…Вс» при fontScale ≥1.3
+            // (дети клипаются по контуру сегмента). Текст центрирован, на
+            // широких сегментах вид не меняет.
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: 4),
+            ),
+          )
         : style;
     final SegmentedButton<T> button = SegmentedButton<T>(
       segments: buttonSegments,

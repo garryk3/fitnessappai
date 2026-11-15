@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:cross_file/cross_file.dart';
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,6 +16,7 @@ import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_form_screen.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -55,7 +56,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
         home: ExerciseFormScreen(

@@ -1,6 +1,6 @@
 // ignore_for_file: type=lint
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,10 +16,12 @@ import 'package:fitnessappai/core/domain/models/workout_session.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
+import 'package:fitnessappai/features/progress/ui/history_screen.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_screen.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -89,7 +91,7 @@ void main() {
       MaterialApp.router(
         theme: theme ?? AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -1428,6 +1430,45 @@ void main() {
 
     // Понедельники августа (3, 10, 17, 24, 31) — по иконке «грудь» в ячейке.
     expect(find.byType(MuscleGroupIcon), findsNWidgets(5));
+  });
+
+  testWidgets('60.12: календарь плана — тот же размер ячеек, что у истории', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    // История: тренировка в фиксированном месяце, чтобы сетка
+    // отрисовалась (не пустое состояние).
+    final day = await createDay(fixedNow.weekday);
+    await saveSession(workoutRepo, day, DateTime(2026, 8, 3));
+
+    await pumpPlan(tester, now: fixedNow);
+    final planCell = tester.getSize(find.byType(MonthDayCell).first);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: GoRouter(
+          initialLocation: '/history',
+          routes: [
+            GoRoute(
+              path: '/history',
+              builder: (context, state) =>
+                  HistoryScreen(workoutRepository: workoutRepo),
+            ),
+          ],
+        ),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final historyCell = tester.getSize(find.byType(MonthDayCell).first);
+    expect(historyCell, planCell, reason: 'общий MonthGridView(fillHeight)');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('месяц: навигация вперёд без ограничения (59.5.в)', (

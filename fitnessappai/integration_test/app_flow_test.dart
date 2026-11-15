@@ -1,6 +1,6 @@
 // ignore_for_file: type=lint
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -570,7 +570,7 @@ Future<void> configureDay(
     await addDayExercise(tester, name, params);
   }
   if (alternativeSets.isNotEmpty) {
-    await tester.tap(find.text('Альтернативный набор'));
+    await tester.tap(find.text('Альтернативный'));
     await tester.pumpAndSettle();
     for (final (name, params) in alternativeSets) {
       await addDayExercise(tester, name, params);
@@ -1075,7 +1075,7 @@ void main() {
     await tester.tap(drawerButtonFor(2, 'Начать'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Альтернативный набор'));
+    await tester.tap(find.text('Альтернативный'));
     await tester.pumpAndSettle();
     expect(find.text(_squat), findsOneWidget);
 
@@ -1115,7 +1115,7 @@ void main() {
     await tester.tap(healthLink);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(SwitchListTile, 'Колени'));
+    await tester.tap(find.widgetWithText(AppCard, 'Колени'));
     await tester.pumpAndSettle();
     await Future<void>.delayed(const Duration(seconds: 5));
     await tester.pumpAndSettle();
@@ -1777,7 +1777,7 @@ void main() {
     await tester.tap(healthLink);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(SwitchListTile, 'Колени'));
+    await tester.tap(find.widgetWithText(AppCard, 'Колени'));
     await tester.pumpAndSettle();
     await Future<void>.delayed(const Duration(seconds: 5));
     await tester.pumpAndSettle();
@@ -2261,15 +2261,22 @@ void main() {
 
     final today = DateTime.now().weekday;
     final todayLabel = weekdayLabel(today);
-    final chip = find.widgetWithText(ChoiceChip, todayLabel);
-    await scrollUntilVisibleIn(tester, chip);
-    await tester.ensureVisible(chip);
+    // Сегмент дня недели (60.8): AppSegmentedButton вместо сетки ChoiceChip.
+    final segment = find.text(todayLabel);
+    await scrollUntilVisibleIn(tester, segment);
+    await tester.ensureVisible(segment);
     await tester.pumpAndSettle();
-    await tester.tap(chip);
+    await tester.tap(segment);
     await tester.pumpAndSettle();
 
-    final selectedChip = tester.widget<ChoiceChip>(chip);
-    expect(selectedChip.selected, isTrue);
+    final segmented = find.ancestor(
+      of: segment,
+      matching: find.byType(SegmentedButton<int>),
+    );
+    final selectedSegments = tester
+        .widget<SegmentedButton<int>>(segmented)
+        .selected;
+    expect(selectedSegments, {today});
 
     final save = find.descendant(
       of: find.byType(ProgramDayBuilderScreen),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
@@ -442,12 +442,18 @@ class _ExerciseCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         _Badge(label: _typeLabel(l10n, exercise.type)),
-                        // Иконки групп (54.7, образец): до трёх пиктограмм
-                        // с дедупом по ассету — дубли «грудь/пресс» не рисуем.
-                        for (final key in MuscleGroupIcon.dedupeByAsset(
-                          item.muscles.map((m) => m.key),
-                        ).take(3))
-                          MuscleGroupIcon(muscleKey: key, size: 18),
+                        // Плашки мышц (60.6): иконка + название в одной
+                        // капсуле — паттерн карточки деталей (54.7). Голых
+                        // иконок и отдельной строки названий больше нет.
+                        for (final muscle in item.muscles)
+                          AppChip(
+                            avatar: MuscleGroupIcon(
+                              muscleKey: muscle.key,
+                              size: 18,
+                            ),
+                            label: AppText(muscle.labelRu),
+                            shape: const StadiumBorder(),
+                          ),
                         if (item.hasContraindications)
                           _Badge(
                             label: l10n.contraindications,
@@ -456,47 +462,42 @@ class _ExerciseCard extends StatelessWidget {
                           ),
                       ],
                     ),
-                    if (item.muscles.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      AppText(
-                        item.muscles.map((m) => m.labelRu).join(', '),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
                   ],
                 ),
               ),
               if (onStart != null) ...[
                 const SizedBox(width: 8),
                 // Градиентная play-кнопка (54.7, образец): круг на
-                // primaryCta. Glow не рисуем — на каждой карточке он
-                // конкурирует с primary-FAB (design-review 54.7); тап-таргет
-                // 48dp и роль button — через тултип и Semantics.
+                // primaryCta. Glow — по аналогии с кнопкой «+» (60.7,
+                // решение владельца: отменяет оговорку 54.7 «конкурирует с
+                // primary-FAB»); тап-таргет 48dp и роль button — через
+                // тултип и Semantics.
                 AppTooltip(
                   message: l10n.exerciseListStartWorkout,
                   child: Semantics(
                     button: true,
                     label: l10n.exerciseListStartWorkout,
-                    child: AppContainer(
-                      width: 48,
-                      height: 48,
-                      padding: EdgeInsets.zero,
-                      decoration: const BoxDecoration(
-                        gradient: AppGradients.primaryCta,
-                        shape: BoxShape.circle,
-                      ),
-                      child: AppInkWell(
-                        borderRadius: BorderRadius.circular(AppRadii.pill),
-                        onTap: onStart,
-                        child: Center(
-                          child: AppIcon(
-                            Icons.play_arrow,
-                            size: 26,
-                            // На градиенте primaryCta — всегда белый (токен,
-                            // design-review 54.9).
-                            color: AppColors.primaryCtaContent,
+                    child: AppGlowContainer(
+                      radius: AppRadii.pill,
+                      child: AppContainer(
+                        width: 48,
+                        height: 48,
+                        padding: EdgeInsets.zero,
+                        decoration: const BoxDecoration(
+                          gradient: AppGradients.primaryCta,
+                          shape: BoxShape.circle,
+                        ),
+                        child: AppInkWell(
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                          onTap: onStart,
+                          child: Center(
+                            child: AppIcon(
+                              Icons.play_arrow,
+                              size: 26,
+                              // На градиенте primaryCta — всегда белый (токен,
+                              // design-review 54.9).
+                              color: AppColors.primaryCtaContent,
+                            ),
                           ),
                         ),
                       ),
@@ -554,8 +555,10 @@ class _Badge extends StatelessWidget {
   }
 }
 
-/// Пилюля-фильтр по типу (54.7, образец «Упражнения»): выбранная —
-/// неон-обводка и свечение [AppGlowContainer], невыбранная — plain-чип.
+/// Пилюля-фильтр по типу (54.7, образец «Упражнения»; 60.5): оба
+/// состояния — одинаковый `FilterChip`, выбранность = заливка
+/// selectedColor M3 — без галки и glow-обёртки (выбранный должен быть
+/// той же геометрии, что обычный).
 class _FilterPill extends StatelessWidget {
   const _FilterPill({
     required this.label,
@@ -569,19 +572,14 @@ class _FilterPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chip = FilterChip(
+    // 60.5 (владелец): выбранный фильтр — та же геометрия, что и обычный
+    // (без glow-обёртки и галки, которые делали его крупнее и шире);
+    // выбранность читается только заливкой selectedColor (M3).
+    return FilterChip(
       label: AppText(label),
       selected: selected,
-      showCheckmark: selected,
+      showCheckmark: false,
       onSelected: (_) => onTap(),
-    );
-    if (!selected) {
-      return chip;
-    }
-    return AppGlowContainer(
-      radius: AppRadii.pill,
-      padding: EdgeInsets.zero,
-      child: chip,
     );
   }
 }

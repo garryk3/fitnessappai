@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +15,7 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/exercises/ui/single_exercise_params_screen.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -82,7 +83,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -185,7 +186,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -245,7 +246,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -296,7 +297,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -360,7 +361,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),

@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/app_restart.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/app/router.dart';
 import 'package:fitnessappai/app/splash_gate.dart';
 import 'package:fitnessappai/app/theme/app_theme.dart';
@@ -140,7 +141,7 @@ class _FitnessAppAiState extends State<FitnessAppAi>
         themeMode: mode,
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
         routerConfig: _router,

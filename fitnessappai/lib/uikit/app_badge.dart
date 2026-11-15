@@ -1,5 +1,5 @@
 // ignore_for_file: type=lint
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Чип-бейдж UI-кита: компактная плашка с фоном, текстом и опциональной
 /// иконкой. Без бизнес-логики — цвет и текст задаёт вызывающий код.

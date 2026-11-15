@@ -1,5 +1,5 @@
 // ignore_for_file: type=lint
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Строка UI-кита: ведущий элемент, заголовок, подзаголовок и хвостовой
 /// элемент. Без бизнес-логики — только раскладка типового «тайла».

@@ -1,7 +1,7 @@
 // ignore_for_file: type=lint
 import 'package:drift/native.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +15,7 @@ import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/profile/ui/measurement_form_screen.dart';
 import 'package:fitnessappai/features/profile/ui/profile_screen.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -76,7 +77,7 @@ void main() {
       MaterialApp.router(
         theme: AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -199,6 +200,68 @@ void main() {
 
     expect(find.text('Введите число'), findsOneWidget);
     expect(await repo.getAll(), isEmpty);
+  });
+
+  testWidgets('60.4: «Сохранить» фиксирована снизу — видна без прокрутки '
+      'на маленьком экране', (tester) async {
+    await pumpProfile(tester);
+    tester.view.physicalSize = const Size(600, 1100);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Добавить замер'));
+    await tester.pumpAndSettle();
+
+    // Кнопка в bottomNavigationBar, вне скроллируемого списка.
+    expect(
+      find.descendant(
+        of: find.byType(Scrollable),
+        matching: find.byType(AppGradientButton),
+      ),
+      findsNothing,
+    );
+    final rect = tester.getRect(find.byType(AppGradientButton));
+    expect(rect.bottom, greaterThanOrEqualTo(1100 - 80));
+    expect(rect.top, greaterThan(0));
+  });
+
+  testWidgets('60.4: «Сохранить» не уезжает при прокрутке формы до конца', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+    tester.view.physicalSize = const Size(600, 1100);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.tap(find.text('Добавить замер'));
+    await tester.pumpAndSettle();
+
+    final rectBefore = tester.getRect(find.byType(AppGradientButton));
+
+    // Прокрутка формы (обхваты — 8 карточек) вниз до конца.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    final rectAfter = tester.getRect(find.byType(AppGradientButton));
+    expect(rectAfter, rectBefore);
+    expect(find.text('Сохранить'), findsOneWidget);
+  });
+
+  testWidgets('60.4: двойной тап по «Сохранить» не вставляет дубль замера', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+
+    await tester.tap(find.text('Добавить замер'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Вес'), '82');
+    // Два тапа подряд до перерисовки — busy-гвард пропускает только первый.
+    await tester.tap(find.text('Сохранить'), warnIfMissed: false);
+    await tester.tap(find.text('Сохранить'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(await repo.getAll(), hasLength(1));
   });
 
   testWidgets('выбор метрики меняет Dropdown и график', (tester) async {

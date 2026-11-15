@@ -1,0 +1,21 @@
+name: restrict_raw_flutter
+description: An analyzer plugin to restrict usage of Flutter's standard widgets and encourage using custom design system components.
+version: 0.2.2+fitnessappai
+repository: https://github.com/SoutaTanaka/restrict_raw_flutter
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  # Вендорный форк (62.2): SDK 3.14 требует analysis_server_plugin >=0.3.21
+  # (pkg/analysis_server/lib/src/plugin2/generator.dart), исходная версия
+  # пакета ограничивала <0.3.15 — синтетический pub upgrade плагин-системы
+  # не разрешался, плагин молча не загружался.
+  analysis_server_plugin: ^0.3.26
+  analyzer: ^14.0.0
+  analyzer_plugin: ^0.14.20
+dev_dependencies:
+  analyzer_testing: ^0.4.5
+  lints: ^6.1.0
+  test: ^1.33.0
+  test_reflective_loader: ^0.6.0

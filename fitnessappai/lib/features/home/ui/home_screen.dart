@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
@@ -127,22 +128,66 @@ class _HomeScreenState extends State<HomeScreen> {
           onAction: () => context.push('/programs'),
         ),
         const SizedBox(height: 12),
-        for (final info in programs) ...[
-          _ActiveProgramCard(
-            programName: info.program.name,
-            imagePath: info.program.imagePath,
-            day: info.upcomingDay,
-            exerciseNames: info.exerciseNames,
-            onTap: () => context.push('/programs/${info.program.id}/edit'),
-            onStart: info.upcomingDay != null
-                ? () => context.push('/workout/prepare/${info.upcomingDay!.id}')
-                : null,
-            todayStatus: info.todayStatus,
-            weeklyProgressPercent: info.weeklyProgressPercent,
-          ),
-          const SizedBox(height: 12),
-        ],
+        _buildProgramCards(context, programs),
       ],
+    );
+  }
+
+  /// Карточки активных программ (60.11): в компактном окне — одна колонка,
+  /// от medium (>= 600dp, `AppBreakpoints`) — две. Карточки в строке
+  /// выравниваются по высоте (`IntrinsicHeight` + Row stretch — паттерн
+  /// `_SyncTile` 54.4; без `IntrinsicHeight` Row в Column получает
+  /// бесконечную высоту). Нечётная карточка остаётся в своей колонке.
+  Widget _buildProgramCards(
+    BuildContext context,
+    List<ActiveProgramInfo> programs,
+  ) {
+    final cards = [
+      for (final info in programs)
+        _ActiveProgramCard(
+          programName: info.program.name,
+          imagePath: info.program.imagePath,
+          day: info.upcomingDay,
+          exerciseNames: info.exerciseNames,
+          onStart: info.upcomingDay != null
+              ? () => context.push('/workout/prepare/${info.upcomingDay!.id}')
+              : null,
+          todayStatus: info.todayStatus,
+          weeklyProgressPercent: info.weeklyProgressPercent,
+        ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= AppBreakpoints.compactMaxWidth;
+        if (!isWide) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final card in cards) ...[card, const SizedBox(height: 12)],
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < cards.length; i += 2) ...[
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cards[i]),
+                    if (i + 1 < cards.length) ...[
+                      const SizedBox(width: 12),
+                      Expanded(child: cards[i + 1]),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -201,7 +246,6 @@ class _ActiveProgramCard extends StatelessWidget {
     required this.programName,
     required this.day,
     required this.exerciseNames,
-    required this.onTap,
     this.imagePath,
     this.onStart,
     this.todayStatus,
@@ -211,7 +255,6 @@ class _ActiveProgramCard extends StatelessWidget {
   final String programName;
   final ProgramDay? day;
   final List<String> exerciseNames;
-  final VoidCallback onTap;
   final String? imagePath;
   final VoidCallback? onStart;
   final WeekPlanStatus? todayStatus;
@@ -238,7 +281,9 @@ class _ActiveProgramCard extends StatelessWidget {
       radius: AppRadii.xl,
       child: AppCard(
         gradient: heroGradient,
-        onTap: onTap,
+        // Без onTap (60.10): клик карточки не открывает редактор программы —
+        // старт через CTA «Начать», управление программой — со вкладки
+        // «Программы». AppCard при onTap: null не ставит InkWell.
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

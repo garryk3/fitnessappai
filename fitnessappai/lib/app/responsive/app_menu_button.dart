@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:fitnessappai/app/responsive/app_breakpoints.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';

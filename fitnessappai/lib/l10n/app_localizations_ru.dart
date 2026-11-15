@@ -770,10 +770,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get programBuilderPickExercise => 'Выберите упражнение';
 
   @override
-  String get programBuilderMainSet => 'Основной набор';
+  String get programBuilderMainSet => 'Основной';
 
   @override
-  String get programBuilderAlternativeSet => 'Альтернативный набор';
+  String get programBuilderAlternativeSet => 'Альтернативный';
 
   @override
   String get programBuilderMuscles => 'Задействованные мышцы';

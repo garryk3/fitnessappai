@@ -1,6 +1,6 @@
 // ignore_for_file: type=lint
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,6 +22,7 @@ import 'package:fitnessappai/features/settings/ui/sync_controller.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/sync/domain/sync_service.dart';
 import 'package:fitnessappai/features/sync/domain/sync_validation_exception.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
@@ -211,7 +212,7 @@ void main() {
               ),
           notificationController: notificationController,
         ),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),

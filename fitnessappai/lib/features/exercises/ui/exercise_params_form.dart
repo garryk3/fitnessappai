@@ -6,7 +6,7 @@
 /// «Параметры упражнения» (54.4/55.1), без дублирования в двух фичах.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:fitnessappai/core/domain/models/exercise.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';

@@ -4,7 +4,7 @@
 /// Гибкий синтаксис Dart 3 — в call-site'ах не строится сырой
 /// [DropdownMenuItem] (запрет этапа 52/56): элементы описываются парой
 /// значений.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:fitnessappai/uikit/app_text.dart';
 

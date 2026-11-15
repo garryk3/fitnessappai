@@ -1,6 +1,6 @@
 // ignore_for_file: type=lint
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,6 +20,7 @@ import 'package:fitnessappai/features/exercises/ui/exercise_thumbnail.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -133,7 +134,7 @@ void main() {
       MaterialApp.router(
         theme: AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -372,6 +373,41 @@ void main() {
     },
   );
 
+  testWidgets('подписи наборов без слова «набор» (60.8)', (tester) async {
+    final program = await createProgram('Сплит', 1);
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    expect(find.text('Основной'), findsOneWidget);
+    expect(find.text('Альтернативный'), findsOneWidget);
+    expect(find.text('Основной набор'), findsNothing);
+    expect(find.text('Альтернативный набор'), findsNothing);
+  });
+
+  testWidgets('выбор дня недели сегментом: выбор, смена, сброс (60.8)', (
+    tester,
+  ) async {
+    final program = await createProgram('Сплит', 1);
+    await pumpDayBuilder(tester, programId: program.id!);
+
+    // Выбор дня.
+    await tester.tap(find.text('Пт'));
+    await tester.pumpAndSettle();
+    var days = await programRepository.getDays(program.id!);
+    expect(days.single.dayOfWeek, 5);
+
+    // Смена дня.
+    await tester.tap(find.text('Сб'));
+    await tester.pumpAndSettle();
+    days = await programRepository.getDays(program.id!);
+    expect(days.single.dayOfWeek, 6);
+
+    // Повторный тап по выбранному дню — сброс привязки (пустой выбор).
+    await tester.tap(find.text('Сб'));
+    await tester.pumpAndSettle();
+    days = await programRepository.getDays(program.id!);
+    expect(days.single.dayOfWeek, isNull);
+  });
+
   testWidgets('альтернативный набор редактируется отдельно', (tester) async {
     final program = await createProgram('Сплит', 1);
     await createExercise('Приседания', ExerciseType.strength);
@@ -380,14 +416,14 @@ void main() {
     await pumpDayBuilder(tester, programId: program.id!);
     await addAndSaveStrength(tester, 'Приседания');
 
-    await tester.tap(find.text('Альтернативный набор'));
+    await tester.tap(find.text('Альтернативный'));
     await tester.pumpAndSettle();
     await addAndSaveStrength(tester, 'Рывок гири');
 
     expect(find.text('Рывок гири'), findsOneWidget);
     expect(find.text('Приседания'), findsNothing);
 
-    await tester.tap(find.text('Основной набор'));
+    await tester.tap(find.text('Основной'));
     await tester.pumpAndSettle();
     expect(find.text('Приседания'), findsOneWidget);
     expect(find.text('Рывок гири'), findsNothing);

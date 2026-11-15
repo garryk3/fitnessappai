@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:cross_file/cross_file.dart';
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,6 +24,7 @@ import 'package:fitnessappai/features/programs/data/workout_reminder_repository.
 import 'package:fitnessappai/features/programs/ui/program_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_builder_screen.dart';
 import 'package:fitnessappai/features/programs/ui/program_day_exercise_params_screen.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 // 1×1 PNG (валидные байты для декодирования в тестах изображений).
@@ -157,7 +158,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
         home: ProgramBuilderScreen(
@@ -219,7 +220,7 @@ void main() {
       MaterialApp.router(
         theme: AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -320,7 +321,7 @@ void main() {
         MaterialApp.router(
           theme: AppTheme.dark(),
           routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
         ),
@@ -499,7 +500,7 @@ void main() {
         MaterialApp.router(
           theme: AppTheme.dark(),
           routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
         ),
@@ -596,7 +597,7 @@ void main() {
         MaterialApp.router(
           theme: AppTheme.dark(),
           routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
         ),
@@ -665,7 +666,7 @@ void main() {
         MaterialApp.router(
           theme: AppTheme.dark(),
           routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
         ),
@@ -718,7 +719,7 @@ void main() {
         MaterialApp.router(
           theme: AppTheme.dark(),
           routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
         ),
@@ -808,7 +809,7 @@ void main() {
         MaterialApp.router(
           theme: AppTheme.dark(),
           routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
         ),
@@ -868,7 +869,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
         home: ProgramBuilderScreen(
@@ -904,7 +905,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
         home: ProgramBuilderScreen(
@@ -952,7 +953,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.dark(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
           home: ProgramBuilderScreen(
@@ -997,7 +998,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
         home: ProgramBuilderScreen(
@@ -1043,7 +1044,7 @@ void main() {
         MaterialApp.router(
           theme: AppTheme.dark(),
           routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
         ),
@@ -1096,7 +1097,7 @@ void main() {
       MaterialApp.router(
         theme: AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -1148,7 +1149,7 @@ void main() {
       MaterialApp.router(
         theme: AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -1192,7 +1193,7 @@ void main() {
       MaterialApp.router(
         theme: AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),

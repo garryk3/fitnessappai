@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,6 +22,7 @@ import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/features/exercises/ui/single_exercise_params_screen.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -73,7 +74,7 @@ void main() {
       MaterialApp.router(
         routerConfig: router,
         theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -418,6 +419,21 @@ void main() {
     expect(find.byIcon(Icons.play_arrow), findsOneWidget);
   });
 
+  testWidgets('play-кнопка — с glow по аналогии с кнопкой «+» (60.7)', (
+    tester,
+  ) async {
+    await repository.create(exercise('Жим штанги'), const []);
+    await pumpExercises(tester);
+
+    expect(
+      find.ancestor(
+        of: find.byIcon(Icons.play_arrow),
+        matching: find.byType(AppGlowContainer),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('нажатие play открывает экран параметров упражнения', (
     tester,
   ) async {
@@ -468,46 +484,57 @@ void main() {
     expect(find.text('Встроенный присед'), findsNothing);
   });
 
-  testWidgets('выбранный фильтр типа подсвечен AppGlowContainer', (
-    tester,
-  ) async {
-    await repository.create(exercise('Жим штанги'), const []);
-    await pumpExercises(tester);
+  testWidgets(
+    'выбранный фильтр — та же геометрия, индикатор только цветом (60.5)',
+    (tester) async {
+      await repository.create(exercise('Жим штанги'), const []);
+      await pumpExercises(tester);
 
-    final glowFinder = find.ancestor(
-      of: find.text('Все'),
-      matching: find.byType(AppGlowContainer),
-    );
-    expect(glowFinder, findsOneWidget);
-
-    await tester.tap(
-      find.ancestor(of: find.text('Время'), matching: find.byType(FilterChip)),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find
+      // Glow-обёртка на фильтрах убрана (60.5) — ни в одном состоянии
+      // (глобальный Glow остаётся только у других виджетов экрана).
+      bool hasGlow(String label) => find
           .ancestor(
-            of: find.text('Все'),
+            of: find.text(label),
             matching: find.byType(AppGlowContainer),
           )
           .evaluate()
-          .isEmpty,
-      isTrue,
-    );
-    expect(
-      find
-          .ancestor(
-            of: find.text('Время'),
-            matching: find.byType(AppGlowContainer),
-          )
-          .evaluate()
-          .isNotEmpty,
-      isTrue,
-    );
-  });
+          .isNotEmpty;
+      expect(hasGlow('Все'), isFalse);
+      expect(hasGlow('Время'), isFalse);
 
-  testWidgets('в карточке не больше трёх иконок мышц с дедупом по ассету', (
+      // Выбираем «Время».
+      await tester.tap(
+        find.ancestor(
+          of: find.text('Время'),
+          matching: find.byType(FilterChip),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final selectedChip = tester.widget<FilterChip>(
+        find.ancestor(
+          of: find.text('Время'),
+          matching: find.byType(FilterChip),
+        ),
+      );
+      expect(selectedChip.selected, isTrue);
+      expect(selectedChip.showCheckmark, isFalse);
+
+      // Геометрия выбранного = обычному (без glow-обёртки высоты совпадают).
+      final selectedRect = tester.getRect(
+        find.ancestor(
+          of: find.text('Время'),
+          matching: find.byType(FilterChip),
+        ),
+      );
+      final unselectedRect = tester.getRect(
+        find.ancestor(of: find.text('Все'), matching: find.byType(FilterChip)),
+      );
+      expect(selectedRect.height, unselectedRect.height);
+    },
+  );
+
+  testWidgets('капсула мышц: иконка + название в одном чипе (60.6)', (
     tester,
   ) async {
     final chestId = await muscleId('chest');
@@ -526,7 +553,16 @@ void main() {
     expect(created.id, isNotNull);
     await pumpExercises(tester);
 
-    // Пять групп, но «грудь» и «пресс» — один ассет: итог 4 → лимит 3.
-    expect(find.byType(MuscleGroupIcon), findsNWidgets(3));
+    // Пять групп → пять капсул (иконка + название, паттерн карточки
+    // деталей 54.7): без дедупа по ассету и лимита — капсула показывает
+    // название, скрытие группы теряло бы информацию.
+    expect(find.byType(AppChip), findsNWidgets(5));
+    expect(find.byType(MuscleGroupIcon), findsNWidgets(5));
+    for (final label in const ['Грудь', 'Пресс', 'Руки', 'Спина', 'Ноги']) {
+      expect(find.text(label), findsOneWidget);
+    }
+
+    // Отдельная строка joined-названий убрана (60.6).
+    expect(find.text('Грудь, Пресс, Руки, Спина, Ноги'), findsNothing);
   });
 }

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,6 +23,7 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
+import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 
 void main() {
@@ -95,7 +96,7 @@ void main() {
       MaterialApp.router(
         theme: AppTheme.dark(),
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
       ),
@@ -339,7 +340,7 @@ void main() {
     },
   );
 
-  testWidgets('карточка активной программы открывает редактирование', (
+  testWidgets('карточка активной программы не открывает редактирование', (
     WidgetTester tester,
   ) async {
     final program = await createProgram(name: 'Силовая', dayOfWeek: 1);
@@ -350,8 +351,88 @@ void main() {
     await tester.tap(find.text('Силовая'));
     await tester.pumpAndSettle();
 
-    expect(find.text('program-edit-route'), findsOneWidget);
+    // 60.10: клик карточки программы — без действия (переход в редактор
+    // убран; старт через CTA «Начать»).
+    expect(find.text('program-edit-route'), findsNothing);
+    expect(find.byType(HomeScreen), findsOneWidget);
   });
+
+  testWidgets(
+    '60.11: две активные программы на широком экране — карточки в две колонки',
+    (WidgetTester tester) async {
+      await createProgram(name: 'Силовая', dayOfWeek: null);
+      await createProgram(name: 'Кардио', dayOfWeek: null);
+      final programs = await programRepo.getPrograms();
+      for (final item in programs) {
+        await programRepo.setActive(item.program.id!);
+      }
+
+      // Окно по умолчанию (800dp) — medium и шире (>= 600dp).
+      await pumpHome(tester);
+
+      final first = tester.getTopLeft(find.text('Силовая'));
+      final second = tester.getTopLeft(find.text('Кардио'));
+      expect(second.dy, first.dy, reason: 'карточки в одной строке');
+      expect(second.dx, greaterThan(first.dx + 200), reason: 'вторая колонка');
+    },
+  );
+
+  testWidgets('60.11: на компактном экране карточки в одну колонку', (
+    WidgetTester tester,
+  ) async {
+    await createProgram(name: 'Силовая', dayOfWeek: null);
+    await createProgram(name: 'Кардио', dayOfWeek: null);
+    final programs = await programRepo.getPrograms();
+    for (final item in programs) {
+      await programRepo.setActive(item.program.id!);
+    }
+
+    tester.view.physicalSize = const Size(400, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await pumpHome(tester);
+
+    final first = tester.getTopLeft(find.text('Силовая'));
+    final second = tester.getTopLeft(find.text('Кардио'));
+    expect(second.dy, greaterThan(first.dy), reason: 'карточки в столбце');
+    expect(second.dx, first.dx, reason: 'одна колонка');
+  });
+
+  testWidgets(
+    '60.11: нечётная третья карточка на широком экране — полноширинная',
+    (WidgetTester tester) async {
+      for (final name in ['Силовая', 'Кардио', 'Стретчинг']) {
+        await createProgram(name: name, dayOfWeek: null);
+      }
+      final programs = await programRepo.getPrograms();
+      for (final item in programs) {
+        await programRepo.setActive(item.program.id!);
+      }
+
+      // Окно по умолчанию (800dp) — medium и шире (>= 600dp).
+      await pumpHome(tester);
+
+      double cardWidth(String name) => tester
+          .getSize(
+            find
+                .ancestor(
+                  of: find.text(name),
+                  matching: find.byType(AppGlowContainer),
+                )
+                .first,
+          )
+          .width;
+
+      final half = cardWidth('Силовая');
+      final full = cardWidth('Стретчинг');
+      expect(
+        full,
+        greaterThan(half + 100),
+        reason: 'нечётная карточка занимает полную ширину секции',
+      );
+    },
+  );
 
   testWidgets('последние тренировки и переход к деталям', (
     WidgetTester tester,

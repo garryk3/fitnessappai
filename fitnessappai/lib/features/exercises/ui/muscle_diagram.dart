@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
