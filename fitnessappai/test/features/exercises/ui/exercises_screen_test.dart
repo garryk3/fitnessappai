@@ -419,20 +419,32 @@ void main() {
     expect(find.byIcon(Icons.play_arrow), findsOneWidget);
   });
 
-  testWidgets('play-кнопка — с glow по аналогии с кнопкой «+» (60.7)', (
-    tester,
-  ) async {
-    await repository.create(exercise('Жим штанги'), const []);
-    await pumpExercises(tester);
+  testWidgets(
+    '61.5: play-круг на карточке тональный, градиент — только у FAB',
+    (tester) async {
+      await repository.create(exercise('Жим штанги'), const []);
+      await pumpExercises(tester);
 
-    expect(
-      find.ancestor(
+      // Тональный круг: заливка surfaceContainerHighest, иконка primary —
+      // без glow и без градиента (повторяющийся акцент не тянет градиент).
+      final circle = find.ancestor(
         of: find.byIcon(Icons.play_arrow),
-        matching: find.byType(AppGlowContainer),
-      ),
-      findsOneWidget,
-    );
-  });
+        matching: find.byType(AppContainer),
+      );
+      expect(circle, findsOneWidget);
+      final decoration =
+          tester.widget<AppContainer>(circle).decoration! as BoxDecoration;
+      expect(decoration.gradient, isNull);
+      expect(decoration.shape, BoxShape.circle);
+      expect(
+        decoration.color,
+        Theme.of(tester.element(circle)).colorScheme.surfaceContainerHighest,
+      );
+
+      // Градиентный glow остаётся только у FAB «+».
+      expect(find.byType(AppGlowContainer), findsOneWidget);
+    },
+  );
 
   testWidgets('нажатие play открывает экран параметров упражнения', (
     tester,
