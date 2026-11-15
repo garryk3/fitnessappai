@@ -178,7 +178,44 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       children: [
         _buildMonthSwitcher(controller),
         Expanded(child: _buildMonthContent(controller, l10n, today)),
+        // 61.4: сводка месяца под календарём (61.3 освободила низ); «без
+        // данных — без элементов»: в пустом месяце сводки нет.
+        if (controller.items.value.isNotEmpty)
+          _buildMonthSummary(context, controller, l10n),
       ],
+    );
+  }
+
+  /// Компактная строка-сводка отображаемого месяца: запланировано /
+  /// выполнено / серия тренировок (61.4).
+  Widget _buildMonthSummary(
+    BuildContext context,
+    WeekPlanController controller,
+    AppLocalizations l10n,
+  ) {
+    final items = controller.items.value;
+    final planned = items.length;
+    final performed = items
+        .where((item) => item.status == WeekPlanStatus.performed)
+        .length;
+    // Паттерн 54.3 (как на Главной): нулевую (прерванную) серию не
+    // показываем — только живую.
+    final parts = [
+      l10n.weekPlanSummaryScheduled(planned),
+      l10n.weekPlanSummaryPerformed(performed),
+      if (controller.streakDays.value > 0)
+        l10n.weekPlanSummaryStreak(controller.streakDays.value),
+    ];
+    final summary = parts.join(' · ');
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: AppCard(
+        child: AppText(
+          summary,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
     );
   }
 

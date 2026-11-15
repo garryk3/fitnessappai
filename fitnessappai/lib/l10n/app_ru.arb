@@ -141,6 +141,24 @@
   "weekPlanPrevMonth": "Предыдущий месяц",
   "weekPlanNextMonth": "Следующий месяц",
   "weekPlanQuickStart": "Быстрый старт",
+  "weekPlanSummaryScheduled": "Запланировано {count}",
+  "@weekPlanSummaryScheduled": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "weekPlanSummaryPerformed": "Выполнено {count}",
+  "@weekPlanSummaryPerformed": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "weekPlanSummaryStreak": "Серия {count} дн.",
+  "@weekPlanSummaryStreak": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "weekPlanTimeAction": "Время и напоминание",
   "weekPlanTime": "Время тренировки",
   "weekPlanNoTime": "Время не задано",

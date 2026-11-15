@@ -1438,13 +1438,16 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(900, 600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    // История: тренировка в фиксированном месяце, чтобы сетка
-    // отрисовалась (не пустое состояние).
-    final day = await createDay(fixedNow.weekday);
-    await saveSession(workoutRepo, day, DateTime(2026, 8, 3));
-
+    // 61.4: паритет размеров — в месяце БЕЗ тренировок: сводка месяца
+    // занимает низ «Плана» и по построению уменьшает высоту сетки при
+    // наличии данных (на телефонах обе сетки ограничены шириной — размеры
+    // совпадают и там). День и сессия для «Истории» создаются после снятия
+    // размера «Плана».
     await pumpPlan(tester, now: fixedNow);
     final planCell = tester.getSize(find.byType(MonthDayCell).first);
+
+    final day = await createDay(fixedNow.weekday);
+    await saveSession(workoutRepo, day, DateTime(2026, 8, 3));
 
     await tester.pumpWidget(
       MaterialApp.router(
@@ -1553,6 +1556,46 @@ void main() {
       findsOneWidget,
     );
     expect(day.id, isNotNull);
+  });
+
+  testWidgets('61.4: пустой месяц — сводка не показывается', (tester) async {
+    await pumpPlan(tester);
+
+    expect(find.textContaining('Запланировано'), findsNothing);
+    expect(find.textContaining('Выполнено'), findsNothing);
+    expect(find.textContaining('Серия'), findsNothing);
+  });
+
+  testWidgets('61.4: сводка месяца — запланировано, выполнено, серия', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'База');
+    // Выполненная сегодня тренировка + вчера: серия 2 дня (54.3).
+    await saveSession(workoutRepo, day, fixedNow);
+    await saveSession(
+      workoutRepo,
+      day,
+      fixedNow.subtract(const Duration(days: 1)),
+    );
+    await pumpPlan(tester);
+
+    // Август 2026: понедельники 3/10/17/24/31 — 5 запланированных,
+    // выполнена сегодняшняя (10-е), серия «сегодня + вчера» = 2.
+    expect(find.textContaining('Запланировано 5'), findsOneWidget);
+    expect(find.textContaining('Выполнено 1'), findsOneWidget);
+    expect(find.textContaining('Серия 2 дн.'), findsOneWidget);
+  });
+
+  testWidgets('61.4: прерванная серия (0) — сегмент серии скрыт (54.3)', (
+    tester,
+  ) async {
+    final day = await createDay(fixedNow.weekday, name: 'База');
+    // Сессия давно прервана (последняя — не вчера): серия 0.
+    await saveSession(workoutRepo, day, DateTime(2026, 8, 1));
+    await pumpPlan(tester);
+
+    expect(find.textContaining('Запланировано'), findsOneWidget);
+    expect(find.textContaining('Серия'), findsNothing);
   });
 }
 
