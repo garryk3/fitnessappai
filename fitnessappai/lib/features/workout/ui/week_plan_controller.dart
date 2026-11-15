@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
+import 'package:fitnessappai/core/domain/workout_streak.dart' as streak;
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/schedule_mark.dart';
@@ -180,6 +181,11 @@ class WeekPlanController {
   /// видел «Нет запланированных тренировок». Сбрасывается перед каждой
   /// загрузкой; при успешной — остаётся `false`, данные важнее ошибки.
   final Signal<bool> hasError = Signal(false);
+
+  /// Серия тренировок (streak) — число подряд идущих дней с сессиями до
+  /// последней тренировки (61.4: сводка месяца на «Плане»; семантика 54.3 —
+  /// в `workout_streak.dart`). 0 — серия прервана или истории нет.
+  final Signal<int> streakDays = Signal(0);
 
   /// Сегодняшняя дата.
   final Signal<DateTime> selectedDate = Signal(DateTime.now());
@@ -506,6 +512,14 @@ class WeekPlanController {
       }
 
       final marks = await _marksForRange(rangeStart, rangeEnd);
+
+      // Серия тренировок для сводки месяца (61.4): по всей истории сессий,
+      // не только отображаемому месяцу (семантика 54.3).
+      final history = await workoutRepository.getAllSessions();
+      streakDays.value = streak.streakDays(
+        dates: history.map((s) => s.performedDate),
+        today: _dateOnly(_now()),
+      );
 
       final result = <WeekPlanItem>[];
       for (final item in plannedItems) {

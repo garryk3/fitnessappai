@@ -184,6 +184,7 @@ class MonthGridView extends StatefulWidget {
     required this.today,
     required this.cellBuilder,
     this.fillHeight = false,
+    this.verticalAlignment = Alignment.topCenter,
     this.onPrevious,
     this.onNext,
   });
@@ -200,6 +201,11 @@ class MonthGridView extends StatefulWidget {
   /// true — строки заполняют доступную высоту (Expanded, «История»);
   /// false — прокручиваемый список с фиксированной высотой ячеек.
   final bool fillHeight;
+
+  /// Выравнивание сетки в fillHeight-режиме при избытке высоты: ячейки
+  /// квадратные и ограничены шириной, поэтому снизу остаётся пустота —
+  /// «План»/«История» центрируют её (61.3), дефолт — прижать к верху.
+  final AlignmentGeometry verticalAlignment;
 
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
@@ -389,10 +395,11 @@ class _MonthGridViewState extends State<MonthGridView> {
 
           // Контейнер календаря ограничен по меньшей из сторон: при избытке
           // места по ширине сетка не растягивается, а центрируется по
-          // горизонтали; по вертикали прижата к верху под переключателем
-          // месяца, лишнее место скроллится при нехватке высоты.
+          // горизонтали; по вертикали — [verticalAlignment] (у «Плана» и
+          // «Истории» центр, 61.3), лишнее место скроллится при нехватке
+          // высоты.
           return Align(
-            alignment: Alignment.topCenter,
+            alignment: widget.verticalAlignment,
             child: wrapDrag(
               SingleChildScrollView(
                 child: Column(

@@ -374,6 +374,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanQuickStart => 'Быстрый старт';
 
   @override
+  String weekPlanSummaryScheduled(int count) {
+    return 'Запланировано $count';
+  }
+
+  @override
+  String weekPlanSummaryPerformed(int count) {
+    return 'Выполнено $count';
+  }
+
+  @override
+  String weekPlanSummaryStreak(int count) {
+    return 'Серия $count дн.';
+  }
+
+  @override
   String get weekPlanTimeAction => 'Время и напоминание';
 
   @override

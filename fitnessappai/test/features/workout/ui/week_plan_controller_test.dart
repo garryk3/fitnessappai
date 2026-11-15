@@ -120,6 +120,51 @@ void main() {
     },
   );
 
+  test('61.4: серия тренировок — signal streakDays по всей истории', () async {
+    final dayId = await createUnlinkedDay();
+    final day = (await programRepo.getDays(dayId)).first;
+    final repo = WorkoutRepository(db);
+    await repo.saveSession(
+      WorkoutSession(
+        programName: 'Ручная',
+        programDayId: day.id,
+        dayIndex: day.dayIndex,
+        performedDate: DateTime(2026, 8, 9),
+        startedAt: DateTime(2026, 8, 9),
+        endedAt: DateTime(2026, 8, 9, 0, 40),
+      ),
+      const [],
+    );
+    await repo.saveSession(
+      WorkoutSession(
+        programName: 'Ручная',
+        programDayId: day.id,
+        dayIndex: day.dayIndex,
+        performedDate: DateTime(2026, 8, 10),
+        startedAt: DateTime(2026, 8, 10),
+        endedAt: DateTime(2026, 8, 10, 0, 40),
+      ),
+      const [],
+    );
+    // Разрыв серии (7 августа) не мешает: серия считается от последней
+    // тренировки (54.3) — сегодня + вчера = 2.
+    await repo.saveSession(
+      WorkoutSession(
+        programName: 'Ручная',
+        programDayId: day.id,
+        dayIndex: day.dayIndex,
+        performedDate: DateTime(2026, 8, 7),
+        startedAt: DateTime(2026, 8, 7),
+        endedAt: DateTime(2026, 8, 7, 0, 40),
+      ),
+      const [],
+    );
+
+    await controller.refresh();
+
+    expect(controller.streakDays.value, 2);
+  });
+
   test('manual schedule appears in items', () async {
     final dayId = await createUnlinkedDay();
     await scheduleRepo.schedule(dayId, DateTime(2026, 8, 15));
