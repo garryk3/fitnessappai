@@ -135,6 +135,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
             monthStart: _currentMonth,
             today: DateTime.now(),
             fillHeight: true,
+            // 61.3: центрирование сетки по вертикали (как на «Плане»).
+            verticalAlignment: Alignment.center,
             onPrevious: _previousMonth,
             onNext: _canGoNextMonth ? _nextMonth : null,
             cellBuilder: (context, date) => _buildDayCell(context, date, dates),

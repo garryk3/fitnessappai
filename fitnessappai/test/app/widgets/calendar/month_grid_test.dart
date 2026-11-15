@@ -68,4 +68,85 @@ void main() {
     expect(cell.height, lessThan(600 / 4));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('61.3: при избытке высоты сетка центрируется по вертикали', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: MonthGridView(
+            monthStart: DateTime(2027, 2),
+            today: DateTime(2026, 10, 11),
+            fillHeight: true,
+            verticalAlignment: Alignment.center,
+            cellBuilder: (context, date) => MonthDayCell(
+              day: date.day,
+              background: Colors.transparent,
+              foreground: Colors.white,
+              onTap: () {},
+              fillHeight: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Верхняя строка отступает от верха экрана: пустота разделена поровну
+    // (меряем контейнер сетки — у ячейки есть собственный паддинг).
+    final grid = find.descendant(
+      of: find.byType(MonthGridView),
+      matching: find.byType(SingleChildScrollView),
+    );
+    final top = tester.getTopLeft(grid).dy;
+    final bottom = tester.getBottomRight(grid).dy;
+    expect(top, greaterThan(0));
+    // Сетка центрирована: свободное место снизу равно свободному сверху.
+    expect(600 - bottom, closeTo(top, 1));
+  });
+
+  testWidgets('61.3: дефолт — прижать сетку к верху (совместимость)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: MonthGridView(
+            monthStart: DateTime(2027, 2),
+            today: DateTime(2026, 10, 11),
+            fillHeight: true,
+            cellBuilder: (context, date) => MonthDayCell(
+              day: date.day,
+              background: Colors.transparent,
+              foreground: Colors.white,
+              onTap: () {},
+              fillHeight: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Дефолт topCenter: контейнер сетки прижат к верху (24 — внутренний
+    // паддинг ячейки, не смещение контейнера).
+    final grid = find.descendant(
+      of: find.byType(MonthGridView),
+      matching: find.byType(SingleChildScrollView),
+    );
+    expect(tester.getTopLeft(grid).dy, moreOrLessEquals(0, epsilon: 0.5));
+  });
 }
