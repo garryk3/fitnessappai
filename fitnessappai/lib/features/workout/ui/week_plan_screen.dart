@@ -216,6 +216,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       monthStart: month,
       today: today,
       fillHeight: true,
+      // 61.3: при избытке высоты (квадратные ячейки ограничены шириной)
+      // сетка центрируется по вертикали вместо пустоты под ней.
+      verticalAlignment: Alignment.center,
       onPrevious: controller.canGoPrevMonth
           ? () => controller.shiftMonth(-1)
           : null,
