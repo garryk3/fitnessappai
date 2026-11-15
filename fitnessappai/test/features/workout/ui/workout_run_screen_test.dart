@@ -281,7 +281,45 @@ void main() {
     expect(find.text('Повторения'), findsOneWidget);
     expect(find.text('Вес (кг)'), findsOneWidget);
     expect(find.text('Подход выполнен'), findsOneWidget);
+    // 61.2: главное действие экрана — градиентный pill (язык редизайна 54),
+    // а не tonal-заливка, читающаяся как «disabled».
+    final doneButton = tester.widget<AppGradientButton>(
+      find.widgetWithText(AppGradientButton, 'Подход выполнен'),
+    );
+    expect(doneButton.pill, isTrue);
   });
+
+  testWidgets(
+    'планка с удержанием: до старта таймера кнопка подхода вторичная, после старта — градиентная',
+    (tester) async {
+      final dayId = await createDay(
+        type: ExerciseType.plank,
+        durationSeconds: 30,
+        sets: 1,
+        restSeconds: null,
+      );
+      await pumpRun(tester, dayId);
+
+      // 61.2 (WILL BREAK ревью): до старта таймера primary CTA экрана —
+      // «Начать» панели удержания, поэтому кнопка подхода вторичная (tonal);
+      // градиентных CTA на экране ровно один (язык 54).
+      expect(
+        find.widgetWithText(AppGradientButton, 'Подход выполнен'),
+        findsNothing,
+      );
+      expect(find.widgetWithText(AppButton, 'Подход выполнен'), findsOneWidget);
+
+      await tester.tap(find.text('Начать'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // Таймер запущен — «Начать» скрыт, кнопка подхода стала градиентной.
+      expect(
+        find.widgetWithText(AppGradientButton, 'Подход выполнен'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('пустой ввод показывает ошибку валидации', (tester) async {
     final dayId = await createDay();
