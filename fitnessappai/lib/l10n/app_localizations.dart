@@ -754,6 +754,24 @@ abstract class AppLocalizations {
   /// **'Быстрый старт'**
   String get weekPlanQuickStart;
 
+  /// No description provided for @weekPlanSummaryScheduled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запланировано {count}'**
+  String weekPlanSummaryScheduled(int count);
+
+  /// No description provided for @weekPlanSummaryPerformed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выполнено {count}'**
+  String weekPlanSummaryPerformed(int count);
+
+  /// No description provided for @weekPlanSummaryStreak.
+  ///
+  /// In ru, this message translates to:
+  /// **'Серия {count} дн.'**
+  String weekPlanSummaryStreak(int count);
+
   /// No description provided for @weekPlanTimeAction.
   ///
   /// In ru, this message translates to:
