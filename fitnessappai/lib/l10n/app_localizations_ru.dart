@@ -1123,7 +1123,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get progressMetricNoDataHint =>
-      'Прогресс появится после тренировок с этим упражнением';
+      'Запишите подходы с весом — прогресс появится здесь';
 
   @override
   String get progressProgressionEmptyHint =>

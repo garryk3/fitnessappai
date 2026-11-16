@@ -2083,7 +2083,7 @@ abstract class AppLocalizations {
   /// No description provided for @progressMetricNoDataHint.
   ///
   /// In ru, this message translates to:
-  /// **'Прогресс появится после тренировок с этим упражнением'**
+  /// **'Запишите подходы с весом — прогресс появится здесь'**
   String get progressMetricNoDataHint;
 
   /// No description provided for @progressProgressionEmptyHint.

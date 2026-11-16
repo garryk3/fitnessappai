@@ -514,10 +514,7 @@ void main() {
     await pumpProgress(tester);
 
     expect(find.text('Нет данных за период'), findsOneWidget);
-    expect(
-      find.textContaining('Прогресс появится после тренировок'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Запишите подходы с весом'), findsOneWidget);
     expect(find.byType(LineChart), findsNothing);
 
     // Пустое состояние внутри карточки метрики: дропдаун упражнения рядом.
