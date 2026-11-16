@@ -378,10 +378,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     return showAppBottomSheet<void>(
       context: context,
       // 61.7: лист по контенту — без isScrollControlled модальный лист
-      // клэмпится на 9/16 экрана: при контенте выше клэмпа хвост срезается
-      // (замер 61.7: intrinsic 346 → клэмп 337.5). С флагом shrinkWrap-
-      // контент задаёт высоту сам; длинный день разворачивается на весь
-      // экран и скроллится.
+      // клэмпится на 9/16 экрана: при контенте выше клэмпа хвост уходит
+      // под внутренний скролл с урезанной высотой листа (замер 61.7:
+      // intrinsic 346 → клэмп 337.5). С флагом shrinkWrap-контент задаёт
+      // высоту сам; длинный день разворачивается на весь экран и
+      // скроллится.
       isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(

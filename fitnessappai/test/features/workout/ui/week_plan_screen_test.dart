@@ -1629,11 +1629,24 @@ void main() {
     await openDayDrawer(tester, '10');
 
     // Без isScrollControlled лист клэмпился на 9/16 экрана (337.5 из 600)
-    // и срезал хвост контента; с флагом лист по контенту — выше клэмпа.
+    // и уводил хвост под внутренний скролл с обрезанной высотой; с флагом
+    // лист по контенту — выше клэмпа, весь хвост досыпается скроллом.
     expect(
       tester.getSize(find.byType(BottomSheet).first).height,
       greaterThan(337.5),
     );
+    // Хвост длинного дня доступен: доскип до пятой тренировки.
+    await tester.scrollUntilVisible(
+      find.textContaining('День 5'),
+      120,
+      scrollable: find
+          .descendant(
+            of: find.byType(BottomSheet),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.textContaining('День 5'), findsOneWidget);
   });
 }
 
