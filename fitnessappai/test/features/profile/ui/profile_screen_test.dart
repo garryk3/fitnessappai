@@ -93,7 +93,31 @@ void main() {
     // FAB редизайна 54.9 — градиентная пилюля с Tooltip (byType
     // FloatingActionButton больше нет — контракт по тексту/тултипу).
     expect(find.byTooltip('Добавить замер'), findsOneWidget);
+    // 61.8: у empty-state есть action, дублирующий FAB (паттерн «Программ»).
+    expect(
+      find.descendant(
+        of: find.byType(AppEmptyState),
+        matching: find.text('Добавить замер'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Противопоказания'), findsOneWidget);
+  });
+
+  testWidgets('61.8: action пустого состояния открывает форму замера', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+
+    // Тап по action empty-state — тот же маршрут, что у FAB.
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppEmptyState),
+        matching: find.text('Добавить замер'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(MeasurementFormScreen), findsOneWidget);
   });
 
   testWidgets('редизайн 54.9: FAB — градиентная пилюля AppGlowContainer', (
@@ -133,7 +157,12 @@ void main() {
     tester,
   ) async {
     await pumpProfile(tester);
-    await tester.tap(find.text('Добавить замер'));
+    await tester.tap(
+      find.descendant(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.text('Добавить замер'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Обхваты (см)'), findsOneWidget);
@@ -161,7 +190,12 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Добавить замер'));
+      await tester.tap(
+        find.descendant(
+          of: find.byTooltip('Добавить замер'),
+          matching: find.text('Добавить замер'),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Обхваты (см)'), findsOneWidget);
@@ -173,7 +207,12 @@ void main() {
   testWidgets('форма добавляет замер', (tester) async {
     await pumpProfile(tester);
 
-    await tester.tap(find.text('Добавить замер'));
+    await tester.tap(
+      find.descendant(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.text('Добавить замер'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Новый замер'), findsOneWidget);
@@ -191,7 +230,12 @@ void main() {
 
   testWidgets('форма отклоняет нечисловое значение', (tester) async {
     await pumpProfile(tester);
-    await tester.tap(find.text('Добавить замер'));
+    await tester.tap(
+      find.descendant(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.text('Добавить замер'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Вес'), 'abc');
@@ -210,7 +254,12 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Добавить замер'));
+    await tester.tap(
+      find.descendant(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.text('Добавить замер'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     // Кнопка в bottomNavigationBar, вне скроллируемого списка.
@@ -233,7 +282,12 @@ void main() {
     tester.view.physicalSize = const Size(600, 1100);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    await tester.tap(find.text('Добавить замер'));
+    await tester.tap(
+      find.descendant(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.text('Добавить замер'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final rectBefore = tester.getRect(find.byType(AppGradientButton));
@@ -252,7 +306,12 @@ void main() {
   ) async {
     await pumpProfile(tester);
 
-    await tester.tap(find.text('Добавить замер'));
+    await tester.tap(
+      find.descendant(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.text('Добавить замер'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Вес'), '82');
