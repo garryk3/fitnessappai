@@ -2074,6 +2074,18 @@ abstract class AppLocalizations {
   /// **'Ещё нет тренировок с этим упражнением'**
   String get progressProgressionEmpty;
 
+  /// No description provided for @progressMetricNoData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет данных за период'**
+  String get progressMetricNoData;
+
+  /// No description provided for @progressMetricNoDataHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прогресс появится после тренировок с этим упражнением'**
+  String get progressMetricNoDataHint;
+
   /// No description provided for @progressProgressionEmptyHint.
   ///
   /// In ru, this message translates to:

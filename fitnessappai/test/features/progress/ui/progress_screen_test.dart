@@ -500,6 +500,52 @@ void main() {
     expect(textCenter.dy, greaterThan(screenHeight / 2));
   });
 
+  testWidgets('61.6: метрика без точек за период — empty-state в карточке', (
+    tester,
+  ) async {
+    // Упражнение выполнено (попадает в список), но метрика во всех срезах
+    // нулевая: силовые подходы без веса → после обрезки хвостовых нулей
+    // точек нет — раньше рисовались пустые оси.
+    final exerciseId = await insertExercise('Отжимания');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId, reps: 8, weightKg: null),
+    ]);
+
+    await pumpProgress(tester);
+
+    expect(find.text('Нет данных за период'), findsOneWidget);
+    expect(
+      find.textContaining('Прогресс появится после тренировок'),
+      findsOneWidget,
+    );
+    expect(find.byType(LineChart), findsNothing);
+
+    // Пустое состояние внутри карточки метрики: дропдаун упражнения рядом.
+    final empty = find.ancestor(
+      of: find.text('Нет данных за период'),
+      matching: find.byType(AppCard),
+    );
+    expect(empty, findsOneWidget);
+    expect(
+      find.descendant(of: empty, matching: find.byType(DropdownButton<int>)),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('61.6: метрика с данными — график, empty-state скрыт', (
+    tester,
+  ) async {
+    final exerciseId = await insertExercise('Приседания');
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: exerciseId, reps: 8, weightKg: 40),
+    ]);
+
+    await pumpProgress(tester);
+
+    expect(find.byType(LineChart), findsOneWidget);
+    expect(find.text('Нет данных за период'), findsNothing);
+  });
+
   testWidgets('выбор упражнения меняет график прогресса', (tester) async {
     final first = await insertExercise('Бег', type: ExerciseType.distance);
     final second = await insertExercise('Приседания');

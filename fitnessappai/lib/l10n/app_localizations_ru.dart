@@ -1119,6 +1119,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ещё нет тренировок с этим упражнением';
 
   @override
+  String get progressMetricNoData => 'Нет данных за период';
+
+  @override
+  String get progressMetricNoDataHint =>
+      'Прогресс появится после тренировок с этим упражнением';
+
+  @override
   String get progressProgressionEmptyHint =>
       'Выполните тренировку с этим упражнением — график появится здесь.';
 
