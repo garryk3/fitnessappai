@@ -560,6 +560,8 @@
   "progressProgression": "Динамика упражнения",
   "progressProgressionOpen": "Открыть динамику",
   "progressProgressionEmpty": "Ещё нет тренировок с этим упражнением",
+  "progressMetricNoData": "Нет данных за период",
+  "progressMetricNoDataHint": "Запишите подходы с весом — прогресс появится здесь",
   "progressProgressionEmptyHint": "Выполните тренировку с этим упражнением — график появится здесь.",
   "progressProgressionMax": "Максимум",
   "progressDayDetail": "Тренировки за день",

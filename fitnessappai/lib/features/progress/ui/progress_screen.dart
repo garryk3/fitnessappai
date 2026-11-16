@@ -565,102 +565,112 @@ class _MetricChart extends StatelessWidget {
               },
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 160,
-              child: LineChart(
-                LineChartData(
-                  minY: 0,
-                  lineTouchData: LineTouchData(enabled: false),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border(
-                      left: BorderSide(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        width: 0.5,
-                      ),
-                      bottom: BorderSide(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        width: 0.5,
-                      ),
-                    ),
-                  ),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: yInterval,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: theme.colorScheme.chartGrid,
-                      strokeWidth: 0.5,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: leftReserved,
-                        maxIncluded: false,
-                        getTitlesWidget: (value, meta) {
-                          final label = _yAxisLabel(
-                            value,
-                            unitSuffix,
-                            yInterval,
-                          );
-                          return AppText(
-                            label,
-                            style: theme.textTheme.labelSmall,
-                            maxLines: 1,
-                          );
-                        },
+            // 61.6: без точек за период — empty-state вместо пустых осей
+            // (выглядит как сломанная карточка); карточка компактнее
+            // состояния с графиком — это ок, осей под график нет.
+            if (values.isEmpty)
+              AppEmptyState(
+                icon: Icons.insights,
+                title: l10n.progressMetricNoData,
+                hint: l10n.progressMetricNoDataHint,
+              )
+            else
+              SizedBox(
+                height: 160,
+                child: LineChart(
+                  LineChartData(
+                    minY: 0,
+                    lineTouchData: LineTouchData(enabled: false),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border(
+                        left: BorderSide(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 0.5,
+                        ),
+                        bottom: BorderSide(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 0.5,
+                        ),
                       ),
                     ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: yInterval,
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: theme.colorScheme.chartGrid,
+                        strokeWidth: 0.5,
+                      ),
                     ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 24,
-                        interval: 1,
-                        getTitlesWidget: (value, meta) {
-                          final index = value.toInt();
-                          if (index < 0 || index >= labels.length) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: AppText(
-                              labels[index],
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: leftReserved,
+                          maxIncluded: false,
+                          getTitlesWidget: (value, meta) {
+                            final label = _yAxisLabel(
+                              value,
+                              unitSuffix,
+                              yInterval,
+                            );
+                            return AppText(
+                              label,
                               style: theme.textTheme.labelSmall,
-                            ),
-                          );
-                        },
+                              maxLines: 1,
+                            );
+                          },
+                        ),
+                      ),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 24,
+                          interval: 1,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index < 0 || index >= labels.length) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: AppText(
+                                labels[index],
+                                style: theme.textTheme.labelSmall,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: [
+                          for (var i = 0; i < values.length; i++)
+                            FlSpot(i.toDouble(), values[i]),
+                        ],
+                        isCurved: false,
+                        barWidth: 3,
+                        gradient: AppGradients.chartLine(theme.brightness),
+                        dotData: FlDotData(show: true),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: AppGradients.chartLine(
+                            theme.brightness,
+                          ).withOpacity(AppTints.faint),
+                        ),
+                      ),
+                    ],
                   ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: [
-                        for (var i = 0; i < values.length; i++)
-                          FlSpot(i.toDouble(), values[i]),
-                      ],
-                      isCurved: false,
-                      barWidth: 3,
-                      gradient: AppGradients.chartLine(theme.brightness),
-                      dotData: FlDotData(show: true),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: AppGradients.chartLine(
-                          theme.brightness,
-                        ).withOpacity(AppTints.faint),
-                      ),
-                    ),
-                  ],
                 ),
               ),
-            ),
           ],
         ),
       ),
