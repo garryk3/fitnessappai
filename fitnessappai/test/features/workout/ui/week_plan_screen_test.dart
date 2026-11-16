@@ -1597,6 +1597,44 @@ void main() {
     expect(find.textContaining('Запланировано'), findsOneWidget);
     expect(find.textContaining('Серия'), findsNothing);
   });
+
+  testWidgets('61.7: дравер дня — начальная высота по контенту', (
+    tester,
+  ) async {
+    await createDay(fixedNow.weekday, name: 'Сплит');
+    await pumpPlan(tester);
+    await openDayDrawer(tester, '10');
+
+    // Лист по контенту: не растягивается на весь экран (600 в вьюпорте),
+    // содержимое целиком на месте — карточка с действиями.
+    final sheet = find.byType(BottomSheet);
+    expect(tester.getSize(sheet.first).height, lessThan(600));
+    expect(
+      find.descendant(of: sheet, matching: find.textContaining('Сплит')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Начать')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('61.7: длинный день — лист выше прежнего клэмпа 9/16', (
+    tester,
+  ) async {
+    for (var i = 1; i <= 5; i++) {
+      await createDay(fixedNow.weekday, name: 'День $i');
+    }
+    await pumpPlan(tester);
+    await openDayDrawer(tester, '10');
+
+    // Без isScrollControlled лист клэмпился на 9/16 экрана (337.5 из 600)
+    // и срезал хвост контента; с флагом лист по контенту — выше клэмпа.
+    expect(
+      tester.getSize(find.byType(BottomSheet).first).height,
+      greaterThan(337.5),
+    );
+  });
 }
 
 IconButton monthArrow(WidgetTester tester, String tooltip) =>
