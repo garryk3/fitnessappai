@@ -479,7 +479,14 @@ class _HistoryStatsCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
           child: Column(
             children: [
-              AppIcon(icon, size: 20, color: theme.colorScheme.primary),
+              AppIcon(
+                icon,
+                size: 20,
+                // Fix design-review (Low): карточка неинтерактивна —
+                // нейтральный цвет иконок, как в образце 54.8 для
+                // нетапабельных колонок.
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(height: 6),
               // FittedBox: значение ужимается, а не обрезается, при
               // fontScale 1.3–1.5 (design-review 54.8).

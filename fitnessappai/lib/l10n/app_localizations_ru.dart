@@ -1192,7 +1192,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get historyEmpty => 'Пока нет тренировок';
 
   @override
-  String get historyStatsExercises => 'Упражнений';
+  String get historyStatsExercises => 'Упражнения';
 
   @override
   String get historyEmptyHint => 'Завершённые тренировки появятся здесь.';

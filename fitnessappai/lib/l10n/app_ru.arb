@@ -583,7 +583,7 @@
   "history": "История",
   "historyDetail": "Детали тренировки",
   "historyEmpty": "Пока нет тренировок",
-  "historyStatsExercises": "Упражнений",
+  "historyStatsExercises": "Упражнения",
   "@historyStatsExercises": {
     "description": "Подпись числа различных упражнений в общей статистике истории (64.11)"
   },
