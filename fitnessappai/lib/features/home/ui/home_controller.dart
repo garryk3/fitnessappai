@@ -4,10 +4,12 @@ import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 import 'package:fitnessappai/core/domain/workout_streak.dart' as streak;
 import 'package:fitnessappai/core/domain/weekly_progress.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 
@@ -42,6 +44,7 @@ class ActiveProgramInfo {
   const ActiveProgramInfo({
     required this.program,
     required this.upcomingDay,
+    this.upcomingDate,
     required this.exerciseNames,
     this.todayStatus,
     this.weeklyProgressPercent,
@@ -49,6 +52,12 @@ class ActiveProgramInfo {
 
   final Program program;
   final ProgramDay? upcomingDay;
+
+  /// Дата ближайшего дня (64.4): дата запланированного назначения, если оно
+  /// раньше ближайшего шаблонного дня, иначе дата шаблонного дня недели.
+  /// `null` — у дня нет ни даты (непривязанный день), ни назначения.
+  final DateTime? upcomingDate;
+
   final List<String> exerciseNames;
 
   /// Статус тренировки на сегодня, если ближайший день совпадает с сегодняшним.
@@ -67,6 +76,7 @@ class HomeController {
     required this.programRepository,
     required this.exerciseRepository,
     required this.workoutRepository,
+    this.planScheduleRepository,
     DateTime Function()? clock,
     DataChangeNotifier? changes,
   }) : _now = clock ?? DateTime.now {
@@ -80,6 +90,10 @@ class HomeController {
   final ProgramRepository programRepository;
   final ExerciseRepository exerciseRepository;
   final WorkoutRepository workoutRepository;
+
+  /// Назначения из плана (64.4): запланированный на дату день программы
+  /// приоритетнее шаблонного дня недели в карточке ближайшего дня.
+  final PlanScheduleRepository? planScheduleRepository;
   final DateTime Function() _now;
   late final ChangeReloadSubscription _reloadSubscription;
 
@@ -116,12 +130,27 @@ class HomeController {
       final today = _dateOnly(_now());
       final todayWeekday = today.weekday;
       final weekStart = today.subtract(Duration(days: today.weekday - 1));
+      // 64.4: назначения из плана на ближайшую неделю — один запрос на
+      // загрузку, раскладка по программам внутри цикла.
+      final scheduledRange = planScheduleRepository == null
+          ? const <PlanScheduleItem>[]
+          : await planScheduleRepository!.getForRange(
+              today,
+              today.add(const Duration(days: 6)),
+            );
       for (final program in allActive) {
         final detail = await programRepository.getProgram(program.id!);
         if (detail == null) {
           continue;
         }
-        final upcomingDay = _findUpcomingDay(detail.days, todayWeekday);
+        final resolved = _resolveUpcoming(
+          detail.days,
+          today,
+          todayWeekday,
+          scheduledRange,
+        );
+        final upcomingDay = resolved.day;
+        final upcomingDate = resolved.date;
         final exerciseNames = await _exerciseNamesOf(detail, upcomingDay);
         final progress = await _weeklyProgress(
           detail.days,
@@ -132,8 +161,9 @@ class HomeController {
         // Вычисляем статус тренировки на сегодня.
         WeekPlanStatus? todayStatus;
         if (upcomingDay != null &&
-            upcomingDay.dayOfWeek == todayWeekday &&
-            upcomingDay.id != null) {
+            upcomingDay.id != null &&
+            upcomingDate != null &&
+            _dateOnly(upcomingDate) == today) {
           final sessions = await workoutRepository.getSessions(
             upcomingDay.id!,
             weekStart,
@@ -153,6 +183,7 @@ class HomeController {
           ActiveProgramInfo(
             program: program,
             upcomingDay: upcomingDay,
+            upcomingDate: upcomingDate,
             exerciseNames: exerciseNames,
             todayStatus: todayStatus,
             weeklyProgressPercent: progress,
@@ -186,6 +217,52 @@ class HomeController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Ближайший день программы с учётом запланированных назначений (64.4).
+  ///
+  /// Шаблонный ближайший день ([_findUpcomingDay]) сравнивается по дате с
+  /// назначениями из плана этой программы на диапазон от сегодня; раньше
+  /// побеждает запланированный день — он и является ближайшим. Дата
+  /// шаблонного дня — его день недели текущей недели (перенос на следующую
+  /// неделю для дней «позади сегодня»).
+  ({ProgramDay? day, DateTime? date}) _resolveUpcoming(
+    List<ProgramDayDetail> days,
+    DateTime today,
+    int todayWeekday,
+    List<PlanScheduleItem> scheduledRange,
+  ) {
+    final templateDay = _findUpcomingDay(days, todayWeekday);
+    DateTime? templateDate;
+    if (templateDay?.dayOfWeek != null) {
+      // Дата шаблонного дня: всегда не раньше сегодня (при переносе на
+      // следующую неделю — +7 дней).
+      final offset = templateDay!.dayOfWeek! >= todayWeekday
+          ? templateDay.dayOfWeek! - todayWeekday
+          : templateDay.dayOfWeek! - todayWeekday + 7;
+      templateDate = _dateOnly(today.add(Duration(days: offset)));
+    }
+    final dayIds = {for (final d in days) d.day.id};
+    PlanScheduleItem? scheduled;
+    for (final item in scheduledRange) {
+      if (!dayIds.contains(item.programDayId)) {
+        continue;
+      }
+      final date = _dateOnly(item.scheduledDate);
+      if (scheduled == null ||
+          date.isBefore(_dateOnly(scheduled.scheduledDate))) {
+        scheduled = item;
+      }
+    }
+    if (scheduled != null &&
+        (templateDate == null ||
+            _dateOnly(scheduled.scheduledDate).isBefore(templateDate))) {
+      final day = days
+          .firstWhere((d) => d.day.id == scheduled!.programDayId)
+          .day;
+      return (day: day, date: _dateOnly(scheduled.scheduledDate));
+    }
+    return (day: templateDay, date: templateDate);
   }
 
   /// Ближайший день программы по дню недели, начиная с [todayWeekday]
