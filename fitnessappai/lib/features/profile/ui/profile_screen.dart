@@ -49,6 +49,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Открытие формы замера (FAB и action пустого состояния — 61.8),
+  /// с перезагрузкой данных после возврата.
+  Future<void> _openMeasurementForm() async {
+    await context.push('/measurements/new');
+    if (mounted) {
+      await _controller.reload();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -75,12 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: AppInkWell(
               borderRadius: BorderRadius.circular(AppRadii.pill),
-              onTap: () async {
-                await context.push('/measurements/new');
-                if (mounted) {
-                  await _controller.reload();
-                }
-              },
+              onTap: _openMeasurementForm,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -142,6 +146,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.straighten_outlined,
             title: l10n.profileEmpty,
             hint: l10n.profileEmptyHint,
+            // 61.8: на пустом экране FAB «висит в пустоте» — action
+            // дублирует его (паттерн «Программ»); ключ l10n общий.
+            actionLabel: l10n.profileAddMeasurement,
+            onAction: _openMeasurementForm,
           )
         else ...[
           for (final measurement in measurements) ...[
