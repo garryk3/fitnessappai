@@ -113,7 +113,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   /// недели на следующей загрузке удаляется (47.4).
   Future<void> _editTime(WeekPlanItem item) async {
     final l10n = AppLocalizations.of(context);
-    if (_isPast(item.scheduledDate, _controller.selectedDate.value)) {
+    if (_controller.isPast(item.scheduledDate)) {
       showAppSnackBar(
         ScaffoldMessenger.of(context),
         l10n.weekPlanPastDateGuard,
@@ -148,12 +148,6 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     AppLocalizations l10n,
   ) {
     return _showDayActions(context, controller, date, l10n);
-  }
-
-  bool _isPast(DateTime date, DateTime today) {
-    final d = DateTime(date.year, date.month, date.day);
-    final t = DateTime(today.year, today.month, today.day);
-    return d.isBefore(t);
   }
 
   @override
@@ -366,7 +360,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         .toList();
     if (dayItems.isEmpty) {
       // Не планируем на прошедшие даты.
-      if (_isPast(date, controller.selectedDate.value)) {
+      if (controller.isPast(date)) {
         showAppSnackBar(
           ScaffoldMessenger.of(context),
           l10n.weekPlanPastDateGuard,
@@ -437,7 +431,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                 Navigator.of(sheetContext).pop();
                 // Та же защита, что и у пустого дня: в прошедшей дате лист
                 // планирования молча ничего не сделал бы (48.9).
-                if (_isPast(date, controller.selectedDate.value)) {
+                if (controller.isPast(date)) {
                   showAppSnackBar(messenger, l10n.weekPlanPastDateGuard);
                   return;
                 }
@@ -715,6 +709,15 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
   Future<void> _confirm() async {
     final day = _selectedDay;
     if (day == null) {
+      return;
+    }
+    // 64.2: лист, открытый сегодня и подтверждённый после полуночи, не
+    // должен назначить тренировку на прошедший день. Предикат — на
+    // контроллере (живой `_now()`), как во всех гейтах прошедших дат.
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    if (widget.controller.isPast(widget.date)) {
+      showAppSnackBar(messenger, l10n.weekPlanPastDateGuard);
       return;
     }
     final time = _time;

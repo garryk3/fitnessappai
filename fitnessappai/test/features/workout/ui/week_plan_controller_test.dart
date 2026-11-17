@@ -216,6 +216,51 @@ void main() {
     expect(items, hasLength(1));
   });
 
+  test(
+    'scheduleDay на прошедшую дату отклоняется контроллером (64.2)',
+    () async {
+      final dayId = await createUnlinkedDay();
+
+      // fixedNow = 2026-08-10; вчера — 09.08, завтра — 11.08.
+      await controller.scheduleDay(dayId, DateTime(2026, 8, 9));
+
+      final items = controller.items.value.where(
+        (i) => i.programDayId == dayId && i.scheduledDate.day == 9,
+      );
+      expect(items, isEmpty);
+      // Прошедшая дата не попала и в репозиторий.
+      final stored = await scheduleRepo.getFor(dayId, DateTime(2026, 8, 9));
+      expect(stored, isNull);
+    },
+  );
+
+  test(
+    'setReminder на прошедшую дату отклоняется контроллером (64.2)',
+    () async {
+      final dayId = await createUnlinkedDay();
+
+      await controller.setReminder(
+        dayId,
+        DateTime(2026, 8, 9),
+        hour: 9,
+        minute: 0,
+        reminderEnabled: true,
+      );
+
+      final stored = await scheduleRepo.getFor(dayId, DateTime(2026, 8, 9));
+      expect(stored, isNull);
+    },
+  );
+
+  test('scheduleDay на сегодняшний день проходит (64.2, граница)', () async {
+    final dayId = await createUnlinkedDay();
+
+    await controller.scheduleDay(dayId, DateTime(2026, 8, 10));
+
+    final stored = await scheduleRepo.getFor(dayId, DateTime(2026, 8, 10));
+    expect(stored, isNotNull);
+  });
+
   test('manual schedule does not duplicate recurring item', () async {
     // Monday = 1, Aug 10 2026 is a Monday.
     final dayId = await createLinkedDay(1);
