@@ -485,12 +485,12 @@
       }
     }
   },
-  "workoutRunTargetReps": "Цель: {reps} повт",
-  "@workoutRunTargetReps": {
-    "description": "Целевое число повторений в бейдже «Последний результат»",
+  "workoutRunSetGoal": "Цель: {value}",
+  "@workoutRunSetGoal": {
+    "description": "Бейдж цели сета по параметрам позиции (64.7): повторения, вес, время или дистанция — значение собирает WorkoutGoalFormatter",
     "placeholders": {
-      "reps": {
-        "type": "int"
+      "value": {
+        "type": "String"
       }
     }
   },

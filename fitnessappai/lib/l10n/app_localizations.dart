@@ -1882,11 +1882,11 @@ abstract class AppLocalizations {
   /// **'Цель: {seconds} с'**
   String workoutRunHoldTarget(int seconds);
 
-  /// Целевое число повторений в бейдже «Последний результат»
+  /// Бейдж цели сета по параметрам позиции (64.7): повторения, вес, время или дистанция — значение собирает WorkoutGoalFormatter
   ///
   /// In ru, this message translates to:
-  /// **'Цель: {reps} повт'**
-  String workoutRunTargetReps(int reps);
+  /// **'Цель: {value}'**
+  String workoutRunSetGoal(String value);
 
   /// Название программы в шапке подготовки к тренировке
   ///
