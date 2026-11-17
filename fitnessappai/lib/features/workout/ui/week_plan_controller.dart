@@ -264,6 +264,9 @@ class WeekPlanController {
   /// Назначает тренировочный день [programDayId] на [date] с временем (48.10).
   ///
   /// Время необязательно: без него назначение происходит ровно как раньше.
+  /// Прошедшая дата отклоняется на уровне контроллера (64.2): UI-гейты
+  /// (47.1/48.9) закрывают точки входа, контроллер — саму операцию
+  /// (лист, открытый сегодня, подтверждённый после полуночи).
   Future<void> scheduleDay(
     int programDayId,
     DateTime date, {
@@ -271,6 +274,9 @@ class WeekPlanController {
     int? minute,
     bool reminderEnabled = false,
   }) async {
+    if (_isPast(date)) {
+      return;
+    }
     final item = await planScheduleRepository?.schedule(
       programDayId,
       date,
@@ -291,6 +297,8 @@ class WeekPlanController {
   /// меняется: дублей в плане не появляется, крестик удаления не добавляется.
   ///
   /// [hour] равен `null` — время убирается вместе с напоминанием.
+  ///
+  /// Прошедшая дата отклоняется контроллером (64.2, см. [scheduleDay]).
   Future<void> setReminder(
     int programDayId,
     DateTime date, {
@@ -298,6 +306,9 @@ class WeekPlanController {
     required int? minute,
     required bool reminderEnabled,
   }) async {
+    if (_isPast(date)) {
+      return;
+    }
     final item = await planScheduleRepository?.setReminder(
       programDayId,
       date,
@@ -309,6 +320,13 @@ class WeekPlanController {
       await _syncManualReminder(item, programDayId, date);
     }
     await _load();
+  }
+
+  /// Дата в прошлом (до сегодняшнего дня включительно — сегодня можно)?
+  /// Используется guard'ами планирования (64.2).
+  bool _isPast(DateTime date) {
+    final d = _dateOnly(date);
+    return d.isBefore(_dateOnly(_now()));
   }
 
   /// Отменяет ручное назначение тренировочного дня на дату.

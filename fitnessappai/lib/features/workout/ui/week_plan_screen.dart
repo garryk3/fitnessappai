@@ -717,6 +717,19 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
     if (day == null) {
       return;
     }
+    // 64.2: лист, открытый сегодня и подтверждённый после полуночи, не
+    // должен назначить тренировку на прошедший день — контроллер отбросит
+    // вызов, показываем тот же снекбар, что и точки входа (47.1/48.9).
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final today = DateTime.now();
+    final date = widget.date;
+    if (DateTime(date.year, date.month, date.day).isBefore(
+      DateTime(today.year, today.month, today.day),
+    )) {
+      showAppSnackBar(messenger, l10n.weekPlanPastDateGuard);
+      return;
+    }
     final time = _time;
     await widget.controller.scheduleDay(
       day.id!,
