@@ -274,7 +274,7 @@ class WeekPlanController {
     int? minute,
     bool reminderEnabled = false,
   }) async {
-    if (_isPast(date)) {
+    if (isPast(date)) {
       return;
     }
     final item = await planScheduleRepository?.schedule(
@@ -306,7 +306,7 @@ class WeekPlanController {
     required int? minute,
     required bool reminderEnabled,
   }) async {
-    if (_isPast(date)) {
+    if (isPast(date)) {
       return;
     }
     final item = await planScheduleRepository?.setReminder(
@@ -322,9 +322,10 @@ class WeekPlanController {
     await _load();
   }
 
-  /// Дата в прошлом (до сегодняшнего дня включительно — сегодня можно)?
-  /// Используется guard'ами планирования (64.2).
-  bool _isPast(DateTime date) {
+  /// Дата строго раньше сегодняшнего дня (64.2): единый предикат гейтов
+  /// прошедших дат — экран и контроллер используют одну реализацию на
+  /// живом `_now()` (лист, подтверждённый после полуночи, тоже отсекается).
+  bool isPast(DateTime date) {
     final d = _dateOnly(date);
     return d.isBefore(_dateOnly(_now()));
   }

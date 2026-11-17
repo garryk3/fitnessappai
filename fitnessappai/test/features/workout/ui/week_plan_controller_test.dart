@@ -252,6 +252,15 @@ void main() {
     },
   );
 
+  test('scheduleDay на сегодняшний день проходит (64.2, граница)', () async {
+    final dayId = await createUnlinkedDay();
+
+    await controller.scheduleDay(dayId, DateTime(2026, 8, 10));
+
+    final stored = await scheduleRepo.getFor(dayId, DateTime(2026, 8, 10));
+    expect(stored, isNotNull);
+  });
+
   test('manual schedule does not duplicate recurring item', () async {
     // Monday = 1, Aug 10 2026 is a Monday.
     final dayId = await createLinkedDay(1);
