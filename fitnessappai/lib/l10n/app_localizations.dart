@@ -1690,12 +1690,6 @@ abstract class AppLocalizations {
   /// **'Пропустить'**
   String get workoutWarmupSkip;
 
-  /// Оставшееся время разминки
-  ///
-  /// In ru, this message translates to:
-  /// **'осталось {seconds} с'**
-  String workoutWarmupSecondsLeft(int seconds);
-
   /// No description provided for @workoutWarmupStartWorkout.
   ///
   /// In ru, this message translates to:
