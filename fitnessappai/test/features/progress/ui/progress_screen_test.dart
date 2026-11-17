@@ -639,7 +639,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ExerciseProgressionScreen), findsOneWidget);
-    expect(find.text('Максимум: 40 кг'), findsOneWidget);
+    // Оценка 1ПМ по Эпли (64.3): 40 × (1 + 8/30) ≈ 50.7 → «≈50.7 кг».
+    expect(find.text('Максимум: ≈50.7 кг'), findsOneWidget);
     expect(find.byType(LineChart), findsOneWidget);
   });
 

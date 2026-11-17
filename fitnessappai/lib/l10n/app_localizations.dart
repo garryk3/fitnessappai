@@ -1744,6 +1744,12 @@ abstract class AppLocalizations {
   /// **'км'**
   String get workoutUnitKm;
 
+  /// Оценка одноповторного максимума (Эпли) в графике прогрессии силового упражнения (64.3)
+  ///
+  /// In ru, this message translates to:
+  /// **'≈{value} кг'**
+  String progressionMetricOneRm(String value);
+
   /// No description provided for @exerciseParamsAvgSpeed.
   ///
   /// In ru, this message translates to:

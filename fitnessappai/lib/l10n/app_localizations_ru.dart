@@ -925,6 +925,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutUnitKm => 'км';
 
   @override
+  String progressionMetricOneRm(String value) {
+    return '≈$value кг';
+  }
+
+  @override
   String get exerciseParamsAvgSpeed => 'Ср. скорость (км/ч)';
 
   @override

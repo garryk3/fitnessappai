@@ -56,6 +56,21 @@ class ProgressionPoint {
   String toString() => 'ProgressionPoint(${date.toIso8601String()}: $metric)';
 }
 
+/// Оценка одноповторного максимума по формуле Эпли (64.3, вариант B):
+/// вес × (1 + повт/30). Без веса или повторений — просто вес; ноль —
+/// если вес не задан. Используется как метрика прогрессии силовых.
+double epleyEstimatedOneRm(double? weightKg, int? reps) {
+  final weight = weightKg ?? 0;
+  if (weight <= 0) {
+    return 0;
+  }
+  final count = reps ?? 0;
+  if (count <= 1) {
+    return weight;
+  }
+  return weight * (1 + count / 30);
+}
+
 /// Агрегация статистики тренировок за период.
 ///
 /// Границы периода: неделя — с понедельника, месяц — с 1-го числа,
@@ -304,7 +319,8 @@ class StatsAggregator {
 
   /// Метрика упражнения по срезам периода для графика прогресса.
   ///
-  /// strength — максимальный вес в срезе (кг), running — суммарная
+  /// strength — максимальная оценка 1ПМ по Эпли в срезе (кг, 64.3),
+  /// bodyweight — максимум повторов за подход в срезе, running — суммарная
   /// дистанция (м), plank — суммарное время (с). Пустые срезы — 0.
   Future<List<double>> exerciseMetricPerSlice(
     int exerciseId,
@@ -329,15 +345,21 @@ class StatsAggregator {
         case ExerciseType.strength:
           var max = 0.0;
           for (final r in inSlice) {
-            if (r.weightKg != null && r.weightKg! > max) {
-              max = r.weightKg!;
+            final estimate = epleyEstimatedOneRm(r.weightKg, r.reps);
+            if (estimate > max) {
+              max = estimate;
             }
           }
           return max;
         case ExerciseType.bodyweight:
-          return inSlice
-              .fold<int>(0, (sum, r) => sum + (r.reps ?? 0))
-              .toDouble();
+          var max = 0.0;
+          for (final r in inSlice) {
+            final reps = (r.reps ?? 0).toDouble();
+            if (reps > max) {
+              max = reps;
+            }
+          }
+          return max;
         case ExerciseType.distance:
           return inSlice.fold<double>(
             0,
@@ -354,9 +376,10 @@ class StatsAggregator {
 
   /// Прогрессия упражнения по датам выполнения за всё время.
   ///
-  /// strength — максимальный вес за дату (кг), bodyweight — суммарные
-  /// повторения, running — суммарная дистанция (м), plank — суммарное
-  /// время (с). Точки отсортированы по дате.
+  /// strength — максимальная оценка 1ПМ (Эпли) за дату (кг, 64.3),
+  /// bodyweight — максимум повторов за подход, running — суммарная
+  /// дистанция (м), plank — суммарное время (с). Точки отсортированы
+  /// по дате.
   Future<List<ProgressionPoint>> exerciseProgression(int exerciseId) async {
     final exercise = await exerciseRepository.getById(exerciseId);
     if (exercise == null) {
@@ -379,9 +402,17 @@ class StatsAggregator {
         }
         final current = values[date] ?? 0.0;
         values[date] = switch (exercise.type) {
-          ExerciseType.strength when (r.weightKg ?? 0) > current => r.weightKg!,
-          ExerciseType.strength => current,
-          ExerciseType.bodyweight => current + (r.reps ?? 0),
+          ExerciseType.strength => switch (epleyEstimatedOneRm(
+            r.weightKg,
+            r.reps,
+          )) {
+            final estimate when estimate > current => estimate,
+            _ => current,
+          },
+          ExerciseType.bodyweight => switch ((r.reps ?? 0).toDouble()) {
+            final reps when reps > current => reps,
+            _ => current,
+          },
           ExerciseType.distance => current + (r.distanceMeters ?? 0),
           ExerciseType.plank => current + (r.durationSeconds ?? 0),
         };
@@ -460,7 +491,8 @@ class StatsAggregator {
   }
 
   double _metricValue(WorkoutSetResult r) => switch (r.exerciseType) {
-    ExerciseType.strength => r.weightKg ?? 0,
+    // Силовые сравниваются по оценке 1ПМ (64.3) — как в метрике прогрессии.
+    ExerciseType.strength => epleyEstimatedOneRm(r.weightKg, r.reps),
     ExerciseType.bodyweight => (r.reps ?? 0).toDouble(),
     ExerciseType.plank => (r.durationSeconds ?? 0).toDouble(),
     ExerciseType.distance => r.distanceMeters ?? 0,

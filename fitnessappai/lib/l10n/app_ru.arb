@@ -432,6 +432,15 @@
   "workoutUnitMinutes": "мин",
   "workoutUnitKg": "кг",
   "workoutUnitKm": "км",
+  "progressionMetricOneRm": "≈{value} кг",
+  "@progressionMetricOneRm": {
+    "description": "Оценка одноповторного максимума (Эпли) в графике прогрессии силового упражнения (64.3)",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "exerciseParamsAvgSpeed": "Ср. скорость (км/ч)",
   "exerciseParamsAvgCadence": "Ср. каденс (об/мин)",
   "exerciseParamsAvgPulse": "Ср. пульс (уд/мин)",
