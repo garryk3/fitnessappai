@@ -693,13 +693,19 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                // 64.7 (фикс design-review): Wrap вместо Row+Spacer —
+                // широкий бейдж цели переносится на следующую строку,
+                // узкие экраны (320dp) не рвутся.
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     AppText(
                       l10n.workoutRunLastWorkout,
                       style: theme.textTheme.titleSmall,
                     ),
-                    const Spacer(),
                     // Бейдж цели сета (54.6, образец): с/повт по параметрам
                     // позиции; данных нет — бейджа нет.
                     if (_goalLabel(l10n) case final label?)
