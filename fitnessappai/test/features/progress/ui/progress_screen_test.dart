@@ -190,7 +190,9 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(of: statCard('Время'), matching: find.text('17 мин')),
+      // 64.6: общее время тренировки — wall-clock 40 мин (не сумма
+      // длительностей подходов 17 мин).
+      find.descendant(of: statCard('Время'), matching: find.text('40 мин')),
       findsOneWidget,
     );
 
@@ -450,7 +452,8 @@ void main() {
     await pumpProgress(tester);
 
     expect(
-      find.descendant(of: statCard('Время'), matching: find.text('1.5 мин')),
+      // 64.6: общее время — wall-clock 40 мин, не сумма подходов (1.5 мин).
+      find.descendant(of: statCard('Время'), matching: find.text('40 мин')),
       findsOneWidget,
     );
   });

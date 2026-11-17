@@ -154,17 +154,20 @@ class StatsAggregator {
     );
   }
 
-  /// Суммарное время подходов с временем (планка, дистанция).
+  /// Суммарное общее время тренировок за период (64.6, решение владельца:
+  /// общее время — целиком на тренировку, одно значение на день).
   ///
-  /// `durationSeconds` заполняется только там, где время вообще вводится:
-  /// у силовых и «свой вес» подходов фиксируются повторения и вес, поэтому
-  /// в сумму не попадают нули (48.11).
-  Future<Duration> totalExerciseTime(StatPeriod period) async {
-    final results = await _results(period);
-    final seconds = results.fold<int>(
-      0,
-      (sum, r) => sum + (r.durationSeconds ?? 0),
-    );
+  /// Источник — [workoutDisplayDuration] (58.2): wall-clock сессии, а при
+  /// времени, внесённом вручную после тренировки, — суммарное время
+  /// подходов с длительностью (48.11). Не делится по упражнениям.
+  Future<Duration> totalWorkoutTime(StatPeriod period) async {
+    final sessions = await _sessions(period);
+    var seconds = 0;
+    for (final session in sessions) {
+      final detail = await workoutRepository.getSession(session.id!);
+      final results = detail?.results ?? const <WorkoutSetResult>[];
+      seconds += workoutDisplayDuration(session, results).inSeconds;
+    }
     return Duration(seconds: seconds);
   }
 
