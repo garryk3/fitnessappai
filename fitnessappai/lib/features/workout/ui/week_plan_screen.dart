@@ -24,6 +24,14 @@ import 'package:fitnessappai/app/theme/app_tokens.dart';
 /// Тап по любой ячейке открывает дравер действий дня (59.2-паттерн);
 /// навигация месяцами — вперёд без ограничения, назад по пройденным
 /// (59.5.в).
+/// Дата строго раньше сегодняшнего дня (64.2): общая утилита гейтов
+/// прошедших дат экрана плана (47.1/48.9/64.2).
+bool isPastDate(DateTime date, DateTime today) {
+  final d = DateTime(date.year, date.month, date.day);
+  final t = DateTime(today.year, today.month, today.day);
+  return d.isBefore(t);
+}
+
 class WeekPlanScreen extends StatefulWidget {
   const WeekPlanScreen({
     super.key,
@@ -150,11 +158,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     return _showDayActions(context, controller, date, l10n);
   }
 
-  bool _isPast(DateTime date, DateTime today) {
-    final d = DateTime(date.year, date.month, date.day);
-    final t = DateTime(today.year, today.month, today.day);
-    return d.isBefore(t);
-  }
+  bool _isPast(DateTime date, DateTime today) => isPastDate(date, today);
 
   @override
   Widget build(BuildContext context) {
@@ -720,13 +724,10 @@ class _ScheduleSheetState extends State<_ScheduleSheet> {
     // 64.2: лист, открытый сегодня и подтверждённый после полуночи, не
     // должен назначить тренировку на прошедший день — контроллер отбросит
     // вызов, показываем тот же снекбар, что и точки входа (47.1/48.9).
+    // «Сегодня» — из контроллера (инъекция часов, как в остальных guard'ах).
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
-    final today = DateTime.now();
-    final date = widget.date;
-    if (DateTime(date.year, date.month, date.day).isBefore(
-      DateTime(today.year, today.month, today.day),
-    )) {
+    if (isPastDate(widget.date, widget.controller.selectedDate.value)) {
       showAppSnackBar(messenger, l10n.weekPlanPastDateGuard);
       return;
     }
