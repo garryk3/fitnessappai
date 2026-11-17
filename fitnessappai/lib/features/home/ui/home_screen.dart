@@ -11,6 +11,7 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/status_badge.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
@@ -54,6 +55,10 @@ class _HomeScreenState extends State<HomeScreen> {
       exerciseRepository:
           widget.exerciseRepository ?? locator.get<ExerciseRepository>(),
       workoutRepository: workoutRepository,
+      // 59.6/64.4: репозиторий плана может отсутствовать в тестовом locator.
+      planScheduleRepository: locator.isRegistered<PlanScheduleRepository>()
+          ? locator.get<PlanScheduleRepository>()
+          : null,
       clock: widget.clock,
     );
   }
@@ -148,6 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
           programName: info.program.name,
           imagePath: info.program.imagePath,
           day: info.upcomingDay,
+          upcomingDate: info.upcomingDate,
           exerciseNames: info.exerciseNames,
           onStart: info.upcomingDay != null
               ? () => context.push('/workout/prepare/${info.upcomingDay!.id}')
@@ -245,6 +251,7 @@ class _ActiveProgramCard extends StatelessWidget {
   const _ActiveProgramCard({
     required this.programName,
     required this.day,
+    this.upcomingDate,
     required this.exerciseNames,
     this.imagePath,
     this.onStart,
@@ -254,6 +261,10 @@ class _ActiveProgramCard extends StatelessWidget {
 
   final String programName;
   final ProgramDay? day;
+
+  /// Дата ближайшего дня (64.4): приоритетнее `day.dayOfWeek` для подписи —
+  /// запланированный день может выпадать на другой день недели.
+  final DateTime? upcomingDate;
   final List<String> exerciseNames;
   final String? imagePath;
   final VoidCallback? onStart;
@@ -319,7 +330,9 @@ class _ActiveProgramCard extends StatelessWidget {
               else
                 AppText(
                   '${l10n.homeUpcomingDay}: '
-                  '${_weekdayLabel(l10n, day!.dayOfWeek)}',
+                  // 64.4: подпись по дате ближайшего дня — запланированный
+                  // день может выпадать на другой день недели, чем шаблон.
+                  '${_weekdayLabel(l10n, upcomingDate?.weekday ?? day!.dayOfWeek)}',
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w600,

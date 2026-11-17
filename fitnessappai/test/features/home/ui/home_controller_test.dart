@@ -12,6 +12,7 @@ import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/home/ui/home_controller.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 
@@ -20,6 +21,7 @@ void main() {
   late ProgramRepository programRepository;
   late ExerciseRepository exerciseRepository;
   late WorkoutRepository workoutRepository;
+  late PlanScheduleRepository scheduleRepository;
   late int programDayId;
 
   setUp(() {
@@ -27,6 +29,7 @@ void main() {
     programRepository = ProgramRepository(db);
     exerciseRepository = ExerciseRepository(db, MediaStore());
     workoutRepository = WorkoutRepository(db);
+    scheduleRepository = PlanScheduleRepository(db);
   });
 
   tearDown(() async {
@@ -170,6 +173,61 @@ void main() {
 
     expect(controller.activePrograms.value.first.upcomingDay?.dayOfWeek, 2);
   });
+
+  test('запланированный на план день приоритетнее шаблонного (64.4)', () async {
+    // Четверг (4). Шаблон программы — только пятница (5);
+    // на плане день программы назначен на четверг.
+    final exId = await insertExercise('Жим штанги');
+    final program = await createProgram(name: 'Силовая', dayOfWeeks: [5]);
+    await addExerciseToDay(program, exId);
+    await programRepository.setActive(program.id!);
+    final days = await programRepository.getDays(program.id!);
+    await scheduleRepository.schedule(days.first.id!, DateTime(2026, 8, 13));
+
+    final controller = HomeController(
+      programRepository: programRepository,
+      exerciseRepository: exerciseRepository,
+      workoutRepository: workoutRepository,
+      planScheduleRepository: scheduleRepository,
+      clock: () => DateTime(2026, 8, 13),
+    );
+    addTearDown(controller.dispose);
+
+    await Future<void>.delayed(Duration.zero);
+
+    final info = controller.activePrograms.value.single;
+    // Ближайший день — запланированный четверг, а не шаблонная пятница.
+    expect(info.upcomingDay?.id, days.first.id!);
+    expect(info.upcomingDate, DateTime(2026, 8, 13));
+    // Тренировка на сегодня запланирована, но не выполнена.
+    expect(info.todayStatus, WeekPlanStatus.pending);
+  });
+
+  test(
+    'шаблонный день раньше запланированного не затмевается (64.4)',
+    () async {
+      // Четверг (4). Шаблон — пятница (5); на плане день назначен на субботу.
+      final program = await createProgram(name: 'Силовая', dayOfWeeks: [5]);
+      await programRepository.setActive(program.id!);
+      final days = await programRepository.getDays(program.id!);
+      await scheduleRepository.schedule(days.first.id!, DateTime(2026, 8, 15));
+
+      final controller = HomeController(
+        programRepository: programRepository,
+        exerciseRepository: exerciseRepository,
+        workoutRepository: workoutRepository,
+        planScheduleRepository: scheduleRepository,
+        clock: () => DateTime(2026, 8, 13),
+      );
+      addTearDown(controller.dispose);
+
+      await Future<void>.delayed(Duration.zero);
+
+      final info = controller.activePrograms.value.single;
+      expect(info.upcomingDay?.dayOfWeek, 5);
+      expect(info.upcomingDate, DateTime(2026, 8, 14));
+    },
+  );
 
   test(
     'активная программа без привязанного дня недели — показывает непривязанный день',
