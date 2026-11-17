@@ -388,10 +388,12 @@ void main() {
     );
   });
 
-  testWidgets('сессия в другой день даёт статус «Перенесено»', (tester) async {
+  testWidgets('позднее выполнение засчитывается вхождению — «Выполнено» '
+      '(64.8)', (tester) async {
     final weekday = fixedNow.weekday;
     final day = await createDay(weekday);
     final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
+    // Выполнено на день позже запланированного (перенос «на завтра»).
     await saveSession(
       workoutRepo,
       day,
@@ -404,41 +406,67 @@ void main() {
 
     final sheet = find.byType(BottomSheet);
     expect(
-      find.descendant(of: sheet, matching: find.text('Перенесено')),
+      find.descendant(of: sheet, matching: find.text('Выполнено')),
       findsOneWidget,
     );
+    // Статус «Перенесено» на плане больше не возникает: факт выполнения
+    // отмечается в исходный день (64.8).
     expect(
-      find.descendant(of: sheet, matching: find.text('Начать')),
+      find.descendant(of: sheet, matching: find.text('Перенесено')),
       findsNothing,
     );
   });
 
-  testWidgets(
-    'будущий запланированный день с сессией в другой день остаётся «Запланировано»',
-    (tester) async {
-      final weekday = _weekdayAfter(fixedNow.weekday);
-      final day = await createDay(weekday);
-      final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
-      await saveSession(
-        workoutRepo,
-        day,
-        scheduledDate.add(const Duration(days: 1)),
-      );
+  testWidgets('сессия за пределами окна ±3 дня не отмечает вхождение '
+      '(64.8)', (tester) async {
+    final weekday = fixedNow.weekday;
+    final day = await createDay(weekday);
+    final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
+    // Сессия неделю спустя — чужое вхождение (следующая неделя).
+    await saveSession(
+      workoutRepo,
+      day,
+      scheduledDate.add(const Duration(days: 8)),
+    );
 
-      await pumpPlan(tester);
-      await openDayDrawer(tester, '11');
+    // Сегодня — среда: понедельник 10.08 прошёл; факт за окном — день
+    // показывается «Пропущено» (по факту дня, 59.5.г), а не «Перенесено».
+    await pumpPlan(tester, now: DateTime(2026, 8, 12));
+    await openDayDrawer(tester, '10');
 
-      final sheet = find.byType(BottomSheet);
-      expect(
-        find.descendant(of: sheet, matching: find.text('Запланировано')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: sheet, matching: find.text('Перенесено')),
-        findsNothing,
-      );
-    },
-  );
+    final sheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Пропущено')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('сессия чужой недели не отмечает будущее вхождение — '
+      '«Запланировано» (64.8)', (tester) async {
+    final weekday = _weekdayAfter(fixedNow.weekday);
+    final day = await createDay(weekday);
+    final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
+    // Сессия той же программы в другой день на 8 дней раньше вхождения —
+    // из прошлого вхождения, не этого.
+    await saveSession(
+      workoutRepo,
+      day,
+      scheduledDate.subtract(const Duration(days: 8)),
+    );
+
+    await pumpPlan(tester);
+    await openDayDrawer(tester, '11');
+
+    final sheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Запланировано')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Перенесено')),
+      findsNothing,
+    );
+  });
 
   for (final theme in [AppTheme.light(), AppTheme.dark()]) {
     final themeName = theme.brightness == Brightness.light
@@ -474,24 +502,6 @@ void main() {
 
       final cs = Theme.of(tester.element(find.text('Выполнено'))).colorScheme;
       expect(badgeColor(tester, 'Выполнено'), cs.onPrimary);
-    });
-
-    testWidgets('бейдж «Перенесено» контрастен ($themeName)', (tester) async {
-      final weekday = fixedNow.weekday;
-      final day = await createDay(weekday);
-      final scheduledDate = mondayOf(fixedNow).add(Duration(days: weekday - 1));
-      await saveSession(
-        workoutRepo,
-        day,
-        scheduledDate.add(const Duration(days: 1)),
-      );
-      // Сегодня — среда: понедельник 10.08 прошёл, чужая сессия даёт
-      // «Перенесено» (59.5.г: для сегодняшнего дня день ещё не прошёл).
-      await pumpPlan(tester, theme: theme, now: DateTime(2026, 8, 12));
-      await openDayDrawer(tester, '10');
-
-      final cs = Theme.of(tester.element(find.text('Перенесено'))).colorScheme;
-      expect(badgeColor(tester, 'Перенесено'), cs.onTertiary);
     });
 
     testWidgets('бейдж «Пропущено» контрастен ($themeName)', (tester) async {

@@ -674,19 +674,30 @@ class WeekPlanController {
     DateTime now,
   ) {
     if (sessions.isNotEmpty) {
-      final latest = sessions.first;
-      final sameDay = _sameDay(latest.performedDate, item.scheduledDate);
-      if (sameDay) {
+      // 64.8 (решение владельца — «что проще»: в исходный день): сессия
+      // засчитывается вхождению, если выполнена ПОЗЖЕ запланированной даты
+      // в пределах ±3 дней (позднее выполнение того же дня программы —
+      // факт выполнения «Выполнено» на запланированной дате). Сессия
+      // РАНЬШЕ вхождения (досрочное выполнение) не отмечает его — иначе
+      // нельзя пропустить сегодняшнее вхождение при вчерашней тренировке
+      // (регресс 43.7); сессия дальше ±3 дней — чужое вхождение.
+      const window = Duration(days: 3);
+      final scheduled = _dateOnly(item.scheduledDate);
+      final lateInWindow = sessions.any((s) {
+        final performed = _dateOnly(s.performedDate);
+        final delta = performed.difference(scheduled);
+        return delta >= Duration.zero && delta <= window;
+      });
+      if (lateInWindow) {
         return WeekPlanStatus.performed;
       }
-      // Будущую запись нельзя «перенести»: чужая сессия того же programDayId
-      // принадлежит другому вхождению (например выполнение на своём дне),
-      // а не этой будущей тренировке. Сегодняшний день — так же: день ещё
-      // не «прошёл» (59.5.г), чужая сессия — досрочное выполнение.
+      // Сессия чужой недели: будущее и сегодняшнее вхождение ещё не
+      // «прошло» (59.5.г) — остаётся в плане без отметки; прошедшее —
+      // «Пропущено» по факту дня.
       if (!item.scheduledDate.isBefore(now)) {
         return isSkipped ? WeekPlanStatus.skipped : WeekPlanStatus.pending;
       }
-      return WeekPlanStatus.rescheduled;
+      return WeekPlanStatus.pastSkipped;
     }
     if (isSkipped) {
       return WeekPlanStatus.skipped;
