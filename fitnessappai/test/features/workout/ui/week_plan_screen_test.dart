@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:fitnessappai/app/theme/app_theme.dart';
+import 'package:fitnessappai/app/theme/status_colors.dart';
 import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
@@ -247,6 +248,65 @@ void main() {
       expect(find.text('Июль 2026'), findsNothing);
     },
   );
+
+  testWidgets('месяц: выполненный, пропущенный и будущий дни в разных '
+      'цветах (64.10)', (tester) async {
+    final performed = await createDay(DateTime.monday, name: 'Вып');
+    await createDay(DateTime.tuesday, name: 'Проп');
+    await createDay(DateTime.thursday, name: 'Буд');
+    // fixedNow = понедельник 10.08 — сдвигаем «сегодня» на среду 12.08,
+    // чтобы пн/вт были прошлыми днями.
+    await saveSession(workoutRepo, performed, DateTime(2026, 8, 10));
+
+    await pumpPlan(tester, now: DateTime(2026, 8, 12));
+
+    MonthDayCell cellOf(int dayOfMonth) => tester.widget<MonthDayCell>(
+      find
+          .ancestor(
+            of: find.text('$dayOfMonth'),
+            matching: find.byType(MonthDayCell),
+          )
+          .first,
+    );
+
+    final cs = Theme.of(tester.element(find.text('12'))).colorScheme;
+    // Выполненный понедельник — токен «Выполнено» (primary).
+    expect(cellOf(10).background, cs.statusPerformedContainer);
+    // Пропущенный вторник (прошёл без факта) — приподнятая нейтральная
+    // поверхность + outlined-бордер (§4, fix design-review: различимость
+    // от пустого дня).
+    expect(cellOf(11).background, cs.surfaceContainerHighest);
+    expect((cellOf(11).border! as Border).top.color, cs.outline);
+    // Будущий четверг — primaryContainer, как раньше.
+    expect(cellOf(13).background, cs.primaryContainer);
+    // Пустой день без тренировок — нейтральная поверхность.
+    expect(cellOf(14).background, cs.surfaceContainerLow);
+    // Tooltip — semantic label статуса дня (п. 3 плана).
+    expect(cellOf(10).tooltip, 'Выполнено');
+    expect(cellOf(11).tooltip, 'Пропущено');
+    expect(cellOf(13).tooltip, 'Запланировано');
+    expect(cellOf(14).tooltip, isNull);
+  });
+
+  testWidgets('месяц: «сегодня» на выполненном дне читается (64.10, '
+      'fix design-review)', (tester) async {
+    final performed = await createDay(fixedNow.weekday);
+    // Сегодня (10.08) выполнен — фон primary, номер и рамка onPrimary.
+    await saveSession(workoutRepo, performed, fixedNow);
+
+    await pumpPlan(tester);
+
+    final cell = tester.widget<MonthDayCell>(
+      find
+          .ancestor(of: find.text('10'), matching: find.byType(MonthDayCell))
+          .first,
+    );
+    final cs = Theme.of(tester.element(find.text('10'))).colorScheme;
+    expect(cell.todayForegroundColor, cs.statusPerformedOnContainer);
+    // Fix design-review: рамка в контрастном primary-цвете (onPrimary на
+    // светлом зазоре невидима — 1.05:1).
+    expect((cell.border! as Border).top.color, cs.onPrimaryContainer);
+  });
 
   testWidgets('тренировочный день: тап по ячейке открывает действия дня', (
     tester,

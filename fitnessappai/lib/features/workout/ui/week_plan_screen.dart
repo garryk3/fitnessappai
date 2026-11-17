@@ -18,6 +18,7 @@ import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 import 'package:fitnessappai/app/theme/app_tokens.dart';
+import 'package:fitnessappai/app/theme/status_colors.dart';
 
 /// Экран «План»: единый календарь-месяц с тренировочными днями (59.5).
 ///
@@ -259,9 +260,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     );
   }
 
-  /// Ячейка календаря месяца: тренировочный день — `primaryContainer` плюс
-  /// иконки групп мышц; «сегодня» — glow (тёмная тема) и рамка. Тап по любому
-  /// дню открывает дравер действий дня (59.5.б — логика недели).
+  /// Ячейка календаря месяца: цвет по статусу дня (64.10 — выполненный
+  /// primary, пропущенный нейтральный, будущий primaryContainer), иконки
+  /// групп мышц; «сегодня» — glow (тёмная тема) и рамка. Tooltip несёт
+  /// статус дня для скринридера (semantic labels, п. 3 плана 64.10). Тап
+  /// по любому дню открывает дравер действий дня (59.5.б).
   Widget _buildMonthCell(
     BuildContext context,
     WeekPlanController controller,
@@ -275,20 +278,54 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     }
     final colorScheme = Theme.of(context).colorScheme;
     final dayItems = _itemsForDay(controller.items.value, date);
-    final isTraining = dayItems.isNotEmpty;
     final isToday = _sameDay(date, today);
+    // 64.10: цвет ячейки месяца — по статусу дня. Выполненный день —
+    // primary («Выполнено»-токен статуса), пропущенный (прошёл без факта
+    // или отменён) — приподнятая нейтральная поверхность, будущая
+    // тренировка — primaryContainer (как раньше), пустой — нейтральная.
+    final (Color background, Color foreground) = _dayCellColors(
+      dayItems,
+      colorScheme,
+    );
+    final allPerformed =
+        dayItems.isNotEmpty &&
+        dayItems.every((i) => i.status == WeekPlanStatus.performed);
+    final missedDay =
+        dayItems.isNotEmpty &&
+        !allPerformed &&
+        dayItems.every(
+          (i) =>
+              i.status == WeekPlanStatus.skipped ||
+              i.status == WeekPlanStatus.pastSkipped,
+        );
     final cell = MonthDayCell(
       day: date.day,
       fillHeight: true,
-      background: isTraining
-          ? colorScheme.primaryContainer
-          : colorScheme.surfaceContainerLow,
-      foreground: isTraining
-          ? colorScheme.onPrimaryContainer
-          : colorScheme.onSurfaceVariant,
+      background: background,
+      foreground: foreground,
+      // Semantic labels (64.10, п. 3): статус дня для скринридера —
+      // material Tooltip внутри AppTooltip даёт semantics.
+      tooltip: _dayStatusLabel(dayItems, l10n),
       isToday: isToday,
+      // Fix design-review (Critical): на выполненном «сегодня» (фон primary)
+      // primary-номер и primary-рамка невидимы — номер onPrimary, рамка
+      // тоже в контрастном к фону цвете.
+      todayForegroundColor: allPerformed && isToday
+          ? colorScheme.statusPerformedOnContainer
+          : null,
       icons: _cellMuscleIcons(dayItems),
-      border: isToday ? Border.all(color: colorScheme.primary) : null,
+      border: switch ((isToday, missedDay)) {
+        // Пропущенный день — outlined по §4 (контраст к пустому дню).
+        (_, true) => Border.all(color: colorScheme.statusSkippedOutline),
+        (true, false) => Border.all(
+          // Fix design-review: рамка onPrimary невидима на светлом зазоре
+          // (1.05:1) — выполненное «сегодня» в контрастном primary-цвете.
+          color: allPerformed
+              ? colorScheme.onPrimaryContainer
+              : colorScheme.primary,
+        ),
+        _ => null,
+      },
       onTap: () => _onDayTap(context, controller, date, l10n),
     );
     if (!isToday) {
@@ -302,6 +339,61 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       showBorder: false,
       child: cell,
     );
+  }
+
+  /// Цвет ячейки месяца по статусам её тренировок (64.10).
+  ///
+  /// Все выполнены — токен статуса «Выполнено» (primary); пропущено/прошло
+  /// без факта — приподнятая нейтральная поверхность («Пропущено» —
+  /// нейтральная отмена, не error, DESIGN.md §4); будущее/смешанный день —
+  /// primaryContainer; без тренировок — нейтральная поверхность.
+  (Color, Color) _dayCellColors(
+    List<WeekPlanItem> dayItems,
+    ColorScheme colorScheme,
+  ) {
+    if (dayItems.isEmpty) {
+      return (colorScheme.surfaceContainerLow, colorScheme.onSurfaceVariant);
+    }
+    final statuses = dayItems.map((i) => i.status).toSet();
+    // Union-проверки (fix design-review Low): смешанный день из разных
+    // пропусков (skipped+pastSkipped) тоже «пропущенный», а не тренировочный.
+    final allPerformed = statuses.every((s) => s == WeekPlanStatus.performed);
+    final allMissed = statuses.every(
+      (s) => s == WeekPlanStatus.pastSkipped || s == WeekPlanStatus.skipped,
+    );
+    if (allPerformed) {
+      return (
+        colorScheme.statusPerformedContainer,
+        colorScheme.statusPerformedOnContainer,
+      );
+    }
+    if (allMissed) {
+      return (
+        colorScheme.surfaceContainerHighest,
+        colorScheme.onSurfaceVariant,
+      );
+    }
+    return (colorScheme.primaryContainer, colorScheme.onPrimaryContainer);
+  }
+
+  /// Подпись статуса дня для semantic labels (64.10, п. 3): слово статуса
+  /// («Выполнено»/«Пропущено»/«Запланировано») — без тренировок тултипа нет.
+  String? _dayStatusLabel(List<WeekPlanItem> dayItems, AppLocalizations l10n) {
+    if (dayItems.isEmpty) {
+      return null;
+    }
+    final statuses = dayItems.map((i) => i.status).toSet();
+    if (statuses.length == 1) {
+      final status = statuses.single;
+      if (status == WeekPlanStatus.performed) {
+        return l10n.schedulePerformed;
+      }
+      if (status == WeekPlanStatus.pastSkipped ||
+          status == WeekPlanStatus.skipped) {
+        return l10n.scheduleSkipped;
+      }
+    }
+    return l10n.schedulePending;
   }
 
   /// До двух иконок групп мышц дня: дедупликация по ассету (грудь и пресс —
