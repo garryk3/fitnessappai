@@ -894,11 +894,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutWarmupSkip => 'Пропустить';
 
   @override
-  String workoutWarmupSecondsLeft(int seconds) {
-    return 'осталось $seconds с';
-  }
-
-  @override
   String get workoutWarmupStartWorkout => 'Начать тренировку';
 
   @override

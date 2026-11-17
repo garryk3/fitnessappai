@@ -11,6 +11,7 @@ import 'package:fitnessappai/features/workout/ui/workout_run_screen.dart';
 import 'package:fitnessappai/features/workout/ui/workout_warmup_screen.dart';
 import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/app_scaffold.dart';
 
 class _FakeWakelock implements WakelockService {
   int enableCalls = 0;
@@ -75,8 +76,21 @@ void main() {
 
     expect(find.text('Разминка'), findsOneWidget);
     expect(find.text('00:05'), findsOneWidget);
-    expect(find.text('осталось 5 с'), findsOneWidget);
+    // 61.9: дубль информации удалён — «осталось N с» больше не рисуется.
+    expect(find.textContaining('осталось'), findsNothing);
     expect(find.text('Пропустить'), findsOneWidget);
+  });
+
+  testWidgets('61.9: таймер-карточка вертикально центрирована в теле', (
+    tester,
+  ) async {
+    await pumpWarmup(tester, seconds: 30);
+
+    // Центр карточки совпадает с центром тела экрана (без шапки) в пределах
+    // допуска: содержимое центрируется, а не прижато к краю.
+    final cardCenter = tester.getCenter(find.text('00:30'));
+    final screenHeight = tester.getSize(find.byType(AppScaffold)).height;
+    expect((cardCenter.dy - screenHeight / 2).abs(), lessThan(24));
   });
 
   testWidgets('«Пропустить» переходит к тренировке', (tester) async {

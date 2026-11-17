@@ -407,15 +407,6 @@
   "workoutWarmup": "Разминка",
   "workoutWarmupDone": "Разминка завершена",
   "workoutWarmupSkip": "Пропустить",
-  "workoutWarmupSecondsLeft": "осталось {seconds} с",
-  "@workoutWarmupSecondsLeft": {
-    "description": "Оставшееся время разминки",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "workoutWarmupStartWorkout": "Начать тренировку",
   "workoutPrepareNotFound": "День не найден",
   "workoutPrepareRest": "Отдых {seconds} с",
