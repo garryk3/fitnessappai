@@ -1126,6 +1126,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Запишите подходы с весом — прогресс появится здесь';
 
   @override
+  String get progressMetricOneRmHint =>
+      'Для силовых — оценка одноповторного максимума (≈)';
+
+  @override
+  String get progressMetricMaxRepsHint =>
+      'Для упражнений с собственным весом — максимум повторений за подход';
+
+  @override
   String get progressProgressionEmptyHint =>
       'Выполните тренировку с этим упражнением — график появится здесь.';
 

@@ -2086,6 +2086,18 @@ abstract class AppLocalizations {
   /// **'Запишите подходы с весом — прогресс появится здесь'**
   String get progressMetricNoDataHint;
 
+  /// No description provided for @progressMetricOneRmHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для силовых — оценка одноповторного максимума (≈)'**
+  String get progressMetricOneRmHint;
+
+  /// No description provided for @progressMetricMaxRepsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для упражнений с собственным весом — максимум повторений за подход'**
+  String get progressMetricMaxRepsHint;
+
   /// No description provided for @progressProgressionEmptyHint.
   ///
   /// In ru, this message translates to:
