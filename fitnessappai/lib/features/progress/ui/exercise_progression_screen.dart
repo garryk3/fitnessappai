@@ -252,7 +252,9 @@ class _ExerciseProgressionScreenState extends State<ExerciseProgressionScreen> {
 
   String _formatMetric(AppLocalizations l10n, ExerciseType type, double value) {
     return switch (type) {
-      ExerciseType.strength => '${_fmt(value)} ${l10n.workoutUnitKg}',
+      // Силовые — оценка 1ПМ по Эпли (64.3, вариант B), знак «≈» отличает
+      // оценку от фактически поднятого веса.
+      ExerciseType.strength => l10n.progressionMetricOneRm(_fmt(value)),
       ExerciseType.bodyweight => '${value.round()} ${l10n.workoutUnitReps}',
       ExerciseType.distance => '${_fmt(value / 1000)} ${l10n.workoutUnitKm}',
       ExerciseType.plank => '${_fmt(value / 60)} ${l10n.workoutUnitMinutes}',

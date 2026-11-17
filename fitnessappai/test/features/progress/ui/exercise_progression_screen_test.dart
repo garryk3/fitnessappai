@@ -123,7 +123,8 @@ void main() {
 
     expect(find.text('Приседания'), findsOneWidget);
     expect(find.byType(LineChart), findsOneWidget);
-    expect(find.text('Максимум: 50 кг'), findsOneWidget);
+    // Максимум — оценка 1ПМ по Эпли (64.3): 50 × (1 + 6/30) = 60.
+    expect(find.text('Максимум: ≈60 кг'), findsOneWidget);
     expect(find.text('10 августа 2026'), findsOneWidget);
     expect(find.text('12 августа 2026'), findsOneWidget);
   });

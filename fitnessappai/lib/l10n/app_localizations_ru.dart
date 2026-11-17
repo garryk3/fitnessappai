@@ -920,6 +920,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutUnitKm => 'км';
 
   @override
+  String progressionMetricOneRm(String value) {
+    return '≈$value кг';
+  }
+
+  @override
   String get exerciseParamsAvgSpeed => 'Ср. скорость (км/ч)';
 
   @override
@@ -1119,6 +1124,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get progressMetricNoDataHint =>
       'Запишите подходы с весом — прогресс появится здесь';
+
+  @override
+  String get progressMetricOneRmHint =>
+      'Для силовых — оценка одноповторного максимума (≈)';
+
+  @override
+  String get progressMetricMaxRepsHint =>
+      'Для упражнений с собственным весом — максимум повторений за подход';
 
   @override
   String get progressProgressionEmptyHint =>

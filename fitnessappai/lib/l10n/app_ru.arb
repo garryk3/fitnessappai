@@ -423,6 +423,15 @@
   "workoutUnitMinutes": "мин",
   "workoutUnitKg": "кг",
   "workoutUnitKm": "км",
+  "progressionMetricOneRm": "≈{value} кг",
+  "@progressionMetricOneRm": {
+    "description": "Оценка одноповторного максимума (Эпли) в графике прогрессии силового упражнения (64.3)",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "exerciseParamsAvgSpeed": "Ср. скорость (км/ч)",
   "exerciseParamsAvgCadence": "Ср. каденс (об/мин)",
   "exerciseParamsAvgPulse": "Ср. пульс (уд/мин)",
@@ -553,6 +562,8 @@
   "progressProgressionEmpty": "Ещё нет тренировок с этим упражнением",
   "progressMetricNoData": "Нет данных за период",
   "progressMetricNoDataHint": "Запишите подходы с весом — прогресс появится здесь",
+  "progressMetricOneRmHint": "Для силовых — оценка одноповторного максимума (≈)",
+  "progressMetricMaxRepsHint": "Для упражнений с собственным весом — максимум повторений за подход",
   "progressProgressionEmptyHint": "Выполните тренировку с этим упражнением — график появится здесь.",
   "progressProgressionMax": "Максимум",
   "progressDayDetail": "Тренировки за день",

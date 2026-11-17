@@ -266,51 +266,51 @@ void main() {
       expect(await aggregator.totalReps(second, StatPeriod.week), 5);
     });
 
+    test('exerciseMetricPerSlice: bodyweight — максимум повторов за подход '
+        'в срезе (64.3)', () async {
+      final exercise = await exerciseRepo.create(
+        Exercise(
+          name: 'Отжимания',
+          type: ExerciseType.bodyweight,
+          createdAt: clock(),
+          updatedAt: clock(),
+        ),
+        const [],
+      );
+
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+        setResult(
+          exerciseId: exercise.id,
+          type: ExerciseType.bodyweight,
+          weightKg: null,
+          reps: 12,
+        ),
+        setResult(
+          exerciseId: exercise.id,
+          type: ExerciseType.bodyweight,
+          weightKg: null,
+          reps: 10,
+        ),
+        setResult(
+          exerciseId: exercise.id,
+          type: ExerciseType.bodyweight,
+          weightKg: null,
+          reps: 8,
+        ),
+      ]);
+
+      final metric = await aggregator.exerciseMetricPerSlice(
+        exercise.id!,
+        StatPeriod.week,
+      );
+      // Лучший подход в срезе, а не сумма.
+      expect(metric[6], 12);
+      expect(metric.sublist(0, 6), everyElement(0));
+    });
+
     test(
-      'exerciseMetricPerSlice: bodyweight — сумма повторов в срезе',
-      () async {
-        final exercise = await exerciseRepo.create(
-          Exercise(
-            name: 'Отжимания',
-            type: ExerciseType.bodyweight,
-            createdAt: clock(),
-            updatedAt: clock(),
-          ),
-          const [],
-        );
-
-        await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
-          setResult(
-            exerciseId: exercise.id,
-            type: ExerciseType.bodyweight,
-            weightKg: null,
-            reps: 12,
-          ),
-          setResult(
-            exerciseId: exercise.id,
-            type: ExerciseType.bodyweight,
-            weightKg: null,
-            reps: 10,
-          ),
-          setResult(
-            exerciseId: exercise.id,
-            type: ExerciseType.bodyweight,
-            weightKg: null,
-            reps: 8,
-          ),
-        ]);
-
-        final metric = await aggregator.exerciseMetricPerSlice(
-          exercise.id!,
-          StatPeriod.week,
-        );
-        expect(metric[6], 30);
-        expect(metric.sublist(0, 6), everyElement(0));
-      },
-    );
-
-    test(
-      'exerciseProgression: max вес по датам, отсортирован по дате',
+      'exerciseProgression: оценка 1ПМ (Эпли) по датам, отсортирован по дате '
+      '(64.3)',
       () async {
         final id = await insertExercise('Приседания');
         await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
@@ -327,50 +327,65 @@ void main() {
         final points = await aggregator.exerciseProgression(id);
         expect(points, hasLength(3));
         expect(points[0].date, DateTime(2026, 8, 10));
-        expect(points[0].metric, 50);
+        // max(40 × (1 + 8/30), 50 × (1 + 6/30)) = 60.
+        expect(points[0].metric, closeTo(60.0, 0.01));
         expect(points[1].date, DateTime(2026, 8, 12));
-        expect(points[1].metric, 45);
+        // 45 × (1 + 5/30) = 52.5.
+        expect(points[1].metric, closeTo(52.5, 0.01));
         expect(points[2].date, DateTime(2026, 8, 20));
-        expect(points[2].metric, 60);
+        // 60 × (1 + 3/30) = 66.
+        expect(points[2].metric, closeTo(66.0, 0.01));
       },
     );
 
     test(
-      'exerciseProgression: bodyweight суммирует повторы по датам',
+      'exerciseProgression: силовое без повторений — 1ПМ равен весу (64.3)',
       () async {
-        final id = await insertExercise(
-          'Отжимания',
-          type: ExerciseType.bodyweight,
-        );
+        final id = await insertExercise('Приседания');
         await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
-          setResult(
-            exerciseId: id,
-            type: ExerciseType.bodyweight,
-            weightKg: null,
-            reps: 12,
-          ),
-          setResult(
-            exerciseId: id,
-            type: ExerciseType.bodyweight,
-            weightKg: null,
-            reps: 10,
-          ),
-        ]);
-        await workoutRepo.saveSession(session(DateTime(2026, 8, 12)), [
-          setResult(
-            exerciseId: id,
-            type: ExerciseType.bodyweight,
-            weightKg: null,
-            reps: 8,
-          ),
+          setResult(exerciseId: id, reps: null, weightKg: 50),
         ]);
 
         final points = await aggregator.exerciseProgression(id);
-        expect(points, hasLength(2));
-        expect(points[0].metric, 22);
-        expect(points[1].metric, 8);
+        expect(points.single.metric, 50);
       },
     );
+
+    test('exerciseProgression: bodyweight — максимум повторов за подход '
+        '(64.3)', () async {
+      final id = await insertExercise(
+        'Отжимания',
+        type: ExerciseType.bodyweight,
+      );
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+        setResult(
+          exerciseId: id,
+          type: ExerciseType.bodyweight,
+          weightKg: null,
+          reps: 12,
+        ),
+        setResult(
+          exerciseId: id,
+          type: ExerciseType.bodyweight,
+          weightKg: null,
+          reps: 10,
+        ),
+      ]);
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 12)), [
+        setResult(
+          exerciseId: id,
+          type: ExerciseType.bodyweight,
+          weightKg: null,
+          reps: 8,
+        ),
+      ]);
+
+      final points = await aggregator.exerciseProgression(id);
+      expect(points, hasLength(2));
+      // Лучший подход дня, а не сумма подходов.
+      expect(points[0].metric, 12);
+      expect(points[1].metric, 8);
+    });
 
     test(
       'exerciseProgression: неизвестное упражнение — пустой список',

@@ -565,6 +565,24 @@ class _MetricChart extends StatelessWidget {
               },
             ),
             const SizedBox(height: 8),
+            // 64.3 (фикс design-review): метрика графика — оценка
+            // (1ПМ для силы, max за подход для своего веса); подпись
+            // поясняет смену семантики.
+            if (switch (selected?.type) {
+                  ExerciseType.strength => l10n.progressMetricOneRmHint,
+                  ExerciseType.bodyweight => l10n.progressMetricMaxRepsHint,
+                  ExerciseType.distance || ExerciseType.plank || null => null,
+                }
+                case final hint?) ...[
+              AppText(
+                hint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              // Ритм: не прилипать к верху графика/empty-state (L64.3).
+              const SizedBox(height: 4),
+            ],
             // 61.6: без точек за период — empty-state вместо пустых осей
             // (выглядит как сломанная карточка); карточка компактнее
             // состояния с графиком — это ок, осей под график нет.
