@@ -72,6 +72,7 @@ class MonthDayCell extends StatelessWidget {
     this.showWorkoutIcon = false,
     this.icons,
     this.isToday = false,
+    this.todayForegroundColor,
     this.fillHeight = false,
   });
 
@@ -89,6 +90,10 @@ class MonthDayCell extends StatelessWidget {
 
   /// Сегодня: номер дня подсвечивается primary (рамка — через [border]).
   final bool isToday;
+
+  /// Цвет номера дня при [isToday] (64.10): null — `primary` (как раньше).
+  /// Выполненный «сегодня» на primary-фоне передаёт `onPrimary`.
+  final Color? todayForegroundColor;
 
   /// true — ячейка растягивается на высоту строки (режим заполнения),
   /// false — фиксированная высота 52 для прокручиваемой сетки.
@@ -126,7 +131,13 @@ class MonthDayCell extends StatelessWidget {
                     '$day',
                     maxLines: 1,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: isToday ? theme.colorScheme.primary : foreground,
+                      // 64.10 (fix design-review): цвет номера «сегодня»
+                      // настраиваемый — на выполненном дне (фон primary)
+                      // primary-номер невидим; «История» не передаёт
+                      // параметр и сохраняет прежнее поведение.
+                      color: isToday
+                          ? (todayForegroundColor ?? theme.colorScheme.primary)
+                          : foreground,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
