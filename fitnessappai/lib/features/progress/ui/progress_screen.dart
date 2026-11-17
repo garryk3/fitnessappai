@@ -573,13 +573,16 @@ class _MetricChart extends StatelessWidget {
                   ExerciseType.bodyweight => l10n.progressMetricMaxRepsHint,
                   ExerciseType.distance || ExerciseType.plank || null => null,
                 }
-                case final hint?)
+                case final hint?) ...[
               AppText(
                 hint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
+              // Ритм: не прилипать к верху графика/empty-state (L64.3).
+              const SizedBox(height: 4),
+            ],
             // 61.6: без точек за период — empty-state вместо пустых осей
             // (выглядит как сломанная карточка); карточка компактнее
             // состояния с графиком — это ок, осей под график нет.

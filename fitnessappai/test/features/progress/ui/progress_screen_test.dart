@@ -664,6 +664,46 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('подпись оценки метрики видна для силы, нет для дистанции '
+      '(64.3)', (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final strengthId = await insertExercise('Приседания');
+    final distanceId = await insertExercise('Бег', type: ExerciseType.distance);
+    await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
+      setResult(exerciseId: strengthId, reps: 8, weightKg: 40),
+      setResult(
+        exerciseId: distanceId,
+        type: ExerciseType.distance,
+        reps: null,
+        weightKg: null,
+        distanceMeters: 3000,
+        durationSeconds: 900,
+      ),
+    ]);
+
+    await pumpProgressRouter(tester);
+
+    // По умолчанию выбрана «Бег» (первая по алфавиту) — подписи нет
+    // (дистанция считается фактической суммой).
+    expect(
+      find.text('Для силовых — оценка одноповторного максимума (≈)'),
+      findsNothing,
+    );
+
+    // Переключаемся на силовое — подпись оценки 1ПМ видна.
+    await tester.tap(find.text('Бег'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Приседания'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Для силовых — оценка одноповторного максимума (≈)'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('кнопка динамики открывает экран прогрессии упражнения', (
     tester,
   ) async {
