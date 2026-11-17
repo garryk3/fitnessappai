@@ -1954,12 +1954,6 @@ abstract class AppLocalizations {
   /// **'К прогрессу'**
   String get workoutRunGoProgress;
 
-  /// No description provided for @workoutRunRepeat.
-  ///
-  /// In ru, this message translates to:
-  /// **'Повторить тренировку'**
-  String get workoutRunRepeat;
-
   /// No description provided for @workoutRunExercises.
   ///
   /// In ru, this message translates to:

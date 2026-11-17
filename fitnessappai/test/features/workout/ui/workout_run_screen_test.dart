@@ -614,24 +614,17 @@ void main() {
       final progress = find.widgetWithText(AppGradientButton, 'К прогрессу');
       expect(progress, findsOneWidget);
       expect(tester.widget<AppGradientButton>(progress).pill, isTrue);
+      // 64.5: кнопки «Повторить тренировку» на экране окончания больше нет.
       expect(
         find.widgetWithText(AppOutlinedButton, 'Повторить тренировку'),
-        findsOneWidget,
+        findsNothing,
       );
 
-      // «Повторить» перезапускает тот же день на месте: свежая тренировка
-      // (без навигации — go_router переиспользует Element маршрута).
-      await tester.ensureVisible(find.text('Повторить тренировку'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Повторить тренировку'));
-      await tester.pumpAndSettle();
-      expect(find.text('Тренировка завершена'), findsNothing);
-      expect(find.text('Упражнение 1 из 1 · Подход 1 из 1'), findsOneWidget);
-      expect(find.text('Приседания'), findsOneWidget);
-      expect(find.text('Подход выполнен'), findsOneWidget);
-      // Повтор перезапускает foreground service после stop() на finished.
+      // Единственная CTA — «К прогрессу»; foreground service остановлен
+      // на finished и не перезапускается (64.5: «Повторить» удалено).
+      expect(find.text('Тренировка завершена'), findsOneWidget);
       expect(fg.stopCalls, 1);
-      expect(fg.startCalls, 2);
+      expect(fg.startCalls, 1);
     },
   );
 

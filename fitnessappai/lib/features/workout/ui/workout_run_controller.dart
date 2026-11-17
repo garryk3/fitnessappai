@@ -229,8 +229,8 @@ class WorkoutRunController {
         result.results,
       );
       // Сессия записана — снимок на диске обязан исчезнуть до чего угодно
-      // ещё: «Повторить тренировку», сворачивание, force-stop на экране
-      // итогов не должны воскрешать завершённую тренировку (57.6, TC-203).
+      // ещё: сворачивание, force-stop на экране итогов не должны
+      // воскрешать завершённую тренировку (57.6, TC-203).
       try {
         await _checkpointClearer();
       } catch (e) {
@@ -243,22 +243,5 @@ class WorkoutRunController {
     } finally {
       saving.value = false;
     }
-  }
-
-  /// Перезапускает ту же тренировку после завершения («Повторить тренировку»,
-  /// 54.6) — без навигации.
-  ///
-  /// Навигация `pushReplacement` на тот же путь ненадёжна: go_router при
-  /// единственном маршруте в стеке возвращает декларативный список с тем же
-  /// `pageKey`, Navigator переиспользует Element и старый State с фазой
-  /// `finished` остаётся на экране. Перезапуск на месте сбрасывает флаги
-  /// сохранения и прогоняет [load] заново: `workout.start` очищает результаты
-  /// и возвращает фазу `exercise`.
-  Future<void> restart() async {
-    _saveInFlight = null;
-    _savedDetail = null;
-    saved.value = false;
-    saving.value = false;
-    await load();
   }
 }

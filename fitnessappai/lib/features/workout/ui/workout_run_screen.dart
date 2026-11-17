@@ -115,7 +115,8 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   void Function()? _disposeForegroundEffect;
 
   /// Жив ли foreground service: после `stop()` на `finished` эффект фазы
-  /// должен снова `start`, а не no-op `update` (54.6, «Повторить»).
+  /// должен снова `start`, а не no-op `update` (54.6: перезапуск фазы,
+  /// восстановление из чекпоинта).
   bool _foregroundRunning = false;
 
   @override
@@ -211,8 +212,8 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   /// Обновляет уведомление foreground service под текущую фазу тренировки;
   /// при завершении останавливает сервис.
   ///
-  /// После остановки (`finished`, затем «Повторить тренировку», 54.6) `update`
-  /// на живом сервисе — no-op, поэтому третья фаза снова `start` сервиса.
+  /// После остановки (`finished`) `update` на живом сервисе — no-op,
+  /// поэтому третья фаза снова `start` сервиса (восстановление из чекпоинта).
   void _updateForeground() {
     final workout = _controller.workout;
     switch (workout.phase.value) {
@@ -1356,7 +1357,6 @@ class _FinishedViewState extends State<_FinishedView> {
     final setsCount = workout.results.value.length;
     final minutes = widget.controller.durationMinutes;
     final exercises = workout.exercises;
-    final canRepeat = widget.controller.programDayId != null;
 
     return Center(
       child: SingleChildScrollView(
@@ -1512,13 +1512,6 @@ class _FinishedViewState extends State<_FinishedView> {
                 pill: true,
                 label: l10n.workoutRunGoProgress,
               ),
-              if (canRepeat) ...[
-                const SizedBox(height: 8),
-                AppOutlinedButton(
-                  label: l10n.workoutRunRepeat,
-                  onPressed: () => widget.controller.restart(),
-                ),
-              ],
             ],
           ],
         ),
