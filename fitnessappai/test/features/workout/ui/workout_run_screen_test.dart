@@ -958,8 +958,9 @@ void main() {
 
     expect(find.text('Последняя тренировка'), findsOneWidget);
     expect(find.textContaining('20'), findsWidgets);
-    // Бейдж цели сета по параметрам позиции (54.6): reps=8.
-    expect(find.text('Цель: 8 повт'), findsOneWidget);
+    // Бейдж цели сета по типу упражнения (64.7, вариант A): силовое —
+    // повторения + вес, вес позиции больше не теряется.
+    expect(find.text('Цель: 8 повт · 20 кг'), findsOneWidget);
   });
 
   testWidgets('бейдж цели показывает длительность для планки (54.6)', (
@@ -1007,6 +1008,99 @@ void main() {
       find.descendant(of: badge, matching: find.text('Цель: 30 с')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('бейдж цели показывает дистанцию для бега (64.7)', (
+    tester,
+  ) async {
+    final dayId = await createDay(
+      type: ExerciseType.distance,
+      distanceMeters: 3000,
+      durationSeconds: 900,
+      sets: 1,
+    );
+    final exerciseId = (await programRepo.getExercises(dayId)).first.id!;
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        id: null,
+        programId: null,
+        programName: 'База',
+        programDayId: null,
+        dayIndex: 0,
+        variant: WorkoutVariant.main,
+        performedDate: DateTime(2026, 8, 14),
+        startedAt: DateTime(2026, 8, 14, 18, 0),
+        endedAt: DateTime(2026, 8, 14, 18, 30),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: exerciseId,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.distance,
+          setIndex: 1,
+          reps: null,
+          weightKg: null,
+          durationSeconds: 900,
+          distanceMeters: 3000,
+          completedAt: DateTime(2026, 8, 14, 18, 5),
+        ),
+      ],
+    );
+
+    await pumpRun(tester, dayId);
+
+    // Дистанция — цель по типу упражнения; вес позиции не попадает в бейдж.
+    final badge = find.byType(AppBadge);
+    expect(
+      find.descendant(
+        of: badge,
+        matching: find.text('Цель: 3.0 км · 15.0 мин'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('карточка последней тренировки не рвётся на 320dp '
+      '(64.7, guard)', (tester) async {
+    tester.view.physicalSize = const Size(320, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final dayId = await createDay();
+    final exerciseId = (await programRepo.getExercises(dayId)).first.id!;
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        id: null,
+        programId: null,
+        programName: 'База',
+        programDayId: null,
+        dayIndex: 0,
+        variant: WorkoutVariant.main,
+        performedDate: DateTime(2026, 8, 14),
+        startedAt: DateTime(2026, 8, 14, 18, 0),
+        endedAt: DateTime(2026, 8, 14, 18, 30),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseId: exerciseId,
+          exerciseName: 'Приседания',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 8,
+          weightKg: 20,
+          durationSeconds: null,
+          distanceMeters: null,
+          completedAt: DateTime(2026, 8, 14, 18, 5),
+        ),
+      ],
+    );
+
+    // Переполнение заголовка уронило бы тест исключением RenderFlex;
+    // Wrap переносит широкий бейдж цели на следующую строку.
+    await pumpRun(tester, dayId);
+    expect(find.text('Цель: 8 повт · 20 кг'), findsOneWidget);
   });
 
   testWidgets('карточка последней тренировки скрыта без истории', (

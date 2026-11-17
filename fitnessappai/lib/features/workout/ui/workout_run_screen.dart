@@ -23,6 +23,7 @@ import 'package:fitnessappai/features/workout/domain/workout_checkpoint.dart';
 import 'package:fitnessappai/features/workout/domain/workout_controller.dart';
 import 'package:fitnessappai/features/workout/domain/workout_exercise.dart';
 import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
+import 'package:fitnessappai/features/workout/domain/workout_goal_formatter.dart';
 import 'package:fitnessappai/features/workout/domain/workout_set_input.dart';
 import 'package:fitnessappai/features/workout/ui/workout_run_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -591,40 +592,10 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
     );
   }
 
-  String _paramsSummary(AppLocalizations l10n, WorkoutExercise exercise) {
-    final p = exercise.position;
-    final sets = p.sets;
-    final reps = p.reps;
-    final weight = p.weightKg;
-    final duration = p.durationSeconds;
-    final distance = p.distanceMeters;
-    switch (exercise.type) {
-      case ExerciseType.strength:
-        final base = sets != null
-            ? '$sets × ${reps ?? 0} ${l10n.workoutUnitReps}'
-            : '';
-        if (weight != null && weight > 0) {
-          return '$base · ${_fmtWeight(weight)} ${l10n.workoutUnitKg}';
-        }
-        return base;
-      case ExerciseType.bodyweight:
-        return sets != null
-            ? '$sets × ${reps ?? 0} ${l10n.workoutUnitReps}'
-            : '';
-      case ExerciseType.plank:
-        return sets != null && duration != null
-            ? '$sets × $duration ${l10n.workoutUnitSeconds}'
-            : '';
-      case ExerciseType.distance:
-        return distance != null && duration != null
-            ? '${(distance / 1000).toStringAsFixed(1)} ${l10n.workoutUnitKm} · '
-                  '${(duration / 60).toStringAsFixed(1)} ${l10n.workoutUnitMinutes}'
-            : '';
-    }
-  }
-
-  String _fmtWeight(double v) =>
-      v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+  /// Сводка параметров позиции (59.4): единый форматтер с бейджем цели
+  /// (64.7), чтобы строки не расходились.
+  String _paramsSummary(AppLocalizations l10n, WorkoutExercise exercise) =>
+      WorkoutGoalFormatter.summary(l10n, exercise);
 }
 
 /// Анимация упражнения с плейсхолдером при отсутствии файла.
@@ -722,18 +693,24 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                // 64.7 (фикс design-review): Wrap вместо Row+Spacer —
+                // широкий бейдж цели переносится на следующую строку,
+                // узкие экраны (320dp) не рвутся.
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     AppText(
                       l10n.workoutRunLastWorkout,
                       style: theme.textTheme.titleSmall,
                     ),
-                    const Spacer(),
                     // Бейдж цели сета (54.6, образец): с/повт по параметрам
                     // позиции; данных нет — бейджа нет.
                     if (_goalLabel(l10n) case final label?)
                       AppBadge(
-                        label: label,
+                        label: l10n.workoutRunSetGoal(label),
                         background: theme.colorScheme.surfaceContainerHighest,
                         foreground: theme.colorScheme.onSurfaceVariant,
                         borderRadius: const BorderRadius.all(
@@ -766,20 +743,10 @@ class _LastWorkoutCardState extends State<_LastWorkoutCard> {
     );
   }
 
-  /// Цель сета для бейджа (54.6): длительность (с) либо повторения (повт);
-  /// оба параметра не заданы — бейдж не показывается.
-  String? _goalLabel(AppLocalizations l10n) {
-    final position = widget.exercise.position;
-    final seconds = position.durationSeconds;
-    if (seconds != null && seconds > 0) {
-      return l10n.workoutRunHoldTarget(seconds);
-    }
-    final reps = position.reps;
-    if (reps != null && reps > 0) {
-      return l10n.workoutRunTargetReps(reps);
-    }
-    return null;
-  }
+  /// Цель сета для бейджа (54.6, пересчёт 64.7): форматтер по типу
+  /// упражнения; значимых параметров позиции нет — бейдж не показывается.
+  String? _goalLabel(AppLocalizations l10n) =>
+      WorkoutGoalFormatter.perSet(l10n, widget.exercise);
 
   String _sideLabel(int setIndex, String? side) {
     final suffix = switch (side) {
