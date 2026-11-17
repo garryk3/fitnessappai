@@ -1055,9 +1055,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutRunGoProgress => 'К прогрессу';
 
   @override
-  String get workoutRunRepeat => 'Повторить тренировку';
-
-  @override
   String get workoutRunExercises => 'Упражнения';
 
   @override
