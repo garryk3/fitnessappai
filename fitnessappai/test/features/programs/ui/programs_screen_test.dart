@@ -24,6 +24,8 @@ import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
+import 'package:fitnessappai/uikit/app_button.dart';
+import 'package:fitnessappai/uikit/app_gradient_button.dart';
 import 'package:fitnessappai/uikit/app_progress_ring.dart';
 
 void main() {
@@ -255,6 +257,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(opened.path, '/workout/prepare/$firstDay');
+  });
+
+  testWidgets('61.5: «Начать» на карточке — тональная, без градиента', (
+    tester,
+  ) async {
+    final created = await repository.create(program('Сплит', daysCount: 1), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await repository.setActive(created.id!);
+    await pumpPrograms(tester);
+
+    // Тональный CTA карточки: AppButton (→ FilledButton.tonal).
+    final start = find.ancestor(
+      of: find.text('Начать'),
+      matching: find.byType(AppButton),
+    );
+    expect(start, findsOneWidget);
+    expect(
+      tester.widget<AppButton>(start).tonal,
+      isTrue,
+      reason: '61.5: градиентный акцент на карточках не повторяется',
+    );
+    expect(find.byType(AppGradientButton), findsNothing);
   });
 
   testWidgets('удаление с подтверждением убирает программу', (tester) async {

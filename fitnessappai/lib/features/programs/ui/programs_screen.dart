@@ -391,8 +391,11 @@ class _ProgramCard extends StatelessWidget {
                   ),
                 ),
                 if (onStart != null)
-                  AppGradientButton(
-                    pill: true,
+                  // 61.5: тональный CTA на карточке — повторяющийся акцент
+                  // не обесценивает градиент (правило «один градиентный CTA
+                  // на экран»; градиент остаётся у hero/primary-CTA).
+                  AppButton(
+                    tonal: true,
                     icon: Icons.play_arrow,
                     label: l10n.weekPlanStart,
                     onPressed: onStart,

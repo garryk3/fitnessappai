@@ -894,11 +894,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutWarmupSkip => 'Пропустить';
 
   @override
-  String workoutWarmupSecondsLeft(int seconds) {
-    return 'осталось $seconds с';
-  }
-
-  @override
   String get workoutWarmupStartWorkout => 'Начать тренировку';
 
   @override
@@ -1122,6 +1117,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get progressProgressionEmpty =>
       'Ещё нет тренировок с этим упражнением';
+
+  @override
+  String get progressMetricNoData => 'Нет данных за период';
+
+  @override
+  String get progressMetricNoDataHint =>
+      'Запишите подходы с весом — прогресс появится здесь';
 
   @override
   String get progressProgressionEmptyHint =>

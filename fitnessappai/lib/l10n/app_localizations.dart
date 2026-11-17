@@ -1690,12 +1690,6 @@ abstract class AppLocalizations {
   /// **'Пропустить'**
   String get workoutWarmupSkip;
 
-  /// Оставшееся время разминки
-  ///
-  /// In ru, this message translates to:
-  /// **'осталось {seconds} с'**
-  String workoutWarmupSecondsLeft(int seconds);
-
   /// No description provided for @workoutWarmupStartWorkout.
   ///
   /// In ru, this message translates to:
@@ -2079,6 +2073,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ещё нет тренировок с этим упражнением'**
   String get progressProgressionEmpty;
+
+  /// No description provided for @progressMetricNoData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет данных за период'**
+  String get progressMetricNoData;
+
+  /// No description provided for @progressMetricNoDataHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запишите подходы с весом — прогресс появится здесь'**
+  String get progressMetricNoDataHint;
 
   /// No description provided for @progressProgressionEmptyHint.
   ///

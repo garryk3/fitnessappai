@@ -1735,7 +1735,14 @@ void main() {
     expect(find.text('Текущие значения'), findsNothing);
     expect(find.text('Пока нет замеров тела'), findsOneWidget);
 
-    await tester.tap(find.text('Добавить замер'));
+    // 61.8: на пустом профиле два «Добавить замер» (FAB + action
+    // empty-state) — тап скоупится на FAB по тултипу.
+    await tester.tap(
+      find.descendant(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.text('Добавить замер'),
+      ),
+    );
     await tester.pumpAndSettle();
     await enterField(tester, find.widgetWithText(TextFormField, 'Рост'), '180');
     await enterField(tester, find.widgetWithText(TextFormField, 'Вес'), '80');
