@@ -1006,8 +1006,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String workoutRunTargetReps(int reps) {
-    return 'Цель: $reps повт';
+  String workoutRunSetGoal(String value) {
+    return 'Цель: $value';
   }
 
   @override
