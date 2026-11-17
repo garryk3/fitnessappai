@@ -147,6 +147,43 @@ void main() {
     expect(find.byType(DayDetailScreen), findsNothing);
   });
 
+  testWidgets('общая статистика над календарём (64.11)', (tester) async {
+    final now = DateTime.now();
+    await workoutRepo.saveSession(
+      session(performedDate: DateTime(now.year, now.month, 10)),
+      [setResult(name: 'Приседания'), setResult(name: 'Жим лёжа')],
+    );
+    await workoutRepo.saveSession(
+      session(
+        performedDate: DateTime(now.year, now.month, 12),
+        startedAt: DateTime(now.year, now.month, 12, 10),
+        endedAt: DateTime(now.year, now.month, 12, 10, 30),
+      ),
+      [
+        setResult(
+          name: 'Бег',
+          type: ExerciseType.distance,
+          reps: null,
+          weightKg: null,
+          distanceMeters: 3000,
+          durationSeconds: 1500,
+        ),
+      ],
+    );
+    await pumpHistory(tester);
+
+    // Тренировок: 2; упражнений: 3 различных (приседания, жим, бег);
+    // время: wall-clock 40 + 30 мин = 70; дистанция: 3.0 км.
+    expect(find.text('2'), findsWidgets);
+    expect(find.text('3'), findsWidgets);
+    expect(find.textContaining('70'), findsWidgets);
+    expect(find.textContaining('3 км'), findsWidgets);
+    // Блок стоит над переключателем месяца.
+    final statsTop = tester.getTopLeft(find.textContaining('Тренировок')).dy;
+    final switcherTop = tester.getTopLeft(find.byType(MonthSwitcher)).dy;
+    expect(statsTop, lessThan(switcherTop));
+  });
+
   testWidgets('тап по дню без тренировки ничего не делает', (tester) async {
     final now = DateTime.now();
     await workoutRepo.saveSession(

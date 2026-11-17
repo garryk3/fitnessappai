@@ -583,6 +583,10 @@
   "history": "История",
   "historyDetail": "Детали тренировки",
   "historyEmpty": "Пока нет тренировок",
+  "historyStatsExercises": "Упражнений",
+  "@historyStatsExercises": {
+    "description": "Подпись числа различных упражнений в общей статистике истории (64.11)"
+  },
   "historyEmptyHint": "Завершённые тренировки появятся здесь.",
   "historySessionNotFound": "Тренировка не найдена",
   "homeActiveProgram": "Активная программа",

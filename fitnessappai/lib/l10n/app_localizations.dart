@@ -2212,6 +2212,12 @@ abstract class AppLocalizations {
   /// **'Пока нет тренировок'**
   String get historyEmpty;
 
+  /// Подпись числа различных упражнений в общей статистике истории (64.11)
+  ///
+  /// In ru, this message translates to:
+  /// **'Упражнений'**
+  String get historyStatsExercises;
+
   /// No description provided for @historyEmptyHint.
   ///
   /// In ru, this message translates to:

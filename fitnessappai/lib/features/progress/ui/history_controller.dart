@@ -52,33 +52,61 @@ class HistoryController {
   final Signal<List<HistoryItem>> items = Signal(const []);
   final Signal<Set<DateTime>> workoutDates = Signal(const {});
 
+  /// Общая статистика за всю историю (64.11) — блок над календарём.
+  final Signal<int> statWorkoutCount = Signal(0);
+
+  /// Различные упражнения (по названиям) за всю историю.
+  final Signal<int> statExerciseCount = Signal(0);
+
+  /// Суммарное тренированное время (58.2 — workoutDisplayDuration).
+  final Signal<Duration> statTotalTime = Signal(Duration.zero);
+
+  /// Суммарная дистанция (м) по подходам с дистанцией.
+  final Signal<double> statTotalDistance = Signal(0);
+
   Future<void> _load() async {
     isLoading.value = true;
     try {
       final sessions = await workoutRepository.getAllSessions();
       final result = <HistoryItem>[];
       final dates = <DateTime>{};
+      final exerciseNames = <String>{};
+      var distanceMeters = 0.0;
+      var timeSeconds = 0;
       for (final session in sessions) {
         final detail = await workoutRepository.getSession(session.id!);
-        final count = detail == null
-            ? 0
-            : detail.results.map((r) => r.exerciseName).toSet().length;
+        final names = detail == null
+            ? const <String>[]
+            : detail.results.map((r) => r.exerciseName).toSet().toList();
+        exerciseNames.addAll(names);
+        // 64.11: дистанция — сумма подходов с дистанцией за всю историю.
+        if (detail != null) {
+          for (final r in detail.results) {
+            distanceMeters += r.distanceMeters ?? 0;
+          }
+        }
+        final displayDuration = detail == null
+            ? null
+            : workoutDisplayDuration(session, detail.results);
+        timeSeconds += displayDuration?.inSeconds ?? 0;
         result.add(
           HistoryItem(
             session: session,
-            exercisesCount: count,
+            exercisesCount: names.length,
             imagePath: await _imagePathOf(session),
             // 58.2: тренированное время (ввод «дистанции» после пробежки вне
             // приложения даёт wall-clock в 1 мин при 30-минутной пробежке).
-            displayDuration: detail == null
-                ? null
-                : workoutDisplayDuration(session, detail.results),
+            displayDuration: displayDuration,
           ),
         );
         dates.add(_dateOnly(session.performedDate));
       }
       items.value = result;
       workoutDates.value = dates;
+      statWorkoutCount.value = sessions.length;
+      statExerciseCount.value = exerciseNames.length;
+      statTotalTime.value = Duration(seconds: timeSeconds);
+      statTotalDistance.value = distanceMeters;
     } finally {
       isLoading.value = false;
     }

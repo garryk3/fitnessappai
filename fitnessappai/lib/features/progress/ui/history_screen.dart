@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
+import 'package:fitnessappai/app/theme/app_tokens.dart';
 import 'package:fitnessappai/app/widgets/calendar/month_grid.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/exercise.dart';
@@ -125,6 +126,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
     return Column(
       children: [
+        // 64.11: общая статистика за всю историю — блок над календарём
+        // (над переключателем месяца и сеткой).
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+          child: _HistoryStatsCard(controller: _controller),
+        ),
         MonthSwitcher(
           label: monthTitle(_currentMonth),
           onPrevious: _previousMonth,
@@ -439,6 +446,115 @@ class _HistoryDetailScreenState extends State<HistoryDetailScreen> {
         }
         return label;
     }
+  }
+}
+
+/// Общая статистика за всю историю (64.11): Тренировки / Упражнений /
+/// Время / Дистанция — четыре колонки через вертикальный разделитель
+/// (образец — градиентная карточка статистики 54.8 на «Прогрессе»).
+class _HistoryStatsCard extends StatelessWidget {
+  const _HistoryStatsCard({required this.controller});
+
+  final HistoryController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final distanceKm = controller.statTotalDistance.value / 1000;
+    final minutes = controller.statTotalTime.value.inMinutes;
+    final column = theme.textTheme.titleLarge?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+    final caption = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    Widget cell({
+      required IconData icon,
+      required String value,
+      required String label,
+    }) {
+      return Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+          child: Column(
+            children: [
+              AppIcon(icon, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(height: 6),
+              // FittedBox: значение ужимается, а не обрезается, при
+              // fontScale 1.3–1.5 (design-review 54.8).
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: AppText(value, style: column, maxLines: 1),
+              ),
+              const SizedBox(height: 2),
+              AppText(
+                label,
+                style: caption,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Разделители колонок — по образцу 54.8 (тёмная тема: приглушённая
+    // линия onSurface, светлая — outlineVariant).
+    final dividerColor = theme.brightness == Brightness.dark
+        ? theme.colorScheme.onSurface.withValues(alpha: AppTints.faint)
+        : theme.colorScheme.outlineVariant;
+    final divider = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: AppContainer(
+        width: 1,
+        height: double.infinity,
+        color: dividerColor,
+      ),
+    );
+
+    // Фон — те же градиент-токены, что у карточки статистики 54.8.
+    final cardGradient = theme.brightness == Brightness.dark
+        ? AppGradients.heroCard
+        : AppGradients.roleSurface(theme.colorScheme);
+
+    return AppCard(
+      gradient: cardGradient,
+      padding: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            cell(
+              icon: Icons.fitness_center,
+              value: '${controller.statWorkoutCount.value}',
+              label: l10n.progressWorkouts,
+            ),
+            divider,
+            cell(
+              icon: Icons.sports_gymnastics,
+              value: '${controller.statExerciseCount.value}',
+              label: l10n.historyStatsExercises,
+            ),
+            divider,
+            cell(
+              icon: Icons.timer_outlined,
+              value: '$minutes ${l10n.workoutUnitMinutes}',
+              label: l10n.progressTotalTime,
+            ),
+            divider,
+            cell(
+              icon: Icons.directions_run,
+              value: '${_fmt(distanceKm)} ${l10n.workoutUnitKm}',
+              label: l10n.progressDistance,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
