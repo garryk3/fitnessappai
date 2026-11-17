@@ -133,7 +133,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 }
 
 /// Единая градиентная карточка статистики (54.8, образец `IMG_..._204452`):
-/// Тренировки / Дистанция / Время планки — три колонки через вертикальный
+/// Тренировки / Дистанция / Время — три колонки через вертикальный
 /// разделитель. Тап по «Тренировкам» → история (e2e-контракт).
 class _StatCards extends StatelessWidget {
   const _StatCards({required this.controller});
