@@ -167,10 +167,7 @@ void main() {
     test('пустой период даёт нули', () async {
       expect(await aggregator.workoutCount(StatPeriod.week), 0);
       expect(await aggregator.totalDistance(StatPeriod.week), 0);
-      expect(
-        await aggregator.totalExerciseTime(StatPeriod.week),
-        Duration.zero,
-      );
+      expect(await aggregator.totalWorkoutTime(StatPeriod.week), Duration.zero);
       expect(await aggregator.totalReps(1, StatPeriod.week), 0);
       expect(await aggregator.maxWeight(1, StatPeriod.week), isNull);
       expect(await aggregator.muscleLoadPercent(StatPeriod.week), isEmpty);
@@ -205,33 +202,58 @@ void main() {
       },
     );
 
-    test('totalExerciseTime суммирует durationSeconds всех типов, '
-        'подходы без времени не дают нулей (48.11)', () async {
-      await workoutRepo.saveSession(session(DateTime(2026, 8, 10)), [
-        setResult(
-          type: ExerciseType.plank,
-          reps: null,
-          weightKg: null,
-          durationSeconds: 30,
+    test('totalWorkoutTime — общее время тренировок целиком (64.6), '
+        'ручной ввод подходов перекрывает wall-clock (48.11)', () async {
+      // Сессия A: wall 1 мин, но 90 с времени подходов → время 90 с.
+      await workoutRepo.saveSession(
+        WorkoutSession(
+          programName: 'База',
+          dayIndex: 0,
+          performedDate: DateTime(2026, 8, 10),
+          startedAt: DateTime(2026, 8, 10, 18),
+          endedAt: DateTime(2026, 8, 10, 18, 1),
         ),
-        setResult(
-          type: ExerciseType.plank,
-          reps: null,
-          weightKg: null,
-          durationSeconds: 60,
+        [
+          setResult(
+            type: ExerciseType.plank,
+            reps: null,
+            weightKg: null,
+            durationSeconds: 30,
+          ),
+          setResult(
+            type: ExerciseType.plank,
+            reps: null,
+            weightKg: null,
+            durationSeconds: 60,
+          ),
+          setResult(reps: 8, weightKg: 20),
+        ],
+      );
+      // Сессия B: wall 10 мин, дистанция с тем же временем → 600 с.
+      await workoutRepo.saveSession(
+        WorkoutSession(
+          programName: 'База',
+          dayIndex: 0,
+          performedDate: DateTime(2026, 8, 11),
+          startedAt: DateTime(2026, 8, 11, 19),
+          endedAt: DateTime(2026, 8, 11, 19, 10),
         ),
-        setResult(
-          type: ExerciseType.distance,
-          reps: null,
-          weightKg: null,
-          distanceMeters: 1500,
-          durationSeconds: 600,
-        ),
-        setResult(reps: 8, weightKg: 20),
-      ]);
+        [
+          setResult(
+            type: ExerciseType.distance,
+            reps: null,
+            weightKg: null,
+            distanceMeters: 1500,
+            durationSeconds: 600,
+          ),
+        ],
+      );
+      // Сессия C за пределами периода — не считается.
+      await workoutRepo.saveSession(session(DateTime(2026, 8, 20)), []);
 
+      // 90 + 600, без распределения по упражнениям.
       expect(
-        await aggregator.totalExerciseTime(StatPeriod.week),
+        await aggregator.totalWorkoutTime(StatPeriod.week),
         const Duration(seconds: 690),
       );
     });

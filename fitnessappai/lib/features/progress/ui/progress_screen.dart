@@ -145,7 +145,9 @@ class _StatCards extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final distanceKm = controller.totalDistanceMeters.value / 1000;
-    final exerciseMinutes = _fmt(controller.exerciseTime.value.inSeconds / 60);
+    // 64.6: метрика «Время» — общее время тренировок (wall-clock, а при
+    // ручном вводе — время подходов; 58.2), целиком на тренировку.
+    final exerciseMinutes = _fmt(controller.workoutTime.value.inSeconds / 60);
     final column = theme.textTheme.titleLarge?.copyWith(
       fontWeight: FontWeight.w600,
     );
