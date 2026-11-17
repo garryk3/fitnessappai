@@ -303,7 +303,9 @@ void main() {
     );
     final cs = Theme.of(tester.element(find.text('10'))).colorScheme;
     expect(cell.todayForegroundColor, cs.statusPerformedOnContainer);
-    expect((cell.border! as Border).top.color, cs.statusPerformedOnContainer);
+    // Fix design-review: рамка в контрастном primary-цвете (onPrimary на
+    // светлом зазоре невидима — 1.05:1).
+    expect((cell.border! as Border).top.color, cs.onPrimaryContainer);
   });
 
   testWidgets('тренировочный день: тап по ячейке открывает действия дня', (

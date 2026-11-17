@@ -318,8 +318,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         // Пропущенный день — outlined по §4 (контраст к пустому дню).
         (_, true) => Border.all(color: colorScheme.statusSkippedOutline),
         (true, false) => Border.all(
+          // Fix design-review: рамка onPrimary невидима на светлом зазоре
+          // (1.05:1) — выполненное «сегодня» в контрастном primary-цвете.
           color: allPerformed
-              ? colorScheme.statusPerformedOnContainer
+              ? colorScheme.onPrimaryContainer
               : colorScheme.primary,
         ),
         _ => null,
@@ -353,21 +355,23 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       return (colorScheme.surfaceContainerLow, colorScheme.onSurfaceVariant);
     }
     final statuses = dayItems.map((i) => i.status).toSet();
-    if (statuses.length == 1) {
-      final status = statuses.single;
-      if (status == WeekPlanStatus.performed) {
-        return (
-          colorScheme.statusPerformedContainer,
-          colorScheme.statusPerformedOnContainer,
-        );
-      }
-      if (status == WeekPlanStatus.pastSkipped ||
-          status == WeekPlanStatus.skipped) {
-        return (
-          colorScheme.surfaceContainerHighest,
-          colorScheme.onSurfaceVariant,
-        );
-      }
+    // Union-проверки (fix design-review Low): смешанный день из разных
+    // пропусков (skipped+pastSkipped) тоже «пропущенный», а не тренировочный.
+    final allPerformed = statuses.every((s) => s == WeekPlanStatus.performed);
+    final allMissed = statuses.every(
+      (s) => s == WeekPlanStatus.pastSkipped || s == WeekPlanStatus.skipped,
+    );
+    if (allPerformed) {
+      return (
+        colorScheme.statusPerformedContainer,
+        colorScheme.statusPerformedOnContainer,
+      );
+    }
+    if (allMissed) {
+      return (
+        colorScheme.surfaceContainerHighest,
+        colorScheme.onSurfaceVariant,
+      );
     }
     return (colorScheme.primaryContainer, colorScheme.onPrimaryContainer);
   }
