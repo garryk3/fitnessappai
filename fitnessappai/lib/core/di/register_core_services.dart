@@ -10,6 +10,7 @@ import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/database/app_database_path.dart';
 import 'package:fitnessappai/core/database/seed/reference_seeder.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
+import 'package:fitnessappai/features/settings/data/auto_update_repository.dart';
 import 'package:fitnessappai/core/media/media_cache.dart';
 import 'package:fitnessappai/core/media/media_store.dart';
 import 'package:fitnessappai/core/notifications/notification_log.dart';
@@ -143,6 +144,10 @@ void registerCoreServices(ServiceLocator sl, {AppDatabase? database}) {
     ),
   );
   sl.registerLazySingleton<UpdateService>(() => GithubUpdateService());
+  // Флаг автообновления (64.1) — key/value в таблице `app_meta`.
+  sl.registerLazySingleton<AutoUpdateRepository>(
+    () => AutoUpdateRepository(sl.get<AppDatabase>()),
+  );
 }
 
 /// Перестраивает контейнер после импорта БД: пересоздаёт базу из нового
