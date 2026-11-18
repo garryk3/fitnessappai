@@ -178,8 +178,12 @@ void main() {
 
         await controller.deleteProgram(day.programId);
 
-        expect(reminders.deletedDayIds, [day.id!]);
-        expect(reminders.cancelledDays, isEmpty);
+        // 66.1: cancelDays снимает и одноразовые напоминания назначений —
+        // после каскадного удаления plan_schedule отменить их было бы нечем.
+        expect(reminders.cancelledDays, [
+          [day.id!],
+        ]);
+        expect(reminders.deletedDayIds, isEmpty);
       });
     },
   );

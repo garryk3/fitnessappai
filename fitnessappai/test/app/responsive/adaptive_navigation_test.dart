@@ -187,6 +187,37 @@ void main() {
     }
   });
 
+  testWidgets(
+    '66.4: BACK при открытом drawer на не-главной ветви закрывает панель',
+    (tester) async {
+      await pumpAtSize(tester, const Size(480, 800));
+
+      // Уходим на ветвь «Упражнения» через нижний бар.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('Упражнения'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsOneWidget);
+
+      // Первый BACK — только закрывает drawer, ветвь не меняется.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsNothing);
+      expect(find.text('Список упражнений пуст'), findsWidgets);
+
+      // Второй BACK — прежний контракт 58.4: возврат на главную.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Последние тренировки'), findsWidgets);
+    },
+  );
+
   testWidgets('иконка rail-а разворачивает подписи и сворачивает обратно', (
     tester,
   ) async {

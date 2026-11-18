@@ -125,8 +125,20 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     return [
       for (final branch in _railBranchOrder)
         NavigationRailDestination(
-          icon: AppIcon(byBranch[branch]!.icon),
-          selectedIcon: AppIcon(byBranch[branch]!.selectedIcon),
+          icon: Semantics(
+            container: true,
+            label: byBranch[branch]!.label,
+            button: true,
+            selected: navigationShell.currentIndex == branch,
+            child: AppIcon(byBranch[branch]!.icon),
+          ),
+          selectedIcon: Semantics(
+            container: true,
+            label: byBranch[branch]!.label,
+            button: true,
+            selected: navigationShell.currentIndex == branch,
+            child: AppIcon(byBranch[branch]!.selectedIcon),
+          ),
           label: AppText(byBranch[branch]!.label),
         ),
     ];

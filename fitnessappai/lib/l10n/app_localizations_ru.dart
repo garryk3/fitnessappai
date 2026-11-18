@@ -904,6 +904,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutWarmup => 'Разминка';
 
   @override
+  String get workoutWarmupExitTitle => 'Выйти из разминки?';
+
+  @override
+  String get workoutWarmupExitBody =>
+      'Тренировка ещё не начата — вернётесь к экрану подготовки.';
+
+  @override
   String get workoutWarmupDone => 'Разминка завершена';
 
   @override

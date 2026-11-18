@@ -1708,6 +1708,18 @@ abstract class AppLocalizations {
   /// **'Разминка'**
   String get workoutWarmup;
 
+  /// No description provided for @workoutWarmupExitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из разминки?'**
+  String get workoutWarmupExitTitle;
+
+  /// No description provided for @workoutWarmupExitBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка ещё не начата — вернётесь к экрану подготовки.'**
+  String get workoutWarmupExitBody;
+
   /// No description provided for @workoutWarmupDone.
   ///
   /// In ru, this message translates to:

@@ -88,9 +88,13 @@ class ProgramListController {
   Future<void> deleteProgram(int programId) async {
     if (_reminderService != null) {
       final days = await _repository.getDays(programId);
-      for (final day in days) {
-        await _reminderService.cancel(day.id!);
-      }
+      // cancelDays снимает и еженедельные, и одноразовые напоминания ручных
+      // назначений (48.10) — после каскадного удаления plan_schedule
+      // отменить их будет уже нечем.
+      await _reminderService.cancelDays([
+        for (final day in days)
+          if (day.id != null) day.id!,
+      ]);
     }
     await _repository.delete(programId);
   }
