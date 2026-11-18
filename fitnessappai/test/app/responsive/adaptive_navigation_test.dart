@@ -71,6 +71,23 @@ void main() {
     );
   });
 
+  testWidgets('66.3: пункты rail доступны скринридеру по имени', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pumpAtSize(tester, const Size(1200, 800));
+    await tester.pumpAndSettle();
+
+    for (final label in ['Главная', 'Упражнения', 'Программы', 'План']) {
+      expect(
+        find.bySemanticsLabel(label),
+        findsWidgets,
+        reason: 'пункт «$label» должен иметь семантику в rail',
+      );
+    }
+    handle.dispose();
+  });
+
   testWidgets('на широком экране (900dp) — свернутый NavigationRail', (
     tester,
   ) async {
