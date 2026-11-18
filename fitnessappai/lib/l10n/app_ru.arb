@@ -81,6 +81,18 @@
   },
   "settingsUpdateLater": "Позже",
   "settingsUpdateDownload": "Обновить",
+  "settingsAutoUpdate": "Автообновление",
+  "@settingsAutoUpdate": {
+    "description": "Переключатель автообновления рядом с проверкой версии (64.1): пока флаг включён, на сплэше проверяется новая версия"
+  },
+  "settingsUpdateInstallFailed": "Не удалось запустить установку",
+  "@settingsUpdateInstallFailed": {
+    "description": "Снекбар при отказе системного установщика APK (64.1)"
+  },
+  "settingsUpdateDownloading": "Загрузка обновления…",
+  "@settingsUpdateDownloading": {
+    "description": "Диалог загрузки APK новой версии (64.1)"
+  },
   "settingsNotificationsSection": "Уведомления",
   "settingsNotificationsEnabled": "Уведомления включены",
   "settingsNotificationsDisabled": "Уведомления отключены",

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Пути для FileProvider (задача 64.1): скачанный APK живёт во
+     внутреннем кэше приложения в подпапке apk. -->
+<paths>
+    <cache-path name="apk" path="apk/" />
+</paths>

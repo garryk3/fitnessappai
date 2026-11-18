@@ -30,8 +30,7 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
+            android:name=".MainActivity"            android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:taskAffinity=""
@@ -82,6 +81,17 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="workout_timer" />
         </service>
+        <!-- Установка скачанного APK новой версии (задача 64.1): системный
+             установщик читает файл только по content-URI FileProvider. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

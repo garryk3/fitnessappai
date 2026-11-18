@@ -430,6 +430,24 @@ abstract class AppLocalizations {
   /// **'Обновить'**
   String get settingsUpdateDownload;
 
+  /// Переключатель автообновления рядом с проверкой версии (64.1): пока флаг включён, на сплэше проверяется новая версия
+  ///
+  /// In ru, this message translates to:
+  /// **'Автообновление'**
+  String get settingsAutoUpdate;
+
+  /// Снекбар при отказе системного установщика APK (64.1)
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось запустить установку'**
+  String get settingsUpdateInstallFailed;
+
+  /// Диалог загрузки APK новой версии (64.1)
+  ///
+  /// In ru, this message translates to:
+  /// **'Загрузка обновления…'**
+  String get settingsUpdateDownloading;
+
   /// No description provided for @settingsNotificationsSection.
   ///
   /// In ru, this message translates to:

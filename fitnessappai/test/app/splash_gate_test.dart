@@ -5,6 +5,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fitnessappai/app/splash_gate.dart';
+import 'package:fitnessappai/features/settings/data/apk_downloader.dart';
+import 'package:fitnessappai/features/settings/data/apk_installer.dart';
+import 'package:fitnessappai/features/settings/data/auto_update_repository.dart';
+import 'package:fitnessappai/features/settings/domain/auto_update_controller.dart';
+import 'package:fitnessappai/features/settings/domain/update_service.dart';
 
 void main() {
   testWidgets('показывает заставку во время инициализации', (tester) async {
@@ -88,5 +93,175 @@ void main() {
 
     expect(find.text('Главный экран'), findsOneWidget);
     expect(find.text('Заставка'), findsNothing);
+    expect(find.text('Главный экран'), findsOneWidget);
+    expect(find.text('Заставка'), findsNothing);
   });
+
+  testWidgets('флаг включён и есть новая версия — модалка на заставке '
+      '(64.1)', (tester) async {
+    final repository = _StubAutoUpdateRepository();
+    final autoUpdate = AutoUpdateController(
+      repository: repository,
+      service: _FakeUpdateService(
+        release: ReleaseInfo(
+          tagName: 'v1.1.0',
+          htmlUrl:
+              'https://github.com/garryk3/fitnessappai/releases/tag/v1.1.0',
+          apkUrl:
+              'https://github.com/garryk3/fitnessappai/releases/download/v1.1.0/app.apk',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+    );
+    await autoUpdate.setEnabled(true);
+    final downloader = _RecordingDownloader();
+    final installer = _RecordingInstaller();
+
+    await pumpSplash(
+      tester,
+      autoUpdate: autoUpdate,
+      downloader: downloader,
+      installer: installer,
+    );
+
+    // Модалка вместо перехода в приложение.
+    expect(find.text('Доступна новая версия'), findsOneWidget);
+    expect(find.text('Версия 1.1.0 доступна для скачивания.'), findsOneWidget);
+    expect(find.text('Главный экран'), findsNothing);
+
+    await tester.tap(find.text('Обновить'));
+    // Спиннер диалога «Загрузка обновления» анимируется постоянно —
+    // pumpAndSettle никогда не завершился бы; продвигаем фазы явно.
+    await tester.pump(); // закрытие модалки + диалог загрузки
+    await tester.pump(const Duration(milliseconds: 100)); // загрузка+установка
+    await tester.pump(const Duration(seconds: 1)); // consume + fade
+    for (var i = 0; i < 20; i++) {
+      // ignore: avoid_print
+      print(
+        'DEBUG loop $i scheduled=${tester.binding.hasScheduledFrame} '
+        'urls=${downloader.downloadedUrls.length} '
+        'flag=${repository.value}',
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    // Скачивание + установка запущены; флаг сброшен — проверка
+    // не повторится на следующих запусках.
+    expect(downloader.downloadedUrls, hasLength(1));
+    expect(installer.installedPaths, ['/tmp/update.apk']);
+    expect(repository.value, isFalse);
+    // Приложение открылось после установки.
+    expect(find.text('Главный экран'), findsOneWidget);
+  });
+
+  testWidgets('обновления нет — переход в приложение без модалки (64.1)', (
+    tester,
+  ) async {
+    final repository = _StubAutoUpdateRepository();
+    final autoUpdate = AutoUpdateController(
+      repository: repository,
+      service: _FakeUpdateService(release: ReleaseInfo(tagName: 'v1.0.0')),
+      loadVersion: () async => '1.0.0',
+    );
+    await autoUpdate.setEnabled(true);
+
+    await pumpSplash(tester, autoUpdate: autoUpdate);
+
+    expect(find.text('Доступна новая версия'), findsNothing);
+    expect(find.text('Главный экран'), findsOneWidget);
+    // Флаг не сбрасывается: проверка прошла, но повода сбрасывать нет.
+    expect(repository.value, isTrue);
+  });
+
+  testWidgets('флаг выключен — обычный переход в приложение (64.1)', (
+    tester,
+  ) async {
+    final autoUpdate = AutoUpdateController(
+      repository: _StubAutoUpdateRepository(),
+      service: _FakeUpdateService(
+        release: ReleaseInfo(
+          tagName: 'v1.1.0',
+          htmlUrl:
+              'https://github.com/garryk3/fitnessappai/releases/tag/v1.1.0',
+          apkUrl:
+              'https://github.com/garryk3/fitnessappai/releases/download/v1.1.0/app.apk',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+    );
+
+    await pumpSplash(tester, autoUpdate: autoUpdate);
+
+    expect(find.text('Доступна новая версия'), findsNothing);
+    expect(find.text('Главный экран'), findsOneWidget);
+  });
+}
+
+// --- Поддельные зависимости тестов автообновления (64.1) ---
+
+class _FakeUpdateService implements UpdateService {
+  _FakeUpdateService({this.release});
+
+  ReleaseInfo? release;
+
+  @override
+  Future<ReleaseInfo?> fetchLatestRelease() async => release;
+}
+
+class _StubAutoUpdateRepository implements AutoUpdateRepository {
+  bool value = false;
+
+  @override
+  Future<bool> read() async => value;
+
+  @override
+  Future<void> write(bool value) async {
+    this.value = value;
+  }
+}
+
+class _RecordingDownloader implements ApkDownloader {
+  @override
+  Future<String> download(Uri url) async {
+    downloadedUrls.add(url);
+    return '/tmp/update.apk';
+  }
+
+  final downloadedUrls = <Uri>[];
+}
+
+class _RecordingInstaller implements ApkInstaller {
+  @override
+  Future<bool> install(String apkPath) async {
+    installedPaths.add(apkPath);
+    return true;
+  }
+
+  final installedPaths = <String>[];
+}
+
+Future<void> pumpSplash(
+  WidgetTester tester, {
+  required AutoUpdateController autoUpdate,
+  _RecordingDownloader? downloader,
+  _RecordingInstaller? installer,
+}) async {
+  await tester.pumpWidget(
+    SplashGate(
+      bootstrap: () async {},
+      homeBuilder: () =>
+          const MaterialApp(home: Scaffold(body: Text('Главный экран'))),
+      splashBody: const ColoredBox(
+        color: Colors.black,
+        child: Center(child: Text('Заставка')),
+      ),
+      autoUpdateController: autoUpdate,
+      apkDownloader: downloader,
+      apkInstaller: installer,
+    ),
+  );
+  // Минимальные 2 секунды заставки: продвигаем фейковые часы явно —
+  // pumpAndSettle их не двигает.
+  await tester.pump(const Duration(seconds: 3));
+  await tester.pumpAndSettle();
 }

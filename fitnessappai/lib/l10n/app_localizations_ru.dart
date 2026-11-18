@@ -188,6 +188,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsUpdateDownload => 'Обновить';
 
   @override
+  String get settingsAutoUpdate => 'Автообновление';
+
+  @override
+  String get settingsUpdateInstallFailed => 'Не удалось запустить установку';
+
+  @override
+  String get settingsUpdateDownloading => 'Загрузка обновления…';
+
+  @override
   String get settingsNotificationsSection => 'Уведомления';
 
   @override

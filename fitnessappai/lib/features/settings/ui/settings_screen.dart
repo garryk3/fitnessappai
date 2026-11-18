@@ -12,6 +12,8 @@ import 'package:fitnessappai/app/sound/sound_settings_section.dart';
 import 'package:fitnessappai/app/theme/theme_controller.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/settings/data/auto_update_repository.dart';
+import 'package:fitnessappai/features/settings/domain/auto_update_controller.dart';
 import 'package:fitnessappai/features/settings/domain/notification_settings_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
@@ -28,6 +30,7 @@ class SettingsScreen extends StatefulWidget {
     this.soundController,
     this.reminderSoundController,
     this.updateController,
+    this.autoUpdateController,
     this.notificationController,
   });
 
@@ -39,6 +42,10 @@ class SettingsScreen extends StatefulWidget {
   /// (тесты, окружения без ReminderService).
   final SoundSettingsController? reminderSoundController;
   final UpdateCheckController? updateController;
+
+  /// Контроллер автообновления (64.1). null — переключатель не показывается
+  /// (тесты, окружения без AutoUpdateRepository).
+  final AutoUpdateController? autoUpdateController;
   final NotificationSettingsController? notificationController;
 
   @override
@@ -50,6 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final ThemeController _themeController;
   late final SoundSettingsController _soundController;
   late final UpdateCheckController _updateController;
+  AutoUpdateController? _autoUpdateController;
   SoundSettingsController? _reminderSoundController;
   NotificationSettingsController? _notificationController;
 
@@ -74,6 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.updateController ??
         UpdateCheckController(service: locator.get<UpdateService>());
     _updateController.loadVersion();
+    _initAutoUpdate();
     _notificationController = widget.notificationController;
     if (_notificationController == null) {
       try {
@@ -86,6 +95,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } else {
       _notificationController?.load();
+    }
+  }
+
+  /// Контроллер автообновления (64.1): из конструктора или locator по
+  /// isRegistered (паттерн 59.6) — в тестах репозитория может не быть.
+  void _initAutoUpdate() {
+    _autoUpdateController = widget.autoUpdateController;
+    if (_autoUpdateController != null) {
+      _autoUpdateController?.load();
+      return;
+    }
+    try {
+      _autoUpdateController = AutoUpdateController(
+        repository: locator.get<AutoUpdateRepository>(),
+        service: locator.get<UpdateService>(),
+      );
+      _autoUpdateController?.load();
+    } catch (_) {
+      // AutoUpdateRepository не зарегистрирован (тесты) — переключатель
+      // не показывается.
+      _autoUpdateController = null;
     }
   }
 
@@ -243,7 +273,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 AppSectionHeader(title: l10n.settingsAboutSection),
                 const SizedBox(height: 8),
-                _AboutSection(controller: _updateController),
+                _AboutSection(
+                  controller: _updateController,
+                  autoUpdateController: _autoUpdateController,
+                ),
               ],
             ),
           ),
@@ -653,9 +686,12 @@ class _PermissionTile extends StatelessWidget {
 
 /// Секция «О приложении»: версия и проверка обновлений.
 class _AboutSection extends StatefulWidget {
-  const _AboutSection({required this.controller});
+  const _AboutSection({required this.controller, this.autoUpdateController});
 
   final UpdateCheckController controller;
+
+  /// Контроллер автообновления (64.1); null — переключатель не показывается.
+  final AutoUpdateController? autoUpdateController;
 
   @override
   State<_AboutSection> createState() => _AboutSectionState();
@@ -669,6 +705,8 @@ class _AboutSectionState extends State<_AboutSection> {
     return SignalBuilder(
       builder: (_) {
         final controller = widget.controller;
+        final autoUpdate = widget.autoUpdateController;
+        final autoUpdateEnabled = autoUpdate?.autoUpdateEnabled.value ?? false;
         final version = controller.versionText.value;
         final updateStatus = controller.status.value;
         final status = updateStatus == null
@@ -682,6 +720,18 @@ class _AboutSectionState extends State<_AboutSection> {
               AppText(
                 '${l10n.settingsVersion} $versionText',
                 style: theme.textTheme.bodyMedium,
+              ),
+            ],
+            if (autoUpdate != null) ...[
+              const SizedBox(height: 4),
+              // 64.1: флаг автообновления рядом с проверкой версии. Пока
+              // флаг включён, на сплэше делается запрос новой версии и при
+              // наличии показывается модалка; после показа флаг сбрасывается
+              // (одноразовая проверка).
+              AppSwitchTile(
+                value: autoUpdateEnabled,
+                title: AppText(l10n.settingsAutoUpdate),
+                onChanged: (value) => autoUpdate.setEnabled(value),
               ),
             ],
             const SizedBox(height: 16),

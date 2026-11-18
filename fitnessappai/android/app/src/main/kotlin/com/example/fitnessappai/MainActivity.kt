@@ -40,6 +40,35 @@ class MainActivity : FlutterActivity() {
                         }
                         startActivityForResult(intent, SAVE_FILE_REQUEST)
                     }
+                    // Установка скачанного APK новой версии (задача 64.1):
+                    // системный установщик открывается по content-URI
+                    // FileProvider — прямой file:// на Android 7+ запрещён.
+                    "installApk" -> {
+                        val filePath = call.argument<String>("filePath")
+                        if (filePath == null) {
+                            result.error("INVALID_ARGS", "filePath required", null)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            val file = File(filePath)
+                            val uri = androidx.core.content.FileProvider.getUriForFile(
+                                this,
+                                "$packageName.fileprovider",
+                                file,
+                            )
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(uri, "application/vnd.android.package-archive")
+                                addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                )
+                            }
+                            startActivity(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
