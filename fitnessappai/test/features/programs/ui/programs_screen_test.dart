@@ -285,6 +285,60 @@ void main() {
     expect(opened.path, '/workout/prepare/$firstDay');
   });
 
+  testWidgets('65.1: «Начать» открывает ближайший день, а не первый', (
+    tester,
+  ) async {
+    Uri opened = Uri();
+    final now = DateTime.now();
+    final created = await repository.create(program('Сплит', daysCount: 2), [
+      ProgramDay(programId: 0, dayIndex: 0),
+      ProgramDay(programId: 0, dayIndex: 1, dayOfWeek: now.weekday),
+    ]);
+    await repository.setActive(created.id!);
+    final days = await repository.getDays(created.id!);
+    final firstDay = days.first.id!;
+    final upcomingDay = days.last.id!;
+
+    final router = GoRouter(
+      initialLocation: '/programs',
+      routes: [
+        GoRoute(
+          path: '/programs',
+          builder: (context, state) => ProgramsScreen(repository: repository),
+        ),
+        GoRoute(
+          path: '/workout/prepare/:programDayId',
+          builder: (context, state) {
+            opened = state.uri;
+            return const Scaffold(body: Text('prepare'));
+          },
+        ),
+      ],
+    );
+    await tester.runAsync(() async {
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.dark(),
+          localizationsDelegates: appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          routerConfig: router,
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pumpAndSettle();
+
+    final startLabel = AppLocalizations.of(
+      router.routerDelegate.navigatorKey.currentContext!,
+    ).weekPlanStart;
+    await tester.tap(find.text(startLabel));
+    await tester.pumpAndSettle();
+
+    expect(firstDay, isNot(upcomingDay));
+    expect(opened.path, '/workout/prepare/$upcomingDay');
+  });
+
   testWidgets('61.5: «Начать» на карточке — тональная, без градиента', (
     tester,
   ) async {

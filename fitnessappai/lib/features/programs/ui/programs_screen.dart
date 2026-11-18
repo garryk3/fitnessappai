@@ -125,8 +125,13 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: _ProgramCard(
               item: item,
+              // 65.1: кнопка стартует ближайший день («Ближайший день: X»),
+              // как hero-карточка Главной, а не первый день программы.
               onStart: item.program.isActive && item.days.isNotEmpty
-                  ? () => context.push('/workout/prepare/${item.days.first.id}')
+                  ? () => context.push(
+                      '/workout/prepare/'
+                      '${item.upcomingDayId ?? item.days.first.id}',
+                    )
                   : null,
               onEdit: () => context.push('/programs/${item.program.id}/edit'),
               onDelete: () => _confirmDelete(context, item.program),

@@ -20,6 +20,7 @@ class ProgramListItem {
     required this.exercisesCount,
     this.weekProgress,
     this.upcomingDate,
+    this.upcomingDayId,
   });
 
   final Program program;
@@ -37,6 +38,11 @@ class ProgramListItem {
   /// `null` — у программы нет привязанных дней и назначений; подпись
   /// «Ближайший день» в этом случае не показывается.
   final DateTime? upcomingDate;
+
+  /// Идентификатор ближайшего дня программы (65.1) — им же запускается
+  /// тренировка по кнопке «Начать», чтобы действие совпадало с подписью
+  /// и с hero-карточкой Главной (64.4). `null` — ближайшего дня нет.
+  final int? upcomingDayId;
 
   /// Процент недельного выполнения; `null` — нет данных.
   int? get weekPercent => weekProgress == null
@@ -125,9 +131,12 @@ class ProgramListController {
     isLoading.value = true;
     try {
       final summaries = await _repository.getPrograms();
-      final sessions = await _loadWeekSessions();
-      final scheduled = await _loadScheduled();
+      // Один снимок «сегодня» на загрузку: неделя, окно назначений и
+      // резолвер обязаны считать от одной даты (иначе на границе суток
+      // подпись разъедется на день).
       final today = _dateOnly(_clock());
+      final sessions = await _loadWeekSessions(today);
+      final scheduled = await _loadScheduled(today);
       final list = <ProgramListItem>[];
       for (final summary in summaries) {
         final days = await _repository.getDays(summary.program.id!);
@@ -151,6 +160,7 @@ class ProgramListController {
                     programId: summary.program.id!,
                   ),
             upcomingDate: upcoming.date,
+            upcomingDayId: upcoming.dayId,
           ),
         );
       }
@@ -163,12 +173,11 @@ class ProgramListController {
   /// Назначения плана на ближайшую неделю (65.1) — один запрос на загрузку,
   /// раскладка по программам внутри цикла. Репозитория нет — пустой список:
   /// карточка считает ближайший день только по шаблону.
-  Future<List<UpcomingDaySchedule>> _loadScheduled() async {
+  Future<List<UpcomingDaySchedule>> _loadScheduled(DateTime today) async {
     final repository = _planScheduleRepository;
     if (repository == null) {
       return const [];
     }
-    final today = _dateOnly(_clock());
     final items = await repository.getForRange(
       today,
       today.add(const Duration(days: 6)),
@@ -181,12 +190,11 @@ class ProgramListController {
 
   /// Сессии текущей недели `[пн, пн+7)`; `null` — репозитория нет, тогда
   /// недельный прогресс карточек не считается (без данных — без кольца).
-  Future<List<WorkoutSession>?> _loadWeekSessions() async {
+  Future<List<WorkoutSession>?> _loadWeekSessions(DateTime today) async {
     final repository = _workoutRepository;
     if (repository == null) {
       return null;
     }
-    final today = _clock();
     final weekStart = DateTime(
       today.year,
       today.month,

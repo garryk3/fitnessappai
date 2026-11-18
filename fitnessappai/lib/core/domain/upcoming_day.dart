@@ -18,6 +18,8 @@ typedef UpcomingDaySchedule = ({int dayId, DateTime date});
 ///   — плюс 7 дней).
 /// - **Назначение из плана** раньше шаблонной даты — побеждает оно: так
 ///   перенесённая/назначенная тренировка показывается на обоих экранах.
+///   Назначения в прошлом игнорируются (функция не зависит от того, какое
+///   окно дат передал вызывающий).
 ///
 /// Возвращает `dayId` (может быть `null`, если дней нет) и дату выбранного
 /// дня (`null` — у дня нет ни привязки, ни назначения).
@@ -48,8 +50,13 @@ typedef UpcomingDaySchedule = ({int dayId, DateTime date});
     if (!dayIds.contains(item.dayId)) {
       continue;
     }
-    if (nearest == null || item.date.isBefore(nearest.date)) {
-      nearest = item;
+    final date = _dateOnly(item.date);
+    if (date.isBefore(_dateOnly(today))) {
+      // Прошлое назначение ближайшим днём быть не может.
+      continue;
+    }
+    if (nearest == null || date.isBefore(_dateOnly(nearest.date))) {
+      nearest = (dayId: item.dayId, date: date);
     }
   }
   if (nearest != null &&

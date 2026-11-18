@@ -114,6 +114,18 @@ void main() {
       expect(resolved.date, DateTime(2026, 8, 14));
     });
 
+    test('назначение в прошлом игнорируется', () {
+      final resolved = resolveUpcomingDay(
+        days: const [(id: 1, dayOfWeek: 5)],
+        today: wednesday,
+        scheduled: [(dayId: 1, date: DateTime(2026, 8, 10))],
+      );
+
+      // Понедельник 10 августа — в прошлом; остаётся шаблонная пятница.
+      expect(resolved.dayId, 1);
+      expect(resolved.date, DateTime(2026, 8, 14));
+    });
+
     test('назначение непривязанного дня даёт дату', () {
       final resolved = resolveUpcomingDay(
         days: const [(id: 3, dayOfWeek: null)],
