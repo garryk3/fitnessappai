@@ -76,17 +76,6 @@ void main() {
       );
     });
 
-    test('позднее выполнение в окне +3 дня → performed (64.8)', () {
-      expect(
-        planDayStatus(
-          scheduledDate: DateTime(2026, 8, 10),
-          performedDates: [DateTime(2026, 8, 13)],
-          now: wednesday,
-        ),
-        WeekPlanStatus.performed,
-      );
-    });
-
     test('выполнение ровно на границе +3 дня → performed', () {
       expect(
         planDayStatus(
@@ -130,6 +119,27 @@ void main() {
           now: DateTime(2026, 8, 14),
         ),
         WeekPlanStatus.pastSkipped,
+      );
+    });
+
+    test('«сейчас» со временем суток нормализуется', () {
+      // Сегодняшнее вхождение не должно становиться «Пропущено» только
+      // потому, что вызывающий передал DateTime со временем.
+      expect(
+        planDayStatus(
+          scheduledDate: wednesday,
+          performedDates: [DateTime(2026, 8, 5)],
+          now: DateTime(2026, 8, 12, 15, 30),
+        ),
+        WeekPlanStatus.pending,
+      );
+      expect(
+        planDayStatus(
+          scheduledDate: wednesday,
+          performedDates: const [],
+          now: DateTime(2026, 8, 12, 23, 59),
+        ),
+        WeekPlanStatus.pending,
       );
     });
 

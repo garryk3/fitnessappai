@@ -31,6 +31,10 @@ WeekPlanStatus planDayStatus({
   bool isSkipped = false,
 }) {
   final scheduled = _dateOnly(scheduledDate);
+  // Нормализуем «сейчас» внутри функции: сравнение «вхождение ещё не
+  // прошло» не должно зависеть от того, передал вызывающий дату или
+  // дату со временем.
+  final today = _dateOnly(now);
   final performed = performedDates.toList();
   if (performed.isNotEmpty) {
     const window = Duration(days: 3);
@@ -44,7 +48,7 @@ WeekPlanStatus planDayStatus({
     // Сессия чужой недели/вне окна: будущее и сегодняшнее вхождение ещё не
     // «прошло» (59.5.г) — остаётся в плане без отметки; прошедшее —
     // «Пропущено» по факту дня.
-    if (!scheduledDate.isBefore(now)) {
+    if (!scheduled.isBefore(today)) {
       return isSkipped ? WeekPlanStatus.skipped : WeekPlanStatus.pending;
     }
     return WeekPlanStatus.pastSkipped;
@@ -52,7 +56,7 @@ WeekPlanStatus planDayStatus({
   if (isSkipped) {
     return WeekPlanStatus.skipped;
   }
-  if (scheduled.isBefore(_dateOnly(now))) {
+  if (scheduled.isBefore(today)) {
     return WeekPlanStatus.pastSkipped;
   }
   return WeekPlanStatus.pending;
