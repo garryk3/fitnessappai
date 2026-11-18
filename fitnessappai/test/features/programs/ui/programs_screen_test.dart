@@ -21,6 +21,7 @@ import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
 import 'package:fitnessappai/features/programs/ui/programs_screen.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
@@ -44,6 +45,7 @@ void main() {
     WidgetTester tester, {
     ReminderService? reminderService,
     WorkoutRepository? workoutRepository,
+    PlanScheduleRepository? planScheduleRepository,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -55,6 +57,7 @@ void main() {
           repository: repository,
           reminderService: reminderService,
           workoutRepository: workoutRepository,
+          planScheduleRepository: planScheduleRepository,
         ),
       ),
     );
@@ -206,6 +209,29 @@ void main() {
     // бейдж дня недели остаётся отдельным текстом и не задваивается.
     expect(find.text('Ближайший день: Пн'), findsOneWidget);
     expect(find.text('Пн'), findsOneWidget);
+  });
+
+  testWidgets('65.1: назначение из плана — ближайший день по дате', (
+    tester,
+  ) async {
+    final created = await repository.create(program('Сплит'), [
+      ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: 1),
+    ]);
+    final day = (await repository.getDays(created.id!)).single;
+    final plan = PlanScheduleRepository(db);
+    final now = DateTime.now();
+    await plan.schedule(day.id!, DateTime(now.year, now.month, now.day));
+
+    await pumpPrograms(tester, planScheduleRepository: plan);
+
+    // Шаблонный день — понедельник, но назначение на сегодня раньше (или
+    // равно) ему, поэтому подпись строится по дате назначения. На понедельник
+    // проверка вырождается, но контракт «по дате» остаётся верным.
+    const labels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    expect(
+      find.text('Ближайший день: ${labels[now.weekday - 1]}'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('кнопка «Начать» ведёт к подготовке тренировки', (tester) async {

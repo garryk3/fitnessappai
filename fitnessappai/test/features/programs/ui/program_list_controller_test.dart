@@ -13,6 +13,7 @@ import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Сервис напоминаний, который только записывает вызовы (плагин не нужен).
@@ -75,6 +76,7 @@ void main() {
   /// закрытой БД в tearDown. Начальная загрузка дожидается явно.
   Future<ProgramListController> createController({
     WorkoutRepository? workoutRepository,
+    PlanScheduleRepository? planScheduleRepository,
     DateTime Function()? clock,
   }) async {
     final changes = DataChangeNotifier();
@@ -83,6 +85,7 @@ void main() {
       changes: changes,
       reminderService: reminders,
       workoutRepository: workoutRepository,
+      planScheduleRepository: planScheduleRepository,
       clock: clock,
     );
     await controller.refresh();
@@ -279,6 +282,68 @@ void main() {
       final item = controller.items.value.single;
       expect(item.weekProgress, isNull);
       expect(item.weekPercent, isNull);
+    });
+  });
+
+  group('ProgramListController: ближайший день (65.1)', () {
+    // 2026-08-12 — среда; ближайший шаблонный понедельник — 17 августа.
+    final wednesday = DateTime(2026, 8, 12);
+
+    Future<ProgramDay> createProgramWithDay({int? dayOfWeek}) async {
+      final program = await programRepository.create(
+        Program(
+          name: 'Сплит',
+          daysCount: 1,
+          createdAt: DateTime(2024, 1, 1),
+          updatedAt: DateTime(2024, 1, 1),
+        ),
+        [ProgramDay(programId: 0, dayIndex: 0, dayOfWeek: dayOfWeek)],
+      );
+      return (await programRepository.getDays(program.id!)).single;
+    }
+
+    test('без назначений плана — дата шаблонного дня', () async {
+      await createProgramWithDay(dayOfWeek: 1);
+      final controller = await createController(clock: () => wednesday);
+
+      final item = controller.items.value.single;
+      expect(item.upcomingDate, DateTime(2026, 8, 17));
+    });
+
+    test('назначение раньше шаблонного дня — дата назначения', () async {
+      final day = await createProgramWithDay(dayOfWeek: 1);
+      final plan = PlanScheduleRepository(db);
+      await plan.schedule(day.id!, DateTime(2026, 8, 13));
+
+      final controller = await createController(
+        planScheduleRepository: plan,
+        clock: () => wednesday,
+      );
+
+      final item = controller.items.value.single;
+      expect(item.upcomingDate, DateTime(2026, 8, 13));
+    });
+
+    test('назначение непривязанного дня даёт дату', () async {
+      final day = await createProgramWithDay(dayOfWeek: null);
+      final plan = PlanScheduleRepository(db);
+      await plan.schedule(day.id!, DateTime(2026, 8, 13));
+
+      final controller = await createController(
+        planScheduleRepository: plan,
+        clock: () => wednesday,
+      );
+
+      final item = controller.items.value.single;
+      expect(item.upcomingDate, DateTime(2026, 8, 13));
+    });
+
+    test('без привязок и назначений даты нет', () async {
+      await createProgramWithDay(dayOfWeek: null);
+      final controller = await createController(clock: () => wednesday);
+
+      final item = controller.items.value.single;
+      expect(item.upcomingDate, isNull);
     });
   });
 }
