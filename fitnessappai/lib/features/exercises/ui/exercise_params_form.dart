@@ -67,6 +67,7 @@ class ExerciseParamsStepperField extends StatelessWidget {
     this.step = 1,
     this.decimals = false,
     this.helperText,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
   });
 
   final TextEditingController controller;
@@ -76,6 +77,9 @@ class ExerciseParamsStepperField extends StatelessWidget {
   final double step;
   final bool decimals;
   final String? helperText;
+
+  /// Режим валидации поля; экран может откладывать ошибки до сабмита (66.6).
+  final AutovalidateMode autovalidateMode;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +96,7 @@ class ExerciseParamsStepperField extends StatelessWidget {
           step: step,
           decimals: decimals,
           helperText: helperText,
+          autovalidateMode: autovalidateMode,
           // Крупное полужирное значение — как в образце «Параметры упражнения».
           style: Theme.of(
             context,

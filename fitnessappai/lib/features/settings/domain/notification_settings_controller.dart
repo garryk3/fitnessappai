@@ -52,8 +52,13 @@ class NotificationSettingsController extends ChangeNotifier {
   final Signal<bool?> batteryOptimizationExempt = Signal<bool?>(null);
 
   /// Загружает текущий статус разрешений.
-  Future<void> load() async {
-    isLoading.value = true;
+  ///
+  /// [silent] — фоновое перечитывание (возврат в приложение): последний
+  /// известный статус остаётся на экране, секция не схлопывается.
+  Future<void> load({bool silent = false}) async {
+    if (!(silent && status.value != null)) {
+      isLoading.value = true;
+    }
     error.value = null;
     try {
       status.value = await _reminderService.checkPermissions();

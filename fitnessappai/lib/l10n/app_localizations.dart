@@ -1294,6 +1294,12 @@ abstract class AppLocalizations {
   /// **'Удалить программу «{name}»?'**
   String programDeleteConfirm(String name);
 
+  /// No description provided for @programDeleteFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить программу'**
+  String get programDeleteFailed;
+
   /// Количество дней в программе
   ///
   /// In ru, this message translates to:
@@ -1701,6 +1707,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Разминка'**
   String get workoutWarmup;
+
+  /// No description provided for @workoutWarmupExitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из разминки?'**
+  String get workoutWarmupExitTitle;
+
+  /// No description provided for @workoutWarmupExitBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка ещё не начата — вернётесь к экрану подготовки.'**
+  String get workoutWarmupExitBody;
 
   /// No description provided for @workoutWarmupDone.
   ///

@@ -284,6 +284,7 @@
   "copyJsonCopied": "JSON скопирован в буфер обмена",
   "copyJsonNotFound": "Не удалось скопировать JSON",
   "programDeleteConfirm": "Удалить программу «{name}»?",
+  "programDeleteFailed": "Не удалось удалить программу",
   "@programDeleteConfirm": {
     "description": "Подтверждение удаления программы",
     "placeholders": {
@@ -421,6 +422,8 @@
   "workoutRun": "Тренировка",
   "workoutPrepareStart": "Начать тренировку",
   "workoutWarmup": "Разминка",
+  "workoutWarmupExitTitle": "Выйти из разминки?",
+  "workoutWarmupExitBody": "Тренировка ещё не начата — вернётесь к экрану подготовки.",
   "workoutWarmupDone": "Разминка завершена",
   "workoutWarmupSkip": "Пропустить",
   "workoutWarmupStartWorkout": "Начать тренировку",

@@ -96,77 +96,119 @@ class _WorkoutWarmupScreenState extends State<WorkoutWarmupScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return AppScaffold(
-      appBar: AppTopBar(title: l10n.workoutWarmup),
-      body: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: ConstrainedBox(
-            // 61.9: вертикальное центрирование карточки между шапкой и
-            // кнопкой. Внутри SingleChildScrollView Column без минимальной
-            // высоты контент-сайзед и top-aligned — центрирование работает
-            // только при minHeight ≥ вьюпорту; скролл живёт при fontScale.
-            // Вертикальный «воздух» (design-review Low) — внутри
-            // ConstrainedBox: при контенте выше вьюпорта контент при
-            // прокрутке не прижат к шапке/низу, а min-высота учитывает
-            // padding (центр не смещается).
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Таймер-карточка в стиле таймера планки run-экрана (54.6).
-                  AppContainer(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 32,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(AppRadii.lg),
-                    ),
-                    child: Column(
-                      children: [
-                        AppIcon(
-                          _done ? Icons.check_circle : Icons.timer,
-                          size: 48,
-                          color: _done
-                              ? colorScheme.primary
-                              : colorScheme.secondary,
-                        ),
-                        const SizedBox(height: 16),
-                        AppText(
-                          _done ? l10n.workoutWarmupDone : _format(_remaining),
-                          style: theme.textTheme.displayMedium?.copyWith(
-                            color: colorScheme.onSurface,
+    return PopScope(
+      // 66.5: выход с разминки — только через подтверждение, как на экране
+      // выполнения (тренировка ещё не начата, данные не теряются, но
+      // случайный BACK не должен уводить из сценария).
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _confirmExit();
+        }
+      },
+      child: AppScaffold(
+        appBar: AppTopBar(title: l10n.workoutWarmup),
+        body: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              // 61.9: вертикальное центрирование карточки между шапкой и
+              // кнопкой. Внутри SingleChildScrollView Column без минимальной
+              // высоты контент-сайзед и top-aligned — центрирование работает
+              // только при minHeight ≥ вьюпорту; скролл живёт при fontScale.
+              // Вертикальный «воздух» (design-review Low) — внутри
+              // ConstrainedBox: при контенте выше вьюпорта контент при
+              // прокрутке не прижат к шапке/низу, а min-высота учитывает
+              // padding (центр не смещается).
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Таймер-карточка в стиле таймера планки run-экрана (54.6).
+                    AppContainer(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 32,
+                        horizontal: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(AppRadii.lg),
+                      ),
+                      child: Column(
+                        children: [
+                          AppIcon(
+                            _done ? Icons.check_circle : Icons.timer,
+                            size: 48,
+                            color: _done
+                                ? colorScheme.primary
+                                : colorScheme.secondary,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          AppText(
+                            _done
+                                ? l10n.workoutWarmupDone
+                                : _format(_remaining),
+                            style: theme.textTheme.displayMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  if (!_done)
-                    AppOutlinedButton(
-                      label: l10n.workoutWarmupSkip,
-                      onPressed: _goToRun,
-                    )
-                  else
-                    AppGradientButton(
-                      onPressed: _goToRun,
-                      icon: Icons.play_arrow,
-                      pill: true,
-                      label: l10n.workoutWarmupStartWorkout,
-                    ),
-                ],
+                    const SizedBox(height: 32),
+                    if (!_done)
+                      AppOutlinedButton(
+                        label: l10n.workoutWarmupSkip,
+                        onPressed: _goToRun,
+                      )
+                    else
+                      AppGradientButton(
+                        onPressed: _goToRun,
+                        icon: Icons.play_arrow,
+                        pill: true,
+                        label: l10n.workoutWarmupStartWorkout,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Подтверждает выход с разминки (66.5).
+  Future<void> _confirmExit() async {
+    final l10n = AppLocalizations.of(context);
+    final exit = await showAppDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: AppText(l10n.workoutWarmupExitTitle),
+        content: AppText(l10n.workoutWarmupExitBody),
+        actions: [
+          AppTextButton(
+            label: l10n.commonCancel,
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          AppButton(
+            label: l10n.commonExit,
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+    if ((exit ?? false) && mounted) {
+      _timer?.cancel();
+      _timer = null;
+      _navigated = true;
+      _soundService.stop();
+      context.pop();
+    }
   }
 
   String _format(int seconds) {

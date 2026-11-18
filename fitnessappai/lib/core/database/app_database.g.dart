@@ -8245,7 +8245,7 @@ class $PlanScheduleTable extends PlanSchedule
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES program_days (id)',
+      'REFERENCES program_days (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _scheduledDateMeta = const VerificationMeta(
@@ -8907,6 +8907,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       result: [
         TableUpdate('program_warning_dismissals', kind: UpdateKind.delete),
       ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'program_days',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('plan_schedule', kind: UpdateKind.delete)],
     ),
   ]);
 }

@@ -46,6 +46,7 @@ void main() {
     ReminderService? reminderService,
     WorkoutRepository? workoutRepository,
     PlanScheduleRepository? planScheduleRepository,
+    ProgramRepository? repositoryOverride,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -54,7 +55,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
         home: ProgramsScreen(
-          repository: repository,
+          repository: repositoryOverride ?? repository,
           reminderService: reminderService,
           workoutRepository: workoutRepository,
           planScheduleRepository: planScheduleRepository,
@@ -388,6 +389,31 @@ void main() {
     expect(find.text('Список программ пуст'), findsOneWidget);
   });
 
+  testWidgets('66.1: ошибка удаления не тихая — снекбар', (tester) async {
+    await repository.create(program('Full Body'), [
+      ProgramDay(programId: 0, dayIndex: 0),
+    ]);
+    await pumpPrograms(
+      tester,
+      repositoryOverride: _FailingDeleteRepository(db),
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenuButton<String>),
+        matching: find.byType(IconButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Удалить'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Удалить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Не удалось удалить программу'), findsOneWidget);
+    expect(find.text('Full Body'), findsOneWidget);
+  });
+
   testWidgets('отмена удаления сохраняет программу', (tester) async {
     await repository.create(program('Сплит'), [
       ProgramDay(programId: 0, dayIndex: 0),
@@ -659,5 +685,15 @@ class _RecordingReminderService extends ReminderService {
   @override
   Future<void> cancelDays(Iterable<int> programDayIds) async {
     cancelledDays.add(programDayIds.toList()..sort());
+  }
+}
+
+/// Репозиторий, у которого удаление падает (66.1: снекбар ошибки).
+class _FailingDeleteRepository extends ProgramRepository {
+  _FailingDeleteRepository(super.db);
+
+  @override
+  Future<void> delete(int id) async {
+    throw Exception('удаление недоступно');
   }
 }

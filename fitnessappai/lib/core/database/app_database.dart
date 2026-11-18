@@ -54,7 +54,10 @@ part 'app_database.g.dart';
 /// ascentMeters/descentMeters/avgPace/steps`.
 /// v15: без изменений схемы — данные: типы упражнений `running`/`bike`
 /// переписаны в `distance` (задача 47.13).
-const int appDatabaseSchemaVersion = 16;
+/// v16: время и напоминание в `plan_schedule`.
+/// v17: `plan_schedule.program_day_id` — `ON DELETE CASCADE` (66.1:
+/// удаление программы с назначениями падало по FK).
+const int appDatabaseSchemaVersion = 17;
 
 /// Точка входа в локальную БД SQLite.
 ///
@@ -189,6 +192,11 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(planSchedule, planSchedule.reminderEnabled);
           }
         }
+      }
+      if (from < 17) {
+        // 66.1: FK-действие меняется только пересозданием таблицы; данные
+        // назначений при этом сохраняются (TableMigration копирует строки).
+        await m.alterTable(TableMigration(planSchedule));
       }
     },
     beforeOpen: (details) async {

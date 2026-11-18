@@ -81,6 +81,14 @@ class _FakeReminderService extends ReminderService {
     return _status;
   }
 
+  /// Имитирует выдачу разрешения в системном экране.
+  void grantNotifications() {
+    _status = const NotificationPermissionStatus(
+      notificationsEnabled: true,
+      exactAlarmsEnabled: true,
+    );
+  }
+
   @override
   Future<NotificationPermissionStatus> requestNotificationsPermission() async {
     notificationsCalls++;
@@ -812,6 +820,32 @@ void main() {
       expect(find.text('Разрешить уведомления'), findsNothing);
     },
   );
+
+  testWidgets('66.2: возврат в приложение перечитывает статус разрешений', (
+    tester,
+  ) async {
+    final reminder = _FakeReminderService(
+      repository: WorkoutReminderRepository(db),
+      status: const NotificationPermissionStatus(
+        notificationsEnabled: false,
+        exactAlarmsEnabled: false,
+      ),
+    );
+    final notificationController = NotificationSettingsController(
+      reminderService: reminder,
+    );
+    await pumpScreen(tester, notificationController: notificationController);
+
+    expect(find.text('Уведомления отключены'), findsOneWidget);
+
+    // Пользователь выдал разрешение в системном экране и вернулся.
+    reminder.grantNotifications();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Уведомления включены'), findsOneWidget);
+    expect(find.text('Разрешить уведомления'), findsNothing);
+  });
 
   testWidgets('точные будильники: кнопка запрашивает только это разрешение', (
     tester,

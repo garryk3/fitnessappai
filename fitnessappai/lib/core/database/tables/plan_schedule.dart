@@ -8,7 +8,8 @@ import 'package:fitnessappai/core/database/tables/program_days.dart';
 /// привязано к конкретному дню календаря.
 class PlanSchedule extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get programDayId => integer().references(ProgramDays, #id)();
+  IntColumn get programDayId =>
+      integer().references(ProgramDays, #id, onDelete: KeyAction.cascade)();
   DateTimeColumn get scheduledDate => dateTime()();
 
   /// Время тренировки (48.10): час и минута задаются только вместе —

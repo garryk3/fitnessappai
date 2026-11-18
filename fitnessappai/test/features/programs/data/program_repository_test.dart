@@ -9,6 +9,7 @@ import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -314,6 +315,22 @@ void main() {
       expect(await repo.getDays(created.id!), isEmpty);
       expect(await db.select(db.programDayExercises).get(), isEmpty);
     });
+
+    test(
+      '66.1: delete удаляет программу с назначением плана (FK cascade)',
+      () async {
+        final created = await createProgram();
+        final dayRow = (await repo.getDays(created.id!)).single;
+        final schedule = PlanScheduleRepository(db);
+        await schedule.schedule(dayRow.id!, DateTime(2026, 11, 19));
+
+        await repo.delete(created.id!);
+
+        expect(await repo.getById(created.id!), isNull);
+        expect(await repo.getDays(created.id!), isEmpty);
+        expect(await db.select(db.planSchedule).get(), isEmpty);
+      },
+    );
   });
 
   group('дни', () {

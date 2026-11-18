@@ -31,6 +31,10 @@ class AdaptiveNavigation extends StatefulWidget {
 }
 
 class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
+  static const double _kRailCollapsedWidth = 80;
+  static const double _kRailExtendedWidth = 256;
+  static const Duration _kRailAnimationDuration = Duration(milliseconds: 200);
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _railExtended = false;
 
@@ -125,8 +129,20 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
     return [
       for (final branch in _railBranchOrder)
         NavigationRailDestination(
-          icon: AppIcon(byBranch[branch]!.icon),
-          selectedIcon: AppIcon(byBranch[branch]!.selectedIcon),
+          icon: Semantics(
+            container: true,
+            label: byBranch[branch]!.label,
+            button: true,
+            selected: navigationShell.currentIndex == branch,
+            child: AppIcon(byBranch[branch]!.icon),
+          ),
+          selectedIcon: Semantics(
+            container: true,
+            label: byBranch[branch]!.label,
+            button: true,
+            selected: navigationShell.currentIndex == branch,
+            child: AppIcon(byBranch[branch]!.selectedIcon),
+          ),
           label: AppText(byBranch[branch]!.label),
         ),
     ];
@@ -304,21 +320,48 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
         final bool useRail = AppBreakpoints.isExpanded(constraints.maxWidth);
         final items = _menuItems(context);
 
+        // 66.3 (a11y): `StatefulShellRoute` теряет семантику виджетов,
+        // отрисованных ДО `navigationShell` (проверено минимальным тестом:
+        // siblings после shell — доступны, до — исчезают из дерева). Поэтому
+        // shell идёт первым слоем, а rail — поверх него вторым: визуально
+        // слева, но в дереве семантики после shell, и TalkBack видит пункты.
+        final railWidth = _railExtended
+            ? _kRailExtendedWidth
+            : _kRailCollapsedWidth;
         final child = useRail
             ? AppScaffold(
-                body: Row(
+                body: Stack(
                   children: [
-                    NavigationRail(
-                      selectedIndex: _railSelectedIndex(),
-                      onDestinationSelected: _onRailDestinationSelected,
-                      leading: _buildRailLeading(),
-                      trailing: _buildRailTrailing(),
-                      trailingAtBottom: true,
-                      extended: _railExtended,
-                      destinations: _railDestinations(items),
+                    Positioned.fill(
+                      child: AnimatedPadding(
+                        duration: _kRailAnimationDuration,
+                        curve: Curves.ease,
+                        padding: EdgeInsets.only(left: railWidth),
+                        child: navigationShell,
+                      ),
                     ),
-                    const AppVerticalDivider(width: 1, thickness: 1),
-                    Expanded(child: navigationShell),
+                    AnimatedPositioned(
+                      left: railWidth - 1,
+                      top: 0,
+                      bottom: 0,
+                      duration: _kRailAnimationDuration,
+                      curve: Curves.ease,
+                      child: const AppVerticalDivider(width: 1, thickness: 1),
+                    ),
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: NavigationRail(
+                        selectedIndex: _railSelectedIndex(),
+                        onDestinationSelected: _onRailDestinationSelected,
+                        leading: _buildRailLeading(),
+                        trailing: _buildRailTrailing(),
+                        trailingAtBottom: true,
+                        extended: _railExtended,
+                        destinations: _railDestinations(items),
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -340,9 +383,18 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
           child: PopScope(
             canPop: navigationShell.currentIndex == _homeBranchIndex,
             onPopInvokedWithResult: (didPop, result) {
-              if (!didPop) {
-                context.go('/home');
+              if (didPop) {
+                return;
               }
+              // 66.4: открытый drawer закрывается первым BACK на любой ветви;
+              // иначе на не-главной ветви PopScope уводил на /home, минуя
+              // закрытие панели.
+              final scaffold = _scaffoldKey.currentState;
+              if (scaffold != null && scaffold.isDrawerOpen) {
+                scaffold.closeDrawer();
+                return;
+              }
+              context.go('/home');
             },
             child: child,
           ),

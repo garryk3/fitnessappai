@@ -81,6 +81,62 @@ void main() {
     expect(find.text('Пропустить'), findsOneWidget);
   });
 
+  testWidgets('66.5: BACK на разминке спрашивает подтверждение', (
+    tester,
+  ) async {
+    locator.reset();
+    wakelock = _FakeWakelock();
+    locator.registerLazySingleton<WakelockService>(() => wakelock);
+    final router = GoRouter(
+      initialLocation: '/prepare',
+      routes: [
+        GoRoute(
+          path: '/prepare',
+          builder: (context, state) =>
+              const Scaffold(body: Text('prepare-screen')),
+        ),
+        GoRoute(
+          path: '/workout/warmup',
+          builder: (context, state) => WorkoutWarmupScreen(
+            programDayId: 1,
+            warmupSeconds: 30,
+            variant: WorkoutVariant.main,
+            soundService: StubSoundService(),
+          ),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.dark(),
+        routerConfig: router,
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    router.push('/workout/warmup?seconds=30');
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Выйти из разминки?'), findsOneWidget);
+
+    // «Отмена» остаётся на разминке.
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    expect(find.text('Разминка'), findsOneWidget);
+
+    // «Выйти» возвращает на подготовку.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Выйти'));
+    await tester.pumpAndSettle();
+    expect(find.text('Разминка'), findsNothing);
+    expect(find.text('prepare-screen'), findsOneWidget);
+  });
+
   testWidgets('61.9: таймер-карточка вертикально центрирована в теле', (
     tester,
   ) async {

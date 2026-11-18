@@ -665,6 +665,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get programDeleteFailed => 'Не удалось удалить программу';
+
+  @override
   String programDaysCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -899,6 +902,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workoutWarmup => 'Разминка';
+
+  @override
+  String get workoutWarmupExitTitle => 'Выйти из разминки?';
+
+  @override
+  String get workoutWarmupExitBody =>
+      'Тренировка ещё не начата — вернётесь к экрану подготовки.';
 
   @override
   String get workoutWarmupDone => 'Разминка завершена';

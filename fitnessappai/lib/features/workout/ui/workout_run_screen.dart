@@ -874,6 +874,10 @@ class _ExerciseInputForm extends StatefulWidget {
 }
 
 class _ExerciseInputFormState extends State<_ExerciseInputForm> {
+  /// 66.6: до первого сабмита поля не валидируются «на лету» (иначе ввод
+  /// в одно поле подсвечивал бы пустые соседние); после сабмита ошибки
+  /// снимаются сразу при исправлении.
+  bool _submitted = false;
   final _formKey = GlobalKey<FormState>();
   late final _reps = TextEditingController();
   late final _weight = TextEditingController();
@@ -913,6 +917,11 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
   }
 
   void _submit() {
+    // setState обязателен: без перестройки Form не получит новый
+    // autovalidateMode, и ошибки не будут сниматься при вводе.
+    if (!_submitted) {
+      setState(() => _submitted = true);
+    }
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -996,6 +1005,9 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
               '${side == 'right' ? l10n.workoutSideRight : l10n.workoutSideLeft}';
     return Form(
       key: _formKey,
+      autovalidateMode: _submitted
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
