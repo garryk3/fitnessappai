@@ -106,7 +106,7 @@ class UpdateCheckController {
       }
       _latestRelease = release;
       final current = versionText.value ?? await _loadVersion();
-      if (_isNewer(release.tagName, current)) {
+      if (isNewer(release.tagName, current)) {
         hasUpdate.value = true;
         final version = _cleanTag(release.tagName);
         latestVersion.value = version;
@@ -186,7 +186,10 @@ class UpdateCheckController {
   }
 
   /// Сравнивает семантические версии без префикса `v`: `latest` новее `current`.
-  static bool _isNewer(String latestTag, String current) {
+  ///
+  /// Публично с 64.1: правило «новее» одно для проверки в настройках и
+  /// для автообновления на старте.
+  static bool isNewer(String latestTag, String current) {
     final latest = _parseVersion(latestTag);
     final installed = _parseVersion(current);
     if (latest == null || installed == null) {

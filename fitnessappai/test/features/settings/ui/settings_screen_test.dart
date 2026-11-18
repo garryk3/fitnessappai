@@ -14,6 +14,8 @@ import 'package:fitnessappai/app/theme/theme_settings_repository.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/notifications/battery_optimization.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
+import 'package:fitnessappai/features/settings/data/auto_update_repository.dart';
+import 'package:fitnessappai/features/settings/domain/auto_update_controller.dart';
 import 'package:fitnessappai/features/settings/domain/notification_settings_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_check_controller.dart';
 import 'package:fitnessappai/features/settings/domain/update_service.dart';
@@ -175,6 +177,7 @@ void main() {
     SoundSettingsController? soundController,
     SoundSettingsController? reminderSoundController,
     UpdateCheckController? updateController,
+    AutoUpdateController? autoUpdateController,
     NotificationSettingsController? notificationController,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
@@ -210,6 +213,7 @@ void main() {
                 service: _FakeUpdateService(),
                 loadVersion: () async => '1.0.0',
               ),
+          autoUpdateController: autoUpdateController,
           notificationController: notificationController,
         ),
         localizationsDelegates: appLocalizationsDelegates,
@@ -219,6 +223,29 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('переключатель автообновления виден и сохраняет флаг (64.1)', (
+    tester,
+  ) async {
+    final repository = AutoUpdateRepository(db);
+    final autoUpdateController = AutoUpdateController(
+      repository: repository,
+      service: _FakeUpdateService(),
+    );
+    await pumpScreen(tester, autoUpdateController: autoUpdateController);
+
+    expect(find.text('Автообновление'), findsOneWidget);
+    // По умолчанию выключен.
+    final switchTile = tester.widget<AppSwitchTile>(
+      find.widgetWithText(AppSwitchTile, 'Автообновление'),
+    );
+    expect(switchTile.value, isFalse);
+
+    await tester.tap(find.text('Автообновление'));
+    await tester.pumpAndSettle();
+    expect(autoUpdateController.autoUpdateEnabled.value, isTrue);
+    expect(await repository.read(), isTrue);
+  });
 
   testWidgets('показывает секции синхронизации и темы', (tester) async {
     await pumpScreen(tester);
