@@ -470,6 +470,46 @@ void main() {
     },
   );
 
+  testWidgets('история: тап по замеру открывает дравер с деталями (64.9)', (
+    tester,
+  ) async {
+    await repo.add(
+      measurement(date: DateTime(2026, 8, 10), weightKg: 81, waistCm: 90),
+    );
+
+    await pumpProfile(tester);
+
+    final date = DateFormat('d MMMM yyyy', 'ru').format(DateTime(2026, 8, 10));
+    await tester.tap(find.text(date));
+    await tester.pumpAndSettle();
+
+    // Дравер: заголовок-дата и все заполненные метрики записи
+    // (поиск внутри дравера — на экране профиля те же слова).
+    final sheet = find.byType(BottomSheet);
+    expect(find.text(date), findsNWidgets(2));
+    expect(
+      find.descendant(of: sheet, matching: find.text('Вес')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('81 кг')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Талия')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('90 см')),
+      findsOneWidget,
+    );
+    // Незаполненные метрики не показываются.
+    expect(
+      find.descendant(of: sheet, matching: find.text('Рост')),
+      findsNothing,
+    );
+  });
+
   testWidgets('история: свежий замер показывается первым (DESC)', (
     tester,
   ) async {

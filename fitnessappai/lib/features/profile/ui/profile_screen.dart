@@ -14,6 +14,7 @@ import 'package:fitnessappai/features/profile/domain/body_metric.dart';
 import 'package:fitnessappai/features/profile/domain/metric_point.dart';
 import 'package:fitnessappai/features/profile/domain/user_profile_repository.dart';
 import 'package:fitnessappai/features/profile/ui/body_metric_label.dart';
+import 'package:fitnessappai/features/profile/ui/measurement_sheet.dart';
 import 'package:fitnessappai/features/profile/ui/profile_controller.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
@@ -767,6 +768,9 @@ class _HistoryTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: AppListTile(
           contentPadding: EdgeInsets.zero,
+          // 64.9: тап по записи — нижний дравер с деталями замера (без
+          // отдельной страницы), по образцу дравера дня истории (59.2).
+          onTap: () => showMeasurementSheet(context, measurement),
           // Бейдж метрики (54.9, образец): весы при известном весе,
           // иначе линейка (заполненных обхватов).
           leading: AppContainer(
