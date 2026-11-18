@@ -1294,6 +1294,12 @@ abstract class AppLocalizations {
   /// **'Удалить программу «{name}»?'**
   String programDeleteConfirm(String name);
 
+  /// No description provided for @programDeleteFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить программу'**
+  String get programDeleteFailed;
+
   /// Количество дней в программе
   ///
   /// In ru, this message translates to:

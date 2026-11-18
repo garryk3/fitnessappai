@@ -187,8 +187,19 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
       ),
     );
     if (confirmed ?? false) {
-      await _controller.deleteProgram(program.id!);
-      await _controller.refresh();
+      // 66.1: сбой удаления не должен быть тихим (например, FK-ошибка) —
+      // показываем снекбар, список оставляем как есть.
+      try {
+        await _controller.deleteProgram(program.id!);
+        await _controller.refresh();
+      } catch (_) {
+        if (context.mounted) {
+          showAppSnackBar(
+            ScaffoldMessenger.of(context),
+            AppLocalizations.of(context).programDeleteFailed,
+          );
+        }
+      }
     }
   }
 }

@@ -35,6 +35,9 @@ class ProgramDayExerciseParamsScreen extends StatefulWidget {
 
 class _ProgramDayExerciseParamsScreenState
     extends State<ProgramDayExerciseParamsScreen> {
+  /// 66.6: до первого сабмита — без «живой» валидации; после — ошибки
+  /// снимаются сразу при вводе корректного значения.
+  bool _submitted = false;
   late final ProgramRepository _repository;
   late final ExerciseRepository _exerciseRepository;
 
@@ -171,6 +174,7 @@ class _ProgramDayExerciseParamsScreenState
   }
 
   Future<void> _save() async {
+    _submitted = true;
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -257,6 +261,9 @@ class _ProgramDayExerciseParamsScreenState
     }
     return Form(
       key: _formKey,
+      autovalidateMode: _submitted
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
       child: AppListView(
         padding: const EdgeInsets.all(16),
         children: [

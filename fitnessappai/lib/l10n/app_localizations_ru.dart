@@ -665,6 +665,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get programDeleteFailed => 'Не удалось удалить программу';
+
+  @override
   String programDaysCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

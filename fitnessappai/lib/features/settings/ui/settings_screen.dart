@@ -522,7 +522,30 @@ class _NotificationsSection extends StatefulWidget {
   State<_NotificationsSection> createState() => _NotificationsSectionState();
 }
 
-class _NotificationsSectionState extends State<_NotificationsSection> {
+class _NotificationsSectionState extends State<_NotificationsSection>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 66.2: разрешение выдаётся в системном экране, приложение при этом
+    // уходит в фон. Без перечитывания при возврате блок остаётся
+    // «Уведомления отключены» до перезапуска процесса.
+    if (state == AppLifecycleState.resumed) {
+      widget.controller.load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

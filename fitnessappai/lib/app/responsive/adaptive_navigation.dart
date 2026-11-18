@@ -340,9 +340,18 @@ class _AdaptiveNavigationState extends State<AdaptiveNavigation> {
           child: PopScope(
             canPop: navigationShell.currentIndex == _homeBranchIndex,
             onPopInvokedWithResult: (didPop, result) {
-              if (!didPop) {
-                context.go('/home');
+              if (didPop) {
+                return;
               }
+              // 66.4: открытый drawer закрывается первым BACK на любой ветви;
+              // иначе на не-главной ветви PopScope уводил на /home, минуя
+              // закрытие панели.
+              final scaffold = _scaffoldKey.currentState;
+              if (scaffold != null && scaffold.isDrawerOpen) {
+                scaffold.closeDrawer();
+                return;
+              }
+              context.go('/home');
             },
             child: child,
           ),
