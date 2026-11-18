@@ -732,7 +732,7 @@ class _AboutSectionState extends State<_AboutSection> {
                 value: autoUpdateEnabled,
                 title: AppText(l10n.settingsAutoUpdate),
                 // fix design-review: тайл в карточке — без дефолтного
-                // 16dp-паддинга ListTile, иначе рассыпается вертикаль.
+                // 16dp-паддинга тайлов, иначе рассыпается вертикаль.
                 contentPadding: EdgeInsets.zero,
                 subtitle: AppText(
                   l10n.settingsAutoUpdateHint,
