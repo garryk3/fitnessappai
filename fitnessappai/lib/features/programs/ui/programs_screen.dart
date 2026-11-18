@@ -6,12 +6,12 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:fitnessappai/app/responsive/app_menu_button.dart';
 import 'package:fitnessappai/core/di/service_locator.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
-import 'package:fitnessappai/core/domain/nearest_weekday.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/llm/data/llm_export_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/programs/ui/program_list_controller.dart';
 import 'package:fitnessappai/features/programs/ui/program_thumbnail.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
@@ -24,6 +24,7 @@ class ProgramsScreen extends StatefulWidget {
     this.repository,
     this.reminderService,
     this.workoutRepository,
+    this.planScheduleRepository,
   });
 
   final ProgramRepository? repository;
@@ -32,6 +33,11 @@ class ProgramsScreen extends StatefulWidget {
   /// Репозиторий сессий — для недельного прогресса карточек (кольцо %).
   /// `null` — ищется в DI; если DI тоже пуст, кольцо не показывается.
   final WorkoutRepository? workoutRepository;
+
+  /// Назначения плана (65.1) — «Ближайший день» учитывает их так же, как
+  /// главная (64.4). `null` — ищется в DI; без DI ближайший день считается
+  /// только по шаблону.
+  final PlanScheduleRepository? planScheduleRepository;
 
   @override
   State<ProgramsScreen> createState() => _ProgramsScreenState();
@@ -50,6 +56,11 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
           widget.workoutRepository ??
           (locator.isRegistered<WorkoutRepository>()
               ? locator.get<WorkoutRepository>()
+              : null),
+      planScheduleRepository:
+          widget.planScheduleRepository ??
+          (locator.isRegistered<PlanScheduleRepository>()
+              ? locator.get<PlanScheduleRepository>()
               : null),
     );
   }
@@ -114,8 +125,13 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: _ProgramCard(
               item: item,
+              // 65.1: кнопка стартует ближайший день («Ближайший день: X»),
+              // как hero-карточка Главной, а не первый день программы.
               onStart: item.program.isActive && item.days.isNotEmpty
-                  ? () => context.push('/workout/prepare/${item.days.first.id}')
+                  ? () => context.push(
+                      '/workout/prepare/'
+                      '${item.upcomingDayId ?? item.days.first.id}',
+                    )
                   : null,
               onEdit: () => context.push('/programs/${item.program.id}/edit'),
               onDelete: () => _confirmDelete(context, item.program),
@@ -203,10 +219,9 @@ class _ProgramCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final program = item.program;
     final weekProgress = item.weekProgress;
-    final nearest = nearestWeekday(
-      weekdays: [for (final day in item.days) day.dayOfWeek],
-      todayWeekday: DateTime.now().weekday,
-    );
+    // 65.1: ближайший день приходит из контроллера — он учитывает
+    // назначения плана (как главная, 64.4), а подпись строится по дате.
+    final upcomingWeekday = item.upcomingDate?.weekday;
     return AppCard(
       onTap: onEdit,
       child: Column(
@@ -343,7 +358,9 @@ class _ProgramCard extends StatelessWidget {
               ],
             ),
           ],
-          if (nearest != null || weekProgress != null || onStart != null) ...[
+          if (upcomingWeekday != null ||
+              weekProgress != null ||
+              onStart != null) ...[
             const SizedBox(height: 12),
             // Ближайший день и недельный прогресс — в подвале слева,
             // кнопка «Начать» — справа; тесноты узкого экрана больше нет.
@@ -356,9 +373,10 @@ class _ProgramCard extends StatelessWidget {
                     runSpacing: 8,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      if (nearest != null)
+                      if (upcomingWeekday != null)
                         AppText(
-                          '${l10n.homeUpcomingDay}: ${_weekdayLabel(l10n, nearest)}',
+                          '${l10n.homeUpcomingDay}: '
+                          '${_weekdayLabel(l10n, upcomingWeekday)}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),

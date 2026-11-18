@@ -5,9 +5,11 @@ import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/upcoming_day.dart';
 import 'package:fitnessappai/core/domain/weekly_progress.dart';
 import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
+import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 
 /// Элемент карточки программы: модель, дни и количество упражнений.
@@ -17,6 +19,8 @@ class ProgramListItem {
     required this.days,
     required this.exercisesCount,
     this.weekProgress,
+    this.upcomingDate,
+    this.upcomingDayId,
   });
 
   final Program program;
@@ -28,6 +32,17 @@ class ProgramListItem {
   /// Недельный прогресс (выполненные дни / всего) по правилам 48.2 —
   /// считается только при наличии репозитория сессий; `null` — данных нет.
   final ({int performed, int assigned})? weekProgress;
+
+  /// Дата ближайшего дня программы (65.1): дата назначения из плана, если
+  /// оно раньше ближайшего шаблонного дня, иначе дата шаблонного дня недели.
+  /// `null` — у программы нет привязанных дней и назначений; подпись
+  /// «Ближайший день» в этом случае не показывается.
+  final DateTime? upcomingDate;
+
+  /// Идентификатор ближайшего дня программы (65.1) — им же запускается
+  /// тренировка по кнопке «Начать», чтобы действие совпадало с подписью
+  /// и с hero-карточкой Главной (64.4). `null` — ближайшего дня нет.
+  final int? upcomingDayId;
 
   /// Процент недельного выполнения; `null` — нет данных.
   int? get weekPercent => weekProgress == null
@@ -45,9 +60,11 @@ class ProgramListController {
     DataChangeNotifier? changes,
     ReminderService? reminderService,
     WorkoutRepository? workoutRepository,
+    PlanScheduleRepository? planScheduleRepository,
     DateTime Function()? clock,
   }) : _reminderService = reminderService,
        _workoutRepository = workoutRepository,
+       _planScheduleRepository = planScheduleRepository,
        _clock = clock ?? DateTime.now {
     _reloadSubscription = ChangeReloadSubscription(
       changes: changes ?? appDataChanges,
@@ -59,6 +76,7 @@ class ProgramListController {
   final ProgramRepository _repository;
   final ReminderService? _reminderService;
   final WorkoutRepository? _workoutRepository;
+  final PlanScheduleRepository? _planScheduleRepository;
   final DateTime Function() _clock;
   late final ChangeReloadSubscription _reloadSubscription;
 
@@ -113,10 +131,22 @@ class ProgramListController {
     isLoading.value = true;
     try {
       final summaries = await _repository.getPrograms();
-      final sessions = await _loadWeekSessions();
+      // Один снимок «сегодня» на загрузку: неделя, окно назначений и
+      // резолвер обязаны считать от одной даты (иначе на границе суток
+      // подпись разъедется на день).
+      final today = _dateOnly(_clock());
+      final sessions = await _loadWeekSessions(today);
+      final scheduled = await _loadScheduled(today);
       final list = <ProgramListItem>[];
       for (final summary in summaries) {
         final days = await _repository.getDays(summary.program.id!);
+        final upcoming = resolveUpcomingDay(
+          days: [
+            for (final day in days) (id: day.id, dayOfWeek: day.dayOfWeek),
+          ],
+          today: today,
+          scheduled: scheduled,
+        );
         list.add(
           ProgramListItem(
             program: summary.program,
@@ -129,6 +159,8 @@ class ProgramListController {
                     sessions: sessions,
                     programId: summary.program.id!,
                   ),
+            upcomingDate: upcoming.date,
+            upcomingDayId: upcoming.dayId,
           ),
         );
       }
@@ -138,14 +170,31 @@ class ProgramListController {
     }
   }
 
+  /// Назначения плана на ближайшую неделю (65.1) — один запрос на загрузку,
+  /// раскладка по программам внутри цикла. Репозитория нет — пустой список:
+  /// карточка считает ближайший день только по шаблону.
+  Future<List<UpcomingDaySchedule>> _loadScheduled(DateTime today) async {
+    final repository = _planScheduleRepository;
+    if (repository == null) {
+      return const [];
+    }
+    final items = await repository.getForRange(
+      today,
+      today.add(const Duration(days: 6)),
+    );
+    return [
+      for (final item in items)
+        (dayId: item.programDayId, date: item.scheduledDate),
+    ];
+  }
+
   /// Сессии текущей недели `[пн, пн+7)`; `null` — репозитория нет, тогда
   /// недельный прогресс карточек не считается (без данных — без кольца).
-  Future<List<WorkoutSession>?> _loadWeekSessions() async {
+  Future<List<WorkoutSession>?> _loadWeekSessions(DateTime today) async {
     final repository = _workoutRepository;
     if (repository == null) {
       return null;
     }
-    final today = _clock();
     final weekStart = DateTime(
       today.year,
       today.month,
@@ -161,3 +210,6 @@ class ProgramListController {
     _reloadSubscription.dispose();
   }
 }
+
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
