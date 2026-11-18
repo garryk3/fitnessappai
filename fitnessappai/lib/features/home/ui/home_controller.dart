@@ -4,6 +4,7 @@ import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/workout_session.dart';
+import 'package:fitnessappai/core/domain/plan_day_status.dart';
 import 'package:fitnessappai/core/domain/upcoming_day.dart';
 import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 import 'package:fitnessappai/core/domain/workout_streak.dart' as streak;
@@ -12,7 +13,6 @@ import 'package:fitnessappai/features/exercises/data/exercise_repository.dart';
 import 'package:fitnessappai/features/programs/data/program_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
-import 'package:fitnessappai/features/workout/ui/week_plan_controller.dart';
 
 /// Чистая функция недельного процента перенесена в домен (54.4) — re-export
 /// для существующих потребителей `home_controller.dart`.
@@ -169,7 +169,9 @@ class HomeController {
           program.id!,
         );
 
-        // Вычисляем статус тренировки на сегодня.
+        // Статус тренировки на сегодня — по тем же правилам, что план (65.2):
+        // «Перенесено» не выставляется, позднее выполнение в окне +3 дня
+        // засчитывается как «Выполнено» на запланированной дате.
         WeekPlanStatus? todayStatus;
         if (upcomingDay != null &&
             upcomingDay.id != null &&
@@ -179,15 +181,11 @@ class HomeController {
             upcomingDay.id!,
             weekStart,
           );
-          if (sessions.isNotEmpty) {
-            final latest = sessions.first;
-            final sameDay = _sameDay(latest.performedDate, today);
-            todayStatus = sameDay
-                ? WeekPlanStatus.performed
-                : WeekPlanStatus.rescheduled;
-          } else {
-            todayStatus = WeekPlanStatus.pending;
-          }
+          todayStatus = planDayStatus(
+            scheduledDate: upcomingDate,
+            performedDates: [for (final s in sessions) s.performedDate],
+            now: today,
+          );
         }
 
         infos.add(
@@ -314,6 +312,3 @@ class HomeController {
 
 DateTime _dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
-
-bool _sameDay(DateTime a, DateTime b) =>
-    a.year == b.year && a.month == b.month && a.day == b.day;

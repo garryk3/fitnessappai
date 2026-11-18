@@ -471,6 +471,45 @@ void main() {
     expect(info.todayStatus, WeekPlanStatus.performed);
   });
 
+  test(
+    'todayStatus = pending, если тренировка была раньше вхождения',
+    () async {
+      // Сегодня среда (вхождение), а сессия выполнена в понедельник: раннее
+      // выполнение не отмечает сегодняшний день. До 65.2 Главная показывала
+      // «Перенесено», которого на плане после 64.8 не бывает.
+      final program = await createProgram(name: 'Сила', dayOfWeeks: [3]);
+      await programRepository.setActive(program.id!);
+      final day = (await programRepository.getDays(program.id!)).single;
+
+      final monday = DateTime(2026, 8, 10, 10);
+      await workoutRepository.saveSession(
+        WorkoutSession(
+          programDayId: day.id!,
+          dayIndex: 0,
+          programName: 'Сила',
+          performedDate: DateTime(2026, 8, 10),
+          startedAt: monday,
+          endedAt: monday.add(const Duration(hours: 1)),
+          variant: WorkoutVariant.main,
+        ),
+        const [],
+      );
+
+      final controller = HomeController(
+        programRepository: programRepository,
+        exerciseRepository: exerciseRepository,
+        workoutRepository: workoutRepository,
+        clock: () => DateTime(2026, 8, 12),
+      );
+      addTearDown(controller.dispose);
+
+      await Future<void>.delayed(Duration.zero);
+
+      final info = controller.activePrograms.value.first;
+      expect(info.todayStatus, WeekPlanStatus.pending);
+    },
+  );
+
   test('todayStatus = null если сегодня не день тренировки', () async {
     // Программа привязана к среде (3), а сегодня понедельник (1).
     final program = await createProgram(name: 'Кардио', dayOfWeeks: [3]);
