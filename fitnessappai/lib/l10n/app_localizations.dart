@@ -436,6 +436,12 @@ abstract class AppLocalizations {
   /// **'Автообновление'**
   String get settingsAutoUpdate;
 
+  /// Пояснение одноразовости флага автообновления (fix design-review Medium)
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверять новую версию при запуске — один раз'**
+  String get settingsAutoUpdateHint;
+
   /// Снекбар при отказе системного установщика APK (64.1)
   ///
   /// In ru, this message translates to:

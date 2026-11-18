@@ -14,6 +14,11 @@ import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/main.dart';
 import 'package:fitnessappai/uikit/uikit.dart';
 
+/// Исход операции «скачать + установить» (fix task-reviewer): отказ
+/// установщика — с диалогом-сообщением, ошибка сети/записи — молча
+/// (решение владельца 64.1).
+enum _InstallOutcome { done, installerRefused, silentFailure }
+
 /// Стартовый экран: показывает видео-заставку, пока идёт инициализация,
 /// затем плавно переходит в [FitnessAppAi].
 ///
@@ -185,8 +190,10 @@ class _SplashGateState extends State<SplashGate>
   }
 
   Future<void> _downloadAndInstall(AutoUpdateCheck check) async {
-    final url = check.release.apkUrl ?? check.release.htmlUrl;
+    final url = check.release.apkUrl;
     if (url == null || url.isEmpty) {
+      // Релиз без APK-ассета: тихий пропуск (fix task-reviewer — раньше
+      // fallback скачивал HTML-страницу релиза как update.apk).
       return;
     }
     final rootContext = _splashNavigatorKey.currentContext;
@@ -201,7 +208,7 @@ class _SplashGateState extends State<SplashGate>
     await showAppDialog<void>(
       context: rootContext,
       barrierDismissible: false,
-      builder: (context) => FutureBuilder<bool>(
+      builder: (context) => FutureBuilder<_InstallOutcome>(
         future: operation,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.waiting) {
@@ -224,30 +231,40 @@ class _SplashGateState extends State<SplashGate>
       ),
     );
     // Диалог закрыт — операция завершена (тот же Future замемоизирован).
-    final failed = await operation;
-    if (failed && rootContext.mounted) {
-      final messenger = ScaffoldMessenger.maybeOf(rootContext);
-      if (messenger != null) {
-        showAppSnackBar(
-          messenger,
-          AppLocalizations.of(rootContext).settingsUpdateInstallFailed,
-        );
-      }
+    final outcome = await operation;
+    if (outcome != _InstallOutcome.installerRefused || !rootContext.mounted) {
+      return;
     }
+    // Отказ системного установщика — блокирующий диалог (не снекбар:
+    // сплэш исчезает через ~0.9 с, снекбар был бы нечитаем).
+    await showAppDialog<void>(
+      context: rootContext,
+      builder: (context) => AppDialog(
+        title: AppText(l10n.settingsUpdateInstallFailed),
+        actions: [
+          AppTextButton(
+            label: l10n.commonOk,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// Скачивает APK и запускает установку; возвращает `true`, если операция
-  /// не удалась (ошибка сети/записи — молчаливый пропуск по решению
-  /// владельца 64.1, отказ системного установщика — снекбар).
-  Future<bool> _runDownloadAndInstall(String url) async {
+  /// Скачивает APK и запускает установку.
+  ///
+  /// Ошибка сети/записи — [SILENT] (молчаливый пропуск по решению
+  /// владельца 64.1); отказ системного установщика — [installerRefused]
+  /// (диалог с сообщением).
+  Future<_InstallOutcome> _runDownloadAndInstall(String url) async {
     try {
       final apkPath = await _apkDownloader.download(Uri.parse(url));
       final started = await _apkInstaller.install(apkPath);
-      return !started;
+      return started ? _InstallOutcome.done : _InstallOutcome.installerRefused;
     } catch (_) {
       // Ошибка сети/записи: молчаливый пропуск; пользователь может
       // скачать APK вручную со страницы релиза.
-      return true;
+      return _InstallOutcome.silentFailure;
     }
   }
 

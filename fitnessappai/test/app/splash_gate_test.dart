@@ -132,19 +132,14 @@ void main() {
     await tester.tap(find.text('Обновить'));
     // Спиннер диалога «Загрузка обновления» анимируется постоянно —
     // pumpAndSettle никогда не завершился бы; продвигаем фазы явно.
+    // Спиннер диалога «Загрузка обновления» анимируется постоянно —
+    // pumpAndSettle никогда не завершился бы; продвигаем фазы явно:
+    // закрытие модалки → диалог загрузки → завершение операции →
+    // сброс флага → fade заставки.
     await tester.pump(); // закрытие модалки + диалог загрузки
     await tester.pump(const Duration(milliseconds: 100)); // загрузка+установка
-    await tester.pump(const Duration(seconds: 1)); // consume + fade
-    for (var i = 0; i < 20; i++) {
-      // ignore: avoid_print
-      print(
-        'DEBUG loop $i scheduled=${tester.binding.hasScheduledFrame} '
-        'urls=${downloader.downloadedUrls.length} '
-        'flag=${repository.value}',
-      );
-      await tester.pump(const Duration(milliseconds: 200));
-    }
-
+    await tester.pump(const Duration(milliseconds: 300)); // закрытие диалога
+    await tester.pump(const Duration(seconds: 2)); // consume + fade
     // Скачивание + установка запущены; флаг сброшен — проверка
     // не повторится на следующих запусках.
     expect(downloader.downloadedUrls, hasLength(1));
@@ -195,6 +190,82 @@ void main() {
     expect(find.text('Доступна новая версия'), findsNothing);
     expect(find.text('Главный экран'), findsOneWidget);
   });
+
+  testWidgets('ошибка сети — молча: без диалога отказа, приложение открыто '
+      '(64.1, решение владельца)', (tester) async {
+    final repository = _StubAutoUpdateRepository();
+    final autoUpdate = AutoUpdateController(
+      repository: repository,
+      service: _FakeUpdateService(
+        release: ReleaseInfo(
+          tagName: 'v1.1.0',
+          htmlUrl: 'https://example.com/release',
+          apkUrl: 'https://example.com/app.apk',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+    );
+    await autoUpdate.setEnabled(true);
+
+    await pumpSplash(
+      tester,
+      autoUpdate: autoUpdate,
+      downloader: _ThrowingDownloader(),
+      installer: _RecordingInstaller(),
+    );
+
+    await tester.tap(find.text('Обновить'));
+    await tester.pump(); // закрытие модалки + диалог загрузки
+    await tester.pump(const Duration(milliseconds: 100)); // ошибка скачивания
+    await tester.pump(const Duration(milliseconds: 300)); // закрытие диалога
+    await tester.pump(const Duration(seconds: 2)); // consume + fade
+    await tester.pumpAndSettle();
+
+    // Диалога отказа установщика нет; приложение открылось; флаг сброшен.
+    expect(find.text('Не удалось запустить установку'), findsNothing);
+    expect(find.text('Главный экран'), findsOneWidget);
+    expect(repository.value, isFalse);
+  });
+
+  testWidgets('отказ установщика — диалог «Не удалось запустить установку» '
+      '(64.1)', (tester) async {
+    final repository = _StubAutoUpdateRepository();
+    final autoUpdate = AutoUpdateController(
+      repository: repository,
+      service: _FakeUpdateService(
+        release: ReleaseInfo(
+          tagName: 'v1.1.0',
+          htmlUrl: 'https://example.com/release',
+          apkUrl: 'https://example.com/app.apk',
+        ),
+      ),
+      loadVersion: () async => '1.0.0',
+    );
+    await autoUpdate.setEnabled(true);
+
+    await pumpSplash(
+      tester,
+      autoUpdate: autoUpdate,
+      downloader: _RecordingDownloader(),
+      installer: _RefusingInstaller(),
+    );
+
+    await tester.tap(find.text('Обновить'));
+    await tester.pump(); // закрытие модалки + диалог загрузки
+    await tester.pump(const Duration(milliseconds: 100)); // установка отказала
+    await tester.pumpAndSettle();
+
+    // Блокирующий диалог вместо снекбара (сплэш исчезает — снекбар
+    // был бы нечитаем).
+    expect(find.text('Не удалось запустить установку'), findsOneWidget);
+    expect(find.text('Главный экран'), findsNothing);
+
+    await tester.tap(find.text('ОК'));
+    await tester.pumpAndSettle();
+    expect(find.text('Главный экран'), findsOneWidget);
+    // Флаг сброшен после закрытия диалога (диалог модалки был показан).
+    expect(repository.value, isFalse);
+  });
 }
 
 // --- Поддельные зависимости тестов автообновления (64.1) ---
@@ -230,6 +301,18 @@ class _RecordingDownloader implements ApkDownloader {
   final downloadedUrls = <Uri>[];
 }
 
+class _ThrowingDownloader implements ApkDownloader {
+  @override
+  Future<String> download(Uri url) async {
+    throw Exception('network down');
+  }
+}
+
+class _RefusingInstaller implements ApkInstaller {
+  @override
+  Future<bool> install(String apkPath) async => false;
+}
+
 class _RecordingInstaller implements ApkInstaller {
   @override
   Future<bool> install(String apkPath) async {
@@ -243,8 +326,8 @@ class _RecordingInstaller implements ApkInstaller {
 Future<void> pumpSplash(
   WidgetTester tester, {
   required AutoUpdateController autoUpdate,
-  _RecordingDownloader? downloader,
-  _RecordingInstaller? installer,
+  ApkDownloader? downloader,
+  ApkInstaller? installer,
 }) async {
   await tester.pumpWidget(
     SplashGate(

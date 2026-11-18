@@ -85,6 +85,10 @@
   "@settingsAutoUpdate": {
     "description": "Переключатель автообновления рядом с проверкой версии (64.1): пока флаг включён, на сплэше проверяется новая версия"
   },
+  "settingsAutoUpdateHint": "Проверять новую версию при запуске — один раз",
+  "@settingsAutoUpdateHint": {
+    "description": "Пояснение одноразовости флага автообновления (fix design-review Medium)"
+  },
   "settingsUpdateInstallFailed": "Не удалось запустить установку",
   "@settingsUpdateInstallFailed": {
     "description": "Снекбар при отказе системного установщика APK (64.1)"

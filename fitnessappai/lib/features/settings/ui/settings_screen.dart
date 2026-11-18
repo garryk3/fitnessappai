@@ -731,6 +731,15 @@ class _AboutSectionState extends State<_AboutSection> {
               AppSwitchTile(
                 value: autoUpdateEnabled,
                 title: AppText(l10n.settingsAutoUpdate),
+                // fix design-review: тайл в карточке — без дефолтного
+                // 16dp-паддинга ListTile, иначе рассыпается вертикаль.
+                contentPadding: EdgeInsets.zero,
+                subtitle: AppText(
+                  l10n.settingsAutoUpdateHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
                 onChanged: (value) => autoUpdate.setEnabled(value),
               ),
             ],

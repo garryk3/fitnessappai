@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Установка скачанного APK новой версии (задача 64.1): без этого
+         разрешения системный PackageInstaller на Android 8+ не запустится. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Точные будильники напоминаний (задача 47.6).
          USE_EXACT_ALARM выдаётся при установке на Android 13+, поэтому
