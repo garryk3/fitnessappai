@@ -174,7 +174,11 @@ class _ProgramDayExerciseParamsScreenState
   }
 
   Future<void> _save() async {
-    _submitted = true;
+    // setState обязателен: иначе Form не перестроится и останется в
+    // AutovalidateMode.disabled (ошибки не снимались бы при вводе).
+    if (!_submitted) {
+      setState(() => _submitted = true);
+    }
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -278,6 +282,9 @@ class _ProgramDayExerciseParamsScreenState
           const SizedBox(height: 16),
           if (type != ExerciseType.distance)
             ExerciseParamsStepperField(
+              autovalidateMode: _submitted
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
               controller: _setsController,
               label: l10n.exerciseParamsSets,
               validator: _validateRequiredPositive,
@@ -286,6 +293,9 @@ class _ProgramDayExerciseParamsScreenState
           if (type == ExerciseType.strength ||
               type == ExerciseType.bodyweight) ...[
             ExerciseParamsStepperField(
+              autovalidateMode: _submitted
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
               controller: _repsController,
               label: l10n.exerciseParamsReps,
               validator: _validateRequiredPositive,
@@ -293,6 +303,9 @@ class _ProgramDayExerciseParamsScreenState
             ),
             if (type == ExerciseType.strength)
               ExerciseParamsStepperField(
+                autovalidateMode: _submitted
+                    ? AutovalidateMode.onUserInteraction
+                    : AutovalidateMode.disabled,
                 controller: _weightController,
                 label: l10n.exerciseParamsWeightKg,
                 validator: _validateOptionalNotNegative,
@@ -303,6 +316,9 @@ class _ProgramDayExerciseParamsScreenState
           ],
           if (type == ExerciseType.plank)
             ExerciseParamsStepperField(
+              autovalidateMode: _submitted
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
               controller: _durationController,
               label: l10n.exerciseParamsDurationSeconds,
               validator: _validateRequiredPositive,
@@ -310,12 +326,18 @@ class _ProgramDayExerciseParamsScreenState
             ),
           if (type == ExerciseType.distance) ...[
             ExerciseParamsStepperField(
+              autovalidateMode: _submitted
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
               controller: _durationController,
               label: l10n.exerciseParamsDurationMinutes,
               validator: _validateRequiredPositive,
               icon: Icons.timer,
             ),
             ExerciseParamsStepperField(
+              autovalidateMode: _submitted
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
               controller: _distanceController,
               label: l10n.exerciseParamsDistanceKm,
               validator: _validateOptionalNotNegative,
@@ -325,6 +347,9 @@ class _ProgramDayExerciseParamsScreenState
             ),
           ],
           ExerciseParamsStepperField(
+            autovalidateMode: _submitted
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
             controller: _restController,
             label: l10n.exerciseParamsRestSeconds,
             validator: _validateOptionalNotNegative,

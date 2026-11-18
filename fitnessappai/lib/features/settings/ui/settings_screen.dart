@@ -542,7 +542,7 @@ class _NotificationsSectionState extends State<_NotificationsSection>
     // уходит в фон. Без перечитывания при возврате блок остаётся
     // «Уведомления отключены» до перезапуска процесса.
     if (state == AppLifecycleState.resumed) {
-      widget.controller.load();
+      widget.controller.load(silent: true);
     }
   }
 

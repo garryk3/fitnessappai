@@ -189,9 +189,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     if (confirmed ?? false) {
       // 66.1: сбой удаления не должен быть тихим (например, FK-ошибка) —
       // показываем снекбар, список оставляем как есть.
+      var deleted = false;
       try {
         await _controller.deleteProgram(program.id!);
-        await _controller.refresh();
+        deleted = true;
       } catch (_) {
         if (context.mounted) {
           showAppSnackBar(
@@ -199,6 +200,11 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
             AppLocalizations.of(context).programDeleteFailed,
           );
         }
+      }
+      // Перезагрузка списка — вне try: сбой обновления не должен выдавать
+      // «не удалось удалить», если удаление уже прошло.
+      if (deleted) {
+        await _controller.refresh();
       }
     }
   }

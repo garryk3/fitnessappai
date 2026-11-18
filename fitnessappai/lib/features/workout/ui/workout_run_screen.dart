@@ -917,7 +917,11 @@ class _ExerciseInputFormState extends State<_ExerciseInputForm> {
   }
 
   void _submit() {
-    _submitted = true;
+    // setState обязателен: без перестройки Form не получит новый
+    // autovalidateMode, и ошибки не будут сниматься при вводе.
+    if (!_submitted) {
+      setState(() => _submitted = true);
+    }
     if (!_formKey.currentState!.validate()) {
       return;
     }

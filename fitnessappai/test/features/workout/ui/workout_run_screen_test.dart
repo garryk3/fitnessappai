@@ -332,6 +332,22 @@ void main() {
     expect(find.text('Отдых'), findsNothing);
   });
 
+  testWidgets('66.6: ошибка «Заполните поле» снимается сразу при вводе', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    await pumpRun(tester, dayId);
+
+    await tester.tap(find.text('Подход выполнен'));
+    await tester.pumpAndSettle();
+    expect(find.text('Заполните поле'), findsWidgets);
+
+    await tester.enterText(find.byType(TextFormField).first, '8');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Заполните поле'), findsNothing);
+  });
+
   testWidgets('свой вес: ввод повторов без веса', (tester) async {
     final created = await programRepo.create(
       Program(
