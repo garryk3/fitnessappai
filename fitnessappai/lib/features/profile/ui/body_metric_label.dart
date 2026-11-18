@@ -22,6 +22,13 @@ String bodyMetricLabel(AppLocalizations l10n, BodyMetric metric) =>
       BodyMetric.calf => l10n.profileMetricCalf,
     };
 
+/// Форматирование значения метрики замера (64.9): целое без дробной части,
+/// иначе один знак. Общий хелпер для сводки в тайле истории и дравера
+/// деталей — единый вид одной и той же записи.
+String formatMetricValue(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toStringAsFixed(1);
+
 /// Иконка метрики для бейджей (54.9, образцы «Профиль»/«Новый замер»):
 /// рост/вес — предметные, обхваты — линейка (иллюстраций образца
 /// в ассетах приложения нет).
