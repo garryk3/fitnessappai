@@ -262,9 +262,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   /// Ячейка календаря месяца: цвет по статусу дня (64.10 — выполненный
   /// primary, пропущенный нейтральный, будущий primaryContainer), иконки
-  /// групп мышц; «сегодня» — glow (тёмная тема) и рамка. Tooltip несёт
-  /// статус дня для скринридера (semantic labels, п. 3 плана 64.10). Тап
-  /// по любому дню открывает дравер действий дня (59.5.б).
+  /// групп мышц; «сегодня» — glow (тёмная тема) и рамка. Тултип ячейки
+  /// несёт статус дня для скринридера (semantic labels, п. 3 плана 64.10).
+  /// Тап по любому дню открывает дравер действий дня (59.5.б).
   Widget _buildMonthCell(
     BuildContext context,
     WeekPlanController controller,
@@ -304,7 +304,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       background: background,
       foreground: foreground,
       // Semantic labels (64.10, п. 3): статус дня для скринридера —
-      // material Tooltip внутри AppTooltip даёт semantics.
+      // тултип через обёртку uikit даёт semantics.
       tooltip: _dayStatusLabel(dayItems, l10n),
       isToday: isToday,
       // Fix design-review (Critical): на выполненном «сегодня» (фон primary)

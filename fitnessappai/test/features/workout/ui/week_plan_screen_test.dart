@@ -1540,7 +1540,11 @@ void main() {
     await tester.pumpAndSettle();
 
     final historyCell = tester.getSize(find.byType(MonthDayCell).first);
-    expect(historyCell, planCell, reason: 'общий MonthGridView(fillHeight)');
+    // 64.11: у «Истории» над календарём появился блок общей статистики —
+    // сетка ниже, чем у «Плана» (plan > history). Ячейки обеих сеток
+    // остаются квадратными (фикс 47.9).
+    expect(historyCell.width, closeTo(historyCell.height, 0.5));
+    expect(historyCell.shortestSide, lessThan(planCell.shortestSide));
     expect(tester.takeException(), isNull);
   });
 
