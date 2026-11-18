@@ -831,6 +831,7 @@ class _LinksCard extends StatelessWidget {
   }
 }
 
-String _fmt(double value) => value == value.roundToDouble()
-    ? value.toInt().toString()
-    : value.toStringAsFixed(1);
+// Единое правило форматирования значений метрик (64.9): делегирует общему
+// хелперу `formatMetricValue` — сводка в тайле и дравер показывают одну
+// запись одинаково.
+String _fmt(double value) => formatMetricValue(value);

@@ -90,7 +90,7 @@ class _MetricRow extends StatelessWidget {
             ),
           ),
           AppText(
-            '${_fmt(value)} $unit',
+            '${formatMetricValue(value)} $unit',
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -99,7 +99,4 @@ class _MetricRow extends StatelessWidget {
       ),
     );
   }
-
-  static String _fmt(double v) =>
-      v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 }
