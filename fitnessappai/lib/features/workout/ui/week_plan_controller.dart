@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:signals/signals.dart';
 
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
+import 'package:fitnessappai/core/domain/plan_day_status.dart';
 import 'package:fitnessappai/core/domain/workout_streak.dart' as streak;
 import 'package:fitnessappai/core/domain/models/muscle_group.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
@@ -16,13 +17,10 @@ import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart
 import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
 
-/// Статус запланированного тренировочного дня на конкретную дату.
-///
-/// [pastSkipped] — невыполненная тренировка прошедшего дня (59.5.г: день
-/// прошёл без факта — «пропущено», включая вчера в текущей неделе);
-/// отображается как «Пропущено», но только в отображении (в БД не пишется).
-/// Такой день действий не имеет: планировать/запускать на прошлое нельзя.
-enum WeekPlanStatus { pending, performed, rescheduled, skipped, pastSkipped }
+/// Статус дня плана живёт в домене (65.2): единое правило для плана и
+/// Главной. Re-export сохраняет существующие импорты экранов/тестов.
+export 'package:fitnessappai/core/domain/plan_day_status.dart'
+    show WeekPlanStatus;
 
 /// Действия, доступные для тренировки в дне плана (задача 47.1).
 enum DayAction { start, skip, unskip, remove }
@@ -672,44 +670,12 @@ class WeekPlanController {
     List<WorkoutSession> sessions,
     bool isSkipped,
     DateTime now,
-  ) {
-    if (sessions.isNotEmpty) {
-      // 64.8 (решение владельца — «что проще»: в исходный день): сессия
-      // засчитывается вхождению, если выполнена ПОЗЖЕ запланированной даты
-      // в пределах ±3 дней (позднее выполнение того же дня программы —
-      // факт выполнения «Выполнено» на запланированной дате). Сессия
-      // РАНЬШЕ вхождения (досрочное выполнение) не отмечает его — иначе
-      // нельзя пропустить сегодняшнее вхождение при вчерашней тренировке
-      // (регресс 43.7); сессия дальше ±3 дней — чужое вхождение.
-      const window = Duration(days: 3);
-      final scheduled = _dateOnly(item.scheduledDate);
-      final lateInWindow = sessions.any((s) {
-        final performed = _dateOnly(s.performedDate);
-        final delta = performed.difference(scheduled);
-        return delta >= Duration.zero && delta <= window;
-      });
-      if (lateInWindow) {
-        return WeekPlanStatus.performed;
-      }
-      // Сессия чужой недели: будущее и сегодняшнее вхождение ещё не
-      // «прошло» (59.5.г) — остаётся в плане без отметки; прошедшее —
-      // «Пропущено» по факту дня.
-      if (!item.scheduledDate.isBefore(now)) {
-        return isSkipped ? WeekPlanStatus.skipped : WeekPlanStatus.pending;
-      }
-      return WeekPlanStatus.pastSkipped;
-    }
-    if (isSkipped) {
-      return WeekPlanStatus.skipped;
-    }
-    // 59.5.г: «пропущено» — по факту дня, а не по границе недели: любой
-    // прошедший день без сессии (включая вчера в текущей неделе) —
-    // «Пропущено». Сегодня без факта ещё не «прошёл».
-    if (_dateOnly(item.scheduledDate).isBefore(_dateOnly(now))) {
-      return WeekPlanStatus.pastSkipped;
-    }
-    return WeekPlanStatus.pending;
-  }
+  ) => planDayStatus(
+    scheduledDate: item.scheduledDate,
+    performedDates: [for (final session in sessions) session.performedDate],
+    now: now,
+    isSkipped: isSkipped,
+  );
 }
 
 /// Отметки недели, разделённые по статусу: пропуски и переносы (47.3).
