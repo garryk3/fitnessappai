@@ -144,6 +144,7 @@
   "schedulePending": "Запланировано",
   "weekPlanToday": "Сегодня",
   "weekPlanStart": "Начать",
+  "homeStartAgain": "Тренироваться ещё",
   "weekPlanSkip": "Пропустить",
   "weekPlanUnskip": "Отменить пропуск",
   "weekPlanRemove": "Удалить назначение",
@@ -266,6 +267,7 @@
   "programNew": "Новая программа",
   "programEdit": "Редактирование программы",
   "programListEmpty": "Список программ пуст",
+  "programListEmptyHint": "Создайте программу: дни, упражнения и параметры подходов.",
   "programListCreate": "Новая программа",
   "programMakeActive": "Сделать активной",
   "programActivatePrompt": "Сделать программу активной?",
@@ -534,6 +536,10 @@
   "workoutRunHoldStart": "Начать",
   "@workoutRunHoldStart": {
     "description": "Кнопка запуска отсчёта удержания планки"
+  },
+  "workoutRunHoldReached": "Цель достигнута",
+  "@workoutRunHoldReached": {
+    "description": "Подпись в блоке удержания планки после превышения цели (67.4)"
   },
   "workoutRunExitTitle": "Выйти из тренировки?",
   "workoutRunExitBody": "Сохранится только по кнопке «Завершить и сохранить». Если выйти, прогресс этой тренировки потеряется.",

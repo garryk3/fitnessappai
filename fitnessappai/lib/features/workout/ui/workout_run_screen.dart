@@ -204,6 +204,12 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   }
 
   /// Запускает удержание планки и сохраняет чекпоинт.
+  /// 67.4: тактильный отклик при достижении цели удержания. Звук уже
+  /// проигрывает контроллер (`startHoldTimer`), поэтому второй не добавляем.
+  void _onHoldGoalReached() {
+    HapticFeedback.mediumImpact();
+  }
+
   void _startHold() {
     _controller.workout.startHoldTimer();
     _saveCheckpoint();
@@ -361,7 +367,16 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
         }
       },
       child: AppScaffold(
-        appBar: AppTopBar(title: AppLocalizations.of(context).workoutRun),
+        appBar: AppTopBar(
+          title: AppLocalizations.of(context).workoutRun,
+          // 67.3: после восстановления из чекпойнта стек пуст, и
+          // автоматический leading не появляется. Кнопка «Назад» нужна в
+          // обеих сессиях — обработчик тот же, что у системного BACK.
+          // BackButton (а не AppIconButton) — тот же виджет, что давал
+          // автоматический leading: сохранены тултип локализации и
+          // find.byType(BackButton) в тестах.
+          leading: BackButton(onPressed: _handlePopRequest),
+        ),
         body: Stack(
           children: [
             Column(
@@ -514,6 +529,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
               target: holdTarget,
               running: holdRunning,
               onStart: _startHold,
+              onGoalReached: _onHoldGoalReached,
             ),
           ],
           if (exercise.id != null) ...[
@@ -779,24 +795,50 @@ String _fmt(double value) => value == value.roundToDouble()
 
 /// Выделенный блок таймера удержания планки: крупный счётчик, цель в скобках,
 /// кнопка запуска до старта.
-class _PlankHoldPanel extends StatelessWidget {
+///
+/// 67.4: при первом достижении цели подхода — тактильный отклик, звук и
+/// строка «Цель достигнута»; повторно в рамках подхода не срабатывает.
+class _PlankHoldPanel extends StatefulWidget {
   const _PlankHoldPanel({
     required this.elapsed,
     required this.target,
     required this.running,
     required this.onStart,
+    required this.onGoalReached,
   });
 
   final int elapsed;
   final int target;
   final bool running;
   final VoidCallback onStart;
+  final VoidCallback onGoalReached;
+
+  @override
+  State<_PlankHoldPanel> createState() => _PlankHoldPanelState();
+}
+
+class _PlankHoldPanelState extends State<_PlankHoldPanel> {
+  bool _goalNotified = false;
+
+  bool get _reached => widget.running && widget.elapsed >= widget.target;
+
+  @override
+  void didUpdateWidget(covariant _PlankHoldPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_reached) {
+      // Новый подход или остановка удержания — сигнал снова доступен.
+      _goalNotified = false;
+    } else if (!_goalNotified) {
+      _goalNotified = true;
+      widget.onGoalReached();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final reached = running && elapsed >= target;
+    final reached = _reached;
     final counterColor = reached
         ? theme.colorScheme.tertiary
         : theme.colorScheme.primary;
@@ -812,7 +854,7 @@ class _PlankHoldPanel extends StatelessWidget {
       child: Column(
         children: [
           AppText(
-            l10n.workoutRunHold(elapsed),
+            l10n.workoutRunHold(widget.elapsed),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: counterColor,
@@ -821,16 +863,37 @@ class _PlankHoldPanel extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           AppText(
-            l10n.workoutRunHoldTarget(target),
+            l10n.workoutRunHoldTarget(widget.target),
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
-          if (!running) ...[
+          if (reached) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AppIcon(
+                  Icons.check_circle,
+                  size: 20,
+                  color: theme.colorScheme.tertiary,
+                ),
+                const SizedBox(width: 6),
+                AppText(
+                  l10n.workoutRunHoldReached,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.tertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (!widget.running) ...[
             const SizedBox(height: 16),
             AppGradientButton(
-              onPressed: onStart,
+              onPressed: widget.onStart,
               icon: Icons.play_arrow,
               pill: true,
               label: l10n.workoutRunHoldStart,

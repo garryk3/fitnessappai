@@ -393,6 +393,45 @@ void main() {
   });
 
   group('упражнения', () {
+    test('67.2: addExerciseToDay заполняет стартовые метрики по типу', () async {
+      final created = await createProgram();
+      final dayRow = (await repo.getDays(created.id!)).single;
+
+      final strength = await repo.addExerciseToDay(
+        dayRow.id!,
+        await insertExercise(name: 'Жим', type: ExerciseType.strength),
+      );
+      expect(strength.sets, 3);
+      expect(strength.reps, 10);
+      expect(strength.restSeconds, 60);
+      expect(strength.weightKg, isNull);
+
+      final bodyweight = await repo.addExerciseToDay(
+        dayRow.id!,
+        await insertExercise(name: 'Отжимания', type: ExerciseType.bodyweight),
+      );
+      expect(bodyweight.sets, 3);
+      expect(bodyweight.reps, 10);
+      expect(bodyweight.restSeconds, 60);
+
+      final plank = await repo.addExerciseToDay(
+        dayRow.id!,
+        await insertExercise(name: 'Планка', type: ExerciseType.plank),
+      );
+      expect(plank.sets, 1);
+      expect(plank.durationSeconds, 30);
+      expect(plank.restSeconds, 30);
+
+      final distance = await repo.addExerciseToDay(
+        dayRow.id!,
+        await insertExercise(name: 'Бег', type: ExerciseType.distance),
+      );
+      expect(distance.sets, 1);
+      expect(distance.durationSeconds, 600);
+      expect(distance.distanceMeters, 1000);
+      expect(distance.restSeconds, 30);
+    });
+
     test('addExerciseToDay добавляет в конец основного набора', () async {
       final created = await createProgram();
       final dayRow = (await repo.getDays(created.id!)).single;
@@ -467,10 +506,18 @@ void main() {
       );
       final item = await repo.addExerciseToDay(dayRow.id!, exId);
 
+      // 67.2: у позиции уже есть дефолтная длительность (30 с), а copyWith
+      // не сбрасывает null — собираем невалидную позицию вручную.
+      final invalid = ProgramDayExercise(
+        id: item.id,
+        dayId: item.dayId,
+        exerciseId: item.exerciseId,
+        orderIndex: item.orderIndex,
+        sets: 1,
+        restSeconds: item.restSeconds,
+      );
       await expectLater(
-        repo.updateExercise(
-          item.copyWith(sets: 1, durationSeconds: null, weightKg: null),
-        ),
+        repo.updateExercise(invalid),
         throwsA(isA<ProgramValidationException>()),
       );
       final updated = await repo.updateExercise(

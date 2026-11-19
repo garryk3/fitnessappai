@@ -212,6 +212,7 @@ void main() {
     WorkoutForegroundService? foregroundService,
     WakelockService? wakelockService,
     SoundService? soundService,
+    DateTime Function()? clock,
   }) async {
     final location = initialLocation.isEmpty
         ? '/workout/run?programDayId=$dayId&variant=${variant.name}'
@@ -244,6 +245,7 @@ void main() {
             foregroundService:
                 foregroundService ?? StubWorkoutForegroundService(),
             soundService: soundService ?? StubSoundService(),
+            clock: clock,
             checkpointLoader: checkpointLoader ?? () async => null,
             checkpointSaver: checkpointSaver ?? (_) async {},
             checkpointClearer: () async {},
@@ -320,6 +322,49 @@ void main() {
       );
     },
   );
+
+  testWidgets('67.3: на восстановленной сессии есть стрелка «Назад»', (
+    tester,
+  ) async {
+    final dayId = await createDay();
+    // Старт сразу с /workout/run — та же ситуация, что после force-stop:
+    // в стеке нет предыдущего экрана, автоматический leading не появляется.
+    await pumpRun(tester, dayId);
+
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Выйти из тренировки?'), findsOneWidget);
+  });
+
+  testWidgets('67.4: достижение цели удержания — подпись, звук один раз', (
+    tester,
+  ) async {
+    final dayId = await createDay(
+      type: ExerciseType.plank,
+      durationSeconds: 1,
+      sets: 1,
+      restSeconds: null,
+    );
+    final sound = StubSoundService();
+    var now = DateTime(2026, 1, 1, 12);
+    await pumpRun(tester, dayId, soundService: sound, clock: () => now);
+
+    expect(find.text('Цель достигнута'), findsNothing);
+
+    await tester.tap(find.text('Начать'));
+    await tester.pump();
+    now = now.add(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('Цель достигнута'), findsOneWidget);
+    expect(sound.completionCalls, 1);
+
+    // Повторного сигнала в том же подходе нет.
+    await tester.pump(const Duration(seconds: 2));
+    expect(sound.completionCalls, 1);
+  });
 
   testWidgets('пустой ввод показывает ошибку валидации', (tester) async {
     final dayId = await createDay();

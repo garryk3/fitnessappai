@@ -346,6 +346,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weekPlanStart => 'Начать';
 
   @override
+  String get homeStartAgain => 'Тренироваться ещё';
+
+  @override
   String get weekPlanSkip => 'Пропустить';
 
   @override
@@ -626,6 +629,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get programListEmpty => 'Список программ пуст';
+
+  @override
+  String get programListEmptyHint =>
+      'Создайте программу: дни, упражнения и параметры подходов.';
 
   @override
   String get programListCreate => 'Новая программа';
@@ -1040,6 +1047,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workoutRunHoldStart => 'Начать';
+
+  @override
+  String get workoutRunHoldReached => 'Цель достигнута';
 
   @override
   String get workoutRunExitTitle => 'Выйти из тренировки?';
