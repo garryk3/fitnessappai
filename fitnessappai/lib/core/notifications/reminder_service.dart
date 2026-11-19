@@ -16,6 +16,7 @@ import 'package:fitnessappai/core/notifications/reminder_delivered_log.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 
 /// Статус разрешений на уведомления.
 class NotificationPermissionStatus {
@@ -968,12 +969,22 @@ class ReminderService {
 
   /// Идентификаторы уведомлений, которые сейчас висят в трее.
   ///
+  /// Уведомление foreground service тренировки
+  /// ([workoutForegroundServiceNotificationId]) не является напоминанием и
+  /// исключается: догон не принял бы его за висящее напоминание дня с
+  /// совпавшим id, а снятие при входе в приложение не гасило бы постоянное
+  /// уведомление тренировки (67.1).
+  ///
   /// Пустое множество при любой ошибке: догон лишь подстраховывается, ломать
   /// из-за недоступности системного списка нельзя.
   Future<Set<int>> _activeNotificationIds() async {
     try {
       final active = await _plugin.getActiveNotifications();
-      return {for (final notification in active) notification.id ?? -1};
+      return {
+        for (final notification in active)
+          if (notification.id != workoutForegroundServiceNotificationId)
+            notification.id ?? -1,
+      };
     } catch (e, st) {
       logNotificationIssue(
         'Не удалось прочитать активные уведомления',
