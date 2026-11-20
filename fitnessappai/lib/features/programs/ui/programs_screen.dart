@@ -105,7 +105,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
               SizedBox(
                 height: constraints.maxHeight,
                 child: AppEmptyState(
-                  icon: Icons.fitness_center,
+                  icon: Icons.fitness_center_outlined,
                   title: AppLocalizations.of(context).programListEmpty,
                   hint: AppLocalizations.of(context).programListEmptyHint,
                   actionLabel: AppLocalizations.of(context).programListCreate,

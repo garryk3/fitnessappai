@@ -36,6 +36,16 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  /// Порог прокрутки, после которого FAB уезжает (67.6): на первых
+  /// пикселях скролла кнопка не дёргается.
+  static const double _fabHideThreshold = 24;
+
+  /// Смещение уезжающего FAB — на его собственную высоту с запасом.
+  static const Offset _fabHiddenOffset = Offset(0, 2.5);
+
+  /// Длительность анимации ухода/возврата FAB.
+  static const Duration _fabSlideDuration = Duration(milliseconds: 200);
+
   late final ProfileController _controller;
 
   /// 67.6: FAB уезжает при прокрутке вниз, чтобы не закрывать график.
@@ -70,7 +80,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     if (notification is ScrollUpdateNotification) {
       final delta = notification.scrollDelta ?? 0;
-      if (delta > 0 && !_fabHidden && notification.metrics.pixels > 24) {
+      if (delta > 0 &&
+          !_fabHidden &&
+          notification.metrics.pixels > _fabHideThreshold) {
         setState(() => _fabHidden = true);
       } else if (delta < 0 && _fabHidden) {
         setState(() => _fabHidden = false);
@@ -101,8 +113,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: ExcludeSemantics(
           excluding: _fabHidden,
           child: AnimatedSlide(
-            offset: _fabHidden ? const Offset(0, 2.5) : Offset.zero,
-            duration: const Duration(milliseconds: 200),
+            offset: _fabHidden ? _fabHiddenOffset : Offset.zero,
+            // Reduce-motion (a11y): при системном отключении анимаций
+            // кнопка скрывается/возвращается мгновенно.
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : _fabSlideDuration,
             curve: Curves.ease,
             child: AppTooltip(
               message: l10n.profileAddMeasurement,

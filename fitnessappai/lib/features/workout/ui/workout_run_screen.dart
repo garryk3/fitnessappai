@@ -372,10 +372,9 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
           // 67.3: после восстановления из чекпойнта стек пуст, и
           // автоматический leading не появляется. Кнопка «Назад» нужна в
           // обеих сессиях — обработчик тот же, что у системного BACK.
-          // BackButton (а не AppIconButton) — тот же виджет, что давал
-          // автоматический leading: сохранены тултип локализации и
-          // find.byType(BackButton) в тестах.
-          leading: BackButton(onPressed: _handlePopRequest),
+          // Внутри uikit AppTopBar ставит BackButton: сохранены тултип
+          // локализации и find.byType(BackButton) в тестах.
+          onBack: _handlePopRequest,
         ),
         body: Stack(
           children: [
@@ -877,14 +876,19 @@ class _PlankHoldPanelState extends State<_PlankHoldPanel> {
                 AppIcon(
                   Icons.check_circle,
                   size: 20,
-                  color: theme.colorScheme.tertiary,
+                  color: theme.colorScheme.onTertiaryContainer,
                 ),
                 const SizedBox(width: 6),
-                AppText(
-                  l10n.workoutRunHoldReached,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.tertiary,
-                    fontWeight: FontWeight.w600,
+                // Flexible: при крупном шрифте подпись переносится, а не
+                // переполняет блок (дизайн-ревью 67.4).
+                Flexible(
+                  child: AppText(
+                    l10n.workoutRunHoldReached,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],

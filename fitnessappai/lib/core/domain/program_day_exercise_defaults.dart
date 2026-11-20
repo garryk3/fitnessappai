@@ -29,12 +29,8 @@ class ProgramDayExerciseDefaults {
   /// - дистанция — 1 км за 10 мин, отдых 30 с.
   static ProgramDayExerciseDefaults forType(ExerciseType type) =>
       switch (type) {
-        ExerciseType.strength ||
-        ExerciseType.bodyweight => const ProgramDayExerciseDefaults(
-          sets: 3,
-          reps: 10,
-          restSeconds: 60,
-        ),
+        ExerciseType.strength || ExerciseType.bodyweight =>
+          const ProgramDayExerciseDefaults(sets: 3, reps: 10, restSeconds: 60),
         ExerciseType.plank => const ProgramDayExerciseDefaults(
           sets: 1,
           durationSeconds: 30,
