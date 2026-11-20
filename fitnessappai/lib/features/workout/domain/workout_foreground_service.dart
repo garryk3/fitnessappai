@@ -19,6 +19,14 @@ void workoutForegroundServiceCallback() {
   FlutterForegroundTask.setTaskHandler(WorkoutForegroundTaskHandler());
 }
 
+/// Id постоянного уведомления foreground service тренировки.
+///
+/// Плагин использует `serviceId` и как id уведомления (`ForegroundService.kt`:
+/// `startForeground(serviceId, …)` и `notify(serviceId, …)`), поэтому значение
+/// — договорённость с `ReminderService`: уведомление с этим id не является
+/// напоминанием и не должно гаситься/учитываться догоном (67.1).
+const int workoutForegroundServiceNotificationId = 256;
+
 /// Минимальный обработчик: foreground service нужен только для удержания
 /// процесса и показа уведомления; таймеры живут в основном изоляте.
 class WorkoutForegroundTaskHandler extends TaskHandler {
@@ -34,7 +42,7 @@ class WorkoutForegroundTaskHandler extends TaskHandler {
 
 /// Реализация [WorkoutForegroundService] на `flutter_foreground_task`.
 class FlutterForegroundTaskService implements WorkoutForegroundService {
-  static const int _serviceId = 256;
+  static const int _serviceId = workoutForegroundServiceNotificationId;
   static const String _channelId = 'workout_active';
 
   bool _initialized = false;

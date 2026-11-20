@@ -18,6 +18,7 @@ import 'package:fitnessappai/core/notifications/reminder_service.dart';
 import 'package:fitnessappai/features/programs/data/workout_reminder_repository.dart';
 import 'package:fitnessappai/features/workout/data/plan_schedule_repository.dart';
 import 'package:fitnessappai/features/workout/domain/plan_schedule_item.dart';
+import 'package:fitnessappai/features/workout/domain/workout_foreground_service.dart';
 
 class _MockNotificationsPlugin extends Mock
     implements FlutterLocalNotificationsPlugin {}
@@ -200,6 +201,8 @@ void main() {
           const ActiveNotification(id: 42),
           ActiveNotification(id: ReminderService.manualReminderId(7)),
           const ActiveNotification(id: -1),
+          // Постоянное уведомление foreground service тренировки (67.1).
+          const ActiveNotification(id: workoutForegroundServiceNotificationId),
         ],
       );
     });
@@ -213,6 +216,34 @@ void main() {
       ).called(1);
       // Битый id (-1) не канцелят.
       verifyNever(() => plugin.cancel(id: -1));
+      // Уведомление foreground service не канцелят (67.1).
+      verifyNever(
+        () => plugin.cancel(id: workoutForegroundServiceNotificationId),
+      );
+    });
+
+    test('foreground service тренировки не гасится и не помечается', () async {
+      final deliveredLog = _MockDeliveredLog();
+      when(
+        () => deliveredLog.markDelivered(any(), any()),
+      ).thenAnswer((_) async {});
+      final marked = ReminderService(
+        repository: repository,
+        plugin: plugin,
+        deliveredLog: deliveredLog,
+      );
+
+      await marked.dismissActiveReminders();
+
+      verifyNever(
+        () => deliveredLog.markDelivered(
+          workoutForegroundServiceNotificationId,
+          any(),
+        ),
+      );
+      verifyNever(
+        () => plugin.cancel(id: workoutForegroundServiceNotificationId),
+      );
     });
 
     test('еженедельному пишется отметка доставки, ручному — нет', () async {
@@ -1647,6 +1678,35 @@ void main() {
 
       verifyNotShown();
     });
+
+    test(
+      'уведомление foreground service не считается висящим напоминанием',
+      () async {
+        // Коллизия id: день программы с id, равным id уведомления FGS (67.1).
+        onlyOne(
+          programDayId: workoutForegroundServiceNotificationId,
+          enabled: true,
+          ago: const Duration(hours: 2),
+        );
+        when(() => plugin.getActiveNotifications()).thenAnswer(
+          (_) async => const [
+            ActiveNotification(id: 256, channelId: 'workout_active'),
+          ],
+        );
+
+        await service.catchUpMissed();
+
+        verify(
+          () => plugin.show(
+            id: workoutForegroundServiceNotificationId,
+            title: 'Сплит',
+            body: any(named: 'body'),
+            notificationDetails: any(named: 'notificationDetails'),
+            payload: workoutForegroundServiceNotificationId.toString(),
+          ),
+        ).called(1);
+      },
+    );
 
     test('в тот же день догон не повторяется', () async {
       onlyOne(enabled: true, ago: const Duration(hours: 2));
