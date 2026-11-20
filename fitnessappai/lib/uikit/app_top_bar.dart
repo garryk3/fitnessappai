@@ -42,6 +42,7 @@ class AppTopBar extends StatefulWidget implements PreferredSizeWidget {
     this.titleWidget,
     this.large = false,
     this.leading,
+    this.onBack,
     this.automaticallyImplyLeading = true,
     this.actions,
     this.flexibleSpace,
@@ -69,6 +70,16 @@ class AppTopBar extends StatefulWidget implements PreferredSizeWidget {
   final bool large;
 
   final Widget? leading;
+
+  /// Обработчик кнопки «Назад», которая ставится в [leading] автоматически.
+  ///
+  /// Нужен экранам, где автоматический leading не появляется (пустой стек
+  /// после восстановления состояния, например тренировки из чекпойнта), но
+  /// кнопка обязана быть. Рендерится Material `BackButton` внутри uikit —
+  /// finder-контракт `byType(BackButton)` сохраняется. Приоритетнее
+  /// [leading] не становится: если передан явный [leading], используется он.
+  final VoidCallback? onBack;
+
   final bool automaticallyImplyLeading;
   final List<Widget>? actions;
   final Widget? flexibleSpace;
@@ -146,8 +157,11 @@ class _AppTopBarState extends State<AppTopBar> {
         widget.toolbarHeight == null &&
         widget.titleWidget == null &&
         widget.title != null;
+    final Widget? leading =
+        widget.leading ??
+        (widget.onBack == null ? null : BackButton(onPressed: widget.onBack));
     final bool hasLeading =
-        widget.leading != null ||
+        leading != null ||
         (widget.automaticallyImplyLeading &&
             (ModalRoute.of(context)?.canPop ?? false));
     final int actionsCount = widget.actions?.length ?? 0;
@@ -197,7 +211,7 @@ class _AppTopBarState extends State<AppTopBar> {
                       maxLines: AppTopBar._kTitleMaxLines,
                       overflow: TextOverflow.ellipsis,
                     )),
-          leading: widget.leading,
+          leading: leading,
           automaticallyImplyLeading: widget.automaticallyImplyLeading,
           actions: widget.actions,
           flexibleSpace: widget.flexibleSpace,

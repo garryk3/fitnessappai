@@ -26,6 +26,7 @@ import 'package:fitnessappai/features/workout/data/workout_repository.dart';
 import 'package:fitnessappai/app/localization_delegates.dart';
 import 'package:fitnessappai/l10n/app_localizations.dart';
 import 'package:fitnessappai/uikit/app_button.dart';
+import 'package:fitnessappai/uikit/app_empty_state.dart';
 import 'package:fitnessappai/uikit/app_gradient_button.dart';
 import 'package:fitnessappai/uikit/app_progress_ring.dart';
 
@@ -104,14 +105,32 @@ void main() {
     expect(find.text('Список программ пуст'), findsOneWidget);
   });
 
+  testWidgets('68.1: пустое состояние подсказывает создать программу', (
+    tester,
+  ) async {
+    await pumpPrograms(tester);
+
+    expect(find.text('Список программ пуст'), findsOneWidget);
+    expect(
+      find.text('Создайте программу: дни, упражнения и параметры подходов.'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(FilledButton, 'Новая программа'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('пустое состояние вертикально отцентрировано', (tester) async {
     await pumpPrograms(tester);
 
-    final textCenter = tester.getCenter(find.text('Список программ пуст'));
+    // 68.1: пустое состояние — AppEmptyState (иконка, заголовок, подсказка,
+    // кнопка), центрируется как блок целиком.
+    final emptyCenter = tester.getCenter(find.byType(AppEmptyState));
     final appBarHeight = tester.getSize(find.byType(AppBar)).height;
     final screenHeight = tester.getSize(find.byType(Scaffold)).height;
     final expectedY = appBarHeight + (screenHeight - appBarHeight) / 2;
-    expect(textCenter.dy, closeTo(expectedY, 1.0));
+    expect(emptyCenter.dy, closeTo(expectedY, 1.0));
   });
 
   testWidgets('отображает карточки программ с днями и счётчиками', (

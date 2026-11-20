@@ -210,13 +210,19 @@ void main() {
 
     await pumpParams(tester, positionId);
 
+    // 68.2: позиция создаётся с дефолтами (3 × 10) — очищаем обязательные
+    // поля, чтобы проверить валидацию пустых значений.
+    await enterField(tester, 'Подходы', '');
+    await enterField(tester, 'Повторения', '');
+
     await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
 
     expect(find.text('Заполните поле'), findsNWidgets(2));
 
     final items = await _dayItems(programRepository, positionId);
-    expect(items.sets, isNull);
+    // Неудачная валидация ничего не записывает: в БД остаются дефолты.
+    expect(items.sets, 3);
   });
 
   testWidgets('ошибка валидации снимается при вводе корректного значения', (
@@ -225,6 +231,10 @@ void main() {
     final positionId = await addPosition('Жим штанги', ExerciseType.strength);
 
     await pumpParams(tester, positionId);
+
+    // 68.2: сначала очищаем дефолтные значения.
+    await enterField(tester, 'Подходы', '');
+    await enterField(tester, 'Повторения', '');
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
     await tester.pumpAndSettle();
@@ -241,6 +251,10 @@ void main() {
     final positionId = await addPosition('Жим штанги', ExerciseType.strength);
 
     await pumpParams(tester, positionId);
+
+    // 68.2: очищаем дефолты, чтобы увидеть поведение пустых полей.
+    await enterField(tester, 'Подходы', '');
+    await enterField(tester, 'Повторения', '');
 
     // До сабмита ввод в «Подходы» не должен валидировать «Повторения».
     await enterField(tester, 'Подходы', '3');
@@ -285,6 +299,39 @@ void main() {
     expect(items.durationSeconds, 1800);
     expect(items.distanceMeters, 5000);
     expect(items.sets, 1);
+  });
+
+  testWidgets('68.2: дефолт дистанции предзаполнен в километрах', (
+    tester,
+  ) async {
+    final positionId = await addPosition('Бег', ExerciseType.distance);
+
+    await pumpParams(tester, positionId);
+
+    // 1000 м из дефолта — это «1» км, а не «1000».
+    expect(
+      tester.widget<TextFormField>(field('Дистанция (км)')).controller!.text,
+      '1',
+    );
+    expect(
+      tester.widget<TextFormField>(field('Время (мин)')).controller!.text,
+      '10',
+    );
+  });
+
+  testWidgets('68.2: сохранение дефолтов без правок не искажает дистанцию', (
+    tester,
+  ) async {
+    final positionId = await addPosition('Бег', ExerciseType.distance);
+
+    await pumpParams(tester, positionId);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    final items = await _dayItems(programRepository, positionId);
+    expect(items.distanceMeters, 1000);
+    expect(items.durationSeconds, 600);
+    expect(items.restSeconds, 30);
   });
 
   testWidgets('предзаполнение значениями существующей позиции', (tester) async {
@@ -356,7 +403,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Жим штанги'), findsOneWidget);
-    expect(find.text('Параметры не заданы'), findsOneWidget);
+    // 68.2: позиция создаётся с дефолтами по типу — сводка видна сразу.
+    expect(find.text('3 × 10 · отдых 60 с'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();

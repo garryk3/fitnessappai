@@ -183,6 +183,23 @@ void main() {
       },
     );
 
+    testWidgets('68.3: onBack ставит BackButton с обработчиком', (
+      tester,
+    ) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            appBar: AppTopBar(title: 'Тренировка', onBack: () => taps++),
+          ),
+        ),
+      );
+
+      expect(find.byType(BackButton), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      expect(taps, 1);
+    });
+
     testWidgets('54.2: preferredSize отражает измеренную высоту', (
       tester,
     ) async {

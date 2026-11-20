@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:fitnessappai/core/data/data_change_notifier.dart';
 import 'package:fitnessappai/core/database/app_database.dart';
 import 'package:fitnessappai/core/domain/models/exercise_type.dart';
+import 'package:fitnessappai/core/domain/program_day_exercise_defaults.dart';
 import 'package:fitnessappai/core/domain/models/program.dart';
 import 'package:fitnessappai/core/domain/models/program_day.dart';
 import 'package:fitnessappai/core/domain/models/program_day_exercise.dart';
@@ -395,6 +396,12 @@ class ProgramRepository {
             .getSingle();
     final nextIndex =
         (last.read(_db.programDayExercises.orderIndex.max()) ?? -1) + 1;
+    // 68.2: стартовые метрики по типу упражнения — экран параметров не
+    // требует ручного ввода всех обязательных полей.
+    final type = await _exerciseTypeOf(exerciseId);
+    final defaults = type == null
+        ? ProgramDayExerciseDefaults.empty
+        : ProgramDayExerciseDefaults.forType(type);
     final id = await _db
         .into(_db.programDayExercises)
         .insert(
@@ -402,6 +409,11 @@ class ProgramRepository {
             dayId: dayId,
             exerciseId: Value(exerciseId),
             orderIndex: nextIndex,
+            sets: Value(defaults.sets),
+            reps: Value(defaults.reps),
+            durationSeconds: Value(defaults.durationSeconds),
+            distanceMeters: Value(defaults.distanceMeters),
+            restSeconds: Value(defaults.restSeconds),
             isAlternative: Value(isAlternative),
           ),
         );

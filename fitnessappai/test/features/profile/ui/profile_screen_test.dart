@@ -46,8 +46,11 @@ void main() {
     waistCm: waistCm,
   );
 
-  Future<void> pumpProfile(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1000, 2200);
+  Future<void> pumpProfile(
+    WidgetTester tester, {
+    Size size = const Size(1000, 2200),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -426,6 +429,35 @@ void main() {
 
     expect(await repo.getAll(), hasLength(1));
     expect(find.text('80 кг'), findsWidgets);
+  });
+
+  testWidgets('68.6: FAB уезжает при прокрутке вниз и возвращается вверх', (
+    tester,
+  ) async {
+    for (var day = 1; day <= 13; day++) {
+      await repo.add(
+        measurement(date: DateTime(2026, 8, day), weightKg: 100.0 - day),
+      );
+    }
+    // Узкое окно: список заведомо длиннее экрана и прокручивается.
+    await pumpProfile(tester, size: const Size(500, 700));
+
+    AnimatedSlide fabSlide() => tester.widget<AnimatedSlide>(
+      find.ancestor(
+        of: find.byTooltip('Добавить замер'),
+        matching: find.byType(AnimatedSlide),
+      ),
+    );
+
+    expect(fabSlide().offset, Offset.zero);
+
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(fabSlide().offset, const Offset(0, 2.5));
+
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(fabSlide().offset, Offset.zero);
   });
 
   testWidgets('история: до 10 замеров кнопка «Загрузить ещё» не показывается', (

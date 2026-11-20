@@ -626,6 +626,41 @@ void main() {
     expect(find.text('Выполнено'), findsOneWidget);
   });
 
+  testWidgets('68.5: после выполненной тренировки CTA «Тренироваться ещё»', (
+    WidgetTester tester,
+  ) async {
+    final program = await createProgram(name: 'Сила', dayOfWeek: 1);
+    final day = (await programRepo.getDays(program.id!)).single;
+    await programRepo.setActive(program.id!);
+
+    await workoutRepo.saveSession(
+      WorkoutSession(
+        programName: 'Сила',
+        programDayId: day.id!,
+        dayIndex: 0,
+        performedDate: DateTime(2026, 8, 10),
+        startedAt: DateTime(2026, 8, 10, 10),
+        endedAt: DateTime(2026, 8, 10, 11),
+      ),
+      [
+        WorkoutSetResult(
+          sessionId: 0,
+          exerciseName: 'Жим',
+          exerciseType: ExerciseType.strength,
+          setIndex: 1,
+          reps: 10,
+          completedAt: DateTime(2026, 8, 10, 10),
+        ),
+      ],
+    );
+
+    await pumpHome(tester);
+
+    expect(find.text('Выполнено'), findsOneWidget);
+    expect(find.text('Тренироваться ещё'), findsOneWidget);
+    expect(find.widgetWithText(AppGradientButton, 'Начать'), findsNothing);
+  });
+
   testWidgets('текст «Ближайший день» когда сегодня не день тренировки', (
     WidgetTester tester,
   ) async {

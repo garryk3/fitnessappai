@@ -700,6 +700,12 @@ abstract class AppLocalizations {
   /// **'Начать'**
   String get weekPlanStart;
 
+  /// No description provided for @homeStartAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренироваться ещё'**
+  String get homeStartAgain;
+
   /// No description provided for @weekPlanSkip.
   ///
   /// In ru, this message translates to:
@@ -1227,6 +1233,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Список программ пуст'**
   String get programListEmpty;
+
+  /// No description provided for @programListEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создайте программу: дни, упражнения и параметры подходов.'**
+  String get programListEmptyHint;
 
   /// No description provided for @programListCreate.
   ///
@@ -1947,6 +1959,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начать'**
   String get workoutRunHoldStart;
+
+  /// Подпись в блоке удержания планки после превышения цели (68.4)
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель достигнута'**
+  String get workoutRunHoldReached;
 
   /// No description provided for @workoutRunExitTitle.
   ///

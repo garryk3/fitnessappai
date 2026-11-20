@@ -117,7 +117,11 @@ class _ProgramDayExerciseParamsScreenState
         _durationController.text = minutes == null
             ? ''
             : '${(minutes / 60).round()}';
-        _distanceController.text = _formatDouble(item?.distanceMeters);
+        // Метры в БД → километры в поле (48.3): без перевода дефолт 68.2
+        // (1000 м) показывался как «1000 км» и сохранялся в 1 000 000 м.
+        _distanceController.text = item?.distanceMeters == null
+            ? ''
+            : _formatDouble(item!.distanceMeters! / 1000);
       } else {
         _durationController.text = _formatInt(item?.durationSeconds);
       }

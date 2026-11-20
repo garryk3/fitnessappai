@@ -36,7 +36,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  /// Порог прокрутки, после которого FAB уезжает (68.6): на первых
+  /// пикселях скролла кнопка не дёргается.
+  static const double _fabHideThreshold = 24;
+
+  /// Смещение уезжающего FAB — на его собственную высоту с запасом.
+  static const Offset _fabHiddenOffset = Offset(0, 2.5);
+
+  /// Длительность анимации ухода/возврата FAB.
+  static const Duration _fabSlideDuration = Duration(milliseconds: 200);
+
   late final ProfileController _controller;
+
+  /// 68.6: FAB уезжает при прокрутке вниз, чтобы не закрывать график.
+  bool _fabHidden = false;
 
   @override
   void initState() {
@@ -59,6 +72,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// 68.6: M3-поведение FAB — скрывается при прокрутке вниз и
+  /// возвращается при прокрутке вверх или у верхней границы списка.
+  bool _handleScroll(ScrollNotification notification) {
+    if (notification.depth != 0) {
+      return false;
+    }
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0;
+      if (delta > 0 &&
+          !_fabHidden &&
+          notification.metrics.pixels > _fabHideThreshold) {
+        setState(() => _fabHidden = true);
+      } else if (delta < 0 && _fabHidden) {
+        setState(() => _fabHidden = false);
+      }
+    } else if (notification is ScrollEndNotification &&
+        notification.metrics.pixels <= 0 &&
+        _fabHidden) {
+      setState(() => _fabHidden = false);
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -72,45 +108,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // FAB — градиентная пилюля (54.9, образец) по паттерну 54.7:
       // glow + primaryCta + текст, e2e-контракт «Добавить замер» сохранён
       // (AppInkWell — предок текста, тап по нему проходит hit-test).
-      floatingActionButton: AppTooltip(
-        message: l10n.profileAddMeasurement,
-        child: AppGlowContainer(
-          radius: AppRadii.pill,
-          child: AppContainer(
-            height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              gradient: AppGradients.primaryCta,
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-            ),
-            child: AppInkWell(
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              onTap: _openMeasurementForm,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppIcon(
-                    Icons.add,
-                    size: 24,
-                    color: AppColors.primaryCtaContent,
+      floatingActionButton: IgnorePointer(
+        ignoring: _fabHidden,
+        child: ExcludeSemantics(
+          excluding: _fabHidden,
+          child: AnimatedSlide(
+            offset: _fabHidden ? _fabHiddenOffset : Offset.zero,
+            // Reduce-motion (a11y): при системном отключении анимаций
+            // кнопка скрывается/возвращается мгновенно.
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : _fabSlideDuration,
+            curve: Curves.ease,
+            child: AppTooltip(
+              message: l10n.profileAddMeasurement,
+              child: AppGlowContainer(
+                radius: AppRadii.pill,
+                child: AppContainer(
+                  height: 56,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.primaryCta,
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
                   ),
-                  const SizedBox(width: 8),
-                  AppText(
-                    l10n.profileAddMeasurement,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      // onPrimary тёмной темы тёмный — на градиенте 2.2:1
-                      // (дизайн-ревью 54.9); белый виден в обеих темах.
-                      color: AppColors.primaryCtaContent,
-                      fontWeight: FontWeight.w600,
+                  child: AppInkWell(
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                    onTap: _openMeasurementForm,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppIcon(
+                          Icons.add,
+                          size: 24,
+                          color: AppColors.primaryCtaContent,
+                        ),
+                        const SizedBox(width: 8),
+                        AppText(
+                          l10n.profileAddMeasurement,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            // onPrimary тёмной темы тёмный — на градиенте 2.2:1
+                            // (дизайн-ревью 54.9); белый виден в обеих темах.
+                            color: AppColors.primaryCtaContent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
-      body: SignalBuilder(builder: (_) => _buildBody(context)),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _handleScroll,
+        child: SignalBuilder(builder: (_) => _buildBody(context)),
+      ),
     );
   }
 
