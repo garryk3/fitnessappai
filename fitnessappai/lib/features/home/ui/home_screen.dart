@@ -360,7 +360,7 @@ class _ActiveProgramCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: AppGradientButton(
-                  // 67.5: после выполненной тренировки «Начать» не отличает
+                  // 68.5: после выполненной тренировки «Начать» не отличает
                   // запланированный день от уже сделанного — подпись меняется.
                   label: todayStatus == WeekPlanStatus.performed
                       ? l10n.homeStartAgain

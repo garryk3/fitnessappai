@@ -474,7 +474,7 @@ void main() {
       days[0].id!,
       exercise.id!,
     );
-    // 67.2: новые позиции получают дефолты — для проверки блокировки
+    // 68.2: новые позиции получают дефолты — для проверки блокировки
     // сохранения обнуляем обязательные поля прямо в БД (как у старых данных).
     await db.customStatement(
       'UPDATE program_day_exercises SET sets = NULL, reps = NULL WHERE id = ?',

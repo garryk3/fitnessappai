@@ -1960,7 +1960,7 @@ abstract class AppLocalizations {
   /// **'Начать'**
   String get workoutRunHoldStart;
 
-  /// Подпись в блоке удержания планки после превышения цели (67.4)
+  /// Подпись в блоке удержания планки после превышения цели (68.4)
   ///
   /// In ru, this message translates to:
   /// **'Цель достигнута'**

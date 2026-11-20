@@ -204,7 +204,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
   }
 
   /// Запускает удержание планки и сохраняет чекпоинт.
-  /// 67.4: тактильный отклик при достижении цели удержания. Звук уже
+  /// 68.4: тактильный отклик при достижении цели удержания. Звук уже
   /// проигрывает контроллер (`startHoldTimer`), поэтому второй не добавляем.
   void _onHoldGoalReached() {
     HapticFeedback.mediumImpact();
@@ -369,7 +369,7 @@ class _WorkoutRunScreenState extends State<WorkoutRunScreen>
       child: AppScaffold(
         appBar: AppTopBar(
           title: AppLocalizations.of(context).workoutRun,
-          // 67.3: после восстановления из чекпойнта стек пуст, и
+          // 68.3: после восстановления из чекпойнта стек пуст, и
           // автоматический leading не появляется. Кнопка «Назад» нужна в
           // обеих сессиях — обработчик тот же, что у системного BACK.
           // Внутри uikit AppTopBar ставит BackButton: сохранены тултип
@@ -795,7 +795,7 @@ String _fmt(double value) => value == value.roundToDouble()
 /// Выделенный блок таймера удержания планки: крупный счётчик, цель в скобках,
 /// кнопка запуска до старта.
 ///
-/// 67.4: при первом достижении цели подхода — тактильный отклик, звук и
+/// 68.4: при первом достижении цели подхода — тактильный отклик, звук и
 /// строка «Цель достигнута»; повторно в рамках подхода не срабатывает.
 class _PlankHoldPanel extends StatefulWidget {
   const _PlankHoldPanel({
@@ -880,7 +880,7 @@ class _PlankHoldPanelState extends State<_PlankHoldPanel> {
                 ),
                 const SizedBox(width: 6),
                 // Flexible: при крупном шрифте подпись переносится, а не
-                // переполняет блок (дизайн-ревью 67.4).
+                // переполняет блок (дизайн-ревью 68.4).
                 Flexible(
                   child: AppText(
                     l10n.workoutRunHoldReached,

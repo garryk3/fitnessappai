@@ -626,7 +626,7 @@ void main() {
     expect(find.text('Выполнено'), findsOneWidget);
   });
 
-  testWidgets('67.5: после выполненной тренировки CTA «Тренироваться ещё»', (
+  testWidgets('68.5: после выполненной тренировки CTA «Тренироваться ещё»', (
     WidgetTester tester,
   ) async {
     final program = await createProgram(name: 'Сила', dayOfWeek: 1);

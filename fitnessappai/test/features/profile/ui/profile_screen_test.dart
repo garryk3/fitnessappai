@@ -431,7 +431,7 @@ void main() {
     expect(find.text('80 кг'), findsWidgets);
   });
 
-  testWidgets('67.6: FAB уезжает при прокрутке вниз и возвращается вверх', (
+  testWidgets('68.6: FAB уезжает при прокрутке вниз и возвращается вверх', (
     tester,
   ) async {
     for (var day = 1; day <= 13; day++) {

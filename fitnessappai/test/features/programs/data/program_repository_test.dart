@@ -394,7 +394,7 @@ void main() {
 
   group('упражнения', () {
     test(
-      '67.2: addExerciseToDay заполняет стартовые метрики по типу',
+      '68.2: addExerciseToDay заполняет стартовые метрики по типу',
       () async {
         final created = await createProgram();
         final dayRow = (await repo.getDays(created.id!)).single;
@@ -512,7 +512,7 @@ void main() {
       );
       final item = await repo.addExerciseToDay(dayRow.id!, exId);
 
-      // 67.2: у позиции уже есть дефолтная длительность (30 с), а copyWith
+      // 68.2: у позиции уже есть дефолтная длительность (30 с), а copyWith
       // не сбрасывает null — собираем невалидную позицию вручную.
       final invalid = ProgramDayExercise(
         id: item.id,

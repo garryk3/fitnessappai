@@ -323,7 +323,7 @@ void main() {
     },
   );
 
-  testWidgets('67.3: на восстановленной сессии есть стрелка «Назад»', (
+  testWidgets('68.3: на восстановленной сессии есть стрелка «Назад»', (
     tester,
   ) async {
     final dayId = await createDay();
@@ -338,7 +338,7 @@ void main() {
     expect(find.text('Выйти из тренировки?'), findsOneWidget);
   });
 
-  testWidgets('67.4: достижение цели удержания — подпись, звук один раз', (
+  testWidgets('68.4: достижение цели удержания — подпись, звук один раз', (
     tester,
   ) async {
     final dayId = await createDay(

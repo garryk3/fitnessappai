@@ -396,7 +396,7 @@ class ProgramRepository {
             .getSingle();
     final nextIndex =
         (last.read(_db.programDayExercises.orderIndex.max()) ?? -1) + 1;
-    // 67.2: стартовые метрики по типу упражнения — экран параметров не
+    // 68.2: стартовые метрики по типу упражнения — экран параметров не
     // требует ручного ввода всех обязательных полей.
     final type = await _exerciseTypeOf(exerciseId);
     final defaults = type == null

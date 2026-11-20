@@ -36,7 +36,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  /// Порог прокрутки, после которого FAB уезжает (67.6): на первых
+  /// Порог прокрутки, после которого FAB уезжает (68.6): на первых
   /// пикселях скролла кнопка не дёргается.
   static const double _fabHideThreshold = 24;
 
@@ -48,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   late final ProfileController _controller;
 
-  /// 67.6: FAB уезжает при прокрутке вниз, чтобы не закрывать график.
+  /// 68.6: FAB уезжает при прокрутке вниз, чтобы не закрывать график.
   bool _fabHidden = false;
 
   @override
@@ -72,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  /// 67.6: M3-поведение FAB — скрывается при прокрутке вниз и
+  /// 68.6: M3-поведение FAB — скрывается при прокрутке вниз и
   /// возвращается при прокрутке вверх или у верхней границы списка.
   bool _handleScroll(ScrollNotification notification) {
     if (notification.depth != 0) {

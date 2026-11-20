@@ -105,7 +105,7 @@ void main() {
     expect(find.text('Список программ пуст'), findsOneWidget);
   });
 
-  testWidgets('67.1: пустое состояние подсказывает создать программу', (
+  testWidgets('68.1: пустое состояние подсказывает создать программу', (
     tester,
   ) async {
     await pumpPrograms(tester);
@@ -124,7 +124,7 @@ void main() {
   testWidgets('пустое состояние вертикально отцентрировано', (tester) async {
     await pumpPrograms(tester);
 
-    // 67.1: пустое состояние — AppEmptyState (иконка, заголовок, подсказка,
+    // 68.1: пустое состояние — AppEmptyState (иконка, заголовок, подсказка,
     // кнопка), центрируется как блок целиком.
     final emptyCenter = tester.getCenter(find.byType(AppEmptyState));
     final appBarHeight = tester.getSize(find.byType(AppBar)).height;
